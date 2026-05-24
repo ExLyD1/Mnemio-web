@@ -18,7 +18,7 @@
 
             <div class="flex flex-col gap-[20px]">
                 <p class="text-small">
-                    {{ activeTab === 'login' ? 'or login with email' : 'or register with email' }}
+                    {{ t(activeTab === 'login' ? 'auth.orLoginWithEmail' : 'auth.orRegisterWithEmail') }}
                 </p>
 
                 <div>
@@ -37,7 +37,7 @@
                         class="mt-1.5 text-small text-error"
                         aria-live="polite"
                     >
-                        {{ emailError }}
+                        {{ t(emailError) }}
                     </p>
                 </div>
 
@@ -53,8 +53,8 @@
                         </template>
                     </UiInputField>
                     <p class="mt-1.5 min-h-[20px] text-small" aria-live="polite">
-                        <span v-if="passwordError" class="text-error">{{ passwordError }}</span>
-                        <span v-else-if="activeTab === 'register'">8+ characters</span>
+                        <span v-if="passwordError" class="text-error">{{ t(passwordError) }}</span>
+                        <span v-else-if="activeTab === 'register'">{{ t('auth.passwordHint') }}</span>
                     </p>
                 </div>
             </div>
@@ -66,7 +66,7 @@
                 :disabled="loading"
             >
                 <UiSpinner v-if="loading" size="sm" class="mr-2" />
-                {{ activeTab === 'login' ? 'Log in' : 'Create account' }}
+                {{ t(activeTab === 'login' ? 'auth.tabLogin' : 'auth.createAccount') }}
             </UiButton>
         </div>
     </form>
@@ -77,6 +77,9 @@ import { Check } from 'lucide-vue-next';
 import { useForm, useField } from 'vee-validate';
 import { loginSchema, registerSchema } from '@/schemas/auth';
 import { toFormValidator } from '@/utils/zodValidator';
+import { useT } from '@/composables/useT';
+
+const { t } = useT();
 
 const props = withDefaults(
     defineProps<{ initialTab?: 'register' | 'login'; loading?: boolean }>(),
@@ -110,10 +113,10 @@ const onSubmit = handleSubmit((values) => {
     emit('submit', { email: values.email, password: values.password, activeTab: activeTab.value });
 });
 
-const tabs = [
-    { key: 'register', label: 'Register' },
-    { key: 'login', label: 'Log in' },
-];
+const tabs = computed(() => [
+    { key: 'register', label: t('auth.tabRegister') },
+    { key: 'login', label: t('auth.tabLogin') },
+]);
 
 const socials = [
     { label: 'Apple', icon: '/images/shared/social/apple.svg' },

@@ -1,41 +1,62 @@
 <template>
-    <div>
-        <h2 class="mb-3 text-h2 font-bold text-neutral-0">Verify your email</h2>
+    <form novalidate @submit.prevent="onSubmit">
+        <h2 class="mb-3 text-h2 font-bold text-neutral-0">{{ t('auth.verifyTitle') }}</h2>
         <p class="mb-8 text-body text-brand-muted">
-            Please enter the 6 digit code we sent to
+            {{ t('auth.verifyHint') }}
             <strong class="text-brand-pale">{{ maskedEmail }}</strong
-            >. If you don't see it, please check your spam folder.
+            >. {{ t('auth.verifySpamHint') }}
         </p>
 
-        <UiInputOtp v-model="code" class="mb-4" />
+        <UiInputOtp v-model="code" class="mb-2" />
+        <p v-if="error" class="mb-4 text-small text-error" aria-live="polite">
+            {{ t(error) }}
+        </p>
 
         <p class="mb-8 text-body text-brand-muted">
             Didn't get it?
-            <button class="text-accent transition-colors hover:underline">Re-send</button>
+            <button type="button" class="text-accent transition-colors hover:underline">
+                {{ t('auth.resend') }}
+            </button>
         </p>
 
         <UiButton
-            @click="emit('submit', { email: 'qwe', password: 'qwe', code })"
+            type="submit"
             variant="light"
             class="w-full rounded-xl py-4 text-body font-bold"
+            :disabled="loading"
         >
-            Confirm
+            <UiSpinner v-if="loading" size="sm" class="mr-2" />
+            {{ t('auth.confirm') }}
         </UiButton>
-    </div>
+    </form>
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ email: string }>();
+import { otpSchema } from '@/schemas/auth';
+import { useT } from '@/composables/useT';
 
-const emit = defineEmits<{
-    submit: [payload: { email: string; password: string; code: string }];
-}>();
+const props = withDefaults(defineProps<{ email: string; loading?: boolean }>(), {
+    loading: false,
+});
+const emit = defineEmits<{ submit: [payload: { code: string }] }>();
 
+const { t } = useT();
 const code = ref('');
+const error = ref<string | null>(null);
 
 const maskedEmail = computed(() => {
     const [local, domain] = props.email.split('@');
     if (!domain) return props.email;
     return `${local!.slice(0, 2)}***@${domain}`;
 });
+
+const onSubmit = () => {
+    const result = otpSchema.safeParse({ code: code.value });
+    if (!result.success) {
+        error.value = result.error.issues[0]?.message ?? 'auth.errors.code_invalid';
+        return;
+    }
+    error.value = null;
+    emit('submit', { code: code.value });
+};
 </script>

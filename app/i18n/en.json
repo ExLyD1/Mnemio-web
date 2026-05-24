@@ -1,0 +1,49 @@
+{
+    "common": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "continue": "Continue",
+        "back": "Back",
+        "loading": "Loading…"
+    },
+    "nav": {
+        "dashboard": "Dashboard",
+        "decks": "My Decks",
+        "favorites": "Favorites",
+        "ai": "AI",
+        "signOut": "Sign out",
+        "signIn": "Sign in",
+        "register": "Register"
+    },
+    "auth": {
+        "tabLogin": "Log in",
+        "tabRegister": "Register",
+        "createAccount": "Create account",
+        "orLoginWithEmail": "or login with email",
+        "orRegisterWithEmail": "or register with email",
+        "passwordHint": "8+ characters",
+        "signedOut": "You have been signed out",
+        "verifyTitle": "Verify your email",
+        "verifyHint": "Please enter the 6 digit code we sent to",
+        "verifySpamHint": "If you don't see it, please check your spam folder.",
+        "resend": "Re-send",
+        "confirm": "Confirm",
+        "detailsTitle": "Account details",
+        "fullName": "Full name*",
+        "username": "Username*",
+        "birthday": "Birthday*",
+        "fullNamePlaceholder": "Dracula Alucard",
+        "usernamePlaceholder": "Dracula_Rules34",
+        "birthdayPlaceholder": "MM/DD/YYYY",
+        "next": "Next",
+        "errors": {
+            "email_invalid": "Please enter a valid email address.",
+            "password_too_short": "Password must be at least 8 characters.",
+            "code_invalid": "Enter the 6-digit code.",
+            "fullName_required": "Full name is required.",
+            "username_invalid": "Username must be 3–20 letters, numbers, or underscores.",
+            "birthday_invalid": "Use MM/DD/YYYY format.",
+            "birthday_too_young": "You must be at least 13 years old."
+        }
+    }
+}

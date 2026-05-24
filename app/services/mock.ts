@@ -9,6 +9,8 @@ export const mockUser = (overrides: Partial<User> = {}): User => ({
     id: uid(),
     email: 'user@example.com',
     displayName: null,
+    username: null,
+    birthday: null,
     createdAt: new Date().toISOString(),
     ...overrides,
 });

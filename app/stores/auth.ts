@@ -3,9 +3,10 @@ import {
     login as apiLogin,
     register as apiRegister,
     logout as apiLogout,
+    updateProfile as apiUpdateProfile,
 } from '@/api/auth';
 import { mockStore } from '@/services/mockStore';
-import type { User } from '@/types/user';
+import type { User, ProfileDetails } from '@/types/user';
 
 const USER_KEY = 'auth:user';
 const TOKEN_KEY = 'auth:accessToken';
@@ -52,14 +53,26 @@ export const useAuthStore = defineStore('auth', () => {
         persist();
     };
 
+    const updateProfile = async (details: ProfileDetails) => {
+        if (!user.value) throw { code: 'AUTH_NOT_AUTHENTICATED', message: 'Not signed in.' };
+        const updated = await apiUpdateProfile(user.value.id, details);
+        user.value = updated;
+        persist();
+        return updated;
+    };
+
+    const needsProfile = computed(() => !!user.value && !user.value.username);
+
     return {
         user,
         accessToken,
         isAuthenticated,
         currentUser,
+        needsProfile,
         login,
         register,
         logout,
+        updateProfile,
         hydrate,
     };
 });

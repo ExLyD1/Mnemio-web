@@ -9,9 +9,13 @@
         <LoginRegisterEmail
             v-else-if="step === 'verify'"
             :email="data.email"
-            @submit="onRegisterSubmit"
+            @submit="onOtpSubmit"
         />
-        <LoginRegisterAcountDetails v-else-if="step === 'details'" />
+        <LoginRegisterAcountDetails
+            v-else-if="step === 'details'"
+            :loading="updateProfile.loading.value"
+            @submit="onDetailsSubmit"
+        />
 
         <p class="mt-5 text-center text-small text-brand-muted">
             By continuing I agree with the
@@ -27,13 +31,15 @@
 </template>
 
 <script setup lang="ts">
-import { useAuth, useToast } from '#imports';
+import { useAuth, useAuthStore, useToast, useT } from '#imports';
 
 definePageMeta({ layout: 'auth' });
 
 const route = useRoute();
-const { login, register } = useAuth();
+const authStore = useAuthStore();
+const { login, register, updateProfile } = useAuth();
 const toast = useToast();
+const { t } = useT();
 
 type Tab = 'register' | 'login';
 
@@ -44,6 +50,14 @@ const data = reactive<{ email: string; password: string }>({
 });
 const initialTab = route.query.tab === 'login' ? 'login' : ('register' as const);
 
+const finishAuth = async () => {
+    if (authStore.needsProfile) {
+        step.value = 'details';
+    } else {
+        await navigateTo('/dashboard');
+    }
+};
+
 async function onAuthSubmit(payload: { email: string; password: string; activeTab: Tab }) {
     data.email = payload.email;
     data.password = payload.password;
@@ -51,9 +65,9 @@ async function onAuthSubmit(payload: { email: string; password: string; activeTa
     if (payload.activeTab === 'login') {
         const result = await login.execute(payload.email, payload.password);
         if (result) {
-            await navigateTo('/dashboard');
+            await finishAuth();
         } else if (login.error.value) {
-            toast.error(login.error.value.message);
+            toast.error(t(login.error.value.message, login.error.value.message));
         }
         return;
     }
@@ -61,13 +75,22 @@ async function onAuthSubmit(payload: { email: string; password: string; activeTa
     step.value = 'verify';
 }
 
-async function onRegisterSubmit(_payload: { email: string; password: string; code: string }) {
+async function onOtpSubmit(_payload: { code: string }) {
     const result = await register.execute(data.email, data.password);
     if (result) {
         step.value = 'details';
     } else if (register.error.value) {
-        toast.error(register.error.value.message);
+        toast.error(t(register.error.value.message, register.error.value.message));
         step.value = 'auth';
+    }
+}
+
+async function onDetailsSubmit(payload: { fullName: string; username: string; birthday: string }) {
+    const result = await updateProfile.execute(payload);
+    if (result) {
+        await navigateTo('/dashboard');
+    } else if (updateProfile.error.value) {
+        toast.error(t(updateProfile.error.value.message, updateProfile.error.value.message));
     }
 }
 </script>
