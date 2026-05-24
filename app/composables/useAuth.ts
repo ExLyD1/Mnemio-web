@@ -1,18 +1,17 @@
-import { login as apiLogin, register as apiRegister } from '@/api/auth';
+import { useAuthStore } from '@/stores/auth';
+import { useAsync } from '@/composables/useAsync';
 
 export const useAuth = () => {
-    const login = async (email: string, password: string, accessToken: string) => {
-        const response = await apiLogin(email, password, accessToken);
-        return { data: response, success: response.success };
-    };
+    const store = useAuthStore();
 
-    const register = async (email: string, password: string) => {
-        const response = await apiRegister(email, password);
-        return { data: response, token: response.accessToken, success: response.success };
-    };
+    const loginAsync = useAsync(store.login);
+    const registerAsync = useAsync(store.register);
+    const logoutAsync = useAsync(store.logout);
 
     return {
-        login,
-        register,
+        store,
+        login: loginAsync,
+        register: registerAsync,
+        logout: logoutAsync,
     };
 };

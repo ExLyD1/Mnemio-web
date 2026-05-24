@@ -24,7 +24,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' });
 
-import { useProfileStore, useAuth } from '#imports';
+import { useAuth } from '#imports';
 
 const route = useRoute();
 
@@ -51,9 +51,8 @@ function onAuthSubmit(payload: { email: string; password: string; activeTab: Tab
     if (payload.activeTab === 'register') step.value = 'verify';
 }
 
-async function onRegisterSubmit(payload: { email: string; password: string; code: string }) {
-    const response = await register(payload.email, payload.password);
-
-    step.value = 'details';
+async function onRegisterSubmit(_payload: { email: string; password: string; code: string }) {
+    const result = await register.execute(data.email, data.password);
+    if (result) step.value = 'details';
 }
 </script>
