@@ -4,7 +4,8 @@
         "save": "Save",
         "continue": "Continue",
         "back": "Back",
-        "loading": "Loading…"
+        "loading": "Loading…",
+        "loadMore": "Load more"
     },
     "nav": {
         "dashboard": "Dashboard",
@@ -44,6 +45,75 @@
             "username_invalid": "Username must be 3–20 letters, numbers, or underscores.",
             "birthday_invalid": "Use MM/DD/YYYY format.",
             "birthday_too_young": "You must be at least 13 years old."
+        }
+    },
+    "deck": {
+        "myDecks": "My Decks",
+        "create": "Create deck",
+        "createFirst": "Create your first deck",
+        "createTitle": "Create a new deck",
+        "editTitle": "Edit deck",
+        "edit": "Edit",
+        "delete": "Delete",
+        "study": "Study",
+        "title": "Deck title",
+        "titlePlaceholder": "Spanish basics",
+        "description": "Description (optional)",
+        "descriptionPlaceholder": "What this deck is about",
+        "sourceLanguage": "From language",
+        "targetLanguage": "To language",
+        "searchPlaceholder": "Search your decks",
+        "cardCount": "{n} cards",
+        "emptyTitle": "No decks yet",
+        "emptyMessage": "Create your first deck to start learning.",
+        "noResultsTitle": "Nothing here",
+        "noResultsMessage": "No decks match your search.",
+        "notFoundTitle": "Deck not found",
+        "notFoundMessage": "This deck doesn't exist or was deleted.",
+        "backToDecks": "Back to decks",
+        "deleteTitle": "Delete this deck?",
+        "deleteMessage": "This will permanently remove the deck and all its cards. This cannot be undone.",
+        "created": "Deck created",
+        "updated": "Deck saved",
+        "deleted": "Deck deleted",
+        "errors": {
+            "title_too_short": "Title must be at least 2 characters.",
+            "title_too_long": "Title is too long (max 120).",
+            "description_too_long": "Description is too long (max 500).",
+            "language_invalid": "Pick a valid language.",
+            "languages_same": "Source and target language must differ."
+        }
+    },
+    "dashboard": {
+        "greetingMorning": "Good morning",
+        "greetingAfternoon": "Good afternoon",
+        "greetingEvening": "Good evening",
+        "tagline": "Pick up where you left off, or start something new.",
+        "decks": "Decks",
+        "cards": "Cards",
+        "recent": "Most recent",
+        "recentDecks": "Recent decks",
+        "viewAll": "View all"
+    },
+    "card": {
+        "word": "Word",
+        "definition": "Definition",
+        "wordPlaceholder": "hola",
+        "definitionPlaceholder": "hello",
+        "add": "Add card",
+        "edit": "Edit card",
+        "delete": "Delete",
+        "emptyTitle": "No cards yet",
+        "emptyMessage": "Add your first card using the form above.",
+        "deleteTitle": "Delete this card?",
+        "deleteMessage": "This card will be permanently removed from the deck.",
+        "deleted": "Card deleted",
+        "errors": {
+            "word_required": "Word is required.",
+            "word_too_long": "Word is too long (max 120).",
+            "definition_required": "Definition is required.",
+            "definition_too_long": "Definition is too long (max 500).",
+            "phonetic_too_long": "Phonetic is too long (max 120)."
         }
     }
 }
