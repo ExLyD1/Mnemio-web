@@ -23,8 +23,10 @@ withDefaults(
 );
 
 const variants = {
-    primary: 'bg-brand text-neutral-0 hover:bg-brand-dark',
-    ghost:   'bg-bg-surface text-brand-muted hover:bg-bg-muted',
+    primary:
+        'bg-lavender text-plum-deep shadow-lavender-cta hover:bg-lavender hover:-translate-y-px transition-transform',
+    ghost:
+        'bg-transparent text-cream border border-line-strong hover:border-cream-dim hover:bg-white/[0.03]',
     light:   'bg-brand-light text-brand hover:bg-brand-pale',
     text:    'text-brand-pale hover:text-brand-light',
 } as const;
