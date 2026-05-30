@@ -16,6 +16,12 @@ export default defineNuxtConfig({
         locales: [{ code: 'en', language: 'en-US' }],
     },
 
+    runtimeConfig: {
+        public: {
+            apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://127.0.0.1:3001',
+        },
+    },
+
     css: ['~/assets/css/main.css'],
 
     vite: {
