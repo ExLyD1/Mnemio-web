@@ -14,7 +14,11 @@
 
         <p class="mb-8 text-body text-brand-muted">
             Didn't get it?
-            <button type="button" class="text-accent transition-colors hover:underline">
+            <button
+                type="button"
+                class="text-accent transition-colors hover:underline"
+                @click="$emit('resend')"
+            >
                 {{ t('auth.resend') }}
             </button>
         </p>
@@ -38,7 +42,7 @@ import { useT } from '@/composables/useT';
 const props = withDefaults(defineProps<{ email: string; loading?: boolean }>(), {
     loading: false,
 });
-const emit = defineEmits<{ submit: [payload: { code: string }] }>();
+const emit = defineEmits<{ submit: [payload: { code: string }]; resend: [] }>();
 
 const { t } = useT();
 const code = ref('');
