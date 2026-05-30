@@ -80,7 +80,7 @@ const onLogout = async () => {
 const navLinks = [
     { label: 'Dashboard', to: '/dashboard', icon: '/images/layout/home.svg' },
     { label: 'My Decks', to: '/decks', icon: '/images/layout/folder.svg' },
-    { label: 'Favorites', to: '/favorites', icon: '/images/layout/favorite.svg' },
+    { label: 'Review', to: '/review', icon: '/images/layout/favorite.svg' },
 ];
 
 const aiLinks = [{ label: 'AI', to: '/ai', icon: '/images/layout/ai.svg' }];
