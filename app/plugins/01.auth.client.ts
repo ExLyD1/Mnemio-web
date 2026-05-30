@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/stores/auth';
 
-export default defineNuxtPlugin(() => {
+export default defineNuxtPlugin(async () => {
     const auth = useAuthStore();
-    auth.hydrate();
+    await auth.hydrate();
 });
