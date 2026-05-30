@@ -9,7 +9,9 @@
         <LoginRegisterEmail
             v-else-if="step === 'verify'"
             :email="data.email"
+            :loading="verifyEmail.loading.value"
             @submit="onOtpSubmit"
+            @resend="onResend"
         />
         <LoginRegisterAcountDetails
             v-else-if="step === 'details'"
@@ -37,7 +39,7 @@ definePageMeta({ layout: 'auth' });
 
 const route = useRoute();
 const authStore = useAuthStore();
-const { login, register, updateProfile } = useAuth();
+const { login, register, verifyEmail, resendOtp, updateProfile } = useAuth();
 const toast = useToast();
 const { t } = useT();
 
@@ -49,6 +51,8 @@ const data = reactive<{ email: string; password: string }>({
     password: '',
 });
 const initialTab = route.query.tab === 'login' ? 'login' : ('register' as const);
+
+const showError = (msg: string) => toast.error(t(msg, msg));
 
 const finishAuth = async () => {
     if (authStore.needsProfile) {
@@ -66,31 +70,59 @@ async function onAuthSubmit(payload: { email: string; password: string; activeTa
         const result = await login.execute(payload.email, payload.password);
         if (result) {
             await finishAuth();
-        } else if (login.error.value) {
-            toast.error(t(login.error.value.message, login.error.value.message));
+            return;
         }
+        const err = login.error.value;
+        if (err?.code === 'EMAIL_NOT_VERIFIED') {
+            const userId =
+                ((err.details ?? {}) as { userId?: string }).userId ?? null;
+            if (userId) {
+                authStore.pendingUserId = userId;
+                step.value = 'verify';
+                toast.info(t('auth.verifyHint', 'Please verify your email.'));
+                return;
+            }
+        }
+        if (err) showError(err.message);
         return;
     }
 
-    step.value = 'verify';
-}
-
-async function onOtpSubmit(_payload: { code: string }) {
-    const result = await register.execute(data.email, data.password);
+    const result = await register.execute(payload.email, payload.password);
     if (result) {
-        step.value = 'details';
+        step.value = 'verify';
     } else if (register.error.value) {
-        toast.error(t(register.error.value.message, register.error.value.message));
-        step.value = 'auth';
+        showError(register.error.value.message);
     }
 }
 
-async function onDetailsSubmit(payload: { fullName: string; username: string; birthday: string }) {
+async function onOtpSubmit(payload: { code: string }) {
+    const result = await verifyEmail.execute(payload.code);
+    if (result) {
+        await finishAuth();
+    } else if (verifyEmail.error.value) {
+        showError(verifyEmail.error.value.message);
+    }
+}
+
+async function onResend() {
+    const result = await resendOtp.execute();
+    if (result) {
+        toast.success(t('auth.otpResent', 'New code sent.'));
+    } else if (resendOtp.error.value) {
+        showError(resendOtp.error.value.message);
+    }
+}
+
+async function onDetailsSubmit(payload: {
+    fullName: string;
+    username: string;
+    birthday: string;
+}) {
     const result = await updateProfile.execute(payload);
     if (result) {
         await navigateTo('/dashboard');
     } else if (updateProfile.error.value) {
-        toast.error(t(updateProfile.error.value.message, updateProfile.error.value.message));
+        showError(updateProfile.error.value.message);
     }
 }
 </script>
