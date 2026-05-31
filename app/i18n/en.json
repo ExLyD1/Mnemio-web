@@ -35,7 +35,7 @@
         "birthday": "Birthday*",
         "fullNamePlaceholder": "Dracula Alucard",
         "usernamePlaceholder": "Dracula_Rules34",
-        "birthdayPlaceholder": "MM/DD/YYYY",
+        "birthdayPlaceholder": "YYYY-MM-DD",
         "next": "Next",
         "errors": {
             "email_invalid": "Please enter a valid email address.",
@@ -43,7 +43,7 @@
             "code_invalid": "Enter the 6-digit code.",
             "fullName_required": "Full name is required.",
             "username_invalid": "Username must be 3–20 letters, numbers, or underscores.",
-            "birthday_invalid": "Use MM/DD/YYYY format.",
+            "birthday_invalid": "Use YYYY-MM-DD format.",
             "birthday_too_young": "You must be at least 13 years old."
         }
     },

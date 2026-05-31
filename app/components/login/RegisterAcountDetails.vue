@@ -38,8 +38,9 @@
                     <UiInputField
                         v-model="birthday"
                         :label="t('auth.birthday')"
-                        type="text"
+                        type="date"
                         :placeholder="t('auth.birthdayPlaceholder')"
+                        :max="todayIso"
                     />
                     <p v-if="birthdayError" class="mt-1.5 text-small text-error" aria-live="polite">
                         {{ t(birthdayError) }}
@@ -81,6 +82,8 @@ const { handleSubmit } = useForm({
 const { value: fullName, errorMessage: fullNameError } = useField<string>('fullName');
 const { value: username, errorMessage: usernameError } = useField<string>('username');
 const { value: birthday, errorMessage: birthdayError } = useField<string>('birthday');
+
+const todayIso = new Date().toISOString().slice(0, 10);
 
 const onSubmit = handleSubmit((values) => emit('submit', values));
 </script>
