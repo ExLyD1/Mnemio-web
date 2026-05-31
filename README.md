@@ -1,4 +1,4 @@
-# mnemio-web
+# Mnemio-web
 
 > AI-powered vocabulary & flashcard learning app — built to replace Quizlet and Anki.
 
