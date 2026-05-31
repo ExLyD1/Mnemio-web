@@ -1,9 +1,9 @@
 <template>
-    <div class="flex min-h-screen flex-col bg-bg-base text-brand-pale">
-        <LayoutHeader />
-        <main class="flex-1">
+    <div class="min-h-screen bg-bg-landing bg-page-glow text-cream">
+        <LandingNav />
+        <main>
             <slot />
         </main>
-        <LayoutFooter />
+        <LandingFooter />
     </div>
 </template>

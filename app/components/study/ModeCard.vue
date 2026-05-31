@@ -1,0 +1,30 @@
+<template>
+    <button
+        type="button"
+        class="group flex flex-col items-start gap-3 rounded-2xl border border-line bg-bg-surface p-6 text-left transition-all hover:-translate-y-0.5 hover:border-line-strong"
+        @click="$emit('select')"
+    >
+        <div
+            class="grid size-10 place-items-center rounded-xl bg-lavender-soft text-lavender"
+        >
+            <component :is="icon" class="size-5" />
+        </div>
+        <h3 class="text-h3 font-semibold text-cream">{{ title }}</h3>
+        <p class="text-small text-cream-dim">{{ description }}</p>
+        <span class="mt-2 text-eyebrow uppercase text-lavender">{{ t('study.start') }} →</span>
+    </button>
+</template>
+
+<script setup lang="ts">
+import type { Component } from 'vue';
+import { useT } from '@/composables/useT';
+
+defineProps<{
+    icon: Component;
+    title: string;
+    description: string;
+}>();
+defineEmits<{ select: [] }>();
+
+const { t } = useT();
+</script>
