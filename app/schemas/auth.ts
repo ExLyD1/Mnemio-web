@@ -1,18 +1,20 @@
 import { z } from 'zod';
 
 const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-const birthdayRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/;
+const birthdayRegex = /^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 const parseBirthday = (s: string): Date | null => {
     const m = birthdayRegex.exec(s);
     if (!m) return null;
-    const [, mm, dd, yyyy] = m;
+    const [, , mm, dd] = m;
+    const yyyy = s.slice(0, 4);
     const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
     if (
         d.getFullYear() !== Number(yyyy) ||
         d.getMonth() !== Number(mm) - 1 ||
         d.getDate() !== Number(dd)
-    ) return null;
+    )
+        return null;
     return d;
 };
 
