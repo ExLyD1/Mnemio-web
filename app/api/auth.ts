@@ -51,12 +51,6 @@ const toUser = (u: BackendUser): User => ({
     createdAt: u.createdAt,
 });
 
-/** Convert FE birthday format MM/DD/YYYY → backend YYYY-MM-DD. */
-const toBackendBirthday = (mmddyyyy: string): string => {
-    const [mm, dd, yyyy] = mmddyyyy.split('/');
-    return `${yyyy}-${mm}-${dd}`;
-};
-
 // ─── Endpoints ──────────────────────────────────────────────────────────────
 
 export interface RegisterResult {
@@ -143,7 +137,7 @@ export const updateProfile = async (details: ProfileDetails): Promise<MeResult> 
         body: {
             fullName: details.fullName,
             username: details.username,
-            birthday: toBackendBirthday(details.birthday),
+            birthday: details.birthday,
         },
     });
     return { user: toUser(res.user), needsProfile: res.needsProfile };
