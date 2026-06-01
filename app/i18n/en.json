@@ -182,5 +182,48 @@
             "definition_too_long": "Definition is too long (max 500).",
             "phonetic_too_long": "Phonetic is too long (max 120)."
         }
+    },
+    "mimi": {
+        "idle": [
+            "Ready when you are — tap a card to begin.",
+            "Take your time. I'll be right here.",
+            "Let's make some memories stick."
+        ],
+        "forgot": [
+            "No worries — forgetting is how we learn. We'll see it again soon.",
+            "That one's slippery. We'll circle back to it.",
+            "Lost it? That's fine. Repetition is on our side."
+        ],
+        "hard": [
+            "Almost! A little more practice and it's yours.",
+            "You reached for it — that counts. Let's reinforce it.",
+            "Tough one. I'll keep it close in the queue."
+        ],
+        "good": [
+            "Nice recall! Keep that rhythm going.",
+            "That's the one. Onward.",
+            "Solid. Your future self says thanks."
+        ],
+        "easy": [
+            "Effortless! You really know this one.",
+            "Too easy? I'll space it out further.",
+            "Locked in. Beautiful."
+        ],
+        "streak": [
+            "You're on fire — what a streak!",
+            "Look at you go. Don't break the chain!",
+            "Streak secured. I'm impressed."
+        ],
+        "done": [
+            "Session complete — proud of you!",
+            "That's a wrap. Great work today.",
+            "All done. Rest those neurons."
+        ],
+        "suggestions": [
+            "You have cards due today. Want to knock them out?",
+            "A quick five-minute review keeps your streak alive.",
+            "Evening is your best focus window — perfect time for a session.",
+            "A couple of words slipped last time. Shall we drill them?"
+        ]
     }
 }
