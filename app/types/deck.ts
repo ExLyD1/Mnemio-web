@@ -36,3 +36,21 @@ export interface CardInput {
 }
 
 export type DeckSummary = Omit<Deck, 'cards'> & { cardCount: number };
+
+/**
+ * Presentation model for the redesigned DeckCard. Built from a DeckSummary plus
+ * derived/mocked stats (mastery, due, favourite) — see plan §3.5 / §5.3.
+ */
+export interface DeckCardVM {
+    id: string;
+    title: string;
+    tag?: string;
+    glyph?: string;
+    total: number;
+    masteredPct: number;
+    due: number;
+    swatch: string;
+    favorite?: boolean;
+    author?: string;
+    copies?: number;
+}
