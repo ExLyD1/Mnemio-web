@@ -5,7 +5,16 @@
         "continue": "Continue",
         "back": "Back",
         "loading": "Loading…",
-        "loadMore": "Load more"
+        "loadMore": "Load more",
+        "language": "Language"
+    },
+    "topbar": {
+        "search": "Search decks…",
+        "notifications": "Notifications",
+        "noNotifications": "No notifications yet",
+        "newDeck": "New deck",
+        "account": "Account",
+        "profile": "Profile"
     },
     "nav": {
         "dashboard": "Dashboard",
@@ -120,6 +129,9 @@
         "easy": "Easy",
         "flipHint": "Tap or press Space to reveal the answer.",
         "sessionDone": "Review session complete",
+        "heading": "Review",
+        "inHours": "in {h}h",
+        "inDays": "in {d}d",
         "errors": {
             "rate_failed": "Could not save your rating. Try again."
         }
@@ -158,6 +170,28 @@
         "backToDeck": "Back to deck",
         "noResultsTitle": "No completed session",
         "noResultsMessage": "Start a study session to see your results here.",
+        "endSession": "End session",
+        "revealHint": "Tap the card or press Space to reveal.",
+        "toReveal": "to reveal",
+        "revealAnswer": "Reveal answer",
+        "prevCard": "Previous card",
+        "nextCard": "Next card",
+        "reviewedSummary": "{recalled} recalled · {revisit} to revisit",
+        "listen": "Listen",
+        "audioComingSoon": "Audio coming soon",
+        "meaning": "Meaning",
+        "inContext": "In context",
+        "sessionComplete": "Session complete",
+        "niceWork": "Nice work",
+        "reviewed": "Reviewed",
+        "recalled": "Recalled",
+        "streak": "Streak",
+        "time": "Time",
+        "howItWent": "How it went",
+        "wordsToRevisit": "Words to revisit",
+        "summaryRecalled": "You recalled {pct}% of {total} cards",
+        "summaryRevisit": " — {n} to revisit.",
+        "summaryPerfect": ". Flawless run!",
         "errors": {
             "emptyDeck": "This deck has no cards to study."
         }

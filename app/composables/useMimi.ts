@@ -1,10 +1,13 @@
 import { ref } from 'vue';
-import messages from '@/i18n/en.json';
+import { useI18n } from '#imports';
+import { catalogs, isLocale, DEFAULT_LOCALE } from '@/i18n';
 import type { MimiMood } from '@/types/mimi';
 
-type MimiLines = Record<MimiMood | 'suggestions', string[]>;
+type MimiKey = MimiMood | 'suggestions';
+type MimiLines = Record<MimiKey, string[]>;
 
-const lines = ((messages as Record<string, unknown>).mimi ?? {}) as Partial<MimiLines>;
+const mimiOf = (code: keyof typeof catalogs): Partial<MimiLines> =>
+    ((catalogs[code] as Record<string, unknown>).mimi ?? {}) as Partial<MimiLines>;
 
 const randomOf = (arr: string[] | undefined): string => {
     if (!arr?.length) {
@@ -15,13 +18,20 @@ const randomOf = (arr: string[] | undefined): string => {
 
 /**
  * Rule-based mascot copy. Lines live in i18n (`mimi.*`) but are read directly
- * from the JSON because `useT` only resolves string values, not arrays.
+ * from the catalog (per active locale, English fallback) because `useT` only
+ * resolves string values, not arrays.
  */
 export const useMimi = () => {
+    const { locale } = useI18n();
     const mood = ref<MimiMood>('idle');
     const message = ref<string>('');
 
-    const pick = (m: MimiMood): string => randomOf(lines[m]);
+    const linesFor = (key: MimiKey): string[] => {
+        const code = isLocale(locale.value) ? locale.value : DEFAULT_LOCALE;
+        return mimiOf(code)[key] ?? mimiOf(DEFAULT_LOCALE)[key] ?? [];
+    };
+
+    const pick = (m: MimiMood): string => randomOf(linesFor(m));
 
     const say = (m: MimiMood): void => {
         mood.value = m;
@@ -32,7 +42,7 @@ export const useMimi = () => {
         message.value = '';
     };
 
-    const suggestion = (): string => randomOf(lines.suggestions);
+    const suggestion = (): string => randomOf(linesFor('suggestions'));
 
     return { mood, message, pick, say, clear, suggestion };
 };

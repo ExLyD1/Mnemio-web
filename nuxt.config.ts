@@ -3,17 +3,26 @@ export default defineNuxtConfig({
     devtools: { enabled: true },
 
     modules: [
-      '@pinia/nuxt',
-      '@vueuse/nuxt',
-      '@nuxtjs/i18n',
-      '@nuxt/image',
-      '@nuxtjs/color-mode',
-      '@nuxtjs/tailwindcss',
+        '@pinia/nuxt',
+        '@vueuse/nuxt',
+        '@nuxtjs/i18n',
+        '@nuxt/image',
+        '@nuxtjs/color-mode',
+        '@nuxtjs/tailwindcss',
     ],
 
     i18n: {
         defaultLocale: 'en',
-        locales: [{ code: 'en', language: 'en-US' }],
+        strategy: 'no_prefix',
+        locales: [
+            { code: 'en', language: 'en-US', name: 'English' },
+            { code: 'uk', language: 'uk-UA', name: 'Українська' },
+        ],
+        detectBrowserLanguage: {
+            useCookie: true,
+            cookieKey: 'i18n_locale',
+            redirectOn: 'root',
+        },
     },
 
     runtimeConfig: {
