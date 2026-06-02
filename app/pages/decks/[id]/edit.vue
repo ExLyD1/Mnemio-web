@@ -12,9 +12,7 @@
             <h1 class="text-h1 font-bold text-neutral-0">{{ t('deck.editTitle') }}</h1>
         </header>
 
-        <div v-if="fetchOne.loading.value && !store.deck" class="flex justify-center py-12">
-            <UiSpinner size="lg" />
-        </div>
+        <SharedPageLoader v-if="fetchOne.loading.value && !store.deck" />
 
         <div v-else-if="store.deck" class="rounded-2xl bg-bg-surface p-6">
             <DeckForm
@@ -31,11 +29,7 @@
             />
         </div>
 
-        <UiEmptyState
-            v-else
-            :title="t('deck.notFoundTitle')"
-            :message="t('deck.notFoundMessage')"
-        >
+        <UiEmptyState v-else :title="t('deck.notFoundTitle')" :message="t('deck.notFoundMessage')">
             <template #action>
                 <UiButton variant="light" @click="navigateTo('/decks')">
                     {{ t('deck.backToDecks') }}

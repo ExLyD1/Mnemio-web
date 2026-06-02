@@ -18,9 +18,7 @@
         </header>
 
         <main class="flex flex-1 flex-col items-center justify-center gap-8 p-6">
-            <div v-if="srs.loading && !srs.dueCards.length" class="flex justify-center">
-                <UiSpinner size="lg" />
-            </div>
+            <SharedPageLoader v-if="srs.loading && !srs.dueCards.length" />
 
             <template v-else-if="active && studyCard">
                 <StudyFlashCard

@@ -22,9 +22,7 @@
             <SharedSortMenu v-model="sort" :options="sortOptions" />
         </div>
 
-        <div v-if="loading && !store.summaries.length" class="flex justify-center py-16">
-            <UiSpinner size="lg" />
-        </div>
+        <SharedPageLoader v-if="loading && !store.summaries.length" />
 
         <UiEmptyState
             v-else-if="!store.summaries.length"

@@ -7,9 +7,7 @@
             <ArrowLeft class="size-4" /> My Decks
         </NuxtLink>
 
-        <div v-if="store.loadingDeck && !store.deck" class="flex justify-center py-16">
-            <UiSpinner size="lg" />
-        </div>
+        <SharedPageLoader v-if="store.loadingDeck && !store.deck" />
 
         <div v-else-if="store.deck" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
             <div class="flex flex-col gap-5">
