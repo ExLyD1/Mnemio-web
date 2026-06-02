@@ -43,15 +43,20 @@
                 "
             >
                 <template v-if="mode !== 'multiple-choice' && studyCard">
-                    <StudyFlashCard
-                        :card="studyCard"
-                        :revealed="practice.revealed.value"
-                        @flip="practice.flip"
-                    />
-                    <StudyRatingRow v-if="practice.revealed.value" @grade="onGrade" />
-                    <p v-else class="text-small text-brand-muted">
-                        Tap the card or press Space to reveal.
-                    </p>
+                    <Transition name="card" mode="out-in">
+                        <StudyFlashCard
+                            :key="studyCard.id"
+                            :card="studyCard"
+                            :revealed="practice.revealed.value"
+                            @flip="practice.flip"
+                        />
+                    </Transition>
+                    <Transition name="rate">
+                        <StudyRatingRow v-if="practice.revealed.value" @grade="onGrade" />
+                        <p v-else class="text-small text-brand-muted">
+                            Tap the card or press Space to reveal.
+                        </p>
+                    </Transition>
                 </template>
 
                 <StudyMultipleChoiceCard
@@ -216,3 +221,35 @@ onBeforeUnmount(() => {
     window.removeEventListener('keydown', onKey);
 });
 </script>
+
+<style scoped>
+.card-enter-active,
+.card-leave-active {
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
+}
+.card-enter-from {
+    opacity: 0;
+    transform: translateY(10px);
+}
+.card-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+.rate-enter-active {
+    transition:
+        opacity 0.3s ease 0.08s,
+        transform 0.3s ease 0.08s;
+}
+.rate-leave-active {
+    transition: opacity 0.15s ease;
+}
+.rate-enter-from {
+    opacity: 0;
+    transform: translateY(12px);
+}
+.rate-leave-to {
+    opacity: 0;
+}
+</style>
