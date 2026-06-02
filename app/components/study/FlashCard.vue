@@ -38,14 +38,16 @@
                                 <Volume2 class="size-4" /> Listen
                             </button>
                         </UiTooltip>
-                        <SharedPill tone="muted" class="w-fit">{{ card.pos }}</SharedPill>
+                        <SharedPill v-if="card.pos" tone="muted" class="w-fit">
+                            {{ card.pos }}
+                        </SharedPill>
                     </div>
                     <div class="flex flex-col gap-4 text-left">
                         <div>
                             <p class="text-eyebrow uppercase text-brand-muted">Meaning</p>
                             <p class="mt-1 text-xl text-cream">{{ card.meaning }}</p>
                         </div>
-                        <div>
+                        <div v-if="card.example">
                             <p class="text-eyebrow uppercase text-brand-muted">In context</p>
                             <p class="mt-1 italic text-cream/90">{{ card.example }}</p>
                             <p class="mt-1 text-small text-brand-muted">
