@@ -7,7 +7,6 @@
             tabindex="0"
             :aria-label="revealed ? 'Show front' : 'Reveal answer'"
             @click="$emit('flip')"
-            @keydown.space.prevent="$emit('flip')"
         >
             <div
                 class="face front rounded-[24px] border border-line-strong bg-plum-card p-10 shadow-flash-card"
