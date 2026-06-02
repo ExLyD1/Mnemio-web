@@ -185,6 +185,7 @@ import { useAchievements } from '@/composables/useAchievements';
 import { uploadMedia } from '@/api/media';
 import { mediaUrl } from '@/utils/media';
 import { LANGUAGES } from '@/schemas/deck';
+import type { ProfileUpdate } from '@/types/user';
 
 definePageMeta({ layout: 'default' });
 
@@ -272,17 +273,28 @@ const dirty = computed(
 );
 
 const onSave = async () => {
-    const result = await updateProfile.execute({
-        fullName: draft.fullName.trim(),
-        username: draft.username.trim().toLowerCase(),
-        birthday: draft.birthday,
-    });
-    if (!result) {
-        if (updateProfile.error.value) {
-            toast.error(updateProfile.error.value.message);
-        }
-        return;
+    const cur = auth.currentUser;
+    const patch: ProfileUpdate = {};
+    const fullName = draft.fullName.trim();
+    const username = draft.username.trim().toLowerCase();
+    if (fullName && fullName !== (cur?.displayName ?? '')) {
+        patch.fullName = fullName;
     }
+    if (username && username !== (cur?.username ?? '')) {
+        patch.username = username;
+    }
+    if (draft.birthday && draft.birthday !== (cur?.birthday ?? '')) {
+        patch.birthday = draft.birthday;
+    }
+
+    if (Object.keys(patch).length > 0) {
+        const result = await updateProfile.execute(patch);
+        if (!result) {
+            toast.error(updateProfile.error.value?.message ?? 'Could not save profile');
+            return;
+        }
+    }
+
     await prefs.update({
         nativeLanguage: draft.nativeLanguage,
         learningLanguages: [...draft.learning],

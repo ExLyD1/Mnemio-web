@@ -9,7 +9,7 @@ import {
     updateProfile as apiUpdateProfile,
 } from '@/api/auth';
 import { readAccessToken, writeAccessToken } from '@/utils/authToken';
-import type { User, ProfileDetails } from '@/types/user';
+import type { User, ProfileUpdate } from '@/types/user';
 
 export const useAuthStore = defineStore('auth', () => {
     const user = ref<User | null>(null);
@@ -78,7 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
         clearSession();
     };
 
-    const updateProfile = async (details: ProfileDetails) => {
+    const updateProfile = async (details: ProfileUpdate) => {
         const result = await apiUpdateProfile(details);
         user.value = result.user;
         return result.user;

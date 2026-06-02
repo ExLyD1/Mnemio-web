@@ -1,6 +1,6 @@
 import { http } from '@/utils/http';
 import { writeAccessToken } from '@/utils/authToken';
-import type { User, ProfileDetails } from '@/types/user';
+import type { User, ProfileUpdate } from '@/types/user';
 
 /**
  * Backend wire types (per docs/api-contract.md).
@@ -133,14 +133,18 @@ export const me = async (): Promise<MeResult> => {
     return { user: toUser(res.user), needsProfile: res.needsProfile };
 };
 
-export const updateProfile = async (details: ProfileDetails): Promise<MeResult> => {
-    const res = await http<UpdateProfileResponse>('/users/me', {
-        method: 'PATCH',
-        body: {
-            fullName: details.fullName,
-            username: details.username,
-            birthday: details.birthday,
-        },
-    });
+export const updateProfile = async (details: ProfileUpdate): Promise<MeResult> => {
+    // Send only the provided, non-empty fields — PATCH /users/me accepts any subset.
+    const body: Record<string, string> = {};
+    if (details.fullName) {
+        body.fullName = details.fullName;
+    }
+    if (details.username) {
+        body.username = details.username;
+    }
+    if (details.birthday) {
+        body.birthday = details.birthday;
+    }
+    const res = await http<UpdateProfileResponse>('/users/me', { method: 'PATCH', body });
     return { user: toUser(res.user), needsProfile: res.needsProfile };
 };

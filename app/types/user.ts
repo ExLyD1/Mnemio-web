@@ -15,6 +15,9 @@ export interface ProfileDetails {
     birthday: string;
 }
 
+/** Partial profile patch — `PATCH /users/me` accepts any subset (≥1 field). */
+export type ProfileUpdate = Partial<ProfileDetails>;
+
 export interface Preference {
     interests: string[];
     goal: string | null;
