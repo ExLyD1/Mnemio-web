@@ -7,6 +7,7 @@ import { useStorage } from '@vueuse/core';
  */
 export const usePreferencesStore = defineStore('preferences', () => {
     const favorites = useStorage<string[]>('mnemio:favorites', []);
+    const avatarHue = useStorage<number>('mnemio:avatar-hue', 286);
     const interests = useStorage<string[]>('mnemio:interests', []);
     const goal = useStorage<string>('mnemio:goal', 'steady');
     const nativeLanguage = useStorage<string>('mnemio:native-language', 'en');
@@ -22,6 +23,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
 
     return {
         favorites,
+        avatarHue,
         interests,
         goal,
         nativeLanguage,
