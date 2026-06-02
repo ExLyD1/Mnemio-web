@@ -13,14 +13,24 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <button
-                type="button"
-                class="relative grid size-10 place-items-center rounded-full text-brand-muted transition-colors hover:bg-white/[0.04] hover:text-cream"
-                aria-label="Notifications"
-            >
-                <Bell class="size-5" />
-                <span class="absolute right-2.5 top-2.5 size-1.5 rounded-full bg-pink-soft" />
-            </button>
+            <UiPopover align="right">
+                <template #trigger="{ toggle }">
+                    <button
+                        type="button"
+                        class="grid size-10 place-items-center rounded-full text-brand-muted transition-colors hover:bg-white/[0.04] hover:text-cream"
+                        aria-label="Notifications"
+                        @click="toggle"
+                    >
+                        <Bell class="size-5" />
+                    </button>
+                </template>
+                <template #default>
+                    <div class="w-56 px-3 py-6 text-center">
+                        <Bell class="mx-auto size-5 text-brand-muted" />
+                        <p class="mt-2 text-small text-brand-muted">No notifications yet</p>
+                    </div>
+                </template>
+            </UiPopover>
 
             <UiButton
                 variant="primary"
