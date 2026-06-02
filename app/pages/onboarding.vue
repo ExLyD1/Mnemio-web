@@ -152,12 +152,12 @@ const goalOptions = [
 ];
 
 const step = ref(0);
-const hue = ref(prefs.avatarHue);
+const hue = ref(prefs.avatarHue ?? 286);
 const fullName = ref('');
 const username = ref('');
 const birthday = ref('');
 const selectedInterests = ref<string[]>([...prefs.interests]);
-const goal = ref(prefs.goal);
+const goal = ref(prefs.goal ?? 'steady');
 
 const maxBirthday = computed(() => {
     const d = new Date();
@@ -209,9 +209,13 @@ const finish = async () => {
         }
         return;
     }
-    prefs.avatarHue = hue.value;
-    prefs.interests = [...selectedInterests.value];
-    prefs.goal = goal.value;
+    await prefs
+        .update({
+            avatarHue: hue.value,
+            interests: [...selectedInterests.value],
+            goal: goal.value,
+        })
+        .catch(() => {});
     toast.success('Welcome to Mnemio!');
     await navigateTo('/dashboard');
 };

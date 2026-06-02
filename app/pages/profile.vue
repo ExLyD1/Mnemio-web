@@ -2,7 +2,7 @@
     <section class="mx-auto grid max-w-6xl gap-6 p-8 lg:grid-cols-[300px_1fr]">
         <aside class="flex flex-col gap-5 self-start lg:sticky lg:top-6">
             <div class="rounded-[20px] border border-line bg-bg-surface p-6 text-center">
-                <UiAvatar :name="name" :hue="prefs.avatarHue" :size="96" class="mx-auto" />
+                <UiAvatar :name="name" :hue="prefs.avatarHue ?? 286" :size="96" class="mx-auto" />
                 <h1 class="mt-4 font-display text-h2 text-cream">{{ name || 'Your profile' }}</h1>
                 <p v-if="handle" class="text-small text-brand-muted">@{{ handle }}</p>
                 <p
@@ -217,9 +217,9 @@ const syncDraft = () => {
     draft.fullName = auth.currentUser?.displayName ?? '';
     draft.username = auth.currentUser?.username ?? '';
     draft.birthday = auth.currentUser?.birthday ?? '';
-    draft.nativeLanguage = prefs.nativeLanguage;
+    draft.nativeLanguage = prefs.nativeLanguage ?? 'en';
     draft.learning = [...prefs.learningLanguages];
-    draft.goal = prefs.goal;
+    draft.goal = prefs.goal ?? 'steady';
 };
 
 const dirty = computed(
@@ -227,9 +227,9 @@ const dirty = computed(
         draft.fullName !== (auth.currentUser?.displayName ?? '') ||
         draft.username !== (auth.currentUser?.username ?? '') ||
         draft.birthday !== (auth.currentUser?.birthday ?? '') ||
-        draft.nativeLanguage !== prefs.nativeLanguage ||
+        draft.nativeLanguage !== (prefs.nativeLanguage ?? 'en') ||
         JSON.stringify(draft.learning) !== JSON.stringify(prefs.learningLanguages) ||
-        draft.goal !== prefs.goal,
+        draft.goal !== (prefs.goal ?? 'steady'),
 );
 
 const onSave = async () => {
@@ -244,9 +244,11 @@ const onSave = async () => {
         }
         return;
     }
-    prefs.nativeLanguage = draft.nativeLanguage;
-    prefs.learningLanguages = [...draft.learning];
-    prefs.goal = draft.goal;
+    await prefs.update({
+        nativeLanguage: draft.nativeLanguage,
+        learningLanguages: [...draft.learning],
+        goal: draft.goal,
+    });
     toast.success('Profile saved');
     syncDraft();
 };
@@ -258,6 +260,8 @@ onMounted(async () => {
         fetchList.execute({ cursor: null, append: false }),
         stats.load(),
         achievements.load(),
+        prefs.hydrate().catch(() => {}),
     ]);
+    syncDraft();
 });
 </script>

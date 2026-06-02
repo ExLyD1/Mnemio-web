@@ -119,6 +119,7 @@ const deckVms = computed(() => {
 
 onMounted(async () => {
     loading.value = true;
+    prefs.hydrate().catch(() => {});
     await fetchList.execute({ cursor: null, append: false });
     loading.value = false;
 });
