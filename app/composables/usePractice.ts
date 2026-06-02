@@ -37,6 +37,15 @@ export const usePractice = () => {
         revealed.value = !revealed.value;
     };
 
+    const goNext = (): Promise<void> => {
+        revealed.value = false;
+        return study.goNext();
+    };
+    const goPrev = (): Promise<void> => {
+        revealed.value = false;
+        return study.goPrev();
+    };
+
     const apply = async (rating: SrsRating, card: Card): Promise<void> => {
         if (locked.value) {
             return;
@@ -69,5 +78,17 @@ export const usePractice = () => {
     const recordSimple = (correct: boolean, card: Card): Promise<void> =>
         apply(correct ? 'good' : 'again', card);
 
-    return { study, revealed, streak, counts, revisit, flip, grade, recordSimple, mimi };
+    return {
+        study,
+        revealed,
+        streak,
+        counts,
+        revisit,
+        flip,
+        goNext,
+        goPrev,
+        grade,
+        recordSimple,
+        mimi,
+    };
 };

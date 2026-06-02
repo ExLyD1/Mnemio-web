@@ -69,8 +69,7 @@ export const useStudySession = () => {
             resumeTimer();
             return created;
         } catch (e) {
-            error.value =
-                (e as { message?: string })?.message ?? 'Could not start session.';
+            error.value = (e as { message?: string })?.message ?? 'Could not start session.';
             state.value = 'idle';
             return null;
         }
@@ -88,6 +87,16 @@ export const useStudySession = () => {
             await finishComplete();
         }
     };
+
+    const goTo = async (i: number) => {
+        if (!session.value) return;
+        const clamped = Math.max(0, Math.min(totalCount.value - 1, i));
+        if (clamped === currentIndex.value) return;
+        session.value = { ...session.value, index: clamped };
+        await sessions.updateActive({ index: clamped });
+    };
+    const goNext = () => goTo(currentIndex.value + 1);
+    const goPrev = () => goTo(currentIndex.value - 1);
 
     const finishComplete = async () => {
         if (!session.value) return;
@@ -132,6 +141,9 @@ export const useStudySession = () => {
         progress,
         start,
         answer,
+        goTo,
+        goNext,
+        goPrev,
         finishComplete,
         exit,
         reset,

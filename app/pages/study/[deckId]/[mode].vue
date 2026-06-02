@@ -33,9 +33,7 @@
         </header>
 
         <main class="flex flex-1 flex-col items-center justify-center gap-8 p-6">
-            <div v-if="loading" class="flex justify-center">
-                <UiSpinner size="lg" />
-            </div>
+            <SharedPageLoader v-if="loading" />
 
             <template
                 v-else-if="
@@ -43,14 +41,37 @@
                 "
             >
                 <template v-if="mode !== 'multiple-choice' && studyCard">
-                    <Transition name="card" mode="out-in">
-                        <StudyFlashCard
-                            :key="studyCard.id"
-                            :card="studyCard"
-                            :revealed="practice.revealed.value"
-                            @flip="practice.flip"
-                        />
-                    </Transition>
+                    <div class="flex w-full items-center justify-center gap-3">
+                        <button
+                            type="button"
+                            class="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-white/[0.04] hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
+                            aria-label="Previous card"
+                            :disabled="practice.study.currentIndex.value === 0"
+                            @click="practice.goPrev"
+                        >
+                            <ChevronLeft class="size-5" />
+                        </button>
+                        <Transition name="card" mode="out-in">
+                            <StudyFlashCard
+                                :key="studyCard.id"
+                                :card="studyCard"
+                                :revealed="practice.revealed.value"
+                                @flip="practice.flip"
+                            />
+                        </Transition>
+                        <button
+                            type="button"
+                            class="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-white/[0.04] hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
+                            aria-label="Next card"
+                            :disabled="
+                                practice.study.currentIndex.value >=
+                                practice.study.totalCount.value - 1
+                            "
+                            @click="practice.goNext"
+                        >
+                            <ChevronRight class="size-5" />
+                        </button>
+                    </div>
                     <Transition name="rate">
                         <StudyRatingRow v-if="practice.revealed.value" @grade="onGrade" />
                         <p v-else class="text-small text-brand-muted">
@@ -92,6 +113,7 @@
 </template>
 
 <script setup lang="ts">
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import { useDecks } from '#imports';
 import { usePractice } from '@/composables/usePractice';
 import { usePracticeStore } from '@/stores/practice';
@@ -187,6 +209,16 @@ const onKey = (e: KeyboardEvent) => {
     if (e.key === ' ') {
         e.preventDefault();
         practice.flip();
+        return;
+    }
+    if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        practice.goNext();
+        return;
+    }
+    if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        practice.goPrev();
         return;
     }
     if (practice.revealed.value) {
