@@ -1,118 +1,103 @@
-import { mockStore } from '@/services/mockStore';
-import { mockSession } from '@/services/mock';
-import type { StudyMode, StudySession, SessionsState } from '@/types/session';
-import type { ApiError } from '@/composables/useAsync';
+import { http } from '@/utils/http';
+import type { SessionCounts, StudyMode, StudySession } from '@/types/session';
 
-const key = (userId: string) => mockStore.userKey(userId, 'sessions');
+type WireMode = 'flashcard' | 'multiple_choice' | 'srs';
 
-const err = (code: string, message: string): ApiError => ({ code, message });
+interface WireSession {
+    id: string;
+    userId: string;
+    deckId: string;
+    mode: WireMode;
+    status: 'active' | 'incomplete' | 'complete';
+    cardIds: string[];
+    cardIndex: number;
+    correct: number;
+    xpAwarded: number;
+    counts: SessionCounts;
+    revisitCardIds: string[];
+    durationMs: number;
+    startedAt: string;
+    endedAt: string | null;
+}
 
-const empty = (): SessionsState => ({ active: null, incomplete: [], history: [] });
+const toFeMode = (m: WireMode): StudyMode => (m === 'multiple_choice' ? 'multiple-choice' : m);
+const toWireMode = (m: StudyMode): WireMode => (m === 'multiple-choice' ? 'multiple_choice' : m);
 
-const load = (userId: string): SessionsState =>
-    mockStore.get<SessionsState>(key(userId)) ?? empty();
-const save = (userId: string, state: SessionsState) => mockStore.set(key(userId), state);
+const toSession = (s: WireSession): StudySession => ({
+    id: s.id,
+    userId: s.userId,
+    deckId: s.deckId,
+    mode: toFeMode(s.mode),
+    cardIds: s.cardIds,
+    index: s.cardIndex,
+    correct: s.correct,
+    xpAwarded: s.xpAwarded,
+    status: s.status,
+    counts: s.counts,
+    revisitCardIds: s.revisitCardIds,
+    durationMs: s.durationMs,
+    startedAt: s.startedAt,
+    endedAt: s.endedAt,
+});
 
-export const listIncomplete = async (userId: string): Promise<StudySession[]> => {
-    return load(userId).incomplete;
+const clean = (input: Record<string, unknown>): Record<string, unknown> =>
+    Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
+
+export const getActive = async (): Promise<StudySession | null> => {
+    const res = await http<{ session: WireSession | null }>('/sessions/active');
+    return res.session ? toSession(res.session) : null;
 };
 
-export const getActive = async (userId: string): Promise<StudySession | null> => {
-    return load(userId).active;
+export const listIncomplete = async (): Promise<StudySession[]> => {
+    const res = await http<{ session: WireSession | null }>('/sessions/incomplete');
+    return res.session ? [toSession(res.session)] : [];
 };
 
-export const startSession = async (
-    userId: string,
-    input: { deckId: string; mode: StudyMode; cardIds: string[] },
-): Promise<StudySession> => {
-    if (input.cardIds.length === 0) {
-        throw err('SESSION_EMPTY_DECK', 'This deck has no cards to study.');
-    }
-    const state = load(userId);
-    if (state.active) {
-        const ended: StudySession = {
-            ...state.active,
-            status: 'incomplete',
-            endedAt: new Date().toISOString(),
-        };
-        state.incomplete = [ended, ...state.incomplete].slice(0, 10);
-    }
-    const session = mockSession({
-        userId,
-        deckId: input.deckId,
-        mode: input.mode,
-        cardIds: input.cardIds,
-        status: 'active',
+export const startSession = async (input: {
+    deckId: string;
+    mode: StudyMode;
+}): Promise<StudySession> => {
+    const s = await http<WireSession>('/sessions', {
+        method: 'POST',
+        body: { deckId: input.deckId, mode: toWireMode(input.mode) },
     });
-    state.active = session;
-    save(userId, state);
-    return session;
+    return toSession(s);
 };
+
+export interface SessionPatch {
+    index?: number;
+    correct?: number;
+    counts?: SessionCounts;
+    revisitCardIds?: string[];
+    durationMs?: number;
+}
 
 export const updateActive = async (
-    userId: string,
-    patch: Partial<Pick<StudySession, 'index' | 'correct'>>,
-): Promise<StudySession> => {
-    const state = load(userId);
-    if (!state.active) throw err('SESSION_NOT_FOUND', 'No active session.');
-    state.active = { ...state.active, ...patch };
-    save(userId, state);
-    return state.active;
-};
-
-export const completeSession = async (
-    userId: string,
-    xpAwarded: number,
-): Promise<StudySession> => {
-    const state = load(userId);
-    if (!state.active) throw err('SESSION_NOT_FOUND', 'No active session.');
-    const ended: StudySession = {
-        ...state.active,
-        status: 'complete',
-        xpAwarded,
-        endedAt: new Date().toISOString(),
-    };
-    state.active = null;
-    state.history = [ended, ...state.history].slice(0, 50);
-    save(userId, state);
-    return ended;
-};
-
-export const exitActive = async (userId: string): Promise<void> => {
-    const state = load(userId);
-    if (!state.active) return;
-    const ended: StudySession = {
-        ...state.active,
-        status: 'incomplete',
-        endedAt: new Date().toISOString(),
-    };
-    state.incomplete = [ended, ...state.incomplete].slice(0, 10);
-    state.active = null;
-    save(userId, state);
-};
-
-export const resumeIncomplete = async (
-    userId: string,
     sessionId: string,
+    patch: SessionPatch,
 ): Promise<StudySession> => {
-    const state = load(userId);
-    const found = state.incomplete.find((s) => s.id === sessionId);
-    if (!found) throw err('SESSION_NOT_FOUND', 'Session not found.');
-    if (state.active) {
-        const ended: StudySession = {
-            ...state.active,
-            status: 'incomplete',
-            endedAt: new Date().toISOString(),
-        };
-        state.incomplete = [ended, ...state.incomplete.filter((s) => s.id !== sessionId)].slice(
-            0,
-            10,
-        );
-    } else {
-        state.incomplete = state.incomplete.filter((s) => s.id !== sessionId);
-    }
-    const resumed: StudySession = { ...found, status: 'active', endedAt: null };
-    state.active = resumed;
-    save(userId, state);
-    return resumed;
+    const body = clean({
+        cardIndex: patch.index,
+        correct: patch.correct,
+        counts: patch.counts,
+        revisitCardIds: patch.revisitCardIds,
+        durationMs: patch.durationMs,
+    });
+    const s = await http<WireSession>(`/sessions/${sessionId}`, { method: 'PATCH', body });
+    return toSession(s);
+};
+
+export const completeSession = async (sessionId: string): Promise<StudySession> => {
+    const s = await http<WireSession>(`/sessions/${sessionId}/complete`, { method: 'POST' });
+    return toSession(s);
+};
+
+export const exitActive = async (sessionId: string): Promise<StudySession> => {
+    const s = await http<WireSession>(`/sessions/${sessionId}/exit`, { method: 'POST' });
+    return toSession(s);
+};
+
+export const resumeIncomplete = async (sessionId: string): Promise<StudySession> => {
+    const s = await http<WireSession>(`/sessions/${sessionId}/resume`, { method: 'POST' });
+    return toSession(s);
 };

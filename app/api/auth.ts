@@ -48,6 +48,8 @@ const toUser = (u: BackendUser): User => ({
     displayName: u.fullName,
     username: u.username,
     birthday: u.birthday,
+    avatarUrl: u.avatarUrl ?? null,
+    xp: u.xp ?? 0,
     createdAt: u.createdAt,
 });
 
@@ -95,7 +97,7 @@ export const resendOtp = async (userId: string): Promise<ResendOtpResponse> => {
     });
 };
 
-export interface LoginResult extends VerifyEmailResult {}
+export type LoginResult = VerifyEmailResult;
 
 export const login = async (email: string, password: string): Promise<LoginResult> => {
     const res = await http<AuthTokenResponse>('/auth/login', {
