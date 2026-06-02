@@ -1,7 +1,6 @@
-import { defineStore, ref, computed } from '#imports';
+import { defineStore, ref } from '#imports';
 import * as decksApi from '@/api/decks';
 import * as cardsApi from '@/api/cards';
-import { useAuthStore } from '@/stores/auth';
 import type { Card, Deck, DeckInput, DeckSummary, CardInput } from '@/types/deck';
 
 export const useDecksStore = defineStore('decks', () => {
@@ -13,22 +12,14 @@ export const useDecksStore = defineStore('decks', () => {
     const loadingList = ref(false);
     const loadingDeck = ref(false);
 
-    const auth = useAuthStore();
-    const ownerId = computed(() => auth.currentUser?.id ?? null);
-
-    const requireOwner = (): string => {
-        const id = ownerId.value;
-        if (!id) throw { code: 'AUTH_NOT_AUTHENTICATED', message: 'Not signed in.' };
-        return id;
-    };
-
     const byId = (id: string) => summaries.value.find((d) => d.id === id) ?? null;
 
-    const fetchList = async (opts: { cursor?: string | null; q?: string; append?: boolean } = {}) => {
-        const owner = requireOwner();
+    const fetchList = async (
+        opts: { cursor?: string | null; q?: string; append?: boolean } = {},
+    ) => {
         loadingList.value = true;
         try {
-            const res = await decksApi.listDecks(owner, {
+            const res = await decksApi.listDecks({
                 cursor: opts.cursor ?? null,
                 q: opts.q ?? search.value,
                 limit: 20,
@@ -47,15 +38,16 @@ export const useDecksStore = defineStore('decks', () => {
     };
 
     const loadMore = async () => {
-        if (!nextCursor.value) return;
+        if (!nextCursor.value) {
+            return;
+        }
         await fetchList({ cursor: nextCursor.value, append: true });
     };
 
     const fetchOne = async (id: string) => {
-        const owner = requireOwner();
         loadingDeck.value = true;
         try {
-            deck.value = await decksApi.getDeck(owner, id);
+            deck.value = await decksApi.getDeck(id);
             return deck.value;
         } finally {
             loadingDeck.value = false;
@@ -63,40 +55,46 @@ export const useDecksStore = defineStore('decks', () => {
     };
 
     const create = async (input: DeckInput) => {
-        const owner = requireOwner();
-        const created = await decksApi.createDeck(owner, input);
+        const created = await decksApi.createDeck(input);
         await fetchList({ cursor: null, append: false });
         return created;
     };
 
     const update = async (id: string, input: Partial<DeckInput>) => {
-        const owner = requireOwner();
-        const updated = await decksApi.updateDeck(owner, id, input);
-        if (deck.value?.id === id) deck.value = { ...deck.value, ...updated };
+        const updated = await decksApi.updateDeck(id, input);
+        if (deck.value?.id === id) {
+            deck.value = { ...deck.value, ...updated };
+        }
         const idx = summaries.value.findIndex((d) => d.id === id);
         if (idx !== -1) {
-            const { cards, ...rest } = updated;
-            summaries.value[idx] = { ...rest, cardCount: cards.length };
+            summaries.value[idx] = updated;
         }
         return updated;
     };
 
     const remove = async (id: string) => {
-        const owner = requireOwner();
-        await decksApi.deleteDeck(owner, id);
+        await decksApi.deleteDeck(id);
         summaries.value = summaries.value.filter((d) => d.id !== id);
         total.value = Math.max(0, total.value - 1);
-        if (deck.value?.id === id) deck.value = null;
+        if (deck.value?.id === id) {
+            deck.value = null;
+        }
+    };
+
+    const bumpCardCount = (deckId: string, delta: number) => {
+        const idx = summaries.value.findIndex((d) => d.id === deckId);
+        const cur = idx !== -1 ? summaries.value[idx] : undefined;
+        if (cur) {
+            summaries.value[idx] = { ...cur, cardCount: Math.max(0, cur.cardCount + delta) };
+        }
     };
 
     const addCard = async (deckId: string, input: CardInput): Promise<Card> => {
-        const owner = requireOwner();
-        const card = await cardsApi.addCard(owner, deckId, input);
+        const card = await cardsApi.addCard(deckId, input);
         if (deck.value?.id === deckId) {
             deck.value = { ...deck.value, cards: [...deck.value.cards, card] };
         }
-        const idx = summaries.value.findIndex((d) => d.id === deckId);
-        if (idx !== -1) summaries.value[idx] = { ...summaries.value[idx]!, cardCount: summaries.value[idx]!.cardCount + 1 };
+        bumpCardCount(deckId, 1);
         return card;
     };
 
@@ -105,8 +103,7 @@ export const useDecksStore = defineStore('decks', () => {
         cardId: string,
         input: Partial<CardInput>,
     ): Promise<Card> => {
-        const owner = requireOwner();
-        const updated = await cardsApi.updateCard(owner, deckId, cardId, input);
+        const updated = await cardsApi.updateCard(cardId, input);
         if (deck.value?.id === deckId) {
             deck.value = {
                 ...deck.value,
@@ -117,20 +114,14 @@ export const useDecksStore = defineStore('decks', () => {
     };
 
     const deleteCard = async (deckId: string, cardId: string): Promise<void> => {
-        const owner = requireOwner();
-        await cardsApi.deleteCard(owner, deckId, cardId);
+        await cardsApi.deleteCard(cardId);
         if (deck.value?.id === deckId) {
             deck.value = {
                 ...deck.value,
                 cards: deck.value.cards.filter((c) => c.id !== cardId),
             };
         }
-        const idx = summaries.value.findIndex((d) => d.id === deckId);
-        if (idx !== -1)
-            summaries.value[idx] = {
-                ...summaries.value[idx]!,
-                cardCount: Math.max(0, summaries.value[idx]!.cardCount - 1),
-            };
+        bumpCardCount(deckId, -1);
     };
 
     const reset = () => {

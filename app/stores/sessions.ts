@@ -1,6 +1,6 @@
 import { defineStore, ref, computed } from '#imports';
 import * as sessionsApi from '@/api/sessions';
-import { useAuthStore } from '@/stores/auth';
+import type { SessionPatch } from '@/api/sessions';
 import type { StudyMode, StudySession } from '@/types/session';
 
 export const useSessionsStore = defineStore('sessions', () => {
@@ -8,62 +8,55 @@ export const useSessionsStore = defineStore('sessions', () => {
     const incomplete = ref<StudySession[]>([]);
     const lastCompleted = ref<StudySession | null>(null);
 
-    const auth = useAuthStore();
-    const userId = computed(() => auth.currentUser?.id ?? null);
-
-    const requireUser = (): string => {
-        const id = userId.value;
-        if (!id) throw { code: 'AUTH_NOT_AUTHENTICATED', message: 'Not signed in.' };
-        return id;
-    };
-
     const latestIncomplete = computed(() => incomplete.value[0] ?? null);
 
     const hydrate = async () => {
-        const id = userId.value;
-        if (!id) return;
-        active.value = await sessionsApi.getActive(id);
-        incomplete.value = await sessionsApi.listIncomplete(id);
+        active.value = await sessionsApi.getActive();
+        incomplete.value = await sessionsApi.listIncomplete();
     };
 
-    const start = async (input: { deckId: string; mode: StudyMode; cardIds: string[] }) => {
-        const id = requireUser();
-        const replacedActive = active.value;
-        const session = await sessionsApi.startSession(id, input);
+    const start = async (input: { deckId: string; mode: StudyMode; cardIds?: string[] }) => {
+        const replaced = active.value;
+        const session = await sessionsApi.startSession({ deckId: input.deckId, mode: input.mode });
         active.value = session;
-        if (replacedActive) {
-            incomplete.value = await sessionsApi.listIncomplete(id);
+        if (replaced) {
+            incomplete.value = await sessionsApi.listIncomplete();
         }
         return session;
     };
 
-    const updateActive = async (patch: Partial<Pick<StudySession, 'index' | 'correct'>>) => {
-        const id = requireUser();
-        const updated = await sessionsApi.updateActive(id, patch);
+    const updateActive = async (patch: SessionPatch) => {
+        if (!active.value) {
+            return null;
+        }
+        const updated = await sessionsApi.updateActive(active.value.id, patch);
         active.value = updated;
         return updated;
     };
 
-    const complete = async (xpAwarded: number) => {
-        const id = requireUser();
-        const ended = await sessionsApi.completeSession(id, xpAwarded);
+    const complete = async (_xpAwarded?: number) => {
+        if (!active.value) {
+            return null;
+        }
+        const ended = await sessionsApi.completeSession(active.value.id);
         active.value = null;
         lastCompleted.value = ended;
         return ended;
     };
 
     const exit = async () => {
-        const id = requireUser();
-        await sessionsApi.exitActive(id);
+        if (!active.value) {
+            return;
+        }
+        await sessionsApi.exitActive(active.value.id);
         active.value = null;
-        incomplete.value = await sessionsApi.listIncomplete(id);
+        incomplete.value = await sessionsApi.listIncomplete();
     };
 
     const resume = async (sessionId: string) => {
-        const id = requireUser();
-        const resumed = await sessionsApi.resumeIncomplete(id, sessionId);
+        const resumed = await sessionsApi.resumeIncomplete(sessionId);
         active.value = resumed;
-        incomplete.value = await sessionsApi.listIncomplete(id);
+        incomplete.value = await sessionsApi.listIncomplete();
         return resumed;
     };
 
