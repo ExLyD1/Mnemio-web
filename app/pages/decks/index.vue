@@ -4,8 +4,8 @@
             <div>
                 <h1 class="font-display text-display-sm text-cream">My Decks</h1>
                 <p class="mt-1 text-body text-cream-dim">
-                    {{ store.summaries.length }} decks · {{ totalCards }} cards ·
-                    {{ srs.dueCount }} due today
+                    {{ store.summaries.length }} decks · {{ totalCards }} cards · {{ totalDue }} due
+                    today
                 </p>
             </div>
             <UiButton variant="primary" @click="navigateTo('/decks/create')">
@@ -64,17 +64,14 @@
 
 <script setup lang="ts">
 import { Plus, Library } from 'lucide-vue-next';
-import { useDecks, useSrsStore, usePreferencesStore } from '#imports';
-import { useDeckStats } from '@/composables/useDeckStats';
+import { useDecks, usePreferencesStore } from '#imports';
 import { deckToCardVm } from '@/utils/deckVm';
 import { LANGUAGES } from '@/schemas/deck';
 
 definePageMeta({ layout: 'default' });
 
 const { store, fetchList } = useDecks();
-const srs = useSrsStore();
 const prefs = usePreferencesStore();
-const stats = useDeckStats();
 
 const loading = ref(true);
 const filter = ref('all');
@@ -88,6 +85,7 @@ const sortOptions = [
 ];
 
 const totalCards = computed(() => store.summaries.reduce((sum, d) => sum + d.cardCount, 0));
+const totalDue = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
 
 const filterOptions = computed(() => {
     const counts = new Map<string, number>();
@@ -107,7 +105,7 @@ const deckVms = computed(() => {
         (d) => filter.value === 'all' || d.targetLanguage === filter.value,
     );
     const rows = list.map((d) => ({
-        vm: deckToCardVm(d, stats.forDeck(d.id, d.cardCount), prefs.isFavorite(d.id)),
+        vm: deckToCardVm(d, prefs.isFavorite(d.id)),
         updatedAt: d.updatedAt,
     }));
     rows.sort((a, b) => {
@@ -122,7 +120,6 @@ const deckVms = computed(() => {
 onMounted(async () => {
     loading.value = true;
     await fetchList.execute({ cursor: null, append: false });
-    await srs.fetchAll();
     loading.value = false;
 });
 </script>

@@ -60,9 +60,7 @@
                                 d.title
                             }}</span>
                             <span class="w-28 shrink-0">
-                                <SharedProgressBar
-                                    :value="stats.forDeck(d.id, d.cardCount).masteredPct"
-                                />
+                                <SharedProgressBar :value="d.stats.masteredPct" />
                             </span>
                         </NuxtLink>
                     </div>
@@ -158,10 +156,9 @@
 
 <script setup lang="ts">
 import { Trophy, Lock } from 'lucide-vue-next';
-import { useAuthStore, useAuth, useDecks, useSrsStore, useToast } from '#imports';
+import { useAuthStore, useAuth, useDecks, useToast } from '#imports';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useStats } from '@/composables/useStats';
-import { useDeckStats } from '@/composables/useDeckStats';
 import { LANGUAGES } from '@/schemas/deck';
 
 definePageMeta({ layout: 'default' });
@@ -169,10 +166,8 @@ definePageMeta({ layout: 'default' });
 const auth = useAuthStore();
 const { updateProfile } = useAuth();
 const { store, fetchList } = useDecks();
-const srs = useSrsStore();
 const prefs = usePreferencesStore();
 const statsApi = useStats();
-const stats = useDeckStats();
 const toast = useToast();
 
 const tab = ref('overview');
@@ -258,6 +253,5 @@ watch(() => auth.currentUser, syncDraft, { immediate: true });
 
 onMounted(async () => {
     await fetchList.execute({ cursor: null, append: false });
-    await srs.fetchAll();
 });
 </script>

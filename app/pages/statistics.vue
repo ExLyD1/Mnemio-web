@@ -22,7 +22,7 @@
                 tone="accent"
             />
             <SharedStatTile label="Streak" :value="`${statsApi.streak.value}d`" />
-            <SharedStatTile label="Due" :value="srs.dueCount" tone="plum" />
+            <SharedStatTile label="Due" :value="dueTotal" tone="plum" />
         </div>
 
         <div class="rounded-[20px] border border-line bg-bg-surface p-5">
@@ -59,7 +59,7 @@
                     </NuxtLink>
                     <span class="text-small text-brand-muted">{{ d.cardCount }} cards</span>
                     <span class="w-28">
-                        <SharedProgressBar :value="stats.forDeck(d.id, d.cardCount).masteredPct" />
+                        <SharedProgressBar :value="d.stats.masteredPct" />
                     </span>
                 </div>
             </div>
@@ -107,16 +107,14 @@
 
 <script setup lang="ts">
 import { Trophy, Lock } from 'lucide-vue-next';
-import { useDecks, useSrsStore } from '#imports';
+import { useDecks } from '#imports';
 import { useStats } from '@/composables/useStats';
-import { useDeckStats } from '@/composables/useDeckStats';
 
 definePageMeta({ layout: 'default' });
 
 const { store, fetchList } = useDecks();
-const srs = useSrsStore();
 const statsApi = useStats();
-const stats = useDeckStats();
+const dueTotal = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
 
 const range = ref('30');
 const rangeOptions = [
@@ -133,7 +131,7 @@ const heat = computed(() => statsApi.yearHeat());
 
 const insight = computed(() => {
     const weakest = store.summaries
-        .map((d) => ({ title: d.title, pct: stats.forDeck(d.id, d.cardCount).masteredPct }))
+        .map((d) => ({ title: d.title, pct: d.stats.masteredPct }))
         .sort((a, b) => a.pct - b.pct)[0];
     return weakest
         ? `“${weakest.title}” is your lowest deck at ${weakest.pct}% mastered — a quick session would help.`
@@ -142,6 +140,5 @@ const insight = computed(() => {
 
 onMounted(async () => {
     await fetchList.execute({ cursor: null, append: false });
-    await srs.fetchAll();
 });
 </script>

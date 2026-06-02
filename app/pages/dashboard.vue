@@ -8,12 +8,12 @@
                 </h1>
             </div>
             <p class="text-body text-cream-dim">
-                <span class="font-semibold text-pink-soft">{{ srs.dueCount }}</span> due today
+                <span class="font-semibold text-pink-soft">{{ dueToday }}</span> due today
             </p>
         </header>
 
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <SharedStatTile label="Due today" :value="srs.dueCount" sub="cards" tone="plum" />
+            <SharedStatTile label="Due today" :value="dueToday" sub="cards" tone="plum" />
             <SharedStatTile label="Reviewed" :value="statsApi.reviewedToday.value" sub="today" />
             <SharedStatTile label="Streak" :value="`${statsApi.streak.value}d`" />
             <SharedStatTile label="Retention" :value="`${statsApi.retention.value}%`" />
@@ -118,8 +118,7 @@
 
 <script setup lang="ts">
 import { Flame } from 'lucide-vue-next';
-import { useAuthStore, useDecks, useSrsStore, useT } from '#imports';
-import { useDeckStats } from '@/composables/useDeckStats';
+import { useAuthStore, useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useMimi } from '@/composables/useMimi';
 import { deckToCardVm } from '@/utils/deckVm';
@@ -128,13 +127,12 @@ definePageMeta({ layout: 'default' });
 
 const auth = useAuthStore();
 const { store, fetchList } = useDecks();
-const srs = useSrsStore();
-const stats = useDeckStats();
 const statsApi = useStats();
 const mimi = useMimi();
 const { t } = useT();
 
 const name = computed(() => auth.currentUser?.displayName ?? auth.currentUser?.username ?? '');
+const dueToday = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
 
 const greeting = computed(() => {
     const hour = new Date().getHours();
@@ -150,16 +148,11 @@ const todayLabel = computed(() =>
 const toVm = (deckId: string) => {
     const d = store.summaries.find((s) => s.id === deckId);
     if (!d) return null;
-    return deckToCardVm(d, stats.forDeck(d.id, d.cardCount));
+    return deckToCardVm(d);
 };
 
 const featured = computed(() => (store.summaries[0] ? toVm(store.summaries[0].id) : null));
-const recentVms = computed(() =>
-    store.summaries
-        .slice(0, 8)
-        .map((d) => deckToCardVm(d, stats.forDeck(d.id, d.cardCount)))
-        .filter((vm): vm is NonNullable<typeof vm> => vm !== null),
-);
+const recentVms = computed(() => store.summaries.slice(0, 8).map((d) => deckToCardVm(d)));
 
 const cursor = ref(new Date());
 const weeks = computed(() =>
@@ -178,6 +171,5 @@ const nextMonth = () => {
 onMounted(async () => {
     mimi.message.value = mimi.suggestion();
     await fetchList.execute({ cursor: null, append: false });
-    await srs.fetchAll();
 });
 </script>

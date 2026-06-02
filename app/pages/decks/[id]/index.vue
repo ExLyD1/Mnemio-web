@@ -140,10 +140,9 @@
 <script setup lang="ts">
 import { ArrowLeft, MoreVertical, Pencil, Trash2 } from 'lucide-vue-next';
 import { useDecks, useSrsStore, useToast, useT } from '#imports';
-import { useDeckStats } from '@/composables/useDeckStats';
 import { useStats } from '@/composables/useStats';
 import { swatchFor } from '@/utils/coverSwatches';
-import type { Card } from '@/types/deck';
+import type { Card, DeckStats } from '@/types/deck';
 
 definePageMeta({ layout: 'default' });
 
@@ -152,15 +151,23 @@ const id = computed(() => String(route.params.id));
 
 const { store, fetchOne, remove } = useDecks();
 const srs = useSrsStore();
-const stats = useDeckStats();
 const statsApi = useStats();
 const toast = useToast();
 const { t } = useT();
 
 const confirmOpen = ref(false);
 
-const swatch = computed(() => swatchFor(id.value));
-const deckStat = computed(() => stats.forDeck(id.value, store.deck?.cards.length ?? 0));
+const EMPTY_STATS: DeckStats = {
+    total: 0,
+    mastered: 0,
+    learning: 0,
+    new: 0,
+    due: 0,
+    masteredPct: 0,
+};
+
+const swatch = computed(() => store.deck?.coverColor ?? swatchFor(id.value));
+const deckStat = computed(() => store.deck?.stats ?? EMPTY_STATS);
 const coachTip = computed(() =>
     deckStat.value.due > 0
         ? `${deckStat.value.due} cards are ready for review. Want to start?`
