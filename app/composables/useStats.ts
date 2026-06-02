@@ -62,5 +62,51 @@ export const useStats = () => {
         return weeks;
     };
 
-    return { reviewedToday, streak, retention, monthCalendar };
+    const yearHeat = (): number[][] => {
+        const weeks: number[][] = [];
+        const todayDow = new Date().getDay();
+        for (let w = 0; w < 53; w += 1) {
+            const days: number[] = [];
+            for (let d = 0; d < 7; d += 1) {
+                const future = w === 52 && d > todayDow;
+                days.push(future ? 0 : Math.floor(seeded(w * 7 + d + 1) * 5));
+            }
+            weeks.push(days);
+        }
+        return weeks;
+    };
+
+    const dailySeries = (days: number): { label: string; value: number }[] => {
+        const out: { label: string; value: number }[] = [];
+        const today = new Date();
+        for (let i = days - 1; i >= 0; i -= 1) {
+            const date = new Date(today.getTime() - i * 86400000);
+            out.push({
+                label: `${date.getMonth() + 1}/${date.getDate()}`,
+                value: Math.floor(seeded(Math.floor(date.getTime() / 86400000)) * 55) + 5,
+            });
+        }
+        return out;
+    };
+
+    const achievements: { id: string; name: string; note: string; earned: boolean }[] = [
+        { id: 'first-deck', name: 'First steps', note: 'Created your first deck', earned: true },
+        { id: 'streak-7', name: 'Week warrior', note: 'Kept a 7-day streak', earned: true },
+        { id: 'cards-100', name: 'Century', note: 'Reviewed 100 cards', earned: true },
+        { id: 'mastered-50', name: 'Half-mast', note: 'Master 50 cards', earned: false },
+        { id: 'streak-30', name: 'Unstoppable', note: 'Keep a 30-day streak', earned: false },
+        { id: 'night-owl', name: 'Night owl', note: 'Study after midnight', earned: false },
+        { id: 'polyglot', name: 'Polyglot', note: 'Study three languages', earned: false },
+        { id: 'perfect', name: 'Flawless', note: 'A perfect session', earned: true },
+    ];
+
+    return {
+        reviewedToday,
+        streak,
+        retention,
+        monthCalendar,
+        yearHeat,
+        dailySeries,
+        achievements,
+    };
 };
