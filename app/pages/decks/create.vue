@@ -30,33 +30,90 @@
             <span class="h-px flex-1 bg-line" />
         </div>
 
-        <UiTooltip content="AI generation coming soon" side="top">
-            <button
-                type="button"
-                disabled
-                class="flex w-full items-center gap-3 rounded-2xl border border-line-strong bg-brand/15 p-4 text-left opacity-60"
-            >
+        <!-- AI generation -->
+        <div class="rounded-2xl border border-line-strong bg-brand/15 p-5">
+            <div class="flex items-start gap-3">
                 <Sparkles class="size-6 shrink-0 text-lavender" />
-                <span>
-                    <span class="block text-body font-semibold text-cream">Generate with AI</span>
-                    <span class="block text-small text-brand-muted">
+                <div class="flex-1">
+                    <p class="text-body font-semibold text-cream">Generate with AI</p>
+                    <p class="text-small text-brand-muted">
                         Describe a topic and let Mimi draft a starter deck.
-                    </span>
-                </span>
-            </button>
-        </UiTooltip>
+                    </p>
+                </div>
+            </div>
+
+            <div v-if="!draft" class="mt-4 flex flex-col gap-3">
+                <UiInputField v-model="topic" label="Topic" placeholder="e.g. Kitchen vocabulary" />
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <UiSelect v-model="aiSource" label="From" :options="languageOptions" />
+                    <UiSelect v-model="aiTarget" label="To" :options="languageOptions" />
+                </div>
+                <UiButton
+                    variant="primary"
+                    class="self-start"
+                    :disabled="!topic.trim() || generating"
+                    @click="onGenerate"
+                >
+                    <UiSpinner v-if="generating" size="sm" class="mr-2" />
+                    Generate draft
+                </UiButton>
+            </div>
+
+            <div v-else class="mt-4 flex flex-col gap-3">
+                <div class="rounded-xl border border-line bg-bg-surface p-4">
+                    <p class="font-display text-h3 text-cream">{{ draft.title }}</p>
+                    <p class="mt-1 text-small text-brand-muted">{{ draft.description }}</p>
+                    <p class="mt-2 text-small text-brand-pale">{{ draft.cards.length }} cards</p>
+                    <ul class="mt-2 flex flex-col gap-1">
+                        <li
+                            v-for="(c, i) in draft.cards.slice(0, 6)"
+                            :key="i"
+                            class="flex justify-between gap-3 text-small text-cream-dim"
+                        >
+                            <span class="font-medium text-cream">{{ c.word }}</span>
+                            <span class="truncate">{{ c.definition }}</span>
+                        </li>
+                    </ul>
+                    <p v-if="draft.cards.length > 6" class="mt-1 text-small text-brand-muted">
+                        +{{ draft.cards.length - 6 }} more
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <UiButton variant="ghost" :disabled="accepting" @click="draft = null">
+                        Discard
+                    </UiButton>
+                    <UiButton variant="primary" :disabled="accepting" @click="onAccept">
+                        <UiSpinner v-if="accepting" size="sm" class="mr-2" />
+                        Create this deck
+                    </UiButton>
+                </div>
+            </div>
+        </div>
     </section>
 </template>
 
 <script setup lang="ts">
 import { ArrowLeft, Sparkles } from 'lucide-vue-next';
 import { useDecks, useToast, useT } from '#imports';
+import * as aiApi from '@/api/ai';
+import type { AiDeckDraft } from '@/api/ai';
+import { bulkAddCards } from '@/api/cards';
+import { LANGUAGES } from '@/schemas/deck';
 
 definePageMeta({ layout: 'default' });
 
 const { create } = useDecks();
 const toast = useToast();
 const { t } = useT();
+
+const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
+
+const topic = ref('');
+const aiSource = ref('en');
+const aiTarget = ref('es');
+const generating = ref(false);
+const accepting = ref(false);
+const draft = ref<AiDeckDraft | null>(null);
 
 const onSubmit = async (payload: {
     title: string;
@@ -70,6 +127,66 @@ const onSubmit = async (payload: {
         await navigateTo(`/decks/${result.id}/cards/add`);
     } else if (create.error.value) {
         toast.error(t(create.error.value.message, create.error.value.message));
+    }
+};
+
+const onGenerate = async () => {
+    if (!topic.value.trim()) {
+        return;
+    }
+    generating.value = true;
+    try {
+        const res = await aiApi.generateDeck({
+            topic: topic.value.trim(),
+            sourceLanguage: aiSource.value,
+            targetLanguage: aiTarget.value,
+            count: 8,
+        });
+        draft.value = res.draft;
+    } catch {
+        toast.error('Could not generate a deck. Try a different topic.');
+    } finally {
+        generating.value = false;
+    }
+};
+
+const onAccept = async () => {
+    const d = draft.value;
+    if (!d) {
+        return;
+    }
+    accepting.value = true;
+    try {
+        const deck = await create.execute({
+            title: d.title,
+            description: d.description,
+            sourceLanguage: d.sourceLanguage,
+            targetLanguage: d.targetLanguage,
+            subject: d.subject ?? null,
+            glyph: d.glyph ?? null,
+        });
+        if (!deck) {
+            throw new Error('create failed');
+        }
+        await bulkAddCards(
+            deck.id,
+            d.cards.map((c) => ({
+                word: c.word,
+                definition: c.definition,
+                phonetic: c.phonetic ?? null,
+                partOfSpeech: c.partOfSpeech,
+                example: c.example,
+                exampleTranslation: c.exampleTranslation,
+                tags: c.tags,
+                difficulty: c.difficulty,
+            })),
+        );
+        toast.success('Deck created with AI');
+        await navigateTo(`/decks/${deck.id}`);
+    } catch {
+        toast.error('Could not create the deck.');
+    } finally {
+        accepting.value = false;
     }
 };
 </script>

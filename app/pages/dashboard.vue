@@ -87,7 +87,9 @@
                 <p class="text-eyebrow uppercase text-brand-pale">Mimi suggests</p>
                 <p class="mt-1 text-body text-cream">{{ mimi.message.value }}</p>
             </div>
-            <UiButton variant="primary" @click="navigateTo('/review')">Start review</UiButton>
+            <UiButton variant="primary" @click="navigateTo(suggestAction?.href ?? '/review')">
+                {{ suggestAction?.label ?? 'Start review' }}
+            </UiButton>
         </div>
 
         <div v-if="recentVms.length">
@@ -116,6 +118,7 @@ import { Flame } from 'lucide-vue-next';
 import { useAuthStore, useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useMimi } from '@/composables/useMimi';
+import * as aiApi from '@/api/ai';
 import { deckToCardVm } from '@/utils/deckVm';
 
 definePageMeta({ layout: 'default' });
@@ -128,6 +131,7 @@ const { t } = useT();
 
 const name = computed(() => auth.currentUser?.displayName ?? auth.currentUser?.username ?? '');
 const dueToday = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
+const suggestAction = ref<{ label: string; href: string } | null>(null);
 
 const greeting = computed(() => {
     const hour = new Date().getHours();
@@ -155,5 +159,15 @@ const monthLabel = computed(() => stats.monthLabel.value);
 onMounted(async () => {
     mimi.message.value = mimi.suggestion();
     await Promise.all([fetchList.execute({ cursor: null, append: false }), stats.load()]);
+    try {
+        const s = await aiApi.suggest('dashboard');
+        mimi.message.value = s.suggestion;
+        // Use the suggestion's label text, but a FE-controlled route by kind —
+        // the backend's action.href (e.g. /decks/new) doesn't match our routing.
+        const href = s.kind === 'deck' ? '/decks/create' : '/review';
+        suggestAction.value = { label: s.actions[0]?.label ?? 'Start review', href };
+    } catch {
+        // keep the scripted fallback line already set above
+    }
 });
 </script>
