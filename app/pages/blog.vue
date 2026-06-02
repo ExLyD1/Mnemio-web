@@ -2,7 +2,7 @@
     <div>
         <section class="border-b border-line bg-mimi-ambient">
             <div class="mx-auto max-w-[1080px] px-6 py-16 text-center">
-                <p class="text-eyebrow uppercase text-brand-pale">Legal · wait, no — Blog</p>
+                <p class="text-eyebrow uppercase text-brand-pale">Journal</p>
                 <h1 class="mt-2 font-display text-display-sm text-cream">The Mnemio blog</h1>
                 <p class="mt-3 text-body text-cream-dim">
                     Notes on memory, language learning, and building Mnemio.
