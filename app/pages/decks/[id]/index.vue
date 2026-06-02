@@ -74,6 +74,8 @@
                             :index="i + 1"
                             :card="card"
                             :state="cardState(card)"
+                            @edit="openEdit"
+                            @delete="askDeleteCard"
                         />
                     </div>
                     <div v-else class="px-4 py-10 text-center text-body text-brand-muted">
@@ -134,12 +136,43 @@
             :loading="remove.loading.value"
             @confirm="onConfirmDelete"
         />
+
+        <UiModal v-model="editOpen" title="Edit card">
+            <div class="flex flex-col gap-4">
+                <UiInputField v-model="editWord" label="Word" />
+                <UiTextarea v-model="editDefinition" label="Definition" :rows="3" />
+                <UiInputField v-model="editPhonetic" label="Phonetic (optional)" />
+            </div>
+            <template #footer>
+                <UiButton variant="ghost" @click="editOpen = false">Cancel</UiButton>
+                <UiButton
+                    variant="primary"
+                    :disabled="
+                        updateCard.loading.value || !editWord.trim() || !editDefinition.trim()
+                    "
+                    @click="saveEdit"
+                >
+                    <UiSpinner v-if="updateCard.loading.value" size="sm" class="mr-2" />
+                    Save
+                </UiButton>
+            </template>
+        </UiModal>
+
+        <UiConfirmDialog
+            v-model="cardConfirmOpen"
+            title="Delete this card?"
+            message="This removes the card from the deck and can't be undone."
+            confirm-label="Delete"
+            destructive
+            :loading="deleteCard.loading.value"
+            @confirm="confirmDeleteCard"
+        />
     </section>
 </template>
 
 <script setup lang="ts">
 import { ArrowLeft, MoreVertical, Pencil, Trash2 } from 'lucide-vue-next';
-import { useDecks, useSrsStore, useToast, useT } from '#imports';
+import { useDecks, useCards, useSrsStore, useToast, useT } from '#imports';
 import { swatchFor } from '@/utils/coverSwatches';
 import type { Card, DeckStats } from '@/types/deck';
 
@@ -149,11 +182,64 @@ const route = useRoute();
 const id = computed(() => String(route.params.id));
 
 const { store, fetchOne, remove } = useDecks();
+const { updateCard, deleteCard } = useCards();
 const srs = useSrsStore();
 const toast = useToast();
 const { t } = useT();
 
 const confirmOpen = ref(false);
+
+const editOpen = ref(false);
+const editCardId = ref<string | null>(null);
+const editWord = ref('');
+const editDefinition = ref('');
+const editPhonetic = ref('');
+const cardConfirmOpen = ref(false);
+const pendingCardId = ref<string | null>(null);
+
+const openEdit = (cardId: string) => {
+    const c = store.deck?.cards.find((x) => x.id === cardId);
+    if (!c) return;
+    editCardId.value = cardId;
+    editWord.value = c.word;
+    editDefinition.value = c.definition;
+    editPhonetic.value = c.phonetic ?? '';
+    editOpen.value = true;
+};
+
+const saveEdit = async () => {
+    if (!editCardId.value) return;
+    await updateCard.execute(id.value, editCardId.value, {
+        word: editWord.value.trim(),
+        definition: editDefinition.value.trim(),
+        phonetic: editPhonetic.value.trim() || null,
+    });
+    if (updateCard.error.value) {
+        toast.error(updateCard.error.value.message);
+        return;
+    }
+    editOpen.value = false;
+    toast.success('Card updated');
+    await fetchOne.execute(id.value);
+};
+
+const askDeleteCard = (cardId: string) => {
+    pendingCardId.value = cardId;
+    cardConfirmOpen.value = true;
+};
+
+const confirmDeleteCard = async () => {
+    if (!pendingCardId.value) return;
+    await deleteCard.execute(id.value, pendingCardId.value);
+    if (deleteCard.error.value) {
+        toast.error(deleteCard.error.value.message);
+    } else {
+        toast.success('Card deleted');
+        await fetchOne.execute(id.value);
+    }
+    cardConfirmOpen.value = false;
+    pendingCardId.value = null;
+};
 
 const EMPTY_STATS: DeckStats = {
     total: 0,
