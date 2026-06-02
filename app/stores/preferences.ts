@@ -1,33 +1,64 @@
-import { defineStore } from '#imports';
-import { useStorage } from '@vueuse/core';
+import { defineStore, ref } from '#imports';
+import * as prefsApi from '@/api/preferences';
+import type { Preference, PreferenceInput } from '@/types/user';
 
-/**
- * Client-only preferences persisted to localStorage until a backend
- * `/preferences` endpoint exists (see plan §5.6).
- */
 export const usePreferencesStore = defineStore('preferences', () => {
-    const favorites = useStorage<string[]>('mnemio:favorites', []);
-    const avatarHue = useStorage<number>('mnemio:avatar-hue', 286);
-    const interests = useStorage<string[]>('mnemio:interests', []);
-    const goal = useStorage<string>('mnemio:goal', 'steady');
-    const nativeLanguage = useStorage<string>('mnemio:native-language', 'en');
-    const learningLanguages = useStorage<string[]>('mnemio:learning-languages', []);
+    const interests = ref<string[]>([]);
+    const goal = ref<string | null>(null);
+    const nativeLanguage = ref<string | null>(null);
+    const learningLanguages = ref<string[]>([]);
+    const avatarHue = ref<number | null>(null);
+    const mimiPlacement = ref<'left' | 'right' | null>(null);
+    const favorites = ref<string[]>([]);
+    const loaded = ref(false);
+
+    const apply = (p: Preference) => {
+        interests.value = p.interests;
+        goal.value = p.goal;
+        nativeLanguage.value = p.nativeLanguage;
+        learningLanguages.value = p.learningLanguages;
+        avatarHue.value = p.avatarHue;
+        mimiPlacement.value = p.mimiPlacement;
+        favorites.value = p.favorites;
+    };
+
+    const hydrate = async () => {
+        const p = await prefsApi.getPreferences();
+        apply(p);
+        loaded.value = true;
+    };
+
+    const update = async (patch: PreferenceInput) => {
+        const p = await prefsApi.updatePreferences(patch);
+        apply(p);
+        return p;
+    };
 
     const isFavorite = (deckId: string): boolean => favorites.value.includes(deckId);
 
-    const toggleFavorite = (deckId: string): void => {
-        favorites.value = isFavorite(deckId)
-            ? favorites.value.filter((id) => id !== deckId)
-            : [...favorites.value, deckId];
+    const toggleFavorite = async (deckId: string): Promise<void> => {
+        const prev = favorites.value;
+        favorites.value = prev.includes(deckId)
+            ? prev.filter((id) => id !== deckId)
+            : [...prev, deckId];
+        try {
+            await prefsApi.updatePreferences({ favorites: favorites.value });
+        } catch {
+            favorites.value = prev; // revert on failure
+        }
     };
 
     return {
-        favorites,
-        avatarHue,
         interests,
         goal,
         nativeLanguage,
         learningLanguages,
+        avatarHue,
+        mimiPlacement,
+        favorites,
+        loaded,
+        hydrate,
+        update,
         isFavorite,
         toggleFavorite,
     };
