@@ -2,6 +2,13 @@ export type StudyMode = 'flashcard' | 'multiple-choice' | 'srs';
 
 export type SessionStatus = 'active' | 'incomplete' | 'complete';
 
+export interface SessionCounts {
+    again: number;
+    hard: number;
+    good: number;
+    easy: number;
+}
+
 export interface StudySession {
     id: string;
     userId: string;
@@ -12,6 +19,9 @@ export interface StudySession {
     correct: number;
     xpAwarded: number;
     status: SessionStatus;
+    counts: SessionCounts;
+    revisitCardIds: string[];
+    durationMs: number;
     startedAt: string;
     endedAt: string | null;
 }
