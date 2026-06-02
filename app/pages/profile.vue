@@ -2,7 +2,29 @@
     <section class="mx-auto grid max-w-6xl gap-6 p-8 lg:grid-cols-[300px_1fr]">
         <aside class="flex flex-col gap-5 self-start lg:sticky lg:top-6">
             <div class="rounded-[20px] border border-line bg-bg-surface p-6 text-center">
-                <UiAvatar :name="name" :hue="prefs.avatarHue ?? 286" :size="96" class="mx-auto" />
+                <div class="relative mx-auto w-fit">
+                    <UiAvatar
+                        :name="name"
+                        :src="mediaUrl(auth.currentUser?.avatarUrl)"
+                        :hue="prefs.avatarHue ?? 286"
+                        :size="96"
+                    />
+                    <input
+                        ref="avatarInput"
+                        type="file"
+                        accept="image/*"
+                        class="hidden"
+                        @change="onAvatar"
+                    />
+                    <button
+                        type="button"
+                        class="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-brand text-cream shadow-soft-elevation transition-transform hover:scale-105"
+                        aria-label="Change photo"
+                        @click="avatarInput?.click()"
+                    >
+                        <Camera class="size-4" />
+                    </button>
+                </div>
                 <h1 class="mt-4 font-display text-h2 text-cream">{{ name || 'Your profile' }}</h1>
                 <p v-if="handle" class="text-small text-brand-muted">@{{ handle }}</p>
                 <p
@@ -155,11 +177,13 @@
 </template>
 
 <script setup lang="ts">
-import { Trophy, Lock } from 'lucide-vue-next';
+import { Trophy, Lock, Camera } from 'lucide-vue-next';
 import { useAuthStore, useAuth, useDecks, useToast } from '#imports';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
+import { uploadMedia } from '@/api/media';
+import { mediaUrl } from '@/utils/media';
 import { LANGUAGES } from '@/schemas/deck';
 
 definePageMeta({ layout: 'default' });
@@ -171,6 +195,21 @@ const prefs = usePreferencesStore();
 const stats = useStats();
 const achievements = useAchievements();
 const toast = useToast();
+
+const avatarInput = ref<HTMLInputElement | null>(null);
+const onAvatar = async (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    try {
+        await uploadMedia('avatar', file);
+        await auth.hydrate();
+        toast.success('Photo updated');
+    } catch {
+        toast.error('Could not upload photo');
+    }
+};
 
 const tab = ref('overview');
 const tabs = [

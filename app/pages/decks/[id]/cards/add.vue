@@ -28,24 +28,39 @@
                 />
 
                 <div class="flex gap-2">
-                    <UiTooltip content="Audio coming soon" side="top">
-                        <button
-                            type="button"
-                            disabled
-                            class="inline-flex items-center gap-1.5 rounded-full border border-line-strong px-3 py-1.5 text-small text-brand-muted opacity-60"
-                        >
-                            <Volume2 class="size-4" /> Add audio
-                        </button>
-                    </UiTooltip>
-                    <UiTooltip content="Images coming soon" side="top">
-                        <button
-                            type="button"
-                            disabled
-                            class="inline-flex items-center gap-1.5 rounded-full border border-line-strong px-3 py-1.5 text-small text-brand-muted opacity-60"
-                        >
-                            <Image class="size-4" /> Add image
-                        </button>
-                    </UiTooltip>
+                    <input
+                        ref="audioInput"
+                        type="file"
+                        accept="audio/*"
+                        class="hidden"
+                        @change="onPick($event, 'card_audio')"
+                    />
+                    <button
+                        type="button"
+                        :class="chipClass(!!audioUrl)"
+                        @click="audioInput?.click()"
+                    >
+                        <UiSpinner v-if="uploading === 'card_audio'" size="sm" />
+                        <component :is="audioUrl ? Check : Volume2" v-else class="size-4" />
+                        {{ audioUrl ? 'Audio added' : 'Add audio' }}
+                    </button>
+
+                    <input
+                        ref="imageInput"
+                        type="file"
+                        accept="image/*"
+                        class="hidden"
+                        @change="onPick($event, 'card_image')"
+                    />
+                    <button
+                        type="button"
+                        :class="chipClass(!!imageUrl)"
+                        @click="imageInput?.click()"
+                    >
+                        <UiSpinner v-if="uploading === 'card_image'" size="sm" />
+                        <component :is="imageUrl ? Check : Image" v-else class="size-4" />
+                        {{ imageUrl ? 'Image added' : 'Add image' }}
+                    </button>
                 </div>
 
                 <UiTextarea
@@ -92,8 +107,11 @@
 </template>
 
 <script setup lang="ts">
-import { Volume2, Image } from 'lucide-vue-next';
+import { Volume2, Image, Check } from 'lucide-vue-next';
 import { useDecks, useCards, useToast } from '#imports';
+import { uploadMedia } from '@/api/media';
+import type { MediaKind } from '@/api/media';
+import type { CardDifficulty } from '@/types/deck';
 
 definePageMeta({ layout: 'default' });
 
@@ -107,7 +125,12 @@ const toast = useToast();
 const front = ref('');
 const back = ref('');
 const tags = ref<string[]>([]);
-const difficulty = ref('medium');
+const difficulty = ref<CardDifficulty>('medium');
+const audioUrl = ref<string | null>(null);
+const imageUrl = ref<string | null>(null);
+const uploading = ref<MediaKind | null>(null);
+const audioInput = ref<HTMLInputElement | null>(null);
+const imageInput = ref<HTMLInputElement | null>(null);
 
 const difficultyOptions = [
     { value: 'easy', label: 'Easy' },
@@ -119,11 +142,41 @@ const deckTitle = computed(() => store.deck?.title ?? 'this deck');
 const nextNumber = computed(() => (store.deck?.cards.length ?? 0) + 1);
 const canSubmit = computed(() => front.value.trim().length > 0 && back.value.trim().length > 0);
 
+const chipClass = (attached: boolean) => [
+    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-small transition-colors',
+    attached
+        ? 'border-brand-bright text-cream'
+        : 'border-line-strong text-brand-muted hover:text-brand-pale',
+];
+
+const onPick = async (e: Event, kind: MediaKind) => {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    uploading.value = kind;
+    try {
+        const res = await uploadMedia(kind, file);
+        if (kind === 'card_audio') {
+            audioUrl.value = res.url;
+        } else {
+            imageUrl.value = res.url;
+        }
+        toast.success('Uploaded');
+    } catch {
+        toast.error('Upload failed');
+    } finally {
+        uploading.value = null;
+    }
+};
+
 const reset = () => {
     front.value = '';
     back.value = '';
     tags.value = [];
     difficulty.value = 'medium';
+    audioUrl.value = null;
+    imageUrl.value = null;
 };
 
 const save = async (): Promise<boolean> => {
@@ -131,6 +184,10 @@ const save = async (): Promise<boolean> => {
         word: front.value.trim(),
         definition: back.value.trim(),
         phonetic: null,
+        tags: tags.value,
+        difficulty: difficulty.value,
+        audioUrl: audioUrl.value,
+        imageUrl: imageUrl.value,
     });
     if (addCard.error.value) {
         toast.error(addCard.error.value.message);
