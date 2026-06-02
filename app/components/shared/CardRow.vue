@@ -12,16 +12,15 @@
         <p class="hidden min-w-0 flex-1 truncate text-small text-brand-muted sm:block">
             {{ card.definition }}
         </p>
-        <UiTooltip content="Audio coming soon" side="left">
-            <button
-                type="button"
-                disabled
-                class="grid size-8 place-items-center rounded-full text-brand-muted/50"
-                aria-label="Play audio"
-            >
-                <Volume2 class="size-4" />
-            </button>
-        </UiTooltip>
+        <button
+            v-if="card.audioUrl"
+            type="button"
+            class="grid size-8 place-items-center rounded-full text-brand-muted transition-colors hover:text-cream"
+            aria-label="Play audio"
+            @click="playAudio"
+        >
+            <Volume2 class="size-4" />
+        </button>
         <span :class="['size-2.5 shrink-0 rounded-full', dotClass]" :title="state" />
     </div>
 </template>
@@ -29,12 +28,20 @@
 <script setup lang="ts">
 import { Volume2 } from 'lucide-vue-next';
 import type { Card } from '@/types/deck';
+import { mediaUrl } from '@/utils/media';
 
 const props = defineProps<{
     index: number;
     card: Card;
     state: 'mastered' | 'learning' | 'new';
 }>();
+
+const playAudio = () => {
+    const url = mediaUrl(props.card.audioUrl);
+    if (url) {
+        void new Audio(url).play().catch(() => {});
+    }
+};
 
 const dotClass = computed(
     () =>
