@@ -126,6 +126,13 @@
                     <UiRadioCards v-model="draft.goal" :options="goalOptions" :columns="3" />
                 </div>
 
+                <div class="rounded-[20px] border border-line bg-bg-surface p-6">
+                    <p class="mb-3 text-eyebrow uppercase text-brand-muted">
+                        {{ t('common.language') }}
+                    </p>
+                    <SharedLanguageSwitcher variant="segmented" />
+                </div>
+
                 <div class="flex items-center justify-between">
                     <p class="text-small" :class="dirty ? 'text-brand-pale' : 'text-brand-muted'">
                         {{ dirty ? 'You have unsaved changes' : 'Everything is up to date' }}
@@ -178,7 +185,7 @@
 
 <script setup lang="ts">
 import { Trophy, Lock, Camera } from 'lucide-vue-next';
-import { useAuthStore, useAuth, useDecks, useToast } from '#imports';
+import { useAuthStore, useAuth, useDecks, useToast, useT } from '#imports';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
@@ -196,6 +203,7 @@ const prefs = usePreferencesStore();
 const stats = useStats();
 const achievements = useAchievements();
 const toast = useToast();
+const { t } = useT();
 
 const avatarInput = ref<HTMLInputElement | null>(null);
 const onAvatar = async (e: Event) => {
