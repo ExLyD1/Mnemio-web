@@ -3,17 +3,19 @@
         <header class="flex h-[68px] shrink-0 items-center gap-4 border-b border-line px-6">
             <div class="flex items-center gap-3">
                 <SharedBrandMark :with-word="false" size="sm" />
-                <p class="font-display text-base leading-none text-cream">Review</p>
+                <p class="font-display text-base leading-none text-cream">
+                    {{ t('review.heading') }}
+                </p>
             </div>
             <div v-if="active" class="flex flex-1 items-center justify-center gap-3">
                 <StudyProgressDots :index="completedCount" :total="totalQueue" />
                 <span class="text-small tabular-nums text-brand-muted">
-                    {{ srs.dueCount }} left
+                    {{ t('review.dueLeft').replace('{n}', String(srs.dueCount)) }}
                 </span>
             </div>
             <div v-else class="flex-1" />
             <UiButton variant="ghost" class="!py-2 !text-small" @click="navigateTo('/dashboard')">
-                {{ active ? 'End session' : 'Back' }}
+                {{ active ? t('study.endSession') : t('common.back') }}
             </UiButton>
         </header>
 
@@ -28,7 +30,7 @@
                 />
                 <StudyRatingRow v-if="revealed" @grade="onRate" />
                 <p v-else class="text-small text-brand-muted">
-                    Tap the card or press Space to reveal.
+                    {{ t('review.flipHint') }}
                 </p>
             </template>
 
@@ -144,7 +146,9 @@ const onRate = async (rating: SrsRating) => {
 const formatNext = (iso: string) => {
     const diff = new Date(iso).getTime() - Date.now();
     const hours = Math.round(diff / (60 * 60 * 1000));
-    return hours < 24 ? `in ${hours}h` : `in ${Math.round(hours / 24)}d`;
+    return hours < 24
+        ? t('review.inHours').replace('{h}', String(hours))
+        : t('review.inDays').replace('{d}', String(Math.round(hours / 24)));
 };
 
 const onKey = (e: KeyboardEvent) => {

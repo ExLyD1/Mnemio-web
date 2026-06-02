@@ -19,31 +19,37 @@
 
             <div>
                 <p class="text-eyebrow uppercase text-brand-muted">
-                    {{ result.deckTitle }} · Session complete
+                    {{ result.deckTitle }} · {{ t('study.sessionComplete') }}
                 </p>
                 <h1 class="mt-2 font-display text-display-sm text-cream">
-                    Nice work<span v-if="name">, {{ name }}</span
+                    {{ t('study.niceWork') }}<span v-if="name">, {{ name }}</span
                     >.
                 </h1>
                 <p class="mt-2 text-body text-cream-dim">{{ summaryLine }}</p>
             </div>
 
             <div class="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
-                <SharedStatTile label="Reviewed" :value="result.reviewed" />
-                <SharedStatTile label="Recalled" :value="`${accuracy}%`" tone="accent" />
-                <SharedStatTile label="Streak" :value="`${result.streak}d`" />
-                <SharedStatTile label="Time" :value="timeLabel" />
+                <SharedStatTile :label="t('study.reviewed')" :value="result.reviewed" />
+                <SharedStatTile
+                    :label="t('study.recalled')"
+                    :value="`${accuracy}%`"
+                    tone="accent"
+                />
+                <SharedStatTile :label="t('study.streak')" :value="`${result.streak}d`" />
+                <SharedStatTile :label="t('study.time')" :value="timeLabel" />
             </div>
 
             <div class="w-full rounded-[20px] border border-line bg-bg-surface p-5 text-left">
-                <p class="text-eyebrow uppercase text-brand-muted">How it went</p>
+                <p class="text-eyebrow uppercase text-brand-muted">{{ t('study.howItWent') }}</p>
                 <div class="mt-3">
                     <SharedBreakdownBar :segments="segments" />
                 </div>
             </div>
 
             <div v-if="result.revisit.length" class="w-full text-left">
-                <p class="text-eyebrow uppercase text-brand-muted">Words to revisit</p>
+                <p class="text-eyebrow uppercase text-brand-muted">
+                    {{ t('study.wordsToRevisit') }}
+                </p>
                 <div class="mt-3 flex flex-col gap-2">
                     <div
                         v-for="(word, i) in result.revisit"
@@ -63,10 +69,10 @@
 
             <div class="flex w-full flex-wrap items-center justify-center gap-3">
                 <UiButton variant="ghost" @click="navigateTo(`/study/${deckId}`)">
-                    <RotateCcw class="size-4" /> Study again
+                    <RotateCcw class="size-4" /> {{ t('study.studyAgain') }}
                 </UiButton>
                 <UiButton variant="primary" @click="navigateTo(`/decks/${deckId}`)">
-                    Back to deck
+                    {{ t('study.backToDeck') }}
                 </UiButton>
             </div>
         </template>
@@ -108,19 +114,21 @@ const summaryLine = computed(() => {
         return '';
     }
     const slipped = result.value.revisit.length;
-    const base = `You recalled ${accuracy.value}% of ${result.value.reviewed} cards`;
+    const base = t('study.summaryRecalled')
+        .replace('{pct}', String(accuracy.value))
+        .replace('{total}', String(result.value.reviewed));
     return slipped > 0
-        ? `${base} — ${slipped} ${slipped === 1 ? 'word' : 'words'} to revisit.`
-        : `${base}. Flawless run!`;
+        ? base + t('study.summaryRevisit').replace('{n}', String(slipped))
+        : base + t('study.summaryPerfect');
 });
 
 const segments = computed(() => {
     const counts = result.value?.counts ?? { again: 0, hard: 0, good: 0, easy: 0 };
     return [
-        { label: 'Forgot', count: counts.again, color: 'bg-error-soft' },
-        { label: 'Hard', count: counts.hard, color: 'bg-brand-bright' },
-        { label: 'Good', count: counts.good, color: 'bg-brand' },
-        { label: 'Easy', count: counts.easy, color: 'bg-success-bright' },
+        { label: t('study.unknown'), count: counts.again, color: 'bg-error-soft' },
+        { label: t('review.hard'), count: counts.hard, color: 'bg-brand-bright' },
+        { label: t('review.good'), count: counts.good, color: 'bg-brand' },
+        { label: t('review.easy'), count: counts.easy, color: 'bg-success-bright' },
     ];
 });
 </script>

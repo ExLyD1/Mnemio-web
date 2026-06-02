@@ -5,7 +5,7 @@
             :class="{ flipped: revealed }"
             role="button"
             tabindex="0"
-            :aria-label="revealed ? 'Show front' : 'Reveal answer'"
+            :aria-label="revealed ? t('study.showFront') : t('study.revealAnswer')"
             @click="$emit('flip')"
         >
             <div
@@ -14,7 +14,7 @@
                 <StudyLangPill :lang="card.lang" :region="card.region" />
                 <p class="fc-word font-display text-cream">{{ card.word }}</p>
                 <span class="flex items-center gap-2 text-small text-brand-muted">
-                    <StudyKeycap label="Space" /> to reveal
+                    <StudyKeycap label="Space" /> {{ t('study.toReveal') }}
                 </span>
             </div>
 
@@ -28,13 +28,13 @@
                         <p v-if="card.reading" class="text-body text-brand-pale">
                             {{ card.reading }}
                         </p>
-                        <UiTooltip content="Audio coming soon" side="top">
+                        <UiTooltip :content="t('study.audioComingSoon')" side="top">
                             <button
                                 type="button"
                                 disabled
                                 class="inline-flex w-fit items-center gap-1.5 rounded-full border border-line-strong px-3 py-1.5 text-small text-brand-muted opacity-60"
                             >
-                                <Volume2 class="size-4" /> Listen
+                                <Volume2 class="size-4" /> {{ t('study.listen') }}
                             </button>
                         </UiTooltip>
                         <SharedPill v-if="card.pos" tone="muted" class="w-fit">
@@ -43,11 +43,15 @@
                     </div>
                     <div class="flex flex-col gap-4 text-left">
                         <div>
-                            <p class="text-eyebrow uppercase text-brand-muted">Meaning</p>
+                            <p class="text-eyebrow uppercase text-brand-muted">
+                                {{ t('study.meaning') }}
+                            </p>
                             <p class="mt-1 text-xl text-cream">{{ card.meaning }}</p>
                         </div>
                         <div v-if="card.example">
-                            <p class="text-eyebrow uppercase text-brand-muted">In context</p>
+                            <p class="text-eyebrow uppercase text-brand-muted">
+                                {{ t('study.inContext') }}
+                            </p>
                             <p class="mt-1 italic text-cream/90">{{ card.example }}</p>
                             <p class="mt-1 text-small text-brand-muted">
                                 {{ card.exampleTranslation }}
@@ -62,10 +66,13 @@
 
 <script setup lang="ts">
 import { Volume2 } from 'lucide-vue-next';
+import { useT } from '@/composables/useT';
 import type { StudyCard } from '@/utils/studyCard';
 
 defineProps<{ card: StudyCard; revealed: boolean }>();
 defineEmits<{ flip: [] }>();
+
+const { t } = useT();
 </script>
 
 <style scoped>

@@ -27,7 +27,7 @@
                     reviewedLabel
                 }}</span>
                 <UiButton variant="ghost" class="!py-2 !text-small" @click="onEnd">
-                    End session
+                    {{ t('study.endSession') }}
                 </UiButton>
             </div>
         </header>
@@ -45,7 +45,7 @@
                         <button
                             type="button"
                             class="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-white/[0.04] hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
-                            aria-label="Previous card"
+                            :aria-label="t('study.prevCard')"
                             :disabled="practice.study.currentIndex.value === 0"
                             @click="practice.goPrev"
                         >
@@ -62,7 +62,7 @@
                         <button
                             type="button"
                             class="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-white/[0.04] hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
-                            aria-label="Next card"
+                            :aria-label="t('study.nextCard')"
                             :disabled="
                                 practice.study.currentIndex.value >=
                                 practice.study.totalCount.value - 1
@@ -75,7 +75,7 @@
                     <Transition name="rate">
                         <StudyRatingRow v-if="practice.revealed.value" @grade="onGrade" />
                         <p v-else class="text-small text-brand-muted">
-                            Tap the card or press Space to reveal.
+                            {{ t('study.revealHint') }}
                         </p>
                     </Transition>
                 </template>
@@ -114,7 +114,7 @@
 
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
-import { useDecks } from '#imports';
+import { useDecks, useT } from '#imports';
 import { usePractice } from '@/composables/usePractice';
 import { usePracticeStore } from '@/stores/practice';
 import { buildMultipleChoice } from '@/composables/useMultipleChoice';
@@ -130,6 +130,7 @@ const deckId = computed(() => String(route.params.deckId));
 const mode = computed(() => String(route.params.mode) as StudyMode);
 
 const { store, fetchOne } = useDecks();
+const { t } = useT();
 const practice = usePractice();
 const practiceStore = usePracticeStore();
 
@@ -151,9 +152,10 @@ const currentQuestion = computed(() => {
     return buildMultipleChoice(card, practice.study.queue.value);
 });
 
-const reviewedLabel = computed(
-    () =>
-        `${practice.counts.good + practice.counts.easy} recalled · ${practice.revisit.value.length} to revisit`,
+const reviewedLabel = computed(() =>
+    t('study.reviewedSummary')
+        .replace('{recalled}', String(practice.counts.good + practice.counts.easy))
+        .replace('{revisit}', String(practice.revisit.value.length)),
 );
 
 const onGrade = (rating: SrsRating) => {
