@@ -125,12 +125,12 @@
                     <div class="mb-4 flex items-center justify-between">
                         <p class="text-eyebrow uppercase text-brand-muted">Achievements</p>
                         <p class="text-small text-brand-muted">
-                            {{ earnedCount }} of {{ statsApi.achievements.length }} earned
+                            {{ earnedCount }} of {{ achievements.items.value.length }} earned
                         </p>
                     </div>
                     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
                         <div
-                            v-for="a in statsApi.achievements"
+                            v-for="a in achievements.items.value"
                             :key="a.id"
                             :class="[
                                 'flex flex-col items-center gap-2 rounded-2xl border p-5 text-center',
@@ -159,6 +159,7 @@ import { Trophy, Lock } from 'lucide-vue-next';
 import { useAuthStore, useAuth, useDecks, useToast } from '#imports';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useStats } from '@/composables/useStats';
+import { useAchievements } from '@/composables/useAchievements';
 import { LANGUAGES } from '@/schemas/deck';
 
 definePageMeta({ layout: 'default' });
@@ -167,7 +168,8 @@ const auth = useAuthStore();
 const { updateProfile } = useAuth();
 const { store, fetchList } = useDecks();
 const prefs = usePreferencesStore();
-const statsApi = useStats();
+const stats = useStats();
+const achievements = useAchievements();
 const toast = useToast();
 
 const tab = ref('overview');
@@ -192,14 +194,14 @@ const memberYear = computed(() =>
         : new Date().getFullYear(),
 );
 
-const heat = computed(() => statsApi.yearHeat());
-const earnedCount = computed(() => statsApi.achievements.filter((a) => a.earned).length);
+const heat = computed(() => stats.yearHeat.value);
+const earnedCount = computed(() => achievements.items.value.filter((a) => a.earned).length);
 
 const quickStats = computed(() => [
-    { label: 'Streak', value: `${statsApi.streak.value}d` },
-    { label: 'Reviewed today', value: statsApi.reviewedToday.value },
+    { label: 'Streak', value: `${stats.streak.value}d` },
+    { label: 'Reviewed today', value: stats.reviewed.value },
     { label: 'Decks', value: store.summaries.length },
-    { label: 'Retention', value: `${statsApi.retention.value}%` },
+    { label: 'Retention', value: `${stats.retention.value}%` },
 ]);
 
 const draft = reactive({
@@ -252,6 +254,10 @@ const onSave = async () => {
 watch(() => auth.currentUser, syncDraft, { immediate: true });
 
 onMounted(async () => {
-    await fetchList.execute({ cursor: null, append: false });
+    await Promise.all([
+        fetchList.execute({ cursor: null, append: false }),
+        stats.load(),
+        achievements.load(),
+    ]);
 });
 </script>

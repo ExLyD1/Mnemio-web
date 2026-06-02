@@ -11,17 +11,17 @@
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <SharedStatTile
                 label="Reviewed"
-                :value="statsApi.reviewedToday.value"
+                :value="stats.reviewed.value"
                 sub="today"
-                :trend="{ dir: 'up', label: '+12%' }"
+                :trend="reviewedTrend"
             />
             <SharedStatTile
                 label="Retention"
-                :value="`${statsApi.retention.value}%`"
-                :trend="{ dir: 'up', label: '+3%' }"
+                :value="`${stats.retention.value}%`"
+                :trend="retentionTrend"
                 tone="accent"
             />
-            <SharedStatTile label="Streak" :value="`${statsApi.streak.value}d`" />
+            <SharedStatTile label="Streak" :value="`${stats.streak.value}d`" />
             <SharedStatTile label="Due" :value="dueTotal" tone="plum" />
         </div>
 
@@ -70,7 +70,7 @@
             <p class="mb-4 text-eyebrow uppercase text-brand-muted">Achievements</p>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div
-                    v-for="a in statsApi.achievements"
+                    v-for="a in achievements.items.value"
                     :key="a.id"
                     :class="[
                         'flex flex-col items-center gap-2 rounded-2xl border p-4 text-center',
@@ -85,7 +85,7 @@
                         :class="a.earned ? 'text-pink-soft' : 'text-brand-muted'"
                     />
                     <span class="text-small font-semibold text-cream">{{ a.name }}</span>
-                    <span class="text-small text-brand-muted">{{ a.note }}</span>
+                    <span class="text-small text-brand-muted">{{ a.description }}</span>
                 </div>
             </div>
         </div>
@@ -109,14 +109,17 @@
 import { Trophy, Lock } from 'lucide-vue-next';
 import { useDecks } from '#imports';
 import { useStats } from '@/composables/useStats';
+import { useAchievements } from '@/composables/useAchievements';
+import type { StatsRange, StatsTrend } from '@/types/stats';
 
 definePageMeta({ layout: 'default' });
 
 const { store, fetchList } = useDecks();
-const statsApi = useStats();
+const stats = useStats();
+const achievements = useAchievements();
 const dueTotal = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
 
-const range = ref('30');
+const range = ref<StatsRange>('30');
 const rangeOptions = [
     { value: '7', label: '7 days' },
     { value: '30', label: '30 days' },
@@ -124,10 +127,19 @@ const rangeOptions = [
     { value: 'all', label: 'All time' },
 ];
 
-const rangeDays = computed(() => (range.value === 'all' ? 90 : Number(range.value)));
-const series = computed(() => statsApi.dailySeries(rangeDays.value));
+const series = computed(() => stats.series.value);
 const maxValue = computed(() => Math.max(1, ...series.value.map((d) => d.value)));
-const heat = computed(() => statsApi.yearHeat());
+const heat = computed(() => stats.yearHeat.value);
+
+const toTrend = (t: StatsTrend | undefined) => {
+    const pct = t?.deltaPct ?? 0;
+    return {
+        dir: pct < 0 ? ('down' as const) : ('up' as const),
+        label: `${pct >= 0 ? '+' : ''}${pct}%`,
+    };
+};
+const reviewedTrend = computed(() => toTrend(stats.overview.value?.trends.reviewed));
+const retentionTrend = computed(() => toTrend(stats.overview.value?.trends.retention));
 
 const insight = computed(() => {
     const weakest = store.summaries
@@ -138,7 +150,16 @@ const insight = computed(() => {
         : 'Create a deck and start studying to unlock insights.';
 });
 
+watch(range, async (r) => {
+    await Promise.all([stats.load(r), stats.loadSeries(r)]);
+});
+
 onMounted(async () => {
-    await fetchList.execute({ cursor: null, append: false });
+    await Promise.all([
+        fetchList.execute({ cursor: null, append: false }),
+        stats.load(range.value),
+        stats.loadSeries(range.value),
+        achievements.load(),
+    ]);
 });
 </script>

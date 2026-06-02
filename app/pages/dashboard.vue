@@ -14,9 +14,9 @@
 
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <SharedStatTile label="Due today" :value="dueToday" sub="cards" tone="plum" />
-            <SharedStatTile label="Reviewed" :value="statsApi.reviewedToday.value" sub="today" />
-            <SharedStatTile label="Streak" :value="`${statsApi.streak.value}d`" />
-            <SharedStatTile label="Retention" :value="`${statsApi.retention.value}%`" />
+            <SharedStatTile label="Reviewed" :value="stats.reviewed.value" sub="today" />
+            <SharedStatTile label="Streak" :value="`${stats.streak.value}d`" />
+            <SharedStatTile label="Retention" :value="`${stats.retention.value}%`" />
         </div>
 
         <div class="grid gap-4 lg:grid-cols-2">
@@ -61,17 +61,12 @@
             </div>
 
             <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-                <SharedMiniCalendar
-                    :weeks="weeks"
-                    :month-label="monthLabel"
-                    @prev="prevMonth"
-                    @next="nextMonth"
-                />
+                <SharedMiniCalendar :weeks="weeks" :month-label="monthLabel" />
                 <div class="mt-4 flex items-center gap-3 border-t border-line pt-4">
                     <Flame class="size-6 text-pink-soft" />
                     <div>
                         <p class="font-display text-xl text-cream">
-                            {{ statsApi.streak.value }} day streak
+                            {{ stats.streak.value }} day streak
                         </p>
                         <p class="text-small text-brand-muted">Keep it going today.</p>
                     </div>
@@ -127,7 +122,7 @@ definePageMeta({ layout: 'default' });
 
 const auth = useAuthStore();
 const { store, fetchList } = useDecks();
-const statsApi = useStats();
+const stats = useStats();
 const mimi = useMimi();
 const { t } = useT();
 
@@ -154,22 +149,11 @@ const toVm = (deckId: string) => {
 const featured = computed(() => (store.summaries[0] ? toVm(store.summaries[0].id) : null));
 const recentVms = computed(() => store.summaries.slice(0, 8).map((d) => deckToCardVm(d)));
 
-const cursor = ref(new Date());
-const weeks = computed(() =>
-    statsApi.monthCalendar(cursor.value.getFullYear(), cursor.value.getMonth()),
-);
-const monthLabel = computed(() =>
-    cursor.value.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-);
-const prevMonth = () => {
-    cursor.value = new Date(cursor.value.getFullYear(), cursor.value.getMonth() - 1, 1);
-};
-const nextMonth = () => {
-    cursor.value = new Date(cursor.value.getFullYear(), cursor.value.getMonth() + 1, 1);
-};
+const weeks = computed(() => stats.monthWeeks.value);
+const monthLabel = computed(() => stats.monthLabel.value);
 
 onMounted(async () => {
     mimi.message.value = mimi.suggestion();
-    await fetchList.execute({ cursor: null, append: false });
+    await Promise.all([fetchList.execute({ cursor: null, append: false }), stats.load()]);
 });
 </script>

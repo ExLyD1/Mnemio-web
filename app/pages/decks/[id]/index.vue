@@ -63,7 +63,7 @@
                     <SharedStatTile label="Total" :value="store.deck.cards.length" />
                     <SharedStatTile label="Mastered" :value="deckStat.mastered" />
                     <SharedStatTile label="Due" :value="deckStat.due" tone="plum" />
-                    <SharedStatTile label="Streak" :value="`${statsApi.streak.value}d`" />
+                    <SharedStatTile label="New" :value="deckStat.new" />
                 </div>
 
                 <div class="rounded-[20px] border border-line bg-bg-surface p-2">
@@ -140,7 +140,6 @@
 <script setup lang="ts">
 import { ArrowLeft, MoreVertical, Pencil, Trash2 } from 'lucide-vue-next';
 import { useDecks, useSrsStore, useToast, useT } from '#imports';
-import { useStats } from '@/composables/useStats';
 import { swatchFor } from '@/utils/coverSwatches';
 import type { Card, DeckStats } from '@/types/deck';
 
@@ -151,7 +150,6 @@ const id = computed(() => String(route.params.id));
 
 const { store, fetchOne, remove } = useDecks();
 const srs = useSrsStore();
-const statsApi = useStats();
 const toast = useToast();
 const { t } = useT();
 
