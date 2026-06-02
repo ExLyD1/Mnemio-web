@@ -1,5 +1,11 @@
 <template>
-    <div class="w-full max-w-md rounded-3xl bg-brand-dark p-8">
+    <div
+        class="w-full max-w-md rounded-3xl border border-line-strong bg-bg-surface p-8 shadow-soft-elevation"
+    >
+        <div class="mb-6 flex flex-col items-center gap-2 text-center">
+            <SharedBrandMark />
+            <p class="text-small text-brand-muted">Welcome to your study companion</p>
+        </div>
         <LoginAuthForm
             v-if="step === 'auth'"
             :initial-tab="initialTab"
@@ -25,9 +31,7 @@
                 >Terms &amp; Conditions</NuxtLink
             >,
             <br />
-            <NuxtLink to="/privacy-policy" class="text-accent hover:underline"
-                >Privacy Policy</NuxtLink
-            >
+            <NuxtLink to="/privacy" class="text-accent hover:underline">Privacy Policy</NuxtLink>
         </p>
     </div>
 </template>
@@ -74,8 +78,7 @@ async function onAuthSubmit(payload: { email: string; password: string; activeTa
         }
         const err = login.error.value;
         if (err?.code === 'EMAIL_NOT_VERIFIED') {
-            const userId =
-                ((err.details ?? {}) as { userId?: string }).userId ?? null;
+            const userId = ((err.details ?? {}) as { userId?: string }).userId ?? null;
             if (userId) {
                 authStore.pendingUserId = userId;
                 step.value = 'verify';
@@ -113,11 +116,7 @@ async function onResend() {
     }
 }
 
-async function onDetailsSubmit(payload: {
-    fullName: string;
-    username: string;
-    birthday: string;
-}) {
+async function onDetailsSubmit(payload: { fullName: string; username: string; birthday: string }) {
     const result = await updateProfile.execute(payload);
     if (result) {
         await navigateTo('/dashboard');
