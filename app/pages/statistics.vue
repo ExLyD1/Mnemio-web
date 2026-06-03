@@ -2,36 +2,40 @@
     <section class="mx-auto flex max-w-6xl flex-col gap-6 p-8">
         <header class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <h1 class="font-display text-display-sm text-cream">Your statistics.</h1>
-                <p class="mt-1 text-body text-cream-dim">How your memory is trending over time.</p>
+                <h1 class="font-display text-display-sm text-cream">{{ t('statistics.title') }}</h1>
+                <p class="mt-1 text-body text-cream-dim">{{ t('statistics.subtitle') }}</p>
             </div>
             <UiSegmentedControl v-model="range" :options="rangeOptions" />
         </header>
 
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <SharedStatTile
-                label="Reviewed"
+                :label="t('statistics.reviewed')"
                 :value="stats.reviewed.value"
-                sub="today"
+                :sub="t('statistics.reviewedSub')"
                 :trend="reviewedTrend"
             />
             <SharedStatTile
-                label="Retention"
+                :label="t('statistics.retention')"
                 :value="`${stats.retention.value}%`"
                 :trend="retentionTrend"
                 tone="accent"
             />
-            <SharedStatTile label="Streak" :value="`${stats.streak.value}d`" />
-            <SharedStatTile label="Due" :value="dueTotal" tone="plum" />
+            <SharedStatTile :label="t('statistics.streak')" :value="`${stats.streak.value}d`" />
+            <SharedStatTile :label="t('statistics.due')" :value="dueTotal" tone="plum" />
         </div>
 
         <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-            <p class="mb-3 text-eyebrow uppercase text-brand-muted">Activity</p>
+            <p class="mb-3 text-eyebrow uppercase text-brand-muted">
+                {{ t('statistics.activity') }}
+            </p>
             <SharedActivityHeatmap :weeks="heat" />
         </div>
 
         <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-            <p class="mb-4 text-eyebrow uppercase text-brand-muted">Cards reviewed</p>
+            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
+                {{ t('statistics.cardsReviewed') }}
+            </p>
             <div class="flex h-40 items-end gap-1">
                 <div
                     v-for="(d, i) in series"
@@ -44,7 +48,9 @@
         </div>
 
         <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-            <p class="mb-4 text-eyebrow uppercase text-brand-muted">Deck performance</p>
+            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
+                {{ t('statistics.deckPerformance') }}
+            </p>
             <div v-if="store.summaries.length" class="flex flex-col gap-1">
                 <div
                     v-for="d in store.summaries"
@@ -57,17 +63,21 @@
                     >
                         {{ d.title }}
                     </NuxtLink>
-                    <span class="text-small text-brand-muted">{{ d.cardCount }} cards</span>
+                    <span class="text-small text-brand-muted">{{
+                        t('statistics.cardsCount').replace('{n}', String(d.cardCount))
+                    }}</span>
                     <span class="w-28">
                         <SharedProgressBar :value="d.stats.masteredPct" />
                     </span>
                 </div>
             </div>
-            <p v-else class="text-body text-brand-muted">No decks yet.</p>
+            <p v-else class="text-body text-brand-muted">{{ t('statistics.noDecks') }}</p>
         </div>
 
         <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-            <p class="mb-4 text-eyebrow uppercase text-brand-muted">Achievements</p>
+            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
+                {{ t('statistics.achievements') }}
+            </p>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div
                     v-for="a in achievements.items.value"
@@ -95,19 +105,21 @@
         >
             <SharedMimi :size="96" placement="left" />
             <div class="flex-1">
-                <p class="text-eyebrow uppercase text-brand-pale">Mimi noticed something</p>
+                <p class="text-eyebrow uppercase text-brand-pale">
+                    {{ t('statistics.insightEyebrow') }}
+                </p>
                 <p class="mt-1 text-body text-cream">{{ insight }}</p>
             </div>
-            <UiButton variant="primary" @click="navigateTo('/review')"
-                >Start a hint session</UiButton
-            >
+            <UiButton variant="primary" @click="navigateTo('/review')">{{
+                t('statistics.startHint')
+            }}</UiButton>
         </div>
     </section>
 </template>
 
 <script setup lang="ts">
 import { Trophy, Lock } from 'lucide-vue-next';
-import { useDecks } from '#imports';
+import { useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
 import type { StatsRange, StatsTrend } from '@/types/stats';
@@ -115,17 +127,18 @@ import type { StatsRange, StatsTrend } from '@/types/stats';
 definePageMeta({ layout: 'default' });
 
 const { store, fetchList } = useDecks();
+const { t } = useT();
 const stats = useStats();
 const achievements = useAchievements();
 const dueTotal = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
 
 const range = ref<StatsRange>('30');
-const rangeOptions = [
-    { value: '7', label: '7 days' },
-    { value: '30', label: '30 days' },
-    { value: '90', label: '90 days' },
-    { value: 'all', label: 'All time' },
-];
+const rangeOptions = computed(() => [
+    { value: '7', label: t('statistics.range7') },
+    { value: '30', label: t('statistics.range30') },
+    { value: '90', label: t('statistics.range90') },
+    { value: 'all', label: t('statistics.rangeAll') },
+]);
 
 const series = computed(() => stats.series.value);
 const maxValue = computed(() => Math.max(1, ...series.value.map((d) => d.value)));
@@ -146,8 +159,10 @@ const insight = computed(() => {
         .map((d) => ({ title: d.title, pct: d.stats.masteredPct }))
         .sort((a, b) => a.pct - b.pct)[0];
     return weakest
-        ? `“${weakest.title}” is your lowest deck at ${weakest.pct}% mastered — a quick session would help.`
-        : 'Create a deck and start studying to unlock insights.';
+        ? t('statistics.insightLowest')
+              .replace('{title}', weakest.title)
+              .replace('{pct}', String(weakest.pct))
+        : t('statistics.insightEmpty');
 });
 
 watch(range, async (r) => {

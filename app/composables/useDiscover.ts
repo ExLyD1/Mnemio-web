@@ -1,4 +1,5 @@
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useT } from '@/composables/useT';
 import * as discoverApi from '@/api/discover';
 import type { DiscoverParams } from '@/api/discover';
 import { deckToCardVm } from '@/utils/deckVm';
@@ -12,14 +13,17 @@ const toVm = (d: DeckWithAuthor): DeckCardVM => ({
 });
 
 export const useDiscover = () => {
+    const { t } = useT();
     const featured = ref<DeckCardVM[]>([]);
     const decks = ref<DeckCardVM[]>([]);
     const categories = ref<DiscoverCategory[]>([]);
     const total = ref(0);
     const loading = ref(false);
 
-    const filters = [
-        { key: 'all', label: 'All' },
+    // Language names stay in English (proper nouns, consistent app-wide); only the
+    // generic labels are localized so the chips react to the active locale.
+    const filters = computed(() => [
+        { key: 'all', label: t('discover.filterAll') },
         { key: 'ja', label: 'Japanese' },
         { key: 'es', label: 'Spanish' },
         { key: 'en', label: 'English' },
@@ -27,11 +31,11 @@ export const useDiscover = () => {
         { key: 'de', label: 'German' },
         { key: 'ko', label: 'Korean' },
         { key: 'zh', label: 'Mandarin' },
-    ];
-    const sorts = [
-        { key: 'recent', label: 'Newest' },
-        { key: 'popular', label: 'Most popular' },
-    ];
+    ]);
+    const sorts = computed(() => [
+        { key: 'recent', label: t('discover.sortNewest') },
+        { key: 'popular', label: t('discover.sortPopular') },
+    ]);
 
     const load = async (opts: DiscoverParams = {}) => {
         loading.value = true;

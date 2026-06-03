@@ -19,18 +19,20 @@
                     <button
                         type="button"
                         class="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-brand text-cream shadow-soft-elevation transition-transform hover:scale-105"
-                        aria-label="Change photo"
+                        :aria-label="t('profile.changePhoto')"
                         @click="avatarInput?.click()"
                     >
                         <Camera class="size-4" />
                     </button>
                 </div>
-                <h1 class="mt-4 font-display text-h2 text-cream">{{ name || 'Your profile' }}</h1>
+                <h1 class="mt-4 font-display text-h2 text-cream">
+                    {{ name || t('profile.yourProfile') }}
+                </h1>
                 <p v-if="handle" class="text-small text-brand-muted">@{{ handle }}</p>
                 <p
                     class="mt-2 inline-block rounded-full border border-line-strong px-3 py-1 text-small text-brand-muted"
                 >
-                    Member since {{ memberYear }}
+                    {{ t('profile.memberSince').replace('{year}', String(memberYear)) }}
                 </p>
                 <div
                     v-if="prefs.learningLanguages.length"
@@ -40,13 +42,15 @@
                         l
                     }}</SharedPill>
                 </div>
-                <UiButton variant="ghost" class="mt-5 w-full" @click="tab = 'edit'"
-                    >Edit profile</UiButton
-                >
+                <UiButton variant="ghost" class="mt-5 w-full" @click="tab = 'edit'">{{
+                    t('profile.editProfile')
+                }}</UiButton>
             </div>
 
             <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-                <p class="mb-3 text-eyebrow uppercase text-brand-muted">At a glance</p>
+                <p class="mb-3 text-eyebrow uppercase text-brand-muted">
+                    {{ t('profile.atAGlance') }}
+                </p>
                 <div class="flex flex-col divide-y divide-line">
                     <div
                         v-for="s in quickStats"
@@ -66,11 +70,15 @@
             <!-- Overview -->
             <template v-if="tab === 'overview'">
                 <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-                    <p class="mb-3 text-eyebrow uppercase text-brand-muted">Activity</p>
+                    <p class="mb-3 text-eyebrow uppercase text-brand-muted">
+                        {{ t('profile.activity') }}
+                    </p>
                     <SharedActivityHeatmap :weeks="heat" />
                 </div>
                 <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-                    <p class="mb-3 text-eyebrow uppercase text-brand-muted">Your decks</p>
+                    <p class="mb-3 text-eyebrow uppercase text-brand-muted">
+                        {{ t('profile.yourDecks') }}
+                    </p>
                     <div v-if="store.summaries.length" class="flex flex-col gap-1">
                         <NuxtLink
                             v-for="d in store.summaries"
@@ -86,7 +94,7 @@
                             </span>
                         </NuxtLink>
                     </div>
-                    <p v-else class="text-body text-brand-muted">No decks yet.</p>
+                    <p v-else class="text-body text-brand-muted">{{ t('profile.noDecks') }}</p>
                 </div>
             </template>
 
@@ -95,15 +103,23 @@
                 <div
                     class="flex flex-col gap-4 rounded-[20px] border border-line bg-bg-surface p-6"
                 >
-                    <p class="text-eyebrow uppercase text-brand-muted">Personal info</p>
+                    <p class="text-eyebrow uppercase text-brand-muted">
+                        {{ t('profile.personalInfo') }}
+                    </p>
                     <UiInputField
                         v-model="draft.fullName"
-                        label="Full name"
-                        placeholder="Ada Lovelace"
+                        :label="t('profile.fullName')"
+                        :placeholder="t('profile.fullNamePlaceholder')"
                     />
-                    <UiInputField v-model="draft.username" label="Username" placeholder="ada" />
+                    <UiInputField
+                        v-model="draft.username"
+                        :label="t('profile.username')"
+                        :placeholder="t('profile.usernamePlaceholder')"
+                    />
                     <div>
-                        <span class="mb-1 block text-small text-brand-muted">Birthday</span>
+                        <span class="mb-1 block text-small text-brand-muted">{{
+                            t('profile.birthday')
+                        }}</span>
                         <input
                             v-model="draft.birthday"
                             type="date"
@@ -112,17 +128,24 @@
                     </div>
                     <UiSelect
                         v-model="draft.nativeLanguage"
-                        label="Native language"
+                        :label="t('profile.nativeLanguage')"
                         :options="languageOptions"
                     />
                     <div>
-                        <span class="mb-1.5 block text-small text-brand-muted">Learning</span>
-                        <UiChipInput v-model="draft.learning" placeholder="Add a language…" />
+                        <span class="mb-1.5 block text-small text-brand-muted">{{
+                            t('profile.learning')
+                        }}</span>
+                        <UiChipInput
+                            v-model="draft.learning"
+                            :placeholder="t('profile.learningPlaceholder')"
+                        />
                     </div>
                 </div>
 
                 <div class="rounded-[20px] border border-line bg-bg-surface p-6">
-                    <p class="mb-3 text-eyebrow uppercase text-brand-muted">Daily goal</p>
+                    <p class="mb-3 text-eyebrow uppercase text-brand-muted">
+                        {{ t('profile.dailyGoal') }}
+                    </p>
                     <UiRadioCards v-model="draft.goal" :options="goalOptions" :columns="3" />
                 </div>
 
@@ -135,7 +158,7 @@
 
                 <div class="flex items-center justify-between">
                     <p class="text-small" :class="dirty ? 'text-brand-pale' : 'text-brand-muted'">
-                        {{ dirty ? 'You have unsaved changes' : 'Everything is up to date' }}
+                        {{ dirty ? t('profile.unsaved') : t('profile.upToDate') }}
                     </p>
                     <UiButton
                         variant="primary"
@@ -143,7 +166,7 @@
                         @click="onSave"
                     >
                         <UiSpinner v-if="updateProfile.loading.value" size="sm" class="mr-2" />
-                        Save changes
+                        {{ t('profile.saveChanges') }}
                     </UiButton>
                 </div>
             </template>
@@ -152,9 +175,15 @@
             <template v-else>
                 <div class="rounded-[20px] border border-line bg-bg-surface p-5">
                     <div class="mb-4 flex items-center justify-between">
-                        <p class="text-eyebrow uppercase text-brand-muted">Achievements</p>
+                        <p class="text-eyebrow uppercase text-brand-muted">
+                            {{ t('profile.achievements') }}
+                        </p>
                         <p class="text-small text-brand-muted">
-                            {{ earnedCount }} of {{ achievements.items.value.length }} earned
+                            {{
+                                t('profile.earned')
+                                    .replace('{x}', String(earnedCount))
+                                    .replace('{y}', String(achievements.items.value.length))
+                            }}
                         </p>
                     </div>
                     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -214,25 +243,25 @@ const onAvatar = async (e: Event) => {
     try {
         await uploadMedia('avatar', file);
         await auth.hydrate();
-        toast.success('Photo updated');
+        toast.success(t('profile.photoUpdated'));
     } catch {
-        toast.error('Could not upload photo');
+        toast.error(t('profile.photoError'));
     }
 };
 
 const tab = ref('overview');
-const tabs = [
-    { value: 'overview', label: 'Overview' },
-    { value: 'edit', label: 'Edit profile' },
-    { value: 'achievements', label: 'Achievements' },
-];
+const tabs = computed(() => [
+    { value: 'overview', label: t('profile.overview') },
+    { value: 'edit', label: t('profile.editProfile') },
+    { value: 'achievements', label: t('profile.achievements') },
+]);
 
 const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
-const goalOptions = [
-    { value: 'casual', label: 'Casual', note: '5 / day' },
-    { value: 'steady', label: 'Steady', note: '15 / day' },
-    { value: 'serious', label: 'Serious', note: '30 / day' },
-];
+const goalOptions = computed(() => [
+    { value: 'casual', label: t('profile.goalCasual'), note: t('profile.goalCasualNote') },
+    { value: 'steady', label: t('profile.goalSteady'), note: t('profile.goalSteadyNote') },
+    { value: 'serious', label: t('profile.goalSerious'), note: t('profile.goalSeriousNote') },
+]);
 
 const name = computed(() => auth.currentUser?.displayName ?? auth.currentUser?.username ?? '');
 const handle = computed(() => auth.currentUser?.username ?? '');
@@ -246,10 +275,10 @@ const heat = computed(() => stats.yearHeat.value);
 const earnedCount = computed(() => achievements.items.value.filter((a) => a.earned).length);
 
 const quickStats = computed(() => [
-    { label: 'Streak', value: `${stats.streak.value}d` },
-    { label: 'Reviewed today', value: stats.reviewed.value },
-    { label: 'Decks', value: store.summaries.length },
-    { label: 'Retention', value: `${stats.retention.value}%` },
+    { label: t('profile.statStreak'), value: `${stats.streak.value}d` },
+    { label: t('profile.statReviewed'), value: stats.reviewed.value },
+    { label: t('profile.statDecks'), value: store.summaries.length },
+    { label: t('profile.statRetention'), value: `${stats.retention.value}%` },
 ]);
 
 const draft = reactive({
@@ -298,7 +327,7 @@ const onSave = async () => {
     if (Object.keys(patch).length > 0) {
         const result = await updateProfile.execute(patch);
         if (!result) {
-            toast.error(updateProfile.error.value?.message ?? 'Could not save profile');
+            toast.error(updateProfile.error.value?.message ?? t('profile.saveError'));
             return;
         }
     }
@@ -308,7 +337,7 @@ const onSave = async () => {
         learningLanguages: [...draft.learning],
         goal: draft.goal,
     });
-    toast.success('Profile saved');
+    toast.success(t('profile.saved'));
     syncDraft();
 };
 

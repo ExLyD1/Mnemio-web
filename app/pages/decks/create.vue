@@ -4,21 +4,23 @@
             to="/decks"
             class="flex w-fit items-center gap-1 text-small text-brand-muted transition-colors hover:text-brand-pale"
         >
-            <ArrowLeft class="size-4" /> My Decks
+            <ArrowLeft class="size-4" /> {{ t('deck.myDecks') }}
         </NuxtLink>
 
         <div>
-            <p class="text-eyebrow uppercase text-brand-muted">New deck</p>
-            <h1 class="mt-1 font-display text-display-sm text-cream">Create a new deck.</h1>
+            <p class="text-eyebrow uppercase text-brand-muted">{{ t('topbar.newDeck') }}</p>
+            <h1 class="mt-1 font-display text-display-sm text-cream">
+                {{ t('deck.createHeading') }}
+            </h1>
             <p class="mt-2 text-body text-cream-dim">
-                Name it, pick the languages, and start adding cards.
+                {{ t('deck.createSubtitle') }}
             </p>
         </div>
 
         <div class="rounded-[20px] border border-line bg-bg-surface p-6">
             <DeckForm
                 :loading="create.loading.value"
-                submit-label="Create & add cards"
+                :submit-label="t('deck.createAndAdd')"
                 @submit="onSubmit"
                 @cancel="navigateTo('/decks')"
             />
@@ -26,7 +28,7 @@
 
         <div class="flex items-center gap-3 text-small text-brand-muted">
             <span class="h-px flex-1 bg-line" />
-            OR
+            {{ t('common.or') }}
             <span class="h-px flex-1 bg-line" />
         </div>
 
@@ -35,18 +37,30 @@
             <div class="flex items-start gap-3">
                 <Sparkles class="size-6 shrink-0 text-lavender" />
                 <div class="flex-1">
-                    <p class="text-body font-semibold text-cream">Generate with AI</p>
+                    <p class="text-body font-semibold text-cream">{{ t('deck.aiTitle') }}</p>
                     <p class="text-small text-brand-muted">
-                        Describe a topic and let Mimi draft a starter deck.
+                        {{ t('deck.aiSubtitle') }}
                     </p>
                 </div>
             </div>
 
             <div v-if="!draft" class="mt-4 flex flex-col gap-3">
-                <UiInputField v-model="topic" label="Topic" placeholder="e.g. Kitchen vocabulary" />
+                <UiInputField
+                    v-model="topic"
+                    :label="t('deck.aiTopic')"
+                    :placeholder="t('deck.aiTopicPlaceholder')"
+                />
                 <div class="grid gap-3 sm:grid-cols-2">
-                    <UiSelect v-model="aiSource" label="From" :options="languageOptions" />
-                    <UiSelect v-model="aiTarget" label="To" :options="languageOptions" />
+                    <UiSelect
+                        v-model="aiSource"
+                        :label="t('deck.aiFrom')"
+                        :options="languageOptions"
+                    />
+                    <UiSelect
+                        v-model="aiTarget"
+                        :label="t('deck.aiTo')"
+                        :options="languageOptions"
+                    />
                 </div>
                 <UiButton
                     variant="primary"
@@ -55,7 +69,7 @@
                     @click="onGenerate"
                 >
                     <UiSpinner v-if="generating" size="sm" class="mr-2" />
-                    Generate draft
+                    {{ t('deck.aiGenerate') }}
                 </UiButton>
             </div>
 
@@ -63,7 +77,9 @@
                 <div class="rounded-xl border border-line bg-bg-surface p-4">
                     <p class="font-display text-h3 text-cream">{{ draft.title }}</p>
                     <p class="mt-1 text-small text-brand-muted">{{ draft.description }}</p>
-                    <p class="mt-2 text-small text-brand-pale">{{ draft.cards.length }} cards</p>
+                    <p class="mt-2 text-small text-brand-pale">
+                        {{ t('deck.cardCount').replace('{n}', String(draft.cards.length)) }}
+                    </p>
                     <ul class="mt-2 flex flex-col gap-1">
                         <li
                             v-for="(c, i) in draft.cards.slice(0, 6)"
@@ -75,16 +91,16 @@
                         </li>
                     </ul>
                     <p v-if="draft.cards.length > 6" class="mt-1 text-small text-brand-muted">
-                        +{{ draft.cards.length - 6 }} more
+                        {{ t('deck.aiMore').replace('{n}', String(draft.cards.length - 6)) }}
                     </p>
                 </div>
                 <div class="flex gap-2">
                     <UiButton variant="ghost" :disabled="accepting" @click="draft = null">
-                        Discard
+                        {{ t('deck.aiDiscard') }}
                     </UiButton>
                     <UiButton variant="primary" :disabled="accepting" @click="onAccept">
                         <UiSpinner v-if="accepting" size="sm" class="mr-2" />
-                        Create this deck
+                        {{ t('deck.aiCreate') }}
                     </UiButton>
                 </div>
             </div>
@@ -144,7 +160,7 @@ const onGenerate = async () => {
         });
         draft.value = res.draft;
     } catch {
-        toast.error('Could not generate a deck. Try a different topic.');
+        toast.error(t('deck.aiGenerateError'));
     } finally {
         generating.value = false;
     }
@@ -181,10 +197,10 @@ const onAccept = async () => {
                 difficulty: c.difficulty,
             })),
         );
-        toast.success('Deck created with AI');
+        toast.success(t('deck.aiCreated'));
         await navigateTo(`/decks/${deck.id}`);
     } catch {
-        toast.error('Could not create the deck.');
+        toast.error(t('deck.aiCreateError'));
     } finally {
         accepting.value = false;
     }

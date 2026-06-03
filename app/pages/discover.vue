@@ -1,28 +1,28 @@
 <template>
     <section class="mx-auto flex max-w-6xl flex-col gap-6 p-8">
         <header>
-            <h1 class="font-display text-display-sm text-cream">Discover decks</h1>
+            <h1 class="font-display text-display-sm text-cream">{{ t('discover.title') }}</h1>
             <p class="mt-1 text-body text-cream-dim">
-                Browse community decks and copy them into your library.
+                {{ t('discover.subtitle') }}
             </p>
         </header>
 
         <UiInputSearch
             v-model="search"
-            placeholder="Search decks, topics, languages…"
+            :placeholder="t('discover.searchPlaceholder')"
             variant="dark"
         />
 
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <SharedFilterChips v-model="filter" :options="discover.filters" />
-            <SharedSortMenu v-model="sort" :options="discover.sorts" />
+            <SharedFilterChips v-model="filter" :options="discover.filters.value" />
+            <SharedSortMenu v-model="sort" :options="discover.sorts.value" />
         </div>
 
         <div
             v-if="discover.featured.value.length"
             class="rounded-[20px] border border-line bg-mimi-ambient p-5"
         >
-            <p class="mb-3 text-eyebrow uppercase text-brand-pale">Featured</p>
+            <p class="mb-3 text-eyebrow uppercase text-brand-pale">{{ t('discover.featured') }}</p>
             <div class="grid gap-4 md:grid-cols-3">
                 <SharedDeckCard
                     v-for="vm in discover.featured.value"
@@ -48,11 +48,11 @@
             />
         </div>
         <p v-else-if="!discover.loading.value" class="text-body text-brand-muted">
-            No public decks match your search yet.
+            {{ t('discover.noResults') }}
         </p>
 
         <div v-if="discover.categories.value.length">
-            <h2 class="mb-3 font-display text-h2 text-cream">Categories</h2>
+            <h2 class="mb-3 font-display text-h2 text-cream">{{ t('discover.categories') }}</h2>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <button
                     v-for="cat in discover.categories.value"
@@ -65,7 +65,9 @@
                         <span class="block font-display text-h3 capitalize text-cream">
                             {{ cat.subject }}
                         </span>
-                        <span class="text-small text-brand-muted">{{ cat.count }} decks</span>
+                        <span class="text-small text-brand-muted">{{
+                            t('discover.categoryCount').replace('{n}', String(cat.count))
+                        }}</span>
                     </span>
                     <ArrowRight class="size-4 text-brand-muted" />
                 </button>
@@ -77,19 +79,19 @@
         >
             <SharedMimi :size="96" placement="left" />
             <div class="flex-1">
-                <p class="font-display text-h2 text-cream">Can’t find what you need?</p>
-                <p class="mt-1 text-body text-cream-dim">Build your own deck in minutes.</p>
+                <p class="font-display text-h2 text-cream">{{ t('discover.ctaTitle') }}</p>
+                <p class="mt-1 text-body text-cream-dim">{{ t('discover.ctaSubtitle') }}</p>
             </div>
-            <UiButton variant="primary" @click="navigateTo('/decks/create')"
-                >Create a deck</UiButton
-            >
+            <UiButton variant="primary" @click="navigateTo('/decks/create')">{{
+                t('discover.ctaButton')
+            }}</UiButton>
         </div>
     </section>
 </template>
 
 <script setup lang="ts">
 import { ArrowRight } from 'lucide-vue-next';
-import { useToast } from '#imports';
+import { useToast, useT } from '#imports';
 import { useDebounceFn } from '@vueuse/core';
 import { useDiscover } from '@/composables/useDiscover';
 
@@ -97,6 +99,7 @@ definePageMeta({ layout: 'default' });
 
 const discover = useDiscover();
 const toast = useToast();
+const { t } = useT();
 
 const search = ref('');
 const filter = ref('all');
@@ -123,14 +126,14 @@ const onCategory = (s: string) => {
 const onCopy = async (deckId: string) => {
     try {
         const copy = await discover.copyDeck(deckId);
-        toast.success('Added to your library');
+        toast.success(t('discover.copied'));
         await navigateTo(`/decks/${copy.id}`);
     } catch {
-        toast.error('Could not copy this deck.');
+        toast.error(t('discover.copyError'));
     }
 };
 
-const onPreview = () => toast.info('Deck preview is coming soon.');
+const onPreview = () => toast.info(t('discover.previewSoon'));
 
 onMounted(reload);
 </script>

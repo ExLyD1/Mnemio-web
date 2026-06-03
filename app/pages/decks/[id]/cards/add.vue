@@ -1,30 +1,38 @@
 <template>
     <section class="mx-auto max-w-5xl p-8">
         <nav class="mb-5 flex items-center gap-1.5 text-small text-brand-muted">
-            <NuxtLink to="/decks" class="transition-colors hover:text-brand-pale">Decks</NuxtLink>
+            <NuxtLink to="/decks" class="transition-colors hover:text-brand-pale">{{
+                t('dashboard.decks')
+            }}</NuxtLink>
             <span>/</span>
             <NuxtLink :to="`/decks/${id}`" class="transition-colors hover:text-brand-pale">
                 {{ deckTitle }}
             </NuxtLink>
             <span>/</span>
-            <span class="text-brand-pale">Add card</span>
+            <span class="text-brand-pale">{{ t('card.add') }}</span>
         </nav>
 
         <div class="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
             <div class="flex max-w-xl flex-col gap-5">
                 <div>
-                    <h1 class="font-display text-display-sm text-cream">Add a card.</h1>
+                    <h1 class="font-display text-display-sm text-cream">
+                        {{ t('card.addHeading') }}
+                    </h1>
                     <p class="mt-1 text-body text-cream-dim">
-                        Card {{ nextNumber }} in {{ deckTitle }}.
+                        {{
+                            t('card.cardInDeck')
+                                .replace('{n}', String(nextNumber))
+                                .replace('{deck}', deckTitle)
+                        }}
                     </p>
                 </div>
 
                 <UiTextarea
                     v-model="front"
-                    label="Front"
+                    :label="t('card.front')"
                     :rows="2"
                     serif
-                    placeholder="Type a word, phrase or prompt…"
+                    :placeholder="t('card.frontPlaceholder')"
                 />
 
                 <div class="flex gap-2">
@@ -42,7 +50,7 @@
                     >
                         <UiSpinner v-if="uploading === 'card_audio'" size="sm" />
                         <component :is="audioUrl ? Check : Volume2" v-else class="size-4" />
-                        {{ audioUrl ? 'Audio added' : 'Add audio' }}
+                        {{ audioUrl ? t('card.audioAdded') : t('card.addAudio') }}
                     </button>
 
                     <input
@@ -59,25 +67,29 @@
                     >
                         <UiSpinner v-if="uploading === 'card_image'" size="sm" />
                         <component :is="imageUrl ? Check : Image" v-else class="size-4" />
-                        {{ imageUrl ? 'Image added' : 'Add image' }}
+                        {{ imageUrl ? t('card.imageAdded') : t('card.addImage') }}
                     </button>
                 </div>
 
                 <UiTextarea
                     v-model="back"
-                    label="Meaning"
+                    :label="t('study.meaning')"
                     :rows="4"
                     :maxlength="200"
-                    placeholder="The meaning, definition or answer learners should produce."
+                    :placeholder="t('card.backPlaceholder')"
                 />
 
                 <div>
-                    <span class="mb-1.5 block text-small text-brand-muted">Tags</span>
-                    <UiChipInput v-model="tags" placeholder="Add a tag…" />
+                    <span class="mb-1.5 block text-small text-brand-muted">{{
+                        t('card.tags')
+                    }}</span>
+                    <UiChipInput v-model="tags" :placeholder="t('card.tagsPlaceholder')" />
                 </div>
 
                 <div>
-                    <span class="mb-1.5 block text-small text-brand-muted">Difficulty</span>
+                    <span class="mb-1.5 block text-small text-brand-muted">{{
+                        t('card.difficulty')
+                    }}</span>
                     <UiRadioCards v-model="difficulty" :options="difficultyOptions" />
                 </div>
 
@@ -87,14 +99,14 @@
                         :disabled="!canSubmit || addCard.loading.value"
                         @click="onAddNext"
                     >
-                        Add &amp; next
+                        {{ t('card.addNext') }}
                     </UiButton>
                     <UiButton
                         variant="primary"
                         :disabled="!canSubmit || addCard.loading.value"
                         @click="onDone"
                     >
-                        Done
+                        {{ t('card.done') }}
                     </UiButton>
                 </div>
             </div>
@@ -108,7 +120,7 @@
 
 <script setup lang="ts">
 import { Volume2, Image, Check } from 'lucide-vue-next';
-import { useDecks, useCards, useToast } from '#imports';
+import { useDecks, useCards, useToast, useT } from '#imports';
 import { uploadMedia } from '@/api/media';
 import type { MediaKind } from '@/api/media';
 import type { CardDifficulty } from '@/types/deck';
@@ -121,6 +133,7 @@ const id = computed(() => String(route.params.id));
 const { store, fetchOne } = useDecks();
 const { addCard } = useCards();
 const toast = useToast();
+const { t } = useT();
 
 const front = ref('');
 const back = ref('');
@@ -132,13 +145,13 @@ const uploading = ref<MediaKind | null>(null);
 const audioInput = ref<HTMLInputElement | null>(null);
 const imageInput = ref<HTMLInputElement | null>(null);
 
-const difficultyOptions = [
-    { value: 'easy', label: 'Easy' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'hard', label: 'Hard' },
-];
+const difficultyOptions = computed(() => [
+    { value: 'easy', label: t('card.diffEasy') },
+    { value: 'medium', label: t('card.diffMedium') },
+    { value: 'hard', label: t('card.diffHard') },
+]);
 
-const deckTitle = computed(() => store.deck?.title ?? 'this deck');
+const deckTitle = computed(() => store.deck?.title ?? t('card.thisDeck'));
 const nextNumber = computed(() => (store.deck?.cards.length ?? 0) + 1);
 const canSubmit = computed(() => front.value.trim().length > 0 && back.value.trim().length > 0);
 
@@ -162,9 +175,9 @@ const onPick = async (e: Event, kind: MediaKind) => {
         } else {
             imageUrl.value = res.url;
         }
-        toast.success('Uploaded');
+        toast.success(t('card.uploaded'));
     } catch {
-        toast.error('Upload failed');
+        toast.error(t('card.uploadFailed'));
     } finally {
         uploading.value = null;
     }
@@ -199,7 +212,7 @@ const save = async (): Promise<boolean> => {
 const onAddNext = async () => {
     if (!canSubmit.value) return;
     if (await save()) {
-        toast.success('Card added');
+        toast.success(t('card.added'));
         reset();
     }
 };

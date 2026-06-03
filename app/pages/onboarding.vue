@@ -14,17 +14,21 @@
                 ]"
             />
         </div>
-        <p class="mb-4 text-center text-small text-brand-muted">Step {{ step + 1 }} of 2</p>
+        <p class="mb-4 text-center text-small text-brand-muted">
+            {{ t('onboarding.stepOf').replace('{i}', String(step + 1)) }}
+        </p>
 
         <div class="rounded-3xl border border-line-strong bg-bg-surface p-8 shadow-soft-elevation">
             <template v-if="step === 0">
-                <h1 class="font-display text-h1 text-cream">Set up your profile</h1>
+                <h1 class="font-display text-h1 text-cream">{{ t('onboarding.profileTitle') }}</h1>
                 <p class="mt-1 text-body text-cream-dim">
-                    A few details so Mimi can greet you properly.
+                    {{ t('onboarding.profileSubtitle') }}
                 </p>
 
                 <div class="mt-6">
-                    <span class="mb-2 block text-small text-brand-muted">Avatar</span>
+                    <span class="mb-2 block text-small text-brand-muted">{{
+                        t('onboarding.avatar')
+                    }}</span>
                     <div class="flex items-center gap-4">
                         <UiAvatar :name="fullName || 'You'" :hue="hue" :size="56" />
                         <div class="flex gap-2">
@@ -37,7 +41,7 @@
                                     hue === h ? 'border-cream' : 'border-transparent',
                                 ]"
                                 :style="{ background: `hsl(${h} 42% 42%)` }"
-                                :aria-label="`Avatar colour ${h}`"
+                                :aria-label="t('onboarding.avatarColour').replace('{h}', String(h))"
                                 @click="hue = h"
                             />
                         </div>
@@ -45,13 +49,23 @@
                 </div>
 
                 <div class="mt-5">
-                    <UiInputField v-model="fullName" label="Full name" placeholder="Ada Lovelace" />
+                    <UiInputField
+                        v-model="fullName"
+                        :label="t('onboarding.fullName')"
+                        :placeholder="t('onboarding.fullNamePlaceholder')"
+                    />
                 </div>
                 <div class="mt-4">
-                    <UiInputField v-model="username" label="Username" placeholder="ada" />
+                    <UiInputField
+                        v-model="username"
+                        :label="t('onboarding.username')"
+                        :placeholder="t('onboarding.usernamePlaceholder')"
+                    />
                 </div>
                 <div class="mt-4">
-                    <span class="mb-1 block text-small text-brand-muted">Birthday</span>
+                    <span class="mb-1 block text-small text-brand-muted">{{
+                        t('onboarding.birthday')
+                    }}</span>
                     <input
                         v-model="birthday"
                         type="date"
@@ -61,16 +75,20 @@
                 </div>
 
                 <div class="mt-7 flex justify-end">
-                    <UiButton variant="primary" @click="goStep2">Continue</UiButton>
+                    <UiButton variant="primary" @click="goStep2">{{
+                        t('common.continue')
+                    }}</UiButton>
                 </div>
             </template>
 
             <template v-else>
-                <h1 class="font-display text-h1 text-cream">What do you want to learn?</h1>
-                <p class="mt-1 text-body text-cream-dim">Pick a few interests and a daily goal.</p>
+                <h1 class="font-display text-h1 text-cream">{{ t('onboarding.learnTitle') }}</h1>
+                <p class="mt-1 text-body text-cream-dim">{{ t('onboarding.learnSubtitle') }}</p>
 
                 <div class="mt-6">
-                    <span class="mb-2 block text-small text-brand-muted">Interests</span>
+                    <span class="mb-2 block text-small text-brand-muted">{{
+                        t('onboarding.interests')
+                    }}</span>
                     <div class="flex flex-wrap gap-2">
                         <button
                             v-for="topic in INTERESTS"
@@ -84,25 +102,27 @@
                             ]"
                             @click="toggleInterest(topic)"
                         >
-                            {{ topic }}
+                            {{ t('onboarding.interestLabels.' + topic, topic) }}
                         </button>
                     </div>
                 </div>
 
                 <div class="mt-6">
-                    <span class="mb-2 block text-small text-brand-muted">Daily goal</span>
+                    <span class="mb-2 block text-small text-brand-muted">{{
+                        t('onboarding.dailyGoal')
+                    }}</span>
                     <UiRadioCards v-model="goal" :options="goalOptions" :columns="3" />
                 </div>
 
                 <div class="mt-7 flex justify-between">
-                    <UiButton variant="ghost" @click="step = 0">Back</UiButton>
+                    <UiButton variant="ghost" @click="step = 0">{{ t('common.back') }}</UiButton>
                     <UiButton
                         variant="primary"
                         :disabled="updateProfile.loading.value"
                         @click="finish"
                     >
                         <UiSpinner v-if="updateProfile.loading.value" size="sm" class="mr-2" />
-                        Get started
+                        {{ t('onboarding.getStarted') }}
                     </UiButton>
                 </div>
             </template>
@@ -120,7 +140,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAuth, useToast } from '#imports';
+import { useAuth, useToast, useT } from '#imports';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useMimi } from '@/composables/useMimi';
 
@@ -130,6 +150,7 @@ const { updateProfile } = useAuth();
 const prefs = usePreferencesStore();
 const mimi = useMimi();
 const toast = useToast();
+const { t } = useT();
 
 const HUES = [286, 210, 24, 140, 330];
 const INTERESTS = [
@@ -145,11 +166,11 @@ const INTERESTS = [
     'Music',
 ];
 
-const goalOptions = [
-    { value: 'casual', label: 'Casual', note: '5 cards / day' },
-    { value: 'steady', label: 'Steady', note: '15 cards / day' },
-    { value: 'serious', label: 'Serious', note: '30 cards / day' },
-];
+const goalOptions = computed(() => [
+    { value: 'casual', label: t('onboarding.goalCasual'), note: t('onboarding.goalCasualNote') },
+    { value: 'steady', label: t('onboarding.goalSteady'), note: t('onboarding.goalSteadyNote') },
+    { value: 'serious', label: t('onboarding.goalSerious'), note: t('onboarding.goalSeriousNote') },
+]);
 
 const step = ref(0);
 const hue = ref(prefs.avatarHue ?? 286);
@@ -178,15 +199,15 @@ const toggleInterest = (topic: string) => {
 
 const goStep2 = () => {
     if (fullName.value.trim().length < 1) {
-        say('I just need your name to get started 🙂');
+        say(t('onboarding.errNeedName'));
         return;
     }
     if (username.value.trim().length < 3) {
-        say('Pick a username with at least 3 characters.');
+        say(t('onboarding.errUsername'));
         return;
     }
     if (!birthday.value) {
-        say('When’s your birthday? It helps me keep things age-appropriate.');
+        say(t('onboarding.errBirthday'));
         return;
     }
     mimi.clear();
@@ -195,7 +216,7 @@ const goStep2 = () => {
 
 const finish = async () => {
     if (!selectedInterests.value.length) {
-        say('Choose at least one interest so I can suggest decks.');
+        say(t('onboarding.errInterest'));
         return;
     }
     const result = await updateProfile.execute({
@@ -216,7 +237,7 @@ const finish = async () => {
             goal: goal.value,
         })
         .catch(() => {});
-    toast.success('Welcome to Mnemio!');
+    toast.success(t('onboarding.welcome'));
     await navigateTo('/dashboard');
 };
 </script>

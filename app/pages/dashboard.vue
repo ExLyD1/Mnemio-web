@@ -8,15 +8,28 @@
                 </h1>
             </div>
             <p class="text-body text-cream-dim">
-                <span class="font-semibold text-pink-soft">{{ dueToday }}</span> due today
+                <span class="font-semibold text-pink-soft">{{ dueToday }}</span>
+                {{ t('dashboard.dueTodaySuffix') }}
             </p>
         </header>
 
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <SharedStatTile label="Due today" :value="dueToday" sub="cards" tone="plum" />
-            <SharedStatTile label="Reviewed" :value="stats.reviewed.value" sub="today" />
-            <SharedStatTile label="Streak" :value="`${stats.streak.value}d`" />
-            <SharedStatTile label="Retention" :value="`${stats.retention.value}%`" />
+            <SharedStatTile
+                :label="t('dashboard.statDueToday')"
+                :value="dueToday"
+                :sub="t('dashboard.statDueSub')"
+                tone="plum"
+            />
+            <SharedStatTile
+                :label="t('dashboard.statReviewed')"
+                :value="stats.reviewed.value"
+                :sub="t('dashboard.statReviewedSub')"
+            />
+            <SharedStatTile :label="t('dashboard.statStreak')" :value="`${stats.streak.value}d`" />
+            <SharedStatTile
+                :label="t('dashboard.statRetention')"
+                :value="`${stats.retention.value}%`"
+            />
         </div>
 
         <div class="grid gap-4 lg:grid-cols-2">
@@ -26,20 +39,23 @@
             >
                 <div class="flex items-start justify-between gap-3">
                     <div>
-                        <p class="text-eyebrow uppercase text-brand-muted">Featured deck</p>
+                        <p class="text-eyebrow uppercase text-brand-muted">
+                            {{ t('dashboard.featuredDeck') }}
+                        </p>
                         <h2 class="mt-1 font-display text-h2 text-cream">{{ featured.title }}</h2>
                         <p class="mt-0.5 text-small text-brand-muted">
-                            {{ featured.total }} cards · {{ featured.tag }}
+                            {{ t('deck.cardCount').replace('{n}', String(featured.total)) }} ·
+                            {{ featured.tag }}
                         </p>
                     </div>
-                    <SharedPill v-if="featured.due > 0" tone="due"
-                        >{{ featured.due }} due</SharedPill
-                    >
+                    <SharedPill v-if="featured.due > 0" tone="due">{{
+                        t('dashboard.dueCount').replace('{n}', String(featured.due))
+                    }}</SharedPill>
                 </div>
                 <div>
                     <SharedProgressBar :value="featured.masteredPct" />
                     <p class="mt-1.5 text-small text-brand-muted">
-                        {{ featured.masteredPct }}% mastered
+                        {{ t('dashboard.mastered').replace('{pct}', String(featured.masteredPct)) }}
                     </p>
                 </div>
                 <div class="mt-auto flex gap-2">
@@ -48,14 +64,14 @@
                         class="flex-1"
                         @click="navigateTo(`/decks/${featured.id}/cards/add`)"
                     >
-                        Add cards
+                        {{ t('dashboard.addCards') }}
                     </UiButton>
                     <UiButton
                         variant="primary"
                         class="flex-1"
                         @click="navigateTo(`/study/${featured.id}`)"
                     >
-                        Practice
+                        {{ t('dashboard.practice') }}
                     </UiButton>
                 </div>
             </div>
@@ -66,9 +82,11 @@
                     <Flame class="size-6 text-pink-soft" />
                     <div>
                         <p class="font-display text-xl text-cream">
-                            {{ stats.streak.value }} day streak
+                            {{
+                                t('dashboard.dayStreak').replace('{n}', String(stats.streak.value))
+                            }}
                         </p>
-                        <p class="text-small text-brand-muted">Keep it going today.</p>
+                        <p class="text-small text-brand-muted">{{ t('dashboard.keepGoing') }}</p>
                     </div>
                 </div>
             </div>
@@ -84,19 +102,21 @@
                 :size="96"
             />
             <div class="flex-1">
-                <p class="text-eyebrow uppercase text-brand-pale">Mimi suggests</p>
+                <p class="text-eyebrow uppercase text-brand-pale">
+                    {{ t('dashboard.mimiSuggests') }}
+                </p>
                 <p class="mt-1 text-body text-cream">{{ mimi.message.value }}</p>
             </div>
             <UiButton variant="primary" @click="navigateTo(suggestAction?.href ?? '/review')">
-                {{ suggestAction?.label ?? 'Start review' }}
+                {{ suggestAction?.label ?? t('dashboard.startReview') }}
             </UiButton>
         </div>
 
         <div v-if="recentVms.length">
             <div class="mb-3 flex items-center justify-between">
-                <h2 class="font-display text-h2 text-cream">Recent decks</h2>
+                <h2 class="font-display text-h2 text-cream">{{ t('dashboard.recentDecks') }}</h2>
                 <NuxtLink to="/decks" class="text-small text-lavender hover:underline">
-                    View all
+                    {{ t('dashboard.viewAll') }}
                 </NuxtLink>
             </div>
             <div class="flex gap-4 overflow-x-auto pb-2">
@@ -118,6 +138,7 @@ import { Flame } from 'lucide-vue-next';
 import { useAuthStore, useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useMimi } from '@/composables/useMimi';
+import { useAppLocale } from '@/composables/useAppLocale';
 import * as aiApi from '@/api/ai';
 import { deckToCardVm } from '@/utils/deckVm';
 
@@ -128,6 +149,7 @@ const { store, fetchList } = useDecks();
 const stats = useStats();
 const mimi = useMimi();
 const { t } = useT();
+const { current: locale } = useAppLocale();
 
 const name = computed(() => auth.currentUser?.displayName ?? auth.currentUser?.username ?? '');
 const dueToday = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
@@ -141,7 +163,11 @@ const greeting = computed(() => {
 });
 
 const todayLabel = computed(() =>
-    new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+    new Date().toLocaleDateString(locale.value === 'uk' ? 'uk-UA' : 'en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+    }),
 );
 
 const toVm = (deckId: string) => {
@@ -165,7 +191,7 @@ onMounted(async () => {
         // Use the suggestion's label text, but a FE-controlled route by kind —
         // the backend's action.href (e.g. /decks/new) doesn't match our routing.
         const href = s.kind === 'deck' ? '/decks/create' : '/review';
-        suggestAction.value = { label: s.actions[0]?.label ?? 'Start review', href };
+        suggestAction.value = { label: s.actions[0]?.label ?? t('dashboard.startReview'), href };
     } catch {
         // keep the scripted fallback line already set above
     }

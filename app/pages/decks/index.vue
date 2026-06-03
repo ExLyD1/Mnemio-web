@@ -2,15 +2,19 @@
     <section class="mx-auto flex max-w-6xl flex-col gap-6 p-8">
         <header class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <h1 class="font-display text-display-sm text-cream">My Decks</h1>
+                <h1 class="font-display text-display-sm text-cream">{{ t('deck.myDecks') }}</h1>
                 <p class="mt-1 text-body text-cream-dim">
-                    {{ store.summaries.length }} decks · {{ totalCards }} cards · {{ totalDue }} due
-                    today
+                    {{
+                        t('deck.listSummary')
+                            .replace('{decks}', String(store.summaries.length))
+                            .replace('{cards}', String(totalCards))
+                            .replace('{due}', String(totalDue))
+                    }}
                 </p>
             </div>
             <UiButton variant="primary" @click="navigateTo('/decks/create')">
                 <Plus class="size-4" />
-                New deck
+                {{ t('topbar.newDeck') }}
             </UiButton>
         </header>
 
@@ -27,12 +31,12 @@
         <UiEmptyState
             v-else-if="!store.summaries.length"
             :icon="Library"
-            title="No decks yet"
-            message="Create your first deck to start learning."
+            :title="t('deck.emptyTitle')"
+            :message="t('deck.emptyMessage')"
         >
             <template #action>
                 <UiButton variant="primary" @click="navigateTo('/decks/create')">
-                    Create your first deck
+                    {{ t('deck.createFirst') }}
                 </UiButton>
             </template>
         </UiEmptyState>
@@ -53,7 +57,7 @@
             >
                 <span class="flex flex-col items-center gap-2">
                     <Plus class="size-6" />
-                    New deck
+                    {{ t('topbar.newDeck') }}
                 </span>
             </NuxtLink>
         </div>
@@ -62,7 +66,7 @@
 
 <script setup lang="ts">
 import { Plus, Library } from 'lucide-vue-next';
-import { useDecks, usePreferencesStore } from '#imports';
+import { useDecks, usePreferencesStore, useT } from '#imports';
 import { deckToCardVm } from '@/utils/deckVm';
 import { LANGUAGES } from '@/schemas/deck';
 
@@ -70,17 +74,18 @@ definePageMeta({ layout: 'default' });
 
 const { store, fetchList } = useDecks();
 const prefs = usePreferencesStore();
+const { t } = useT();
 
 const loading = ref(true);
 const filter = ref('all');
 const sort = ref('recent');
 
-const sortOptions = [
-    { key: 'recent', label: 'Recently updated' },
-    { key: 'name', label: 'Name A–Z' },
-    { key: 'due', label: 'Most due' },
-    { key: 'mastery', label: 'Highest mastery' },
-];
+const sortOptions = computed(() => [
+    { key: 'recent', label: t('deck.sortRecent') },
+    { key: 'name', label: t('deck.sortName') },
+    { key: 'due', label: t('deck.sortDue') },
+    { key: 'mastery', label: t('deck.sortMastery') },
+]);
 
 const totalCards = computed(() => store.summaries.reduce((sum, d) => sum + d.cardCount, 0));
 const totalDue = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
@@ -95,7 +100,7 @@ const filterOptions = computed(() => {
         label: LANGUAGES.find((l) => l.code === code)?.label ?? code.toUpperCase(),
         count,
     }));
-    return [{ key: 'all', label: 'All', count: store.summaries.length }, ...langs];
+    return [{ key: 'all', label: t('deck.filterAll'), count: store.summaries.length }, ...langs];
 });
 
 const deckVms = computed(() => {
