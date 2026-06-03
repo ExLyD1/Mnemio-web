@@ -15,9 +15,7 @@
             <p class="mt-2 text-body text-cream-dim">{{ t('study.modePickerHint') }}</p>
         </header>
 
-        <div v-if="store.loadingDeck && !store.deck" class="flex justify-center py-12">
-            <UiSpinner size="lg" />
-        </div>
+        <SharedPageLoader v-if="store.loadingDeck && !store.deck" />
 
         <UiEmptyState
             v-else-if="!store.deck"

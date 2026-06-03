@@ -35,11 +35,13 @@ const config: Config = {
                     deep: '#202020',
                     surface: '#1A1520',
                     'surface-2': '#221C2A',
+                    well: '#0E0B12',
                     muted: '#454545',
                 },
                 brand: {
                     dark: '#482A41',
                     DEFAULT: '#572E54',
+                    bright: '#7C4576',
                     muted: '#8E7692',
                     pale: '#CEB2BD',
                     light: '#E2D2C8',
@@ -73,6 +75,7 @@ const config: Config = {
                 },
                 success: {
                     DEFAULT: '#A6C261',
+                    bright: '#C2E083',
                 },
                 error: '#EB3D3D',
                 'error-soft': {
@@ -81,6 +84,7 @@ const config: Config = {
                 line: {
                     DEFAULT: 'rgba(227, 210, 200, 0.10)',
                     strong: 'rgba(227, 210, 200, 0.18)',
+                    faint: 'rgba(227, 210, 200, 0.07)',
                 },
             },
             boxShadow: {
@@ -89,6 +93,8 @@ const config: Config = {
                 'flash-card': '0 40px 80px rgba(0,0,0,0.4)',
                 'soft-elevation':
                     '0 30px 80px -30px rgba(0,0,0,.6), 0 4px 14px -6px rgba(0,0,0,.4)',
+                'card-preview':
+                    '0 30px 60px -28px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,0.04)',
             },
             backgroundImage: {
                 'page-glow':
@@ -96,6 +102,8 @@ const config: Config = {
                 'plum-card': 'linear-gradient(160deg, #2C1A2A 0%, #1A1020 100%)',
                 'plum-card-back': 'linear-gradient(160deg, #572F54 0%, #482B5C 100%)',
                 'progress-cream-lavender': 'linear-gradient(90deg, #E2D2C8, #A98EE3)',
+                'mimi-ambient':
+                    'radial-gradient(130% 120% at 50% 0%, rgba(87,47,84,0.55), rgba(14,11,18,0.4))',
             },
             keyframes: {
                 'typing-dot': {

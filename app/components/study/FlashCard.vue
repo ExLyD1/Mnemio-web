@@ -1,30 +1,63 @@
 <template>
-    <div class="flex flex-col items-center gap-6">
-        <div class="w-full" style="perspective: 1400px">
+    <div class="w-full max-w-3xl" style="perspective: 1600px">
+        <div
+            class="fc relative mx-auto min-h-[380px] w-full cursor-pointer outline-none"
+            :class="{ flipped: revealed }"
+            role="button"
+            tabindex="0"
+            :aria-label="revealed ? t('study.showFront') : t('study.revealAnswer')"
+            @click="$emit('flip')"
+        >
             <div
-                ref="cardEl"
-                tabindex="0"
-                role="button"
-                :aria-label="flipped ? t('study.showFront') : t('study.showBack')"
-                class="card relative mx-auto h-[360px] w-full max-w-2xl cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-lavender"
-                :class="{ flipped }"
-                @click="$emit('flip')"
-                @keydown.space.prevent="$emit('flip')"
-                @keydown.enter.prevent="$emit('flip')"
+                class="face front rounded-[24px] border border-line-strong bg-plum-card p-10 shadow-flash-card"
             >
-                <div class="face front bg-plum-card">
-                    <div class="text-eyebrow uppercase text-cream-faint">{{ t('study.front') }}</div>
-                    <div class="word">{{ card.word }}</div>
-                    <div v-if="card.phonetic" class="text-small text-cream-dim">
-                        {{ card.phonetic }}
+                <StudyLangPill :lang="card.lang" :region="card.region" />
+                <p class="fc-word font-display text-cream">{{ card.word }}</p>
+                <span class="flex items-center gap-2 text-small text-brand-muted">
+                    <StudyKeycap label="Space" /> {{ t('study.toReveal') }}
+                </span>
+            </div>
+
+            <div
+                class="face back rounded-[24px] border border-brand-bright bg-plum-card-back p-8 shadow-flash-card"
+            >
+                <div class="grid h-full gap-6 sm:grid-cols-[42%_1fr]">
+                    <div class="flex flex-col gap-3 text-left sm:border-r sm:border-line sm:pr-6">
+                        <StudyLangPill :lang="card.lang" :region="card.region" />
+                        <p class="font-display text-4xl text-cream">{{ card.word }}</p>
+                        <p v-if="card.reading" class="text-body text-brand-pale">
+                            {{ card.reading }}
+                        </p>
+                        <UiTooltip :content="t('study.audioComingSoon')" side="top">
+                            <button
+                                type="button"
+                                disabled
+                                class="inline-flex w-fit items-center gap-1.5 rounded-full border border-line-strong px-3 py-1.5 text-small text-brand-muted opacity-60"
+                            >
+                                <Volume2 class="size-4" /> {{ t('study.listen') }}
+                            </button>
+                        </UiTooltip>
+                        <SharedPill v-if="card.pos" tone="muted" class="w-fit">
+                            {{ card.pos }}
+                        </SharedPill>
                     </div>
-                    <div class="text-small text-cream-faint">
-                        {{ t('study.tapToFlip') }}
+                    <div class="flex flex-col gap-4 text-left">
+                        <div>
+                            <p class="text-eyebrow uppercase text-brand-muted">
+                                {{ t('study.meaning') }}
+                            </p>
+                            <p class="mt-1 text-xl text-cream">{{ card.meaning }}</p>
+                        </div>
+                        <div v-if="card.example">
+                            <p class="text-eyebrow uppercase text-brand-muted">
+                                {{ t('study.inContext') }}
+                            </p>
+                            <p class="mt-1 italic text-cream/90">{{ card.example }}</p>
+                            <p class="mt-1 text-small text-brand-muted">
+                                {{ card.exampleTranslation }}
+                            </p>
+                        </div>
                     </div>
-                </div>
-                <div class="face back bg-plum-card-back">
-                    <div class="text-eyebrow uppercase text-pink-soft">{{ t('study.back') }}</div>
-                    <div class="back-text">{{ card.definition }}</div>
                 </div>
             </div>
         </div>
@@ -32,58 +65,42 @@
 </template>
 
 <script setup lang="ts">
-import type { Card } from '@/types/deck';
+import { Volume2 } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
+import type { StudyCard } from '@/utils/studyCard';
 
-defineProps<{ card: Card; flipped: boolean }>();
+defineProps<{ card: StudyCard; revealed: boolean }>();
 defineEmits<{ flip: [] }>();
 
-const cardEl = ref<HTMLElement | null>(null);
 const { t } = useT();
-
-onMounted(() => {
-    cardEl.value?.focus();
-});
 </script>
 
 <style scoped>
-.card {
+.fc {
     transform-style: preserve-3d;
-    transition: transform 0.7s cubic-bezier(0.6, 0.1, 0.3, 1);
-    border-radius: 24px;
+    transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.card.flipped {
-    transform: rotateX(180deg);
+.fc.flipped {
+    transform: rotateY(180deg);
 }
 .face {
     position: absolute;
     inset: 0;
-    border-radius: 24px;
-    padding: 40px 48px;
-    backface-visibility: hidden;
-    border: 1px solid rgba(227, 210, 200, 0.18);
-    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    backface-visibility: hidden;
+}
+.front {
     align-items: center;
+    justify-content: center;
+    gap: 18px;
     text-align: center;
-    gap: 16px;
 }
-.face.back {
-    transform: rotateX(180deg);
+.back {
+    transform: rotateY(180deg);
 }
-.word {
-    font-family: 'Fraunces', serif;
-    font-weight: 400;
-    color: #e3d2c8;
-    font-size: clamp(40px, 6vw, 72px);
-    line-height: 1.05;
-}
-.back-text {
-    font-size: clamp(20px, 2.4vw, 28px);
-    line-height: 1.4;
-    color: #e3d2c8;
-    max-width: 40ch;
+.fc-word {
+    font-size: clamp(40px, 7vw, 88px);
+    line-height: 1.02;
 }
 </style>

@@ -1,8 +1,8 @@
 <template>
-    <div class="relative min-h-screen bg-brand">
+    <div class="relative min-h-screen bg-bg-base bg-page-glow text-cream">
         <NuxtLink
             to="/"
-            class="absolute right-8 top-6 text-body text-brand-pale transition-colors hover:text-neutral-0"
+            class="absolute right-6 top-6 text-small text-brand-muted transition-colors hover:text-cream"
         >
             Exit
         </NuxtLink>

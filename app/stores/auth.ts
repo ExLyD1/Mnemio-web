@@ -9,7 +9,7 @@ import {
     updateProfile as apiUpdateProfile,
 } from '@/api/auth';
 import { readAccessToken, writeAccessToken } from '@/utils/authToken';
-import type { User, ProfileDetails } from '@/types/user';
+import type { User, ProfileUpdate } from '@/types/user';
 
 export const useAuthStore = defineStore('auth', () => {
     const user = ref<User | null>(null);
@@ -38,10 +38,18 @@ export const useAuthStore = defineStore('auth', () => {
         if (!token) return;
         accessToken.value = token;
         try {
+            // A 401 here is auto-recovered by http.ts: it refreshes via the cookie and
+            // retries, so an expired access token alone does not end the session.
             const result = await apiMe();
             user.value = result.user;
-        } catch {
-            clearSession();
+            accessToken.value = readAccessToken();
+        } catch (e) {
+            // Only a revoked/stolen refresh token is a real logout. Network errors or a
+            // backend that is still booting must NOT wipe a valid session — keep the
+            // token so the next boot can recover.
+            if ((e as { code?: string }).code === 'AUTH_INVALID_REFRESH') {
+                clearSession();
+            }
         }
     };
 
@@ -78,7 +86,7 @@ export const useAuthStore = defineStore('auth', () => {
         clearSession();
     };
 
-    const updateProfile = async (details: ProfileDetails) => {
+    const updateProfile = async (details: ProfileUpdate) => {
         const result = await apiUpdateProfile(details);
         user.value = result.user;
         return result.user;

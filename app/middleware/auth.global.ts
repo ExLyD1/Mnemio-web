@@ -1,9 +1,11 @@
 import { useAuthStore } from '@/stores/auth';
 
-const PUBLIC_ROUTES = new Set(['/', '/login']);
+const PUBLIC_ROUTES = new Set(['/', '/login', '/about', '/blog', '/privacy', '/terms']);
 
 export default defineNuxtRouteMiddleware((to) => {
-    if (import.meta.server) return;
+    if (import.meta.server) {
+        return;
+    }
 
     const auth = useAuthStore();
 

@@ -1,6 +1,7 @@
-import messages from '@/i18n/en.json';
+import { useI18n } from '#imports';
+import { catalogs, isLocale, DEFAULT_LOCALE } from '@/i18n';
 
-type Messages = typeof messages;
+type Messages = typeof catalogs.en;
 
 const resolve = (obj: unknown, path: string): string | null => {
     const parts = path.split('.');
@@ -16,8 +17,10 @@ const resolve = (obj: unknown, path: string): string | null => {
 };
 
 export const useT = () => {
+    const { locale } = useI18n({ useScope: 'global' });
     const t = (key: string, fallback?: string): string => {
-        const value = resolve(messages, key);
+        const code = isLocale(locale.value) ? locale.value : DEFAULT_LOCALE;
+        const value = resolve(catalogs[code], key) ?? resolve(catalogs[DEFAULT_LOCALE], key);
         return value ?? fallback ?? key;
     };
     return { t };
