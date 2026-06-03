@@ -22,7 +22,7 @@ const randomOf = (arr: string[] | undefined): string => {
  * resolves string values, not arrays.
  */
 export const useMimi = () => {
-    const { locale } = useI18n();
+    const { locale } = useI18n({ useScope: 'global' });
     const mood = ref<MimiMood>('idle');
     const message = ref<string>('');
 

@@ -19,7 +19,7 @@ export const LOCALE_OPTIONS: LocaleOption[] = [
  * `useAppLocale` avoids any clash with the module's auto-imported helpers.
  */
 export const useAppLocale = () => {
-    const { locale, setLocale } = useI18n();
+    const { locale, setLocale } = useI18n({ useScope: 'global' });
     const current = computed<LocaleCode>(() =>
         isLocale(locale.value) ? locale.value : DEFAULT_LOCALE,
     );

@@ -17,7 +17,7 @@ const resolve = (obj: unknown, path: string): string | null => {
 };
 
 export const useT = () => {
-    const { locale } = useI18n();
+    const { locale } = useI18n({ useScope: 'global' });
     const t = (key: string, fallback?: string): string => {
         const code = isLocale(locale.value) ? locale.value : DEFAULT_LOCALE;
         const value = resolve(catalogs[code], key) ?? resolve(catalogs[DEFAULT_LOCALE], key);
