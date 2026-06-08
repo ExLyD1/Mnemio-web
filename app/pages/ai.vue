@@ -93,6 +93,7 @@
             <template v-if="mode === 'generate'">
                 <UiInputField
                     v-model="topic"
+                    :label="t('deck.aiTopic')"
                     :placeholder="t('deck.aiTopicPlaceholder')"
                     @keydown.enter="onGenerate"
                 />
