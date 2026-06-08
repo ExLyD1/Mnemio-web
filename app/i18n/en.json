@@ -7,7 +7,8 @@
         "loading": "Loading…",
         "loadMore": "Load more",
         "language": "Language",
-        "or": "OR"
+        "or": "OR",
+        "retry": "Retry"
     },
     "rail": {
         "home": "Home",
@@ -88,6 +89,7 @@
         "noResultsMessage": "No decks match your search.",
         "notFoundTitle": "Deck not found",
         "notFoundMessage": "This deck doesn't exist or was deleted.",
+        "loadErrorTitle": "Couldn't load this deck",
         "backToDecks": "Back to decks",
         "deleteTitle": "Delete this deck?",
         "deleteMessage": "This will permanently remove the deck and all its cards. This cannot be undone.",

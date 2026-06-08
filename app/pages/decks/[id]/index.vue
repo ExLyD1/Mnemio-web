@@ -120,9 +120,16 @@
             </aside>
         </div>
 
-        <UiEmptyState v-else :title="t('deck.notFoundTitle')" :message="t('deck.notFoundMessage')">
+        <UiEmptyState
+            v-else
+            :title="isNotFound ? t('deck.notFoundTitle') : t('deck.loadErrorTitle')"
+            :message="isNotFound ? t('deck.notFoundMessage') : (loadError?.message ?? '')"
+        >
             <template #action>
-                <UiButton variant="primary" @click="navigateTo('/decks')">
+                <UiButton v-if="!isNotFound" variant="primary" @click="load">
+                    {{ t('common.retry') }}
+                </UiButton>
+                <UiButton :variant="isNotFound ? 'primary' : 'ghost'" @click="navigateTo('/decks')">
                     {{ t('deck.backToDecks') }}
                 </UiButton>
             </template>
@@ -202,6 +209,14 @@ const { t } = useT();
 // Only treat the loaded deck as renderable when it matches the current route —
 // guards against a stale/previous deck flashing for the new URL.
 const ready = computed(() => !!store.deck && store.deck.id === id.value);
+
+// A real 404 means the deck is missing or you don't own it. Anything else
+// (auth/network) shouldn't masquerade as "deck deleted" — offer a retry instead.
+const loadError = computed(() => fetchOne.error.value);
+const isNotFound = computed(() => {
+    const code = loadError.value?.code;
+    return !loadError.value || code === 'NOT_FOUND' || code === 'DECK_NOT_FOUND';
+});
 
 const confirmOpen = ref(false);
 const aiOpen = ref(false);
@@ -308,10 +323,8 @@ const onConfirmDelete = async () => {
 };
 
 const load = async () => {
+    // The empty state surfaces any load error (with a retry); no toast needed.
     await fetchOne.execute(id.value);
-    if (fetchOne.error.value) {
-        toast.error(t(fetchOne.error.value.message, fetchOne.error.value.message));
-    }
     await srs.fetchAll();
 };
 
