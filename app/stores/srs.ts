@@ -1,5 +1,6 @@
 import { defineStore, ref, computed } from '#imports';
 import * as srsApi from '@/api/srs';
+import * as decksApi from '@/api/decks';
 import { isDue } from '@/composables/useSpacedRepetition';
 import { useDecksStore } from '@/stores/decks';
 import type { CardProgress, SrsRating } from '@/types/srs';
@@ -60,7 +61,9 @@ export const useSrsStore = defineStore('srs', () => {
             if (decks.summaries.length === 0) {
                 await decks.fetchList({ cursor: null, append: false });
             }
-            const loaded = await Promise.all(decks.summaries.map((d) => decks.fetchOne(d.id)));
+            // Read decks directly via API so SRS preloading does not overwrite
+            // the globally selected deck in the decks store.
+            const loaded = await Promise.all(decks.summaries.map((d) => decksApi.getDeck(d.id)));
             const cardToDeck = new Map<string, string>();
             for (const d of loaded) {
                 for (const c of d.cards) {

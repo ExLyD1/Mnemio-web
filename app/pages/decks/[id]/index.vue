@@ -215,7 +215,7 @@ const ready = computed(() => !!store.deck && store.deck.id === id.value);
 const loadError = computed(() => fetchOne.error.value);
 const isNotFound = computed(() => {
     const code = loadError.value?.code;
-    return !loadError.value || code === 'NOT_FOUND' || code === 'DECK_NOT_FOUND';
+    return code === 'NOT_FOUND' || code === 'DECK_NOT_FOUND';
 });
 
 const confirmOpen = ref(false);
@@ -325,7 +325,8 @@ const onConfirmDelete = async () => {
 const load = async () => {
     // The empty state surfaces any load error (with a retry); no toast needed.
     await fetchOne.execute(id.value);
-    await srs.fetchAll();
+    // SRS enriches card state chips; it should not block first paint of the deck.
+    srs.fetchAll().catch(() => {});
 };
 
 watch(id, load, { immediate: true });
