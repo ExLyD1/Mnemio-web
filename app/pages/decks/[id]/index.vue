@@ -7,9 +7,9 @@
             <ArrowLeft class="size-4" /> {{ t('deck.backToDecks') }}
         </NuxtLink>
 
-        <SharedPageLoader v-if="store.loadingDeck && !store.deck" />
+        <SharedPageLoader v-if="store.loadingDeck && !ready" />
 
-        <div v-else-if="store.deck" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div v-else-if="ready" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
             <div class="flex flex-col gap-5">
                 <SharedCoverArt :swatch="swatch" class="p-6">
                     <div class="relative flex flex-col gap-4">
@@ -159,19 +159,26 @@
                     <UiButton variant="ghost" @click="navigateTo(`/decks/${id}/edit`)">
                         {{ t('deck.edit') }}
                     </UiButton>
-                    <UiButton
-                        :variant="store.deck.cards.length ? 'ghost' : 'primary'"
-                        @click="navigateTo(`/decks/${id}/cards/add`)"
-                    >
+                    <UiButton variant="ghost" @click="aiOpen = true">
+                        <Sparkles class="size-4" /> {{ t('ai.launchAppend') }}
+                    </UiButton>
+                    <UiButton variant="primary" @click="navigateTo(`/decks/${id}/cards/add`)">
                         {{ t('card.addCards') }}
                     </UiButton>
                 </div>
             </aside>
         </div>
 
-        <UiEmptyState v-else :title="t('deck.notFoundTitle')" :message="t('deck.notFoundMessage')">
+        <UiEmptyState
+            v-else
+            :title="isNotFound ? t('deck.notFoundTitle') : t('deck.loadErrorTitle')"
+            :message="isNotFound ? t('deck.notFoundMessage') : (loadError?.message ?? '')"
+        >
             <template #action>
-                <UiButton variant="primary" @click="navigateTo('/decks')">
+                <UiButton v-if="!isNotFound" variant="primary" @click="load">
+                    {{ t('common.retry') }}
+                </UiButton>
+                <UiButton :variant="isNotFound ? 'primary' : 'ghost'" @click="navigateTo('/decks')">
                     {{ t('deck.backToDecks') }}
                 </UiButton>
             </template>
@@ -219,11 +226,22 @@
             :loading="deleteCard.loading.value"
             @confirm="confirmDeleteCard"
         />
+
+        <AiImportDialog
+            v-if="ready && store.deck"
+            v-model="aiOpen"
+            :deck="{
+                id: store.deck.id,
+                sourceLanguage: store.deck.sourceLanguage,
+                targetLanguage: store.deck.targetLanguage,
+            }"
+            @done="onAiDone"
+        />
     </section>
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft, MoreVertical, Pencil, Trash2 } from 'lucide-vue-next';
+import { ArrowLeft, MoreVertical, Pencil, Trash2, Sparkles } from 'lucide-vue-next';
 import { useDecks, useCards, useSrsStore, useToast, useT } from '#imports';
 import { isAuthExpiry } from '@/composables/useToast';
 import { swatchFor } from '@/utils/coverSwatches';
@@ -240,7 +258,22 @@ const srs = useSrsStore();
 const toast = useToast();
 const { t } = useT();
 
+// Only treat the loaded deck as renderable when it matches the current route —
+// guards against a stale/previous deck flashing for the new URL.
+const ready = computed(() => !!store.deck && store.deck.id === id.value);
+
+// A real 404 means the deck is missing or you don't own it. Anything else
+// (auth/network) shouldn't masquerade as "deck deleted" — offer a retry instead.
+const loadError = computed(() => fetchOne.error.value);
+const isNotFound = computed(() => {
+    const code = loadError.value?.code;
+    return code === 'NOT_FOUND' || code === 'DECK_NOT_FOUND';
+});
+
 const confirmOpen = ref(false);
+const aiOpen = ref(false);
+
+const onAiDone = () => fetchOne.execute(id.value);
 
 const editOpen = ref(false);
 const editCardId = ref<string | null>(null);
@@ -391,11 +424,10 @@ const onConfirmDelete = async () => {
 };
 
 const load = async () => {
+    // The empty state surfaces any load error (with a retry); no toast needed.
     await fetchOne.execute(id.value);
-    if (fetchOne.error.value && !isAuthExpiry(fetchOne.error.value.code)) {
-        toast.error(t(fetchOne.error.value.message, fetchOne.error.value.message));
-    }
-    await srs.fetchAll();
+    // SRS enriches card state chips; it should not block first paint of the deck.
+    srs.fetchAll().catch(() => {});
 };
 
 watch(id, load, { immediate: true });

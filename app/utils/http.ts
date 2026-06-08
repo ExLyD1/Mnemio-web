@@ -18,14 +18,10 @@ const isApiError = (e: unknown): e is ApiError =>
     !!e && typeof e === 'object' && 'code' in e && 'message' in e;
 
 const normalizeError = (err: unknown): ApiError => {
-    if (isApiError(err)) {
-        return err;
-    }
+    if (isApiError(err)) return err;
     const anyErr = err as { data?: unknown; message?: string; status?: number };
-    if (anyErr.data && isApiError(anyErr.data)) {
-        return anyErr.data;
-    }
-    if (anyErr.data && typeof anyErr.data === 'object') {
+    if (anyErr?.data && isApiError(anyErr.data)) return anyErr.data;
+    if (anyErr?.data && typeof anyErr.data === 'object') {
         const d = anyErr.data as Record<string, unknown>;
         if (typeof d.code === 'string' && typeof d.message === 'string') {
             return {
@@ -35,22 +31,14 @@ const normalizeError = (err: unknown): ApiError => {
             };
         }
     }
-    const status = anyErr.status ?? 0;
-    if (status === 429) {
-        return { code: 'RATE_LIMITED', message: 'Too many requests.' };
-    }
-    if (status === 401) {
-        return { code: 'AUTH_UNAUTHENTICATED', message: 'Not signed in.' };
-    }
-    if (status === 403) {
-        return { code: 'AUTH_FORBIDDEN', message: 'Not allowed.' };
-    }
-    if (status === 404) {
-        return { code: 'NOT_FOUND', message: 'Not found.' };
-    }
+    const status = anyErr?.status ?? 0;
+    if (status === 429) return { code: 'RATE_LIMITED', message: 'Too many requests.' };
+    if (status === 401) return { code: 'AUTH_UNAUTHENTICATED', message: 'Not signed in.' };
+    if (status === 403) return { code: 'AUTH_FORBIDDEN', message: 'Not allowed.' };
+    if (status === 404) return { code: 'NOT_FOUND', message: 'Not found.' };
     return {
         code: 'NETWORK_ERROR',
-        message: 'Unable to reach the server. Please check your connection and try again.',
+        message: anyErr?.message ?? 'Network request failed.',
     };
 };
 
@@ -58,22 +46,23 @@ interface RefreshResponse {
     accessToken: string;
 }
 
-let _baseURL: string | undefined;
-const getBaseURL = (): string => {
-    _baseURL ??= (useRuntimeConfig().public.apiBase as string | undefined) ?? '';
-    return _baseURL;
+// Resolved once from runtimeConfig by `plugins/00.api.ts`. Kept as a module
+// value (not read via useRuntimeConfig here) so http() never calls a Nuxt
+// composable — http runs inside async store actions, often after an `await`,
+// where the Nuxt instance context is gone and composables would throw.
+let apiBase = '';
+export const setApiBase = (base: string): void => {
+    apiBase = base;
 };
 
 let inflightRefresh: Promise<string | null> | null = null;
 
-const refreshAccessToken = async (baseURL: string): Promise<string | null> => {
-    if (inflightRefresh) {
-        return inflightRefresh;
-    }
+const refreshAccessToken = async (): Promise<string | null> => {
+    if (inflightRefresh) return inflightRefresh;
     inflightRefresh = (async () => {
         try {
             const data = await $fetch<RefreshResponse>(`${API_PREFIX}/auth/refresh`, {
-                baseURL,
+                baseURL: apiBase,
                 method: 'POST',
                 credentials: 'include',
             });
@@ -89,24 +78,23 @@ const refreshAccessToken = async (baseURL: string): Promise<string | null> => {
     return inflightRefresh;
 };
 
-const onAuthFailure = async () => {
+const onAuthFailure = (): void => {
     writeAccessToken(null);
+    // Full-page redirect (no navigateTo) — context-free, safe to call anywhere.
     if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-        await navigateTo('/login');
+        window.location.assign('/login');
     }
 };
 
 export const http = async <T>(path: string, options: HttpOptions = {}): Promise<T> => {
-    const baseURL = getBaseURL();
+    const baseURL = apiBase;
     const url = path.startsWith('/api/') || path.startsWith('http') ? path : `${API_PREFIX}${path}`;
 
     const buildHeaders = (): Record<string, string> => {
         const headers: Record<string, string> = { ...(options.headers ?? {}) };
         if (!options.skipAuth) {
             const token = readAccessToken();
-            if (token) {
-                headers.Authorization = `Bearer ${token}`;
-            }
+            if (token) headers.Authorization = `Bearer ${token}`;
         }
         return headers;
     };
@@ -125,7 +113,7 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
         return await send();
     } catch (err) {
         const normalized = normalizeError(err);
-        const status = (err as { status?: number }).status ?? 0;
+        const status = (err as { status?: number })?.status ?? 0;
 
         if (
             !options.skipAuth &&
@@ -134,25 +122,25 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
             normalized.code !== 'AUTH_INVALID_REFRESH' &&
             url !== `${API_PREFIX}/auth/refresh`
         ) {
-            const newToken = await refreshAccessToken(baseURL);
+            const newToken = await refreshAccessToken();
             if (newToken) {
                 try {
                     return await send();
                 } catch (retryErr) {
                     const retryNormalized = normalizeError(retryErr);
-                    if ((retryErr as { status?: number }).status === 401) {
-                        await onAuthFailure();
+                    if ((retryErr as { status?: number })?.status === 401) {
+                        onAuthFailure();
                     }
-                    throw Object.assign(new Error(retryNormalized.message), retryNormalized);
+                    throw retryNormalized;
                 }
             }
-            await onAuthFailure();
+            onAuthFailure();
         }
 
         if (normalized.code === 'AUTH_INVALID_REFRESH') {
-            await onAuthFailure();
+            onAuthFailure();
         }
 
-        throw Object.assign(new Error(normalized.message), normalized);
+        throw normalized;
     }
 };
