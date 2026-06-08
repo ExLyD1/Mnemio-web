@@ -25,7 +25,9 @@
         "newDeck": "New deck",
         "account": "Account",
         "profile": "Profile",
-        "toggleTheme": "Toggle theme"
+        "toggleTheme": "Toggle theme",
+        "searchSeeAll": "See all results",
+        "searchNoMatches": "No decks match “{q}”"
     },
     "nav": {
         "dashboard": "Dashboard",

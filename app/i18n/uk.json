@@ -25,7 +25,9 @@
         "newDeck": "Нова колода",
         "account": "Обліковий запис",
         "profile": "Профіль",
-        "toggleTheme": "Перемкнути тему"
+        "toggleTheme": "Перемкнути тему",
+        "searchSeeAll": "Переглянути всі результати",
+        "searchNoMatches": "Немає колод за запитом «{q}»"
     },
     "nav": {
         "dashboard": "Головна",
