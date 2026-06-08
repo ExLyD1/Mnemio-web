@@ -24,11 +24,7 @@
                         class="mb-4 flex items-start justify-between gap-4"
                     >
                         <div>
-                            <h2
-                                v-if="title"
-                                :id="titleId"
-                                class="text-h3 font-bold text-neutral-0"
-                            >
+                            <h2 v-if="title" :id="titleId" class="text-h3 font-bold text-neutral-0">
                                 {{ title }}
                             </h2>
                             <slot name="header" />

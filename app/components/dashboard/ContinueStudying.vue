@@ -12,7 +12,11 @@
                     {{ deckTitle ?? t('dashboard.continueUnknownDeck') }}
                 </p>
                 <p class="text-small text-cream-faint">
-                    {{ t('dashboard.continueProgress').replace('{i}', String(session.index)).replace('{n}', String(session.cardIds.length)) }}
+                    {{
+                        t('dashboard.continueProgress')
+                            .replace('{i}', String(session.index))
+                            .replace('{n}', String(session.cardIds.length))
+                    }}
                 </p>
             </div>
         </div>

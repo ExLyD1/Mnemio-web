@@ -28,29 +28,36 @@ const config: Config = {
                 ],
             },
             colors: {
+                // Theme-aware tokens are backed by RGB-channel CSS variables
+                // (defined in assets/css/main.css under :root/.dark/.light) so the
+                // `/<alpha>` opacity modifiers keep working while the palette flips
+                // between light and dark color modes.
                 bg: {
                     landing: '#0E0B10',
                     'landing-2': '#15111A',
-                    base: '#111111',
-                    deep: '#202020',
-                    surface: '#1A1520',
-                    'surface-2': '#221C2A',
-                    well: '#0E0B12',
-                    muted: '#454545',
+                    base: 'rgb(var(--c-bg-base) / <alpha-value>)',
+                    deep: 'rgb(var(--c-bg-deep) / <alpha-value>)',
+                    surface: 'rgb(var(--c-bg-surface) / <alpha-value>)',
+                    'surface-2': 'rgb(var(--c-bg-surface-2) / <alpha-value>)',
+                    well: 'rgb(var(--c-bg-well) / <alpha-value>)',
+                    muted: 'rgb(var(--c-bg-muted) / <alpha-value>)',
                 },
                 brand: {
                     dark: '#482A41',
                     DEFAULT: '#572E54',
                     bright: '#7C4576',
-                    muted: '#8E7692',
-                    pale: '#CEB2BD',
-                    light: '#E2D2C8',
+                    muted: 'rgb(var(--c-brand-muted) / <alpha-value>)',
+                    pale: 'rgb(var(--c-brand-pale) / <alpha-value>)',
+                    light: 'rgb(var(--c-brand-light) / <alpha-value>)',
                 },
                 cream: {
-                    DEFAULT: '#E3D2C8',
-                    dim: 'rgba(227, 210, 200, 0.62)',
-                    faint: 'rgba(227, 210, 200, 0.42)',
+                    DEFAULT: 'rgb(var(--c-cream) / <alpha-value>)',
+                    dim: 'rgb(var(--c-cream) / 0.62)',
+                    faint: 'rgb(var(--c-cream) / 0.42)',
                 },
+                // Light text that must stay light even on colored surfaces in both
+                // themes (active nav, chips on brand/success fills).
+                'on-color': 'rgb(var(--c-on-color) / <alpha-value>)',
                 accent: {
                     DEFAULT: '#1C73BB',
                     light: '#75B8E2',
@@ -82,9 +89,9 @@ const config: Config = {
                     DEFAULT: '#E37D88',
                 },
                 line: {
-                    DEFAULT: 'rgba(227, 210, 200, 0.10)',
-                    strong: 'rgba(227, 210, 200, 0.18)',
-                    faint: 'rgba(227, 210, 200, 0.07)',
+                    DEFAULT: 'rgb(var(--c-line) / 0.14)',
+                    strong: 'rgb(var(--c-line) / 0.24)',
+                    faint: 'rgb(var(--c-line) / 0.09)',
                 },
             },
             boxShadow: {
@@ -99,11 +106,11 @@ const config: Config = {
             backgroundImage: {
                 'page-glow':
                     'radial-gradient(1100px 600px at 80% -10%, rgba(169,142,227,0.12), transparent 60%), radial-gradient(900px 500px at -10% 20%, rgba(87,47,84,0.30), transparent 65%)',
-                'plum-card': 'linear-gradient(160deg, #2C1A2A 0%, #1A1020 100%)',
-                'plum-card-back': 'linear-gradient(160deg, #572F54 0%, #482B5C 100%)',
-                'progress-cream-lavender': 'linear-gradient(90deg, #E2D2C8, #A98EE3)',
-                'mimi-ambient':
-                    'radial-gradient(130% 120% at 50% 0%, rgba(87,47,84,0.55), rgba(14,11,18,0.4))',
+                'plum-card': 'var(--c-fc-front)',
+                'plum-card-back': 'var(--c-fc-back)',
+                'progress-cream-lavender': 'linear-gradient(90deg, #A98EE3, #A6C261)',
+                // Theme-aware: backed by --c-mimi-ambient (light/dark) in main.css.
+                'mimi-ambient': 'var(--c-mimi-ambient)',
             },
             keyframes: {
                 'typing-dot': {

@@ -3,9 +3,12 @@
         <button
             v-for="tab in tabs"
             :key="tab.key"
+            type="button"
             :class="[
                 'relative pb-3 text-body transition-colors',
-                modelValue === tab.key ? 'text-neutral-0' : 'text-brand-muted hover:text-brand-pale',
+                modelValue === tab.key
+                    ? 'text-neutral-0'
+                    : 'text-brand-muted hover:text-brand-pale',
             ]"
             @click="$emit('update:modelValue', tab.key)"
         >

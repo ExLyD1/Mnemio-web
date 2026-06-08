@@ -5,7 +5,9 @@ const birthdayRegex = /^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 const parseBirthday = (s: string): Date | null => {
     const m = birthdayRegex.exec(s);
-    if (!m) return null;
+    if (!m) {
+        return null;
+    }
     const [, , mm, dd] = m;
     const yyyy = s.slice(0, 4);
     const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
@@ -13,15 +15,18 @@ const parseBirthday = (s: string): Date | null => {
         d.getFullYear() !== Number(yyyy) ||
         d.getMonth() !== Number(mm) - 1 ||
         d.getDate() !== Number(dd)
-    )
+    ) {
         return null;
+    }
     return d;
 };
 
 const yearsBetween = (from: Date, to: Date): number => {
     let years = to.getFullYear() - from.getFullYear();
     const m = to.getMonth() - from.getMonth();
-    if (m < 0 || (m === 0 && to.getDate() < from.getDate())) years--;
+    if (m < 0 || (m === 0 && to.getDate() < from.getDate())) {
+        years--;
+    }
     return years;
 };
 

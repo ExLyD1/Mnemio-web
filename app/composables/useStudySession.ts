@@ -13,7 +13,9 @@ const shuffle = <T>(arr: T[]): T[] => {
     const a = [...arr];
     for (let i = a.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j]!, a[i]!];
+        const tmp = a[i] as T;
+        a[i] = a[j] as T;
+        a[j] = tmp;
     }
     return a;
 };
@@ -69,37 +71,16 @@ export const useStudySession = () => {
             resumeTimer();
             return created;
         } catch (e) {
-            error.value = (e as { message?: string })?.message ?? 'Could not start session.';
+            error.value = (e as { message?: string }).message ?? 'Could not start session.';
             state.value = 'idle';
             return null;
         }
     };
 
-    const answer = async (correct: boolean) => {
-        if (state.value !== 'active' || !session.value) return;
-        const nextIndex = currentIndex.value + 1;
-        const nextCorrect = correctCount.value + (correct ? 1 : 0);
-        await sessions.updateActive({ index: nextIndex, correct: nextCorrect });
-        if (session.value) {
-            session.value = { ...session.value, index: nextIndex, correct: nextCorrect };
-        }
-        if (nextIndex >= totalCount.value) {
-            await finishComplete();
-        }
-    };
-
-    const goTo = async (i: number) => {
-        if (!session.value) return;
-        const clamped = Math.max(0, Math.min(totalCount.value - 1, i));
-        if (clamped === currentIndex.value) return;
-        session.value = { ...session.value, index: clamped };
-        await sessions.updateActive({ index: clamped });
-    };
-    const goNext = () => goTo(currentIndex.value + 1);
-    const goPrev = () => goTo(currentIndex.value - 1);
-
     const finishComplete = async () => {
-        if (!session.value) return;
+        if (!session.value) {
+            return;
+        }
         const xp = computeXp(correctCount.value, true);
         pauseTimer();
         const ended = await sessions.complete(xp);
@@ -107,8 +88,37 @@ export const useStudySession = () => {
         state.value = 'results';
     };
 
+    const answer = async (correct: boolean) => {
+        if (state.value !== 'active' || !session.value) {
+            return;
+        }
+        const nextIndex = currentIndex.value + 1;
+        const nextCorrect = correctCount.value + (correct ? 1 : 0);
+        await sessions.updateActive({ index: nextIndex, correct: nextCorrect });
+        session.value = { ...session.value, index: nextIndex, correct: nextCorrect };
+        if (nextIndex >= totalCount.value) {
+            await finishComplete();
+        }
+    };
+
+    const goTo = async (i: number) => {
+        if (!session.value) {
+            return;
+        }
+        const clamped = Math.max(0, Math.min(totalCount.value - 1, i));
+        if (clamped === currentIndex.value) {
+            return;
+        }
+        session.value = { ...session.value, index: clamped };
+        await sessions.updateActive({ index: clamped });
+    };
+    const goNext = () => goTo(currentIndex.value + 1);
+    const goPrev = () => goTo(currentIndex.value - 1);
+
     const exit = async () => {
-        if (state.value !== 'active') return;
+        if (state.value !== 'active') {
+            return;
+        }
         pauseTimer();
         await sessions.exit();
         state.value = 'paused';

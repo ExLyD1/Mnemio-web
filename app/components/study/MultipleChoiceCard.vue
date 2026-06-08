@@ -41,7 +41,7 @@
         <button
             v-if="picked !== null"
             type="button"
-            class="rounded-full border border-line-strong bg-white/[0.04] px-5 py-2.5 text-small font-semibold text-cream transition-colors hover:bg-white/[0.08]"
+            class="rounded-full border border-line-strong bg-bg-surface px-5 py-2.5 text-small font-semibold text-cream transition-colors hover:bg-bg-surface-2"
             @click="$emit('next')"
         >
             {{ t('study.continue') }} →

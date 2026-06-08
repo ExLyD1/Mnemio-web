@@ -3,6 +3,7 @@ import { ref, shallowRef } from 'vue';
 export interface ApiError {
     code: string;
     message: string;
+    details?: Record<string, unknown>;
 }
 
 export const useAsync = <TArgs extends unknown[], TData>(
@@ -23,7 +24,10 @@ export const useAsync = <TArgs extends unknown[], TData>(
             error.value =
                 e && typeof e === 'object' && 'code' in e && 'message' in e
                     ? (e as ApiError)
-                    : { code: 'UNKNOWN', message: (e as Error)?.message ?? 'Unknown error' };
+                    : {
+                          code: 'UNKNOWN',
+                          message: e instanceof Error ? e.message : 'Unknown error',
+                      };
             return null;
         } finally {
             loading.value = false;

@@ -35,7 +35,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     const hydrate = async () => {
         const token = readAccessToken();
-        if (!token) return;
+        if (!token) {
+            return;
+        }
         accessToken.value = token;
         try {
             // A 401 here is auto-recovered by http.ts: it refreshes via the cookie and
@@ -61,7 +63,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     const verifyEmail = async (code: string) => {
         if (!pendingUserId.value) {
-            throw { code: 'AUTH_NO_PENDING_USER', message: 'No registration in progress.' };
+            throw Object.assign(new Error('No registration in progress.'), {
+                code: 'AUTH_NO_PENDING_USER',
+            });
         }
         const result = await apiVerifyEmail(pendingUserId.value, code);
         setSession(result.user, result.accessToken);
@@ -70,7 +74,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     const resendOtp = async () => {
         if (!pendingUserId.value) {
-            throw { code: 'AUTH_NO_PENDING_USER', message: 'No registration in progress.' };
+            throw Object.assign(new Error('No registration in progress.'), {
+                code: 'AUTH_NO_PENDING_USER',
+            });
         }
         return apiResendOtp(pendingUserId.value);
     };

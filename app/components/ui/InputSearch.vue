@@ -31,18 +31,18 @@ defineEmits<{ 'update:modelValue': [value: string] }>();
 const wrappers = {
     light: 'bg-brand-light text-brand',
     brand: 'bg-brand text-brand-pale',
-    dark:  'bg-bg-surface text-brand-muted',
+    dark: 'bg-bg-surface text-brand-muted',
 } as const;
 
 const textColors = {
     light: 'text-brand placeholder:opacity-60',
     brand: 'text-brand-pale placeholder:opacity-70',
-    dark:  'text-brand-muted placeholder:opacity-70',
+    dark: 'text-brand-muted placeholder:opacity-70',
 } as const;
 
 const iconColors = {
     light: 'text-brand opacity-60',
     brand: 'text-brand-pale opacity-70',
-    dark:  'text-brand-muted opacity-70',
+    dark: 'text-brand-muted opacity-70',
 } as const;
 </script>
