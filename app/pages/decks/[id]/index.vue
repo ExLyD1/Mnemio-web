@@ -110,6 +110,9 @@
                     <UiButton variant="ghost" @click="navigateTo(`/decks/${id}/edit`)">
                         Edit deck
                     </UiButton>
+                    <UiButton variant="ghost" @click="aiOpen = true">
+                        <Sparkles class="size-4" /> {{ t('ai.launchAppend') }}
+                    </UiButton>
                     <UiButton variant="primary" @click="navigateTo(`/decks/${id}/cards/add`)">
                         Add cards
                     </UiButton>
@@ -165,11 +168,22 @@
             :loading="deleteCard.loading.value"
             @confirm="confirmDeleteCard"
         />
+
+        <AiImportDialog
+            v-if="store.deck"
+            v-model="aiOpen"
+            :deck="{
+                id: store.deck.id,
+                sourceLanguage: store.deck.sourceLanguage,
+                targetLanguage: store.deck.targetLanguage,
+            }"
+            @done="onAiDone"
+        />
     </section>
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft, MoreVertical, Pencil, Trash2 } from 'lucide-vue-next';
+import { ArrowLeft, MoreVertical, Pencil, Trash2, Sparkles } from 'lucide-vue-next';
 import { useDecks, useCards, useSrsStore, useToast, useT } from '#imports';
 import { swatchFor } from '@/utils/coverSwatches';
 import type { Card, DeckStats } from '@/types/deck';
@@ -186,6 +200,9 @@ const toast = useToast();
 const { t } = useT();
 
 const confirmOpen = ref(false);
+const aiOpen = ref(false);
+
+const onAiDone = () => fetchOne.execute(id.value);
 
 const editOpen = ref(false);
 const editCardId = ref<string | null>(null);

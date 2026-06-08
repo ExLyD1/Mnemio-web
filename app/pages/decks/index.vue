@@ -12,10 +12,16 @@
                     }}
                 </p>
             </div>
-            <UiButton variant="primary" @click="navigateTo('/decks/create')">
-                <Plus class="size-4" />
-                {{ t('topbar.newDeck') }}
-            </UiButton>
+            <div class="flex gap-2">
+                <UiButton variant="ghost" @click="aiOpen = true">
+                    <Sparkles class="size-4" />
+                    {{ t('ai.launchNew') }}
+                </UiButton>
+                <UiButton variant="primary" @click="navigateTo('/decks/create')">
+                    <Plus class="size-4" />
+                    {{ t('topbar.newDeck') }}
+                </UiButton>
+            </div>
         </header>
 
         <div
@@ -61,11 +67,13 @@
                 </span>
             </NuxtLink>
         </div>
+
+        <AiImportDialog v-model="aiOpen" />
     </section>
 </template>
 
 <script setup lang="ts">
-import { Plus, Library } from 'lucide-vue-next';
+import { Plus, Library, Sparkles } from 'lucide-vue-next';
 import { useDecks, usePreferencesStore, useT } from '#imports';
 import { deckToCardVm } from '@/utils/deckVm';
 import { LANGUAGES } from '@/schemas/deck';
@@ -77,6 +85,7 @@ const prefs = usePreferencesStore();
 const { t } = useT();
 
 const loading = ref(true);
+const aiOpen = ref(false);
 const filter = ref('all');
 const sort = ref('recent');
 
