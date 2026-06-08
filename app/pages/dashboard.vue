@@ -51,11 +51,13 @@
                 class="flex flex-col gap-4 rounded-[20px] border border-line bg-bg-surface p-5"
             >
                 <div class="flex items-start justify-between gap-3">
-                    <div>
+                    <div class="min-w-0">
                         <p class="text-eyebrow uppercase text-brand-muted">
                             {{ t('dashboard.featuredDeck') }}
                         </p>
-                        <h2 class="mt-1 font-display text-h2 text-cream">{{ featured.title }}</h2>
+                        <h2 class="mt-1 break-words font-display text-h2 text-cream">
+                            {{ featured.title }}
+                        </h2>
                         <p class="mt-0.5 text-small text-brand-muted">
                             {{ t('deck.cardCount').replace('{n}', String(featured.total)) }} ·
                             {{ featured.tag }}

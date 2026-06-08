@@ -9,7 +9,7 @@
                 <ArrowLeft class="size-4" />
                 {{ t('study.backToDeck') }}
             </button>
-            <h1 v-if="store.deck" class="mt-3 font-display text-display-sm text-cream">
+            <h1 v-if="store.deck" class="mt-3 break-words font-display text-display-sm text-cream">
                 {{ store.deck.title }}
             </h1>
             <p class="mt-2 text-body text-cream-dim">{{ t('study.modePickerHint') }}</p>

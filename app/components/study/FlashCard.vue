@@ -13,7 +13,7 @@
                 :style="{ backgroundImage: frontGradient }"
             >
                 <StudyLangPill :lang="card.lang" :region="card.region" />
-                <p class="fc-word font-display text-cream">{{ card.word }}</p>
+                <p class="fc-word break-words font-display text-cream">{{ card.word }}</p>
                 <span class="flex items-center gap-2 text-small text-brand-muted">
                     <StudyKeycap label="Space" /> {{ t('study.toReveal') }}
                 </span>
@@ -26,8 +26,8 @@
                 <div class="grid h-full gap-6 sm:grid-cols-[42%_1fr]">
                     <div class="flex flex-col gap-3 text-left sm:border-r sm:border-line sm:pr-6">
                         <StudyLangPill :lang="card.lang" :region="card.region" />
-                        <p class="font-display text-4xl text-cream">{{ card.word }}</p>
-                        <p v-if="card.reading" class="text-body text-brand-pale">
+                        <p class="break-words font-display text-4xl text-cream">{{ card.word }}</p>
+                        <p v-if="card.reading" class="break-words text-body text-brand-pale">
                             {{ card.reading }}
                         </p>
                         <UiTooltip :content="t('study.audioComingSoon')" side="top">
@@ -48,7 +48,7 @@
                             <p class="text-eyebrow uppercase text-brand-muted">
                                 {{ t('study.meaning') }}
                             </p>
-                            <p class="mt-1 text-xl text-cream">{{ card.meaning }}</p>
+                            <p class="mt-1 break-words text-xl text-cream">{{ card.meaning }}</p>
                         </div>
                         <div v-if="card.example">
                             <p class="text-eyebrow uppercase text-brand-muted">
@@ -152,6 +152,7 @@ const backGradient = computed(() =>
 .fc-word {
     font-size: clamp(40px, 7vw, 88px);
     line-height: 1.02;
+    overflow-wrap: anywhere;
 }
 
 @media (prefers-reduced-motion: reduce) {

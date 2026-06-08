@@ -14,9 +14,9 @@
                 <SharedCoverArt :swatch="swatch" class="p-6">
                     <div class="relative flex flex-col gap-4">
                         <div class="flex items-start justify-between gap-3">
-                            <div>
+                            <div class="min-w-0">
                                 <p class="text-eyebrow uppercase text-cream/70">{{ eyebrow }}</p>
-                                <h1 class="mt-1 font-display text-h1 text-cream">
+                                <h1 class="mt-1 break-words font-display text-h1 text-cream">
                                     {{ store.deck.title }}
                                 </h1>
                                 <p class="mt-1 text-small text-cream/80">
@@ -24,18 +24,24 @@
                                     {{ store.deck.targetLanguage.toUpperCase() }}
                                 </p>
                             </div>
-                            <UiDropdownMenu :items="menuItems" align="right" @select="onMenuSelect">
-                                <template #trigger="{ toggle }">
-                                    <button
-                                        type="button"
-                                        class="grid size-9 place-items-center rounded-full bg-black/20 text-cream backdrop-blur transition-colors hover:bg-black/35 dark:bg-black/25 dark:hover:bg-black/40"
-                                        :aria-label="t('deck.menuAria')"
-                                        @click="toggle"
-                                    >
-                                        <MoreVertical class="size-4" />
-                                    </button>
-                                </template>
-                            </UiDropdownMenu>
+                            <div class="shrink-0">
+                                <UiDropdownMenu
+                                    :items="menuItems"
+                                    align="right"
+                                    @select="onMenuSelect"
+                                >
+                                    <template #trigger="{ toggle }">
+                                        <button
+                                            type="button"
+                                            class="grid size-9 place-items-center rounded-full bg-black/20 text-cream backdrop-blur transition-colors hover:bg-black/35 dark:bg-black/25 dark:hover:bg-black/40"
+                                            :aria-label="t('deck.menuAria')"
+                                            @click="toggle"
+                                        >
+                                            <MoreVertical class="size-4" />
+                                        </button>
+                                    </template>
+                                </UiDropdownMenu>
+                            </div>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <UiButton
