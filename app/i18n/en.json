@@ -108,6 +108,9 @@
         "sortDue": "Most due",
         "sortMastery": "Highest mastery",
         "filterAll": "All",
+        "filterFavorites": "Favorites",
+        "addFavorite": "Add to favorites",
+        "removeFavorite": "Remove from favorites",
         "menuAria": "Deck options",
         "studyNow": "Study now",
         "studyNowHint": "Choose a study mode",
@@ -243,6 +246,7 @@
         "backToDeck": "Back to deck",
         "noResultsTitle": "No completed session",
         "noResultsMessage": "Start a study session to see your results here.",
+        "couldNotStartTitle": "Couldn't start",
         "endSession": "End session",
         "revealHint": "Tap the card or press Space to reveal.",
         "toReveal": "to reveal",
@@ -305,6 +309,8 @@
         "tagsPlaceholder": "Add a tag…",
         "uploaded": "Uploaded",
         "uploadFailed": "Upload failed",
+        "playAudio": "Play audio",
+        "statusAria": "Status: {state}",
         "errors": {
             "word_required": "Word is required.",
             "word_too_long": "Word is too long (max 120).",
@@ -329,7 +335,10 @@
         "previewSoon": "Deck preview is coming soon.",
         "filterAll": "All",
         "sortNewest": "Newest",
-        "sortPopular": "Most popular"
+        "sortPopular": "Most popular",
+        "copies": "{n} copies",
+        "preview": "Preview",
+        "copy": "Copy"
     },
     "statistics": {
         "title": "Your statistics.",
@@ -433,6 +442,36 @@
         "photoError": "Could not upload photo",
         "saved": "Profile saved",
         "saveError": "Could not save profile"
+    },
+    "achievements": {
+        "first_steps": {
+            "name": "First steps",
+            "description": "Complete your first study session."
+        },
+        "quick_learner": {
+            "name": "Quick learner",
+            "description": "Complete 5 study sessions."
+        },
+        "marathoner": {
+            "name": "Marathoner",
+            "description": "Complete 25 study sessions."
+        },
+        "accuracy_ace": {
+            "name": "Accuracy ace",
+            "description": "Finish a session with 100% accuracy on at least 5 cards."
+        },
+        "reviewer_100": {
+            "name": "Centurion",
+            "description": "Rate 100 cards."
+        },
+        "builder_50": {
+            "name": "Deck builder",
+            "description": "Create 50 cards."
+        },
+        "polyglot": {
+            "name": "Polyglot",
+            "description": "Study decks in 3 different target languages."
+        }
     },
     "ai": {
         "titleNew": "Import words with AI",

@@ -92,12 +92,12 @@
 
             <UiEmptyState
                 v-else-if="practice.study.error.value"
-                title="Couldn't start"
-                :message="practice.study.error.value"
+                :title="t('study.couldNotStartTitle')"
+                :message="t(practice.study.error.value, practice.study.error.value)"
             >
                 <template #action>
                     <UiButton variant="primary" @click="navigateTo(`/decks/${deckId}`)">
-                        Back to deck
+                        {{ t('study.backToDeck') }}
                     </UiButton>
                 </template>
             </UiEmptyState>

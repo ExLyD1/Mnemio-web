@@ -259,11 +259,21 @@ onMounted(async () => {
     ]);
     try {
         const s = await aiApi.suggest('dashboard');
-        mimi.message.value = s.suggestion;
-        // Use the suggestion's label text, but a FE-controlled route by kind —
-        // the backend's action.href (e.g. /decks/new) doesn't match our routing.
+        // The backend suggestion text is English-only — keep our localized Mimi line
+        // for non-English locales instead of leaking English copy into the banner.
+        if (locale.value === 'en') {
+            mimi.message.value = s.suggestion;
+        }
+        // FE-controlled route by kind — the backend's action.href (e.g. /decks/new)
+        // doesn't match our routing.
         const href = s.kind === 'deck' ? '/decks/create' : '/review';
-        suggestAction.value = { label: s.actions[0]?.label ?? t('dashboard.startReview'), href };
+        const label =
+            locale.value === 'en'
+                ? (s.actions[0]?.label ?? t('dashboard.startReview'))
+                : s.kind === 'deck'
+                  ? t('deck.create')
+                  : t('dashboard.startReview');
+        suggestAction.value = { label, href };
     } catch {
         // keep the scripted fallback line already set above
     }
