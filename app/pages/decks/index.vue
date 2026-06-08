@@ -12,11 +12,7 @@
                     }}
                 </p>
             </div>
-            <div class="flex flex-wrap gap-2">
-                <UiButton variant="ghost" @click="quizletOpen = true">
-                    <Download class="size-4" />
-                    {{ t('quizlet.launch') }}
-                </UiButton>
+            <div class="flex gap-2">
                 <UiButton variant="ghost" @click="aiOpen = true">
                     <Sparkles class="size-4" />
                     {{ t('ai.launchNew') }}
@@ -73,12 +69,11 @@
         </div>
 
         <AiImportDialog v-model="aiOpen" />
-        <SharedQuizletImportDialog v-model="quizletOpen" />
     </section>
 </template>
 
 <script setup lang="ts">
-import { Plus, Library, Sparkles, Download } from 'lucide-vue-next';
+import { Plus, Library, Sparkles } from 'lucide-vue-next';
 import { useDecks, usePreferencesStore, useT } from '#imports';
 import { deckToCardVm } from '@/utils/deckVm';
 import { LANGUAGES } from '@/schemas/deck';
@@ -91,7 +86,6 @@ const { t } = useT();
 
 const loading = ref(true);
 const aiOpen = ref(false);
-const quizletOpen = ref(false);
 const filter = ref('all');
 const sort = ref('recent');
 
