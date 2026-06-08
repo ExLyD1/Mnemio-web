@@ -7,9 +7,9 @@
             <ArrowLeft class="size-4" /> My Decks
         </NuxtLink>
 
-        <SharedPageLoader v-if="store.loadingDeck && !store.deck" />
+        <SharedPageLoader v-if="store.loadingDeck && !ready" />
 
-        <div v-else-if="store.deck" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div v-else-if="ready" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
             <div class="flex flex-col gap-5">
                 <SharedCoverArt :swatch="swatch" class="p-6">
                     <div class="relative flex flex-col gap-4">
@@ -170,7 +170,7 @@
         />
 
         <AiImportDialog
-            v-if="store.deck"
+            v-if="ready && store.deck"
             v-model="aiOpen"
             :deck="{
                 id: store.deck.id,
@@ -198,6 +198,10 @@ const { updateCard, deleteCard } = useCards();
 const srs = useSrsStore();
 const toast = useToast();
 const { t } = useT();
+
+// Only treat the loaded deck as renderable when it matches the current route —
+// guards against a stale/previous deck flashing for the new URL.
+const ready = computed(() => !!store.deck && store.deck.id === id.value);
 
 const confirmOpen = ref(false);
 const aiOpen = ref(false);

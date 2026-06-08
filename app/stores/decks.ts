@@ -44,13 +44,26 @@ export const useDecksStore = defineStore('decks', () => {
         await fetchList({ cursor: nextCursor.value, append: true });
     };
 
+    // Monotonic token so out-of-order responses can't clobber a newer fetch.
+    let fetchSeq = 0;
     const fetchOne = async (id: string) => {
+        const seq = ++fetchSeq;
         loadingDeck.value = true;
+        // Never render a previously-loaded *different* deck while the new one
+        // loads — drop it so the page falls back to its loader, not stale data.
+        if (deck.value && deck.value.id !== id) {
+            deck.value = null;
+        }
         try {
-            deck.value = await decksApi.getDeck(id);
-            return deck.value;
+            const result = await decksApi.getDeck(id);
+            if (seq === fetchSeq) {
+                deck.value = result;
+            }
+            return result;
         } finally {
-            loadingDeck.value = false;
+            if (seq === fetchSeq) {
+                loadingDeck.value = false;
+            }
         }
     };
 
