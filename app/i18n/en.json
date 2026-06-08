@@ -15,6 +15,7 @@
         "decks": "My Decks",
         "discover": "Discover",
         "statistics": "Statistics",
+        "ai": "AI assistant",
         "practice": "Practice",
         "profile": "Profile"
     },
@@ -528,6 +529,23 @@
         "errorInvalidUrl": "Enter a valid Quizlet set URL.",
         "errorFetch": "Couldn’t open this Quizlet set. Make sure it’s public.",
         "errorParse": "Couldn’t read cards from this set — Quizlet may have changed its page."
+    },
+    "aiPage": {
+        "title": "AI assistant",
+        "subtitle": "Generate a deck from a topic, or turn a word list into flashcards.",
+        "greeting": "Hi! Give me a topic and I'll draft a deck, or switch to “Define words” to turn a list into flashcards.",
+        "modeGenerate": "Generate a deck",
+        "modeDefine": "Define words",
+        "send": "Generate",
+        "thinking": "Thinking…",
+        "draftReady": "Here's a draft for “{topic}” — {n} cards:",
+        "createDeck": "Create this deck",
+        "defineHint": "Paste a list of words and I'll generate definitions you can review and save.",
+        "openImporter": "Open word importer",
+        "userGenerate": "Make a deck about: {topic}",
+        "error": "Sorry, I couldn't generate that. Try a different topic.",
+        "created": "Deck created!",
+        "topicRequired": "Tell me a topic first."
     },
     "mimi": {
         "idle": [
