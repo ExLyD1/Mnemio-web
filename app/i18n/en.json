@@ -514,6 +514,21 @@
         "added": "Added {n} cards",
         "enrichError": "AI couldn’t generate definitions. Try again."
     },
+    "quizlet": {
+        "title": "Import from Quizlet",
+        "launch": "Import from Quizlet",
+        "urlLabel": "Public Quizlet set URL",
+        "urlPlaceholder": "https://quizlet.com/123456/my-set",
+        "urlHint": "Paste a link to a public Quizlet set. Private sets can’t be imported.",
+        "fetch": "Fetch cards",
+        "fetching": "Fetching…",
+        "reviewHint": "Review the cards, edit anything, then save.",
+        "createN": "Create deck · {n} cards",
+        "empty": "Enter a Quizlet set URL.",
+        "errorInvalidUrl": "Enter a valid Quizlet set URL.",
+        "errorFetch": "Couldn’t open this Quizlet set. Make sure it’s public.",
+        "errorParse": "Couldn’t read cards from this set — Quizlet may have changed its page."
+    },
     "mimi": {
         "idle": [
             "Ready when you are — tap a card to begin.",
