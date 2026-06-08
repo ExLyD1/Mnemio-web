@@ -99,6 +99,8 @@ const sortOptions = computed(() => [
 const totalCards = computed(() => store.summaries.reduce((sum, d) => sum + d.cardCount, 0));
 const totalDue = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
 
+const favCount = computed(() => store.summaries.filter((d) => prefs.isFavorite(d.id)).length);
+
 const filterOptions = computed(() => {
     const counts = new Map<string, number>();
     for (const d of store.summaries) {
@@ -109,13 +111,23 @@ const filterOptions = computed(() => {
         label: LANGUAGES.find((l) => l.code === code)?.label ?? code.toUpperCase(),
         count,
     }));
-    return [{ key: 'all', label: t('deck.filterAll'), count: store.summaries.length }, ...langs];
+    const base = [{ key: 'all', label: t('deck.filterAll'), count: store.summaries.length }];
+    if (favCount.value > 0) {
+        base.push({ key: 'favorites', label: t('deck.filterFavorites'), count: favCount.value });
+    }
+    return [...base, ...langs];
 });
 
 const deckVms = computed(() => {
-    const list = store.summaries.filter(
-        (d) => filter.value === 'all' || d.targetLanguage === filter.value,
-    );
+    const list = store.summaries.filter((d) => {
+        if (filter.value === 'all') {
+            return true;
+        }
+        if (filter.value === 'favorites') {
+            return prefs.isFavorite(d.id);
+        }
+        return d.targetLanguage === filter.value;
+    });
     const rows = list.map((d) => ({
         vm: deckToCardVm(d, prefs.isFavorite(d.id)),
         updatedAt: d.updatedAt,
