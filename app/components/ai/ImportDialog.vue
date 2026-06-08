@@ -44,11 +44,25 @@
 
         <!-- Step 2: review -->
         <div v-else class="flex flex-col gap-3">
-            <p class="text-small text-brand-muted">
-                {{ t('ai.reviewHint') }}
-                <span v-if="unfilledCount" class="text-error-soft">
+            <UiInputField
+                v-if="!props.deck"
+                v-model="newTitle"
+                :label="t('ai.titleLabel')"
+                :placeholder="t('ai.titlePlaceholder')"
+            />
+
+            <div class="flex flex-wrap items-baseline gap-x-2">
+                <p class="text-small text-brand-muted">{{ t('ai.reviewHint') }}</p>
+                <span v-if="unfilledCount" class="text-small text-error-soft">
                     {{ t('ai.unfilledCount').replace('{n}', String(unfilledCount)) }}
                 </span>
+            </div>
+            <p v-if="meta" class="text-small text-brand-muted">
+                {{
+                    t('ai.reviewSummary')
+                        .replace('{enriched}', String(meta.enriched))
+                        .replace('{requested}', String(meta.requested))
+                }}
             </p>
 
             <div class="max-h-[52vh] overflow-y-auto pr-1">
@@ -56,26 +70,31 @@
                     v-for="(row, i) in rows"
                     :key="i"
                     class="mb-2 flex items-start gap-3 rounded-xl border p-3"
-                    :class="
-                        row.definition.trim()
-                            ? 'border-line bg-bg-surface-2'
-                            : 'border-error-soft/60 bg-error-soft/5'
-                    "
+                    :class="rowTone(row)"
                 >
-                    <div class="w-32 shrink-0 pt-1.5">
-                        <p class="truncate font-display text-base text-cream" :title="row.word">
-                            {{ row.word }}
-                        </p>
-                        <SharedPill v-if="!row.definition.trim()" tone="muted" class="mt-1">
+                    <input
+                        v-model="row.include"
+                        type="checkbox"
+                        class="mt-2.5 size-4 shrink-0 accent-brand-bright"
+                        :aria-label="t('ai.includeCard')"
+                    />
+                    <div class="flex min-w-0 flex-1 flex-col gap-2">
+                        <input
+                            v-model="row.word"
+                            type="text"
+                            :placeholder="t('card.word')"
+                            class="w-full break-words rounded-lg border border-brand-muted bg-transparent px-3 py-1.5 font-display text-base text-cream outline-none focus:border-brand-bright"
+                        />
+                        <textarea
+                            v-model="row.definition"
+                            rows="2"
+                            :placeholder="t('ai.definitionPlaceholder')"
+                            class="w-full resize-y rounded-lg border border-brand-muted bg-transparent px-3 py-1.5 text-small text-brand-pale outline-none focus:border-brand-bright"
+                        />
+                        <SharedPill v-if="!row.definition.trim()" tone="muted" class="w-fit">
                             {{ t('ai.unfilled') }}
                         </SharedPill>
                     </div>
-                    <textarea
-                        v-model="row.definition"
-                        rows="2"
-                        :placeholder="t('ai.definitionPlaceholder')"
-                        class="flex-1 resize-y rounded-lg border border-brand-muted bg-transparent px-3 py-1.5 text-small text-brand-pale outline-none focus:border-brand-bright"
-                    />
                     <button
                         type="button"
                         class="mt-1.5 shrink-0 rounded-md p-1 text-brand-muted transition-colors hover:text-error-soft"
@@ -104,7 +123,7 @@
                 </UiButton>
                 <UiButton
                     variant="primary"
-                    :disabled="!committableCount || committing"
+                    :disabled="!committableCount || committing || (!props.deck && !newTitle.trim())"
                     @click="onCommit"
                 >
                     <UiSpinner v-if="committing" size="sm" class="mr-2" />
@@ -123,10 +142,13 @@
 <script setup lang="ts">
 import { Trash2 } from 'lucide-vue-next';
 import { useDecks, useToast, useT } from '#imports';
-import { enrichWords, type AiDraftCard } from '@/api/ai';
+import { enrichWords, type AiDraftCard, type EnrichWordsResult } from '@/api/ai';
 import { bulkAddCards } from '@/api/cards';
 import { LANGUAGES } from '@/schemas/deck';
 import type { CardInput } from '@/types/deck';
+
+// A draft card plus a per-row include toggle for the review step.
+type ReviewRow = AiDraftCard & { include: boolean };
 
 const props = withDefaults(
     defineProps<{
@@ -151,10 +173,20 @@ const newTitle = ref('');
 const newSrc = ref('en');
 const newTgt = ref('en');
 const context = ref('');
-const rows = ref<AiDraftCard[]>([]);
+const rows = ref<ReviewRow[]>([]);
+const meta = ref<EnrichWordsResult['meta'] | null>(null);
 const loading = ref(false);
 const committing = ref(false);
 const error = ref('');
+
+const rowTone = (row: ReviewRow): string => {
+    if (!row.include) {
+        return 'border-line bg-bg-surface-2 opacity-50';
+    }
+    return row.definition.trim()
+        ? 'border-line bg-bg-surface-2'
+        : 'border-error-soft/60 bg-error-soft/5';
+};
 
 const parseWords = (): string[] => {
     const seen = new Set<string>();
@@ -179,9 +211,11 @@ const parseWords = (): string[] => {
 
 const parsedCount = computed(() => parseWords().length);
 const committableCount = computed(
-    () => rows.value.filter((r) => r.definition.trim().length > 0).length,
+    () => rows.value.filter((r) => r.include && r.definition.trim().length > 0).length,
 );
-const unfilledCount = computed(() => rows.value.length - committableCount.value);
+const unfilledCount = computed(
+    () => rows.value.filter((r) => r.include && !r.definition.trim()).length,
+);
 
 const reset = () => {
     step.value = 'input';
@@ -189,6 +223,7 @@ const reset = () => {
     newTitle.value = '';
     context.value = '';
     rows.value = [];
+    meta.value = null;
     loading.value = false;
     committing.value = false;
     error.value = '';
@@ -222,7 +257,8 @@ const onEnrich = async () => {
             targetLanguage: target,
             context: context.value.trim() || undefined,
         });
-        rows.value = res.cards.map((c) => ({ ...c }));
+        rows.value = res.cards.map((c) => ({ ...c, include: c.definition.trim().length > 0 }));
+        meta.value = res.meta;
         step.value = 'review';
     } catch (e) {
         error.value = (e as { message?: string }).message ?? t('ai.enrichError');
@@ -243,7 +279,9 @@ const toCardInput = (r: AiDraftCard): CardInput => ({
 });
 
 const onCommit = async () => {
-    const cards = rows.value.filter((r) => r.definition.trim().length > 0).map(toCardInput);
+    const cards = rows.value
+        .filter((r) => r.include && r.definition.trim().length > 0)
+        .map(toCardInput);
     if (!cards.length) {
         error.value = t('ai.noCommittable');
         return;

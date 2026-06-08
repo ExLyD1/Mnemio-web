@@ -62,6 +62,12 @@
                         :options="languageOptions"
                     />
                 </div>
+                <UiSelect
+                    v-model="aiCount"
+                    :label="t('deck.aiCount')"
+                    :options="countOptions"
+                    class="sm:max-w-[12rem]"
+                />
                 <UiButton
                     variant="primary"
                     class="self-start"
@@ -74,9 +80,9 @@
             </div>
 
             <div v-else class="mt-4 flex flex-col gap-3">
+                <UiInputField v-model="draft.title" :label="t('ai.titleLabel')" />
                 <div class="rounded-xl border border-line bg-bg-surface p-4">
-                    <p class="font-display text-h3 text-cream">{{ draft.title }}</p>
-                    <p class="mt-1 text-small text-brand-muted">{{ draft.description }}</p>
+                    <p class="text-small text-brand-muted">{{ draft.description }}</p>
                     <p class="mt-2 text-small text-brand-pale">
                         {{ t('deck.cardCount').replace('{n}', String(draft.cards.length)) }}
                     </p>
@@ -127,9 +133,13 @@ const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label })
 const topic = ref('');
 const aiSource = ref('en');
 const aiTarget = ref('es');
+const aiCount = ref('12');
 const generating = ref(false);
 const accepting = ref(false);
 const draft = ref<AiDeckDraft | null>(null);
+
+// Backend caps generate-deck at 20 words (see ai.schema.ts) — keep options ≤ 20.
+const countOptions = ['8', '12', '16', '20'].map((n) => ({ value: n, label: n }));
 
 const onSubmit = async (payload: {
     title: string;
@@ -156,7 +166,7 @@ const onGenerate = async () => {
             topic: topic.value.trim(),
             sourceLanguage: aiSource.value,
             targetLanguage: aiTarget.value,
-            count: 8,
+            count: Number(aiCount.value),
         });
         draft.value = res.draft;
     } catch {
