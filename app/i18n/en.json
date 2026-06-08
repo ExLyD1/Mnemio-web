@@ -210,6 +210,9 @@
         "heading": "Review",
         "inHours": "in {h}h",
         "inDays": "in {d}d",
+        "resultsTitle": "Review complete!",
+        "resultsSummary": "You reviewed {n} cards · {pct}% recalled.",
+        "backToDashboard": "Back to dashboard",
         "errors": {
             "rate_failed": "Could not save your rating. Try again."
         }
