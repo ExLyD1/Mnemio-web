@@ -1,5 +1,7 @@
 <template>
-    <div class="rounded-xl border border-brand-muted px-4 pb-3 pt-2 focus-within:border-brand-pale transition-colors">
+    <div
+        class="rounded-xl border border-brand-muted px-4 pb-3 pt-2 focus-within:border-brand-pale transition-colors"
+    >
         <span class="mb-0.5 block text-[11px] leading-none text-brand-muted">{{ label }}</span>
         <div class="flex items-center gap-2">
             <input
@@ -17,8 +19,14 @@
                     type="button"
                     @click="showPassword = !showPassword"
                 >
-                    <Eye v-if="!showPassword" class="size-4 text-brand-muted transition-colors hover:text-brand-pale" />
-                    <EyeOff v-else class="size-4 text-brand-muted transition-colors hover:text-brand-pale" />
+                    <Eye
+                        v-if="!showPassword"
+                        class="size-4 text-brand-muted transition-colors hover:text-brand-pale"
+                    />
+                    <EyeOff
+                        v-else
+                        class="size-4 text-brand-muted transition-colors hover:text-brand-pale"
+                    />
                 </button>
             </div>
         </div>
@@ -30,15 +38,20 @@ import { Eye, EyeOff } from 'lucide-vue-next';
 
 defineOptions({ inheritAttrs: false });
 
-const props = withDefaults(defineProps<{
-    modelValue: string;
-    label: string;
-    type?: string;
-    placeholder?: string;
-}>(), { type: 'text', placeholder: '' });
+const props = withDefaults(
+    defineProps<{
+        modelValue: string;
+        label: string;
+        type?: string;
+        placeholder?: string;
+    }>(),
+    { type: 'text', placeholder: '' },
+);
 
 defineEmits<{ 'update:modelValue': [value: string] }>();
 
 const showPassword = ref(false);
-const inputType = computed(() => props.type === 'password' && showPassword.value ? 'text' : props.type);
+const inputType = computed(() =>
+    props.type === 'password' && showPassword.value ? 'text' : props.type,
+);
 </script>

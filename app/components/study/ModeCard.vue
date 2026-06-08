@@ -4,9 +4,7 @@
         class="group flex flex-col items-start gap-3 rounded-2xl border border-line bg-bg-surface p-6 text-left transition-all hover:-translate-y-0.5 hover:border-line-strong"
         @click="$emit('select')"
     >
-        <div
-            class="grid size-10 place-items-center rounded-xl bg-lavender-soft text-lavender"
-        >
+        <div class="grid size-10 place-items-center rounded-xl bg-lavender-soft text-lavender">
             <component :is="icon" class="size-5" />
         </div>
         <h3 class="text-h3 font-semibold text-cream">{{ title }}</h3>

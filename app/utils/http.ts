@@ -18,23 +18,39 @@ const isApiError = (e: unknown): e is ApiError =>
     !!e && typeof e === 'object' && 'code' in e && 'message' in e;
 
 const normalizeError = (err: unknown): ApiError => {
-    if (isApiError(err)) return err;
+    if (isApiError(err)) {
+        return err;
+    }
     const anyErr = err as { data?: unknown; message?: string; status?: number };
-    if (anyErr?.data && isApiError(anyErr.data)) return anyErr.data;
-    if (anyErr?.data && typeof anyErr.data === 'object') {
+    if (anyErr.data && isApiError(anyErr.data)) {
+        return anyErr.data;
+    }
+    if (anyErr.data && typeof anyErr.data === 'object') {
         const d = anyErr.data as Record<string, unknown>;
         if (typeof d.code === 'string' && typeof d.message === 'string') {
-            return { code: d.code, message: d.message, details: d.details as Record<string, unknown> | undefined };
+            return {
+                code: d.code,
+                message: d.message,
+                details: d.details as Record<string, unknown> | undefined,
+            };
         }
     }
-    const status = anyErr?.status ?? 0;
-    if (status === 429) return { code: 'RATE_LIMITED', message: 'Too many requests.' };
-    if (status === 401) return { code: 'AUTH_UNAUTHENTICATED', message: 'Not signed in.' };
-    if (status === 403) return { code: 'AUTH_FORBIDDEN', message: 'Not allowed.' };
-    if (status === 404) return { code: 'NOT_FOUND', message: 'Not found.' };
+    const status = anyErr.status ?? 0;
+    if (status === 429) {
+        return { code: 'RATE_LIMITED', message: 'Too many requests.' };
+    }
+    if (status === 401) {
+        return { code: 'AUTH_UNAUTHENTICATED', message: 'Not signed in.' };
+    }
+    if (status === 403) {
+        return { code: 'AUTH_FORBIDDEN', message: 'Not allowed.' };
+    }
+    if (status === 404) {
+        return { code: 'NOT_FOUND', message: 'Not found.' };
+    }
     return {
         code: 'NETWORK_ERROR',
-        message: anyErr?.message ?? 'Network request failed.',
+        message: 'Unable to reach the server. Please check your connection and try again.',
     };
 };
 
@@ -42,10 +58,18 @@ interface RefreshResponse {
     accessToken: string;
 }
 
+let _baseURL: string | undefined;
+const getBaseURL = (): string => {
+    _baseURL ??= (useRuntimeConfig().public.apiBase as string | undefined) ?? '';
+    return _baseURL;
+};
+
 let inflightRefresh: Promise<string | null> | null = null;
 
 const refreshAccessToken = async (baseURL: string): Promise<string | null> => {
-    if (inflightRefresh) return inflightRefresh;
+    if (inflightRefresh) {
+        return inflightRefresh;
+    }
     inflightRefresh = (async () => {
         try {
             const data = await $fetch<RefreshResponse>(`${API_PREFIX}/auth/refresh`, {
@@ -73,15 +97,16 @@ const onAuthFailure = async () => {
 };
 
 export const http = async <T>(path: string, options: HttpOptions = {}): Promise<T> => {
-    const config = useRuntimeConfig();
-    const baseURL = config.public.apiBase as string;
+    const baseURL = getBaseURL();
     const url = path.startsWith('/api/') || path.startsWith('http') ? path : `${API_PREFIX}${path}`;
 
     const buildHeaders = (): Record<string, string> => {
         const headers: Record<string, string> = { ...(options.headers ?? {}) };
         if (!options.skipAuth) {
             const token = readAccessToken();
-            if (token) headers.Authorization = `Bearer ${token}`;
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
         }
         return headers;
     };
@@ -100,7 +125,7 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
         return await send();
     } catch (err) {
         const normalized = normalizeError(err);
-        const status = (err as { status?: number })?.status ?? 0;
+        const status = (err as { status?: number }).status ?? 0;
 
         if (
             !options.skipAuth &&
@@ -115,10 +140,10 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
                     return await send();
                 } catch (retryErr) {
                     const retryNormalized = normalizeError(retryErr);
-                    if ((retryErr as { status?: number })?.status === 401) {
+                    if ((retryErr as { status?: number }).status === 401) {
                         await onAuthFailure();
                     }
-                    throw retryNormalized;
+                    throw Object.assign(new Error(retryNormalized.message), retryNormalized);
                 }
             }
             await onAuthFailure();
@@ -128,6 +153,6 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
             await onAuthFailure();
         }
 
-        throw normalized;
+        throw Object.assign(new Error(normalized.message), normalized);
     }
 };

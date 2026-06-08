@@ -36,7 +36,7 @@ withDefaults(
 
 const tones = {
     plain: 'border-line bg-bg-surface',
-    plum: 'border-brand-bright/40 bg-brand/25',
+    plum: 'border-lavender/60 bg-lavender/20 dark:border-brand-bright/40 dark:bg-brand/25',
     accent: 'border-accent/30 bg-accent/10',
 } as const;
 </script>

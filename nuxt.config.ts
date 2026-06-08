@@ -11,6 +11,14 @@ export default defineNuxtConfig({
         '@nuxtjs/tailwindcss',
     ],
 
+    colorMode: {
+        // Class names go straight on <html> as `light` / `dark` (no suffix) so
+        // they match Tailwind's class-based dark mode and our CSS palette.
+        classSuffix: '',
+        preference: 'dark', // default/main theme
+        fallback: 'dark',
+    },
+
     i18n: {
         defaultLocale: 'en',
         strategy: 'no_prefix',
@@ -30,7 +38,7 @@ export default defineNuxtConfig({
             // Empty in dev → client issues relative /api/v1 requests that hit our own
             // origin and are proxied (below) to the backend. This keeps the refresh
             // cookie first-party. Set NUXT_PUBLIC_API_BASE in prod (same-site there).
-            apiBase: process.env.NUXT_PUBLIC_API_BASE ?? '',
+            apiBase: '',
         },
     },
 

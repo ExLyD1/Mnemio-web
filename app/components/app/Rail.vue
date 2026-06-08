@@ -11,8 +11,8 @@
                 <NuxtLink
                     :to="link.to"
                     :aria-label="link.label"
-                    class="grid size-11 place-items-center rounded-[13px] text-brand-muted transition-colors hover:bg-white/[0.04] hover:text-cream"
-                    active-class="bg-brand text-cream"
+                    class="grid size-11 place-items-center rounded-[13px] text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream"
+                    active-class="bg-brand text-on-color"
                 >
                     <component :is="link.icon" class="size-5" />
                 </NuxtLink>

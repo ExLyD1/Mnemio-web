@@ -44,7 +44,7 @@
                     <div class="flex w-full items-center justify-center gap-3">
                         <button
                             type="button"
-                            class="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-white/[0.04] hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
+                            class="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
                             :aria-label="t('study.prevCard')"
                             :disabled="practice.study.currentIndex.value === 0"
                             @click="practice.goPrev"
@@ -61,7 +61,7 @@
                         </Transition>
                         <button
                             type="button"
-                            class="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-white/[0.04] hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
+                            class="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
                             :aria-label="t('study.nextCard')"
                             :disabled="
                                 practice.study.currentIndex.value >=
@@ -72,12 +72,14 @@
                             <ChevronRight class="size-5" />
                         </button>
                     </div>
-                    <Transition name="rate">
-                        <StudyRatingRow v-if="practice.revealed.value" @grade="onGrade" />
-                        <p v-else class="text-small text-brand-muted">
-                            {{ t('study.revealHint') }}
-                        </p>
-                    </Transition>
+                    <div class="flex min-h-[72px] w-full items-center justify-center">
+                        <Transition name="rate" mode="out-in">
+                            <StudyRatingRow v-if="practice.revealed.value" @grade="onGrade" />
+                            <p v-else class="text-small text-brand-muted">
+                                {{ t('study.revealHint') }}
+                            </p>
+                        </Transition>
+                    </div>
                 </template>
 
                 <StudyMultipleChoiceCard
@@ -272,17 +274,12 @@ onBeforeUnmount(() => {
     transform: translateY(-10px);
 }
 .rate-enter-active {
-    transition:
-        opacity 0.3s ease 0.08s,
-        transform 0.3s ease 0.08s;
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.15s;
 }
 .rate-leave-active {
-    transition: opacity 0.15s ease;
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.rate-enter-from {
-    opacity: 0;
-    transform: translateY(12px);
-}
+.rate-enter-from,
 .rate-leave-to {
     opacity: 0;
 }

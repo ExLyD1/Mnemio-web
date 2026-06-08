@@ -84,7 +84,7 @@
                             v-for="d in store.summaries"
                             :key="d.id"
                             :to="`/decks/${d.id}`"
-                            class="flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.02]"
+                            class="flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors hover:bg-brand/10"
                         >
                             <span class="truncate font-display text-base text-cream">{{
                                 d.title
@@ -116,16 +116,11 @@
                         :label="t('profile.username')"
                         :placeholder="t('profile.usernamePlaceholder')"
                     />
-                    <div>
-                        <span class="mb-1 block text-small text-brand-muted">{{
-                            t('profile.birthday')
-                        }}</span>
-                        <input
-                            v-model="draft.birthday"
-                            type="date"
-                            class="w-full rounded-xl border border-brand-muted bg-transparent px-4 py-2.5 text-body text-brand-pale outline-none focus:border-brand-bright"
-                        />
-                    </div>
+                    <UiInputField
+                        v-model="draft.birthday"
+                        type="date"
+                        :label="t('profile.birthday')"
+                    />
                     <UiSelect
                         v-model="draft.nativeLanguage"
                         :label="t('profile.nativeLanguage')"

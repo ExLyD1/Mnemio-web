@@ -1,2 +1,73 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&display=swap');
+
+/*
+ * Theme palette. Values are space-separated RGB channels so Tailwind's
+ * `rgb(var(--x) / <alpha-value>)` tokens (see tailwind.config.ts) can apply
+ * opacity modifiers. Dark is the default/main theme; .light flips surfaces to
+ * cream and text to deep plum, on a lavender-tinted page.
+ */
+:root,
+.dark {
+    color-scheme: dark;
+
+    --c-bg-base: 20 17 28; /* page — dark plum */
+    --c-bg-deep: 12 10 18; /* sunken pockets */
+    --c-bg-surface: 36 31 52; /* cards, rail — clearly elevated */
+    --c-bg-surface-2: 50 43 70; /* second-level surfaces */
+    --c-bg-well: 15 13 22; /* input wells */
+    --c-bg-muted: 72 67 88;
+
+    --c-cream: 233 224 216; /* primary text */
+    --c-brand-muted: 142 118 146; /* secondary text */
+    --c-brand-pale: 206 178 189; /* tertiary text / chips */
+    --c-brand-light: 226 210 200;
+
+    --c-on-color: 244 238 248; /* light text on colored fills */
+    --c-line: 227 210 200; /* borders (alpha applied) */
+
+    --c-fc-front: linear-gradient(160deg, #2c1a2a 0%, #1a1020 100%);
+    --c-fc-back: linear-gradient(160deg, #572f54 0%, #482b5c 100%);
+
+    /* Mimi coach panel wash — dark plum in the default/dark theme. */
+    --c-mimi-ambient: radial-gradient(
+        130% 120% at 50% 0%,
+        rgba(87, 47, 84, 0.55),
+        rgba(14, 11, 18, 0.4)
+    );
+}
+
+.light {
+    color-scheme: light;
+
+    --c-bg-base: 205 193 228; /* page — medium lavender */
+    --c-bg-deep: 190 178 214; /* sunken pockets */
+    --c-bg-surface: 252 247 242; /* cards, rail — near-white cream */
+    --c-bg-surface-2: 244 237 228; /* second-level surfaces */
+    --c-bg-well: 255 253 250; /* input wells */
+    --c-bg-muted: 186 177 202;
+
+    --c-cream: 58 39 56; /* primary text — deep plum */
+    --c-brand-muted: 120 96 122; /* secondary text */
+    --c-brand-pale: 79 50 77; /* tertiary text / chips */
+    --c-brand-light: 87 46 84;
+
+    --c-on-color: 244 238 248; /* light text on colored fills */
+    --c-line: 87 47 84; /* borders — plum (alpha applied) */
+
+    --c-fc-front: linear-gradient(160deg, #faf5ef 0%, #f2eae0 100%);
+    --c-fc-back: linear-gradient(160deg, #f0e8de 0%, #e8ddd0 100%);
+
+    /* Mimi coach panel wash — soft lavender on cream for the light theme so the
+       panel no longer reads as a dark block against the lavender page. */
+    --c-mimi-ambient: radial-gradient(
+        130% 120% at 50% 0%,
+        rgba(169, 142, 227, 0.2),
+        rgba(252, 247, 242, 0.55)
+    );
+}
+
+body {
+    background-color: rgb(var(--c-bg-base));
+    color: rgb(var(--c-cream));
+}

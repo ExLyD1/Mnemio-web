@@ -45,6 +45,15 @@
                     :title="`${d.label}: ${d.value}`"
                 />
             </div>
+            <div class="mt-1.5 flex gap-1">
+                <div
+                    v-for="(d, i) in series"
+                    :key="i"
+                    class="flex-1 truncate text-center text-small text-brand-muted"
+                >
+                    {{ d.label }}
+                </div>
+            </div>
         </div>
 
         <div class="rounded-[20px] border border-line bg-bg-surface p-5">
@@ -55,7 +64,7 @@
                 <div
                     v-for="d in store.summaries"
                     :key="d.id"
-                    class="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.02]"
+                    class="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-brand/10"
                 >
                     <NuxtLink
                         :to="`/decks/${d.id}`"

@@ -13,6 +13,19 @@
             </p>
         </header>
 
+        <DashboardContinueStudying
+            v-if="resumeSession"
+            :session="resumeSession"
+            :deck-title="resumeDeckTitle"
+            @resume="onResume"
+        />
+
+        <DashboardMostPracticed
+            v-if="topDecks.length"
+            :decks="topDecks"
+            @practice="(id) => navigateTo(`/study/${id}`)"
+        />
+
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <SharedStatTile
                 :label="t('dashboard.statDueToday')"
@@ -139,8 +152,13 @@ import { useAuthStore, useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useMimi } from '@/composables/useMimi';
 import { useAppLocale } from '@/composables/useAppLocale';
+import { useSessionsStore } from '@/stores/sessions';
 import * as aiApi from '@/api/ai';
+import * as statsApi from '@/api/stats';
 import { deckToCardVm } from '@/utils/deckVm';
+import { swatchFor } from '@/utils/coverSwatches';
+import type { DeckCardVM } from '@/types/deck';
+import type { DeckPerformance } from '@/types/stats';
 
 definePageMeta({ layout: 'default' });
 
@@ -148,6 +166,7 @@ const auth = useAuthStore();
 const { store, fetchList } = useDecks();
 const stats = useStats();
 const mimi = useMimi();
+const sessions = useSessionsStore();
 const { t } = useT();
 const { current: locale } = useAppLocale();
 
@@ -179,12 +198,65 @@ const toVm = (deckId: string) => {
 const featured = computed(() => (store.summaries[0] ? toVm(store.summaries[0].id) : null));
 const recentVms = computed(() => store.summaries.slice(0, 8).map((d) => deckToCardVm(d)));
 
+// Quick continue — resume the last practiced deck (the active session, or the most
+// recent one left unfinished).
+const resumeSession = computed(() => sessions.active ?? sessions.latestIncomplete);
+const resumeDeckTitle = computed(
+    () => store.summaries.find((d) => d.id === resumeSession.value?.deckId)?.title ?? null,
+);
+
+const onResume = () => {
+    const s = resumeSession.value;
+    if (!s) {
+        return;
+    }
+    if (s.mode === 'srs') {
+        navigateTo('/review');
+        return;
+    }
+    navigateTo(`/study/${s.deckId}/${s.mode}`);
+};
+
+// Most practiced — top decks by total reviews, with quick-start practice.
+const deckPerf = ref<DeckPerformance[]>([]);
+const topDecks = computed<DeckCardVM[]>(() =>
+    [...deckPerf.value]
+        .filter((p) => p.reviewed > 0)
+        .sort((a, b) => b.reviewed - a.reviewed)
+        .slice(0, 4)
+        .map((p) => {
+            const summary = store.summaries.find((s) => s.id === p.deckId);
+            if (summary) {
+                return { ...deckToCardVm(summary), reviewed: p.reviewed };
+            }
+            return {
+                id: p.deckId,
+                title: p.title,
+                total: p.cardCount,
+                masteredPct: p.masteryPct,
+                due: 0,
+                swatch: swatchFor(p.deckId),
+                reviewed: p.reviewed,
+            };
+        }),
+);
+
 const weeks = computed(() => stats.monthWeeks.value);
 const monthLabel = computed(() => stats.monthLabel.value);
 
 onMounted(async () => {
     mimi.message.value = mimi.suggestion();
-    await Promise.all([fetchList.execute({ cursor: null, append: false }), stats.load()]);
+    await Promise.all([
+        fetchList.execute({ cursor: null, append: false }),
+        stats.load(),
+        sessions.hydrate().catch(() => {}),
+        statsApi
+            .getDeckPerformance()
+            .then((res) => {
+                deckPerf.value = res.items;
+            })
+            .catch(() => {}),
+    ]);
     try {
         const s = await aiApi.suggest('dashboard');
         mimi.message.value = s.suggestion;

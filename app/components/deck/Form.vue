@@ -111,8 +111,10 @@ const { handleSubmit } = useForm({
 
 const { value: title, errorMessage: titleError } = useField<string>('title');
 const { value: description, errorMessage: descriptionError } = useField<string>('description');
-const { value: sourceLanguage, errorMessage: sourceLanguageError } = useField<string>('sourceLanguage');
-const { value: targetLanguage, errorMessage: targetLanguageError } = useField<string>('targetLanguage');
+const { value: sourceLanguage, errorMessage: sourceLanguageError } =
+    useField<string>('sourceLanguage');
+const { value: targetLanguage, errorMessage: targetLanguageError } =
+    useField<string>('targetLanguage');
 
 const onSubmit = handleSubmit((values) => {
     emit('submit', {

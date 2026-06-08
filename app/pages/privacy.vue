@@ -1,42 +1,51 @@
 <template>
-    <MarketingLegal
-        title="Privacy Policy"
-        updated="June 2026"
-        :summary="summary"
-        :sections="sections"
-    />
+    <div class="mx-auto max-w-2xl px-6 py-16">
+        <NuxtLink
+            to="/login"
+            class="mb-8 inline-flex items-center gap-2 text-small text-brand-muted hover:text-cream"
+        >
+            <ChevronLeft class="size-4" /> Back to login
+        </NuxtLink>
+        <h1 class="font-display text-h1 text-cream">Privacy Policy</h1>
+        <p class="mt-2 text-small text-brand-muted">Last updated: June 2025</p>
+        <div class="mt-10 flex flex-col gap-8 text-body text-cream-dim">
+            <section>
+                <h2 class="mb-3 font-display text-h3 text-cream">1. Information we collect</h2>
+                <p>
+                    We collect the email address and password you provide when creating an account,
+                    along with usage data such as the decks you study and your session history. We
+                    do not sell your personal data to third parties.
+                </p>
+            </section>
+            <section>
+                <h2 class="mb-3 font-display text-h3 text-cream">2. How we use it</h2>
+                <p>
+                    Your data is used solely to operate the service — to authenticate you, sync your
+                    study progress, and improve the app experience.
+                </p>
+            </section>
+            <section>
+                <h2 class="mb-3 font-display text-h3 text-cream">3. Data retention</h2>
+                <p>
+                    You can delete your account at any time from the Profile page. Upon deletion,
+                    all associated data is permanently removed within 30 days.
+                </p>
+            </section>
+            <section>
+                <h2 class="mb-3 font-display text-h3 text-cream">4. Contact</h2>
+                <p>
+                    For privacy-related questions contact us at
+                    <a href="mailto:privacy@mnemio.app" class="text-accent hover:underline"
+                        >privacy@mnemio.app</a
+                    >.
+                </p>
+            </section>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'marketing' });
+import { ChevronLeft } from 'lucide-vue-next';
 
-const summary =
-    'We collect the minimum needed to run Mnemio, never sell your data, and give you control over what you share. This page explains the details in plain language.';
-
-const sections = [
-    {
-        heading: 'What we collect',
-        body: 'Your account email, the decks and cards you create, and your study progress. That’s it — no tracking pixels, no ad networks.',
-    },
-    {
-        heading: 'How we use it',
-        body: 'To run spaced-repetition scheduling, show your statistics, and keep your account secure. We do not use your content to train third-party models.',
-    },
-    {
-        heading: 'Storage and security',
-        body: 'Data is stored encrypted in transit and at rest. Access tokens are short-lived and refresh tokens are kept in HttpOnly cookies.',
-    },
-    {
-        heading: 'Your choices',
-        body: 'You can edit or delete any deck or card at any time, export your data, or close your account and have it permanently removed.',
-    },
-    {
-        heading: 'Cookies',
-        body: 'We use a single essential cookie to keep you signed in. No analytics or advertising cookies are set.',
-    },
-    {
-        heading: 'Changes',
-        body: 'If this policy changes materially we’ll notify you in-app before the change takes effect.',
-    },
-];
+definePageMeta({ layout: 'auth' });
 </script>

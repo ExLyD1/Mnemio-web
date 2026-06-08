@@ -14,6 +14,7 @@ export default [
             'node_modules/**',
             'eslint.config.js',
             '.nuxt/**',
+            '.output/**',
             'public/**',
         ],
     },

@@ -1,7 +1,7 @@
 # Mnemio Backend — Build Plan (derived from the frontend)
 
-> Companion to [`api-contract.md`](./api-contract.md). That file is the *what* for
-> the MVP core; this file is the *plan* for building the backend the redesigned
+> Companion to [`api-contract.md`](./api-contract.md). That file is the _what_ for
+> the MVP core; this file is the _plan_ for building the backend the redesigned
 > frontend actually needs — confirming the core, flagging FE↔contract mismatches,
 > and specifying the new domains the redesign introduced.
 
@@ -32,20 +32,20 @@ the FE swap is mock → `http` with minimal churn.
 
 ## Current state — who calls what
 
-| Domain | FE consumer | Today | Target |
-|---|---|---|---|
-| Auth / Users | `app/api/auth.ts` (real `http`) | **REAL** | keep + small additions |
-| Decks | `app/api/decks.ts` (mockStore) | MOCK | build real |
-| Cards | `app/api/cards.ts` (mockStore) | MOCK | build real + expand model |
-| Sessions | `app/api/sessions.ts` (mockStore) | MOCK | build real |
-| SRS | `app/api/srs.ts` (mockStore) | MOCK | build real |
-| Dashboard | not called (Home composes decks+srs+stats) | — | build; FE adopts |
-| Statistics | `useStats.ts` | CLIENT MOCK | **NEW** |
-| Achievements | `useStats.achievements` | CLIENT MOCK | **NEW** |
-| Preferences | `stores/preferences.ts` (localStorage) | CLIENT MOCK | **NEW** |
-| Discover | `useDiscover.ts` | CLIENT MOCK | **NEW** (was "out of MVP") |
-| AI (generate/suggest) | disabled in UI | — | **NEW** (optional) |
-| Media (audio/image/avatar) | disabled in UI | — | **NEW** (optional) |
+| Domain                     | FE consumer                                | Today       | Target                     |
+| -------------------------- | ------------------------------------------ | ----------- | -------------------------- |
+| Auth / Users               | `app/api/auth.ts` (real `http`)            | **REAL**    | keep + small additions     |
+| Decks                      | `app/api/decks.ts` (mockStore)             | MOCK        | build real                 |
+| Cards                      | `app/api/cards.ts` (mockStore)             | MOCK        | build real + expand model  |
+| Sessions                   | `app/api/sessions.ts` (mockStore)          | MOCK        | build real                 |
+| SRS                        | `app/api/srs.ts` (mockStore)               | MOCK        | build real                 |
+| Dashboard                  | not called (Home composes decks+srs+stats) | —           | build; FE adopts           |
+| Statistics                 | `useStats.ts`                              | CLIENT MOCK | **NEW**                    |
+| Achievements               | `useStats.achievements`                    | CLIENT MOCK | **NEW**                    |
+| Preferences                | `stores/preferences.ts` (localStorage)     | CLIENT MOCK | **NEW**                    |
+| Discover                   | `useDiscover.ts`                           | CLIENT MOCK | **NEW** (was "out of MVP") |
+| AI (generate/suggest)      | disabled in UI                             | —           | **NEW** (optional)         |
+| Media (audio/image/avatar) | disabled in UI                             | —           | **NEW** (optional)         |
 
 **Conventions:** reuse `api-contract.md §1` verbatim (base `/api/v1`, error envelope
 `{code,message,details?}`, cursor pagination `{items,nextCursor}`, rate limits).
@@ -78,24 +78,27 @@ Resolve each (recommendation in **bold**):
 
 ## Domain specs
 
-### 1. Auth & Users — *extend* (mostly done)
+### 1. Auth & Users — _extend_ (mostly done)
+
 Keep register/verify-email/resend-otp/login/refresh/logout/me + `PATCH /users/me`
 (fullName, username, birthday). Ensure `User` exposes `xp`, `streak`, `createdAt`
 (Profile "member since" + stat tiles read these). Avatar upload → P2.
 
-### 2. Decks — *build real*
+### 2. Decks — _build real_
+
 - `GET /decks?cursor&limit&q` → `Page<Deck> + total` (sort `updatedAt DESC`).
 - `POST /decks` `{title, description, sourceLanguage, targetLanguage, coverColor?,
-  glyph?, subject?, isPublic?}` → Deck.
+glyph?, subject?, isPublic?}` → Deck.
 - `GET /decks/:id` → deck + full cards. `PATCH /decks/:id`, `DELETE /decks/:id`.
 - **New fields:** `coverColor`, `glyph`, `subject`, `isPublic`, `copyCount`,
   `sourceDeckId`.
 - **Embed per-deck stats** in deck responses: `stats {total, mastered, learning,
-  new, due, masteredPct}`. Today Library/Home/DeckDetail/Statistics each recompute
+new, due, masteredPct}`. Today Library/Home/DeckDetail/Statistics each recompute
   this via `app/composables/useDeckStats.ts`; serving it once removes the heavy
   `srs.fetchAll()` fan-out.
 
-### 3. Cards — *build real + expand model*
+### 3. Cards — _build real + expand model_
+
 - CRUD + `POST /decks/:id/cards/bulk` (contract). `GET /decks/:id/cards` paged.
 - **Expand `Card`** to match the study/add-card designs (Add Card already captures
   these but doesn't send them yet): `partOfSpeech`, `example`, `exampleTranslation`,
@@ -103,60 +106,71 @@ Keep register/verify-email/resend-otp/login/refresh/logout/me + `PATCH /users/me
   `difficulty: 'easy'|'medium'|'hard'`, `type: 'basic'|'cloze'|'image'`,
   `audioUrl`, `imageUrl`. Replaces the client enrichment in `app/utils/studyCard.ts`.
 
-### 4. Sessions — *build real*
+### 4. Sessions — _build real_
+
 Per contract (start/patch/complete/exit/resume/active/incomplete). **Add summary
 fields** so Session Summary is server-backed instead of client-built in
 `usePractice`/`stores/practice.ts`: per-grade `counts {again,hard,good,easy}`,
 `revisitCardIds`, `durationMs`.
 
-### 5. SRS — *build real*
+### 5. SRS — _build real_
+
 `POST /srs/rate`, `GET /srs/due`, `GET /srs/progress` per contract; SM-2 identical
 to `useSpacedRepetition.ts`.
 
-### 6. Dashboard — *build; FE adopts*
+### 6. Dashboard — _build; FE adopts_
+
 `GET /dashboard` → `{stats{decks,cards,xp}, dueCount, recentDecks,
 continueStudying}`. Lets `pages/dashboard.vue` drop its decks+srs+stats composition.
 
-### 7. Statistics — *NEW* (replaces `useStats`)
+### 7. Statistics — _NEW_ (replaces `useStats`)
+
 Shapes mirror `useStats.ts`:
+
 - `GET /stats/overview?range=7|30|90|all` → `{reviewed, retention, streak,
-  dueCount, trends}`.
+dueCount, trends}`.
 - `GET /stats/activity` → year heat (`number[][]`, weeks×7) + month calendar.
 - `GET /stats/series?range` → daily `[{label, value}]`.
 - `GET /stats/decks` → per-deck performance (retention, masteryPct).
 - Optional P2: forecast (14-day due), study-patterns (hour×day), XP/league.
 - Needs a **DailyActivity rollup** table for cheap heatmaps/streaks.
 
-### 8. Achievements — *NEW*
+### 8. Achievements — _NEW_
+
 `GET /achievements` → `[{id, name, note, earned, earnedAt?, progress?}]` (mirror
 `useStats.achievements`). Catalog + per-user unlock, evaluated on
 session-complete / rate.
 
-### 9. Preferences — *NEW* (replaces `stores/preferences.ts`)
+### 9. Preferences — _NEW_ (replaces `stores/preferences.ts`)
+
 - `GET /users/me/preferences`, `PATCH /users/me/preferences` →
   `{favorites: deckId[], interests: string[], goal, nativeLanguage,
-  learningLanguages: string[], avatarHue, mimiPlacement}`.
+learningLanguages: string[], avatarHue, mimiPlacement}`.
 - Written by Onboarding, Profile edit, and deck favoriting. (Name/username/birthday
   stay on `/users/me`.) Favorites alternative: `POST/DELETE /decks/:id/favorite`.
 
-### 10. Discover — *NEW* (public catalog; was out-of-MVP)
+### 10. Discover — _NEW_ (public catalog; was out-of-MVP)
+
 - `GET /discover/decks?cursor&q&lang&sort` → `Page<PublicDeck>` (+`author`,
   `copyCount`, `cardCount`, `tag`).
 - `GET /discover/featured`, `GET /discover/categories`.
 - `POST /decks/:id/copy` → clone a public deck (sets `sourceDeckId`, bumps
   `copyCount`). Needs `Deck.isPublic` + catalog.
 
-### 11. AI companion — *NEW, optional* (UI disabled today)
+### 11. AI companion — _NEW, optional_ (UI disabled today)
+
 - `POST /ai/generate-deck {topic}` → draft deck+cards (Create Deck "Generate with AI").
 - `POST /ai/suggest` → Mimi dashboard suggestion / weakest-deck insight.
 
-### 12. Media — *NEW, optional* (UI disabled today)
+### 12. Media — _NEW, optional_ (UI disabled today)
+
 Card audio (TTS) + image upload + avatar upload via object storage; return
 `audioUrl`/`imageUrl`/`avatarUrl`.
 
 ---
 
 ## Data model additions (Prisma-style summary)
+
 - **User**: `xp`, `streak` + relations → `Preference`, `UserAchievement`.
 - **Preference** (1:1 user): `interests[]`, `goal`, `nativeLanguage`,
   `learningLanguages[]`, `avatarHue`, `mimiPlacement`, `favorites` (deckId[] or a
@@ -173,6 +187,7 @@ Card audio (TTS) + image upload + avatar upload via object storage; return
 ---
 
 ## Build phasing
+
 - **P0 — make the FE real.** Decks, Cards, Sessions, SRS, Dashboard per contract +
   the §Reconciliations (`total`, full cards, `cardIndex`, rate deckId). Highest
   value: turns the demo into a real app.
@@ -182,6 +197,7 @@ Card audio (TTS) + image upload + avatar upload via object storage; return
   study-patterns/XP/league.
 
 ## FE swap checklist (when each domain lands)
+
 - Rewrite `app/api/{decks,cards,sessions,srs}.ts` to call `http(...)` (drop the
   `ownerId`/`userId` params) — mirror `app/api/auth.ts`. Update call sites in
   `app/stores/{decks,sessions,srs}.ts`.
@@ -192,6 +208,7 @@ Card audio (TTS) + image upload + avatar upload via object storage; return
 - Map `index`↔`cardIndex` in the api adapter.
 
 ## Open questions
+
 1. **Scope now:** P0-only, or P0+P1 in the first pass? P2 later?
 2. **Per-deck stats:** embed in deck responses (recommended) vs `/decks/:id/stats`?
 3. **Favorites:** `Preference.favorites` vs dedicated `DeckFavorite` / endpoints?
@@ -199,6 +216,7 @@ Card audio (TTS) + image upload + avatar upload via object storage; return
 5. **Stack:** confirm Fastify + Prisma + Postgres (as `api-contract.md` implies).
 
 ## Verification
+
 - Backend: `api-contract.md §5` smoke (register→verify→me) + curl per new route;
   unit tests for SM-2 (match `useSpacedRepetition.ts`) and session XP
   (`correct*10+25`).

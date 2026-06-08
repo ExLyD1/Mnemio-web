@@ -5,7 +5,7 @@
             <div class="flex gap-1">
                 <button
                     type="button"
-                    class="grid size-7 place-items-center rounded-lg text-brand-muted transition-colors hover:bg-white/[0.04] hover:text-cream"
+                    class="grid size-7 place-items-center rounded-lg text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream"
                     aria-label="Previous month"
                     @click="$emit('prev')"
                 >
@@ -13,7 +13,7 @@
                 </button>
                 <button
                     type="button"
-                    class="grid size-7 place-items-center rounded-lg text-brand-muted transition-colors hover:bg-white/[0.04] hover:text-cream"
+                    class="grid size-7 place-items-center rounded-lg text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream"
                     aria-label="Next month"
                     @click="$emit('next')"
                 >
