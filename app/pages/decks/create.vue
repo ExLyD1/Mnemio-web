@@ -52,13 +52,13 @@
                 />
                 <div class="grid gap-3 sm:grid-cols-2">
                     <UiSelect
-                        v-model="aiSource"
-                        :label="t('deck.aiFrom')"
+                        v-model="aiTarget"
+                        :label="t('deck.frontLang')"
                         :options="languageOptions"
                     />
                     <UiSelect
-                        v-model="aiTarget"
-                        :label="t('deck.aiTo')"
+                        v-model="aiSource"
+                        :label="t('deck.backLang')"
                         :options="languageOptions"
                     />
                 </div>

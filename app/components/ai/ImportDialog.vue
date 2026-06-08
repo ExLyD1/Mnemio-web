@@ -29,8 +29,12 @@
             </div>
 
             <div v-if="!props.deck" class="grid gap-3 sm:grid-cols-2">
-                <UiSelect v-model="newTgt" :label="t('ai.toLang')" :options="languageOptions" />
-                <UiSelect v-model="newSrc" :label="t('ai.fromLang')" :options="languageOptions" />
+                <UiSelect
+                    v-model="newTgt"
+                    :label="t('deck.frontLang')"
+                    :options="languageOptions"
+                />
+                <UiSelect v-model="newSrc" :label="t('deck.backLang')" :options="languageOptions" />
             </div>
 
             <UiInputField

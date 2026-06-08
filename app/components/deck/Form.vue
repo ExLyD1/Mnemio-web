@@ -27,30 +27,32 @@
         <div class="grid gap-3 sm:grid-cols-2">
             <div>
                 <UiSelect
-                    v-model="sourceLanguage"
-                    :label="t('deck.sourceLanguage')"
-                    :options="languageOptions"
-                />
-                <p
-                    v-if="sourceLanguageError"
-                    class="mt-1.5 text-small text-error"
-                    aria-live="polite"
-                >
-                    {{ t(sourceLanguageError) }}
-                </p>
-            </div>
-            <div>
-                <UiSelect
                     v-model="targetLanguage"
-                    :label="t('deck.targetLanguage')"
+                    :label="t('deck.frontLang')"
                     :options="languageOptions"
                 />
+                <p class="mt-1 text-small text-brand-muted">{{ t('deck.frontLangHint') }}</p>
                 <p
                     v-if="targetLanguageError"
                     class="mt-1.5 text-small text-error"
                     aria-live="polite"
                 >
                     {{ t(targetLanguageError) }}
+                </p>
+            </div>
+            <div>
+                <UiSelect
+                    v-model="sourceLanguage"
+                    :label="t('deck.backLang')"
+                    :options="languageOptions"
+                />
+                <p class="mt-1 text-small text-brand-muted">{{ t('deck.backLangHint') }}</p>
+                <p
+                    v-if="sourceLanguageError"
+                    class="mt-1.5 text-small text-error"
+                    aria-live="polite"
+                >
+                    {{ t(sourceLanguageError) }}
                 </p>
             </div>
         </div>
