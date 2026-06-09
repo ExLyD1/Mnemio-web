@@ -94,6 +94,8 @@
         "frontLangHint": "Front of the card",
         "backLang": "Explanations in",
         "backLangHint": "Back of the card / your language",
+        "public": "Public deck",
+        "publicHint": "Anyone can find this deck in Discover and copy it.",
         "searchPlaceholder": "Search your decks",
         "cardCount": "{n} cards",
         "emptyTitle": "No decks yet",

@@ -57,6 +57,14 @@
             </div>
         </div>
 
+        <div class="flex items-start justify-between gap-4 rounded-xl border border-line p-3">
+            <div>
+                <p class="text-body text-cream">{{ t('deck.public') }}</p>
+                <p class="text-small text-brand-muted">{{ t('deck.publicHint') }}</p>
+            </div>
+            <UiToggle v-model="isPublic" :aria-label="t('deck.public')" class="mt-0.5 shrink-0" />
+        </div>
+
         <div class="mt-2 flex justify-end gap-2">
             <UiButton type="button" variant="ghost" :disabled="loading" @click="$emit('cancel')">
                 {{ t('common.cancel') }}
@@ -78,7 +86,10 @@ import type { Deck } from '@/types/deck';
 
 const props = withDefaults(
     defineProps<{
-        initial?: Pick<Deck, 'title' | 'description' | 'sourceLanguage' | 'targetLanguage'> | null;
+        initial?: Pick<
+            Deck,
+            'title' | 'description' | 'sourceLanguage' | 'targetLanguage' | 'isPublic'
+        > | null;
         loading?: boolean;
         submitLabel?: string;
     }>(),
@@ -92,6 +103,7 @@ const emit = defineEmits<{
             description: string | null;
             sourceLanguage: string;
             targetLanguage: string;
+            isPublic: boolean;
         },
     ];
     cancel: [];
@@ -108,6 +120,7 @@ const { handleSubmit } = useForm({
         description: props.initial?.description ?? '',
         sourceLanguage: props.initial?.sourceLanguage ?? 'en',
         targetLanguage: props.initial?.targetLanguage ?? 'es',
+        isPublic: props.initial?.isPublic ?? true,
     },
 });
 
@@ -117,6 +130,7 @@ const { value: sourceLanguage, errorMessage: sourceLanguageError } =
     useField<string>('sourceLanguage');
 const { value: targetLanguage, errorMessage: targetLanguageError } =
     useField<string>('targetLanguage');
+const { value: isPublic } = useField<boolean>('isPublic');
 
 const onSubmit = handleSubmit((values) => {
     emit('submit', {
@@ -124,6 +138,7 @@ const onSubmit = handleSubmit((values) => {
         description: values.description?.trim() ? values.description : null,
         sourceLanguage: values.sourceLanguage,
         targetLanguage: values.targetLanguage,
+        isPublic: values.isPublic ?? true,
     });
 });
 </script>

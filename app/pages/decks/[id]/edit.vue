@@ -21,6 +21,7 @@
                     description: store.deck.description,
                     sourceLanguage: store.deck.sourceLanguage,
                     targetLanguage: store.deck.targetLanguage,
+                    isPublic: store.deck.isPublic,
                 }"
                 :loading="update.loading.value"
                 :submit-label="t('common.save')"
@@ -59,6 +60,7 @@ const onSubmit = async (payload: {
     description: string | null;
     sourceLanguage: string;
     targetLanguage: string;
+    isPublic: boolean;
 }) => {
     const result = await update.execute(deckId.value, payload);
     if (result) {
