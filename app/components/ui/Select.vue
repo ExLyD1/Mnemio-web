@@ -13,7 +13,9 @@
                     {{ opt.label }}
                 </option>
             </select>
-            <ChevronDown class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-brand-muted" />
+            <ChevronDown
+                class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-brand-muted"
+            />
         </div>
     </label>
 </template>

@@ -21,19 +21,19 @@ Mnemio is a free, ad-free vocabulary learning platform with AI-driven deck creat
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Nuxt 4 + Vue 3 |
-| Language | TypeScript |
-| Styling | Tailwind CSS |
-| Components | shadcn-vue |
-| State | Pinia |
-| Utilities | VueUse |
-| Animations | @vueuse/motion |
-| Forms | vee-validate + Zod |
-| i18n | nuxt-i18n |
-| HTTP | ofetch |
-| Themes | @nuxtjs/color-mode |
+| Layer      | Technology         |
+| ---------- | ------------------ |
+| Framework  | Nuxt 4 + Vue 3     |
+| Language   | TypeScript         |
+| Styling    | Tailwind CSS       |
+| Components | shadcn-vue         |
+| State      | Pinia              |
+| Utilities  | VueUse             |
+| Animations | @vueuse/motion     |
+| Forms      | vee-validate + Zod |
+| i18n       | nuxt-i18n          |
+| HTTP       | ofetch             |
+| Themes     | @nuxtjs/color-mode |
 
 ---
 
@@ -120,8 +120,8 @@ mnemio-web/
 
 ## Related Repositories
 
-| Repo | Description |
-|---|---|
+| Repo                                                        | Description                                                   |
+| ----------------------------------------------------------- | ------------------------------------------------------------- |
 | [`mnemio-api`](https://github.com/your-username/mnemio-api) | Fastify backend — auth, decks, AI features, progress tracking |
 
 ---

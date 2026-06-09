@@ -3,7 +3,11 @@
         <input
             v-for="(_, i) in length"
             :key="i"
-            :ref="(el) => { if (el) inputs[i] = el as HTMLInputElement }"
+            :ref="
+                (el) => {
+                    if (el) inputs[i] = el as HTMLInputElement;
+                }
+            "
             v-model="digits[i]"
             type="text"
             inputmode="numeric"
@@ -28,7 +32,9 @@ const props = withDefaults(defineProps<{ modelValue?: string; length?: number }>
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
 
 const inputs = ref<HTMLInputElement[]>([]);
-const digits = ref<string[]>(Array.from({ length: props.length }, (_, i) => props.modelValue[i] ?? ''));
+const digits = ref<string[]>(
+    Array.from({ length: props.length }, (_, i) => props.modelValue[i] ?? ''),
+);
 
 function onInput(i: number) {
     const val = digits.value[i]?.replace(/\D/g, '') ?? '';
@@ -47,7 +53,9 @@ function onBackspace(i: number) {
 
 function onPaste(e: ClipboardEvent) {
     const text = e.clipboardData?.getData('text').replace(/\D/g, '').slice(0, props.length) ?? '';
-    text.split('').forEach((char, i) => { digits.value[i] = char; });
+    text.split('').forEach((char, i) => {
+        digits.value[i] = char;
+    });
     inputs.value[Math.min(text.length, props.length - 1)]?.focus();
     emit('update:modelValue', digits.value.join(''));
 }

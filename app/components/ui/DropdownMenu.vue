@@ -15,8 +15,8 @@
                     modelValue === item.key
                         ? 'bg-brand/30 text-cream'
                         : item.danger
-                          ? 'text-error-soft hover:bg-white/[0.04]'
-                          : 'text-brand-pale hover:bg-white/[0.04]',
+                          ? 'text-error-soft hover:bg-brand/20'
+                          : 'text-brand-pale hover:bg-brand/20',
                 ]"
                 @click="select(item.key, close)"
             >

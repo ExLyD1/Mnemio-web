@@ -4,23 +4,22 @@
             to="/decks"
             class="mb-5 flex w-fit items-center gap-1 text-small text-brand-muted transition-colors hover:text-brand-pale"
         >
-            <ArrowLeft class="size-4" /> My Decks
+            <ArrowLeft class="size-4" /> {{ t('deck.backToDecks') }}
         </NuxtLink>
 
-        <SharedPageLoader v-if="store.loadingDeck && !store.deck" />
+        <SharedPageLoader v-if="store.loadingDeck && !ready" />
 
-        <div v-else-if="store.deck" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div v-else-if="ready" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
             <div class="flex flex-col gap-5">
                 <SharedCoverArt :swatch="swatch" class="p-6">
                     <div class="relative flex flex-col gap-4">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <p class="text-eyebrow uppercase text-cream/70">Language deck</p>
+                                <p class="text-eyebrow uppercase text-cream/70">{{ eyebrow }}</p>
                                 <h1 class="mt-1 font-display text-h1 text-cream">
                                     {{ store.deck.title }}
                                 </h1>
                                 <p class="mt-1 text-small text-cream/80">
-                                    {{ store.deck.cards.length }} cards ·
                                     {{ store.deck.sourceLanguage.toUpperCase() }} →
                                     {{ store.deck.targetLanguage.toUpperCase() }}
                                 </p>
@@ -29,8 +28,8 @@
                                 <template #trigger="{ toggle }">
                                     <button
                                         type="button"
-                                        class="grid size-9 place-items-center rounded-full bg-black/25 text-cream backdrop-blur transition-colors hover:bg-black/40"
-                                        aria-label="Deck options"
+                                        class="grid size-9 place-items-center rounded-full bg-black/20 text-cream backdrop-blur transition-colors hover:bg-black/35 dark:bg-black/25 dark:hover:bg-black/40"
+                                        :aria-label="t('deck.menuAria')"
                                         @click="toggle"
                                     >
                                         <MoreVertical class="size-4" />
@@ -42,84 +41,144 @@
                             <UiButton
                                 variant="primary"
                                 :disabled="!store.deck.cards.length"
+                                :title="t('deck.studyNowHint')"
                                 @click="navigateTo(`/study/${id}`)"
                             >
-                                Study now
+                                {{ t('deck.studyNow') }}
                             </UiButton>
                             <UiButton
                                 variant="ghost"
                                 :disabled="!store.deck.cards.length"
+                                :title="t('deck.practiceAllHint')"
                                 @click="navigateTo(`/study/${id}/flashcard`)"
                             >
-                                Practice all
+                                {{ t('deck.practiceAll') }}
                             </UiButton>
                         </div>
                     </div>
                 </SharedCoverArt>
 
                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <SharedStatTile label="Total" :value="store.deck.cards.length" />
-                    <SharedStatTile label="Mastered" :value="deckStat.mastered" />
-                    <SharedStatTile label="Due" :value="deckStat.due" tone="plum" />
-                    <SharedStatTile label="New" :value="deckStat.new" />
+                    <SharedStatTile :label="t('deck.statTotal')" :value="store.deck.cards.length" />
+                    <SharedStatTile :label="t('deck.statMastered')" :value="deckStat.mastered" />
+                    <SharedStatTile :label="t('deck.statDue')" :value="deckStat.due" tone="plum" />
+                    <SharedStatTile :label="t('deck.statNew')" :value="deckStat.new" />
                 </div>
 
                 <div class="rounded-[20px] border border-line bg-bg-surface p-2">
-                    <div v-if="store.deck.cards.length" class="max-h-[420px] overflow-y-auto">
-                        <SharedCardRow
-                            v-for="(card, i) in store.deck.cards"
-                            :key="card.id"
-                            :index="i + 1"
-                            :card="card"
-                            :state="cardState(card)"
-                            @edit="openEdit"
-                            @delete="askDeleteCard"
-                        />
-                    </div>
+                    <template v-if="store.deck.cards.length">
+                        <div class="flex flex-wrap items-center gap-2 p-2">
+                            <UiInputSearch
+                                v-model="search"
+                                variant="dark"
+                                :placeholder="t('deck.cardSearchPlaceholder')"
+                                class="min-w-[180px] flex-1 border border-line"
+                            />
+                            <UiSegmentedControl v-model="filter" :options="filterOptions" />
+                        </div>
+
+                        <div class="max-h-[420px] overflow-y-auto">
+                            <SharedCardRow
+                                v-for="(card, i) in filteredCards"
+                                :key="card.id"
+                                :index="i + 1"
+                                :card="card"
+                                :state="cardState(card)"
+                                @edit="openEdit"
+                                @delete="askDeleteCard"
+                            />
+                            <div
+                                v-if="!filteredCards.length"
+                                class="px-4 py-10 text-center text-body text-brand-muted"
+                            >
+                                {{ t('deck.noCardsMatch') }}
+                            </div>
+                        </div>
+
+                        <div
+                            class="flex flex-wrap gap-4 border-t border-line px-3 py-2.5 text-small text-brand-muted"
+                        >
+                            <span class="flex items-center gap-1.5">
+                                <span class="size-2.5 rounded-full bg-lavender" />
+                                {{ t('deck.statMastered') }}
+                            </span>
+                            <span class="flex items-center gap-1.5">
+                                <span class="size-2.5 rounded-full bg-brand" />
+                                {{ t('deck.statLearning') }}
+                            </span>
+                            <span class="flex items-center gap-1.5">
+                                <span class="size-2.5 rounded-full border border-brand-muted" />
+                                {{ t('deck.statNew') }}
+                            </span>
+                        </div>
+                    </template>
+
                     <div v-else class="px-4 py-10 text-center text-body text-brand-muted">
-                        No cards yet.
+                        {{ t('card.emptyTitle') }}.
                         <NuxtLink
                             :to="`/decks/${id}/cards/add`"
                             class="text-lavender hover:underline"
                         >
-                            Add the first one.
+                            {{ t('deck.addFirstCard') }}
                         </NuxtLink>
                     </div>
                 </div>
             </div>
 
             <aside class="flex flex-col gap-4 self-start lg:sticky lg:top-6">
-                <div
-                    class="grid place-items-center rounded-[20px] border border-line bg-bg-well p-6"
-                >
-                    <SharedProgressRing :pct="deckStat.masteredPct" label="mastered" />
-                    <div class="mt-4 w-full border-t border-line pt-4 text-center">
-                        <p class="text-small text-brand-muted">
-                            {{ deckStat.mastered }} of {{ store.deck.cards.length }} cards mastered
-                        </p>
+                <div class="rounded-[20px] border border-line bg-bg-well p-6">
+                    <div class="grid place-items-center">
+                        <SharedProgressRing :pct="deckStat.masteredPct" label="mastered" />
+                    </div>
+                    <div class="mt-4 w-full border-t border-line pt-4">
+                        <SharedBreakdownBar :segments="breakdownSegments" />
                     </div>
                 </div>
 
                 <div
-                    class="flex items-center gap-3 rounded-[20px] border border-line bg-mimi-ambient p-4"
+                    class="flex flex-col gap-3 rounded-[20px] border border-line bg-mimi-ambient p-4"
                 >
                     <SharedMimi :message="coachTip" placement="left" :size="64" />
+                    <UiButton
+                        v-if="deckStat.due > 0"
+                        variant="primary"
+                        @click="navigateTo(`/study/${id}`)"
+                    >
+                        {{ t('dashboard.reviewNow') }}
+                    </UiButton>
+                    <UiButton
+                        v-else-if="store.deck.cards.length"
+                        variant="ghost"
+                        @click="navigateTo(`/study/${id}`)"
+                    >
+                        {{ t('deck.study') }}
+                    </UiButton>
                 </div>
 
                 <div class="flex flex-col gap-2">
                     <UiButton variant="ghost" @click="navigateTo(`/decks/${id}/edit`)">
-                        Edit deck
+                        {{ t('deck.edit') }}
+                    </UiButton>
+                    <UiButton variant="ghost" @click="aiOpen = true">
+                        <Sparkles class="size-4" /> {{ t('ai.launchAppend') }}
                     </UiButton>
                     <UiButton variant="primary" @click="navigateTo(`/decks/${id}/cards/add`)">
-                        Add cards
+                        {{ t('card.addCards') }}
                     </UiButton>
                 </div>
             </aside>
         </div>
 
-        <UiEmptyState v-else :title="t('deck.notFoundTitle')" :message="t('deck.notFoundMessage')">
+        <UiEmptyState
+            v-else
+            :title="isNotFound ? t('deck.notFoundTitle') : t('deck.loadErrorTitle')"
+            :message="isNotFound ? t('deck.notFoundMessage') : (loadError?.message ?? '')"
+        >
             <template #action>
-                <UiButton variant="primary" @click="navigateTo('/decks')">
+                <UiButton v-if="!isNotFound" variant="primary" @click="load">
+                    {{ t('common.retry') }}
+                </UiButton>
+                <UiButton :variant="isNotFound ? 'primary' : 'ghost'" @click="navigateTo('/decks')">
                     {{ t('deck.backToDecks') }}
                 </UiButton>
             </template>
@@ -135,14 +194,16 @@
             @confirm="onConfirmDelete"
         />
 
-        <UiModal v-model="editOpen" title="Edit card">
+        <UiModal v-model="editOpen" :title="t('card.edit')">
             <div class="flex flex-col gap-4">
-                <UiInputField v-model="editWord" label="Word" />
-                <UiTextarea v-model="editDefinition" label="Definition" :rows="3" />
+                <UiInputField v-model="editWord" :label="t('card.word')" />
+                <UiTextarea v-model="editDefinition" :label="t('card.definition')" :rows="3" />
                 <UiInputField v-model="editPhonetic" label="Phonetic (optional)" />
             </div>
             <template #footer>
-                <UiButton variant="ghost" @click="editOpen = false">Cancel</UiButton>
+                <UiButton variant="ghost" @click="editOpen = false">{{
+                    t('common.cancel')
+                }}</UiButton>
                 <UiButton
                     variant="primary"
                     :disabled="
@@ -151,26 +212,38 @@
                     @click="saveEdit"
                 >
                     <UiSpinner v-if="updateCard.loading.value" size="sm" class="mr-2" />
-                    Save
+                    {{ t('common.save') }}
                 </UiButton>
             </template>
         </UiModal>
 
         <UiConfirmDialog
             v-model="cardConfirmOpen"
-            title="Delete this card?"
-            message="This removes the card from the deck and can't be undone."
-            confirm-label="Delete"
+            :title="t('card.deleteTitle')"
+            :message="t('card.deleteMessage')"
+            :confirm-label="t('card.delete')"
             destructive
             :loading="deleteCard.loading.value"
             @confirm="confirmDeleteCard"
+        />
+
+        <AiImportDialog
+            v-if="ready && store.deck"
+            v-model="aiOpen"
+            :deck="{
+                id: store.deck.id,
+                sourceLanguage: store.deck.sourceLanguage,
+                targetLanguage: store.deck.targetLanguage,
+            }"
+            @done="onAiDone"
         />
     </section>
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft, MoreVertical, Pencil, Trash2 } from 'lucide-vue-next';
+import { ArrowLeft, MoreVertical, Pencil, Trash2, Sparkles } from 'lucide-vue-next';
 import { useDecks, useCards, useSrsStore, useToast, useT } from '#imports';
+import { isAuthExpiry } from '@/composables/useToast';
 import { swatchFor } from '@/utils/coverSwatches';
 import type { Card, DeckStats } from '@/types/deck';
 
@@ -185,7 +258,22 @@ const srs = useSrsStore();
 const toast = useToast();
 const { t } = useT();
 
+// Only treat the loaded deck as renderable when it matches the current route —
+// guards against a stale/previous deck flashing for the new URL.
+const ready = computed(() => !!store.deck && store.deck.id === id.value);
+
+// A real 404 means the deck is missing or you don't own it. Anything else
+// (auth/network) shouldn't masquerade as "deck deleted" — offer a retry instead.
+const loadError = computed(() => fetchOne.error.value);
+const isNotFound = computed(() => {
+    const code = loadError.value?.code;
+    return code === 'NOT_FOUND' || code === 'DECK_NOT_FOUND';
+});
+
 const confirmOpen = ref(false);
+const aiOpen = ref(false);
+
+const onAiDone = () => fetchOne.execute(id.value);
 
 const editOpen = ref(false);
 const editCardId = ref<string | null>(null);
@@ -213,11 +301,13 @@ const saveEdit = async () => {
         phonetic: editPhonetic.value.trim() || null,
     });
     if (updateCard.error.value) {
-        toast.error(updateCard.error.value.message);
+        if (!isAuthExpiry(updateCard.error.value.code)) {
+            toast.error(updateCard.error.value.message);
+        }
         return;
     }
     editOpen.value = false;
-    toast.success('Card updated');
+    toast.success(t('card.updated'));
     await fetchOne.execute(id.value);
 };
 
@@ -230,9 +320,11 @@ const confirmDeleteCard = async () => {
     if (!pendingCardId.value) return;
     await deleteCard.execute(id.value, pendingCardId.value);
     if (deleteCard.error.value) {
-        toast.error(deleteCard.error.value.message);
+        if (!isAuthExpiry(deleteCard.error.value.code)) {
+            toast.error(deleteCard.error.value.message);
+        }
     } else {
-        toast.success('Card deleted');
+        toast.success(t('card.deleted'));
         await fetchOne.execute(id.value);
     }
     cardConfirmOpen.value = false;
@@ -250,16 +342,59 @@ const EMPTY_STATS: DeckStats = {
 
 const swatch = computed(() => store.deck?.coverColor ?? swatchFor(id.value));
 const deckStat = computed(() => store.deck?.stats ?? EMPTY_STATS);
+const eyebrow = computed(() => store.deck?.subject?.toUpperCase() || 'DECK');
 const coachTip = computed(() =>
     deckStat.value.due > 0
-        ? `${deckStat.value.due} cards are ready for review. Want to start?`
-        : 'Looking good — nothing due right now. Keep it up!',
+        ? t('deck.coachReview').replace('{n}', String(deckStat.value.due))
+        : t('deck.coachGood'),
 );
 
-const menuItems = [
-    { key: 'edit', label: 'Edit deck', icon: Pencil },
-    { key: 'delete', label: 'Delete deck', icon: Trash2, danger: true },
-];
+const breakdownSegments = computed(() => [
+    { label: t('deck.statMastered'), count: deckStat.value.mastered, color: 'bg-lavender' },
+    { label: t('deck.statLearning'), count: deckStat.value.learning, color: 'bg-brand' },
+    { label: t('deck.statNew'), count: deckStat.value.new, color: 'bg-brand-muted' },
+]);
+
+const search = ref('');
+const filter = ref('all');
+const filterOptions = computed(() => [
+    { value: 'all', label: t('deck.filterAll') },
+    { value: 'new', label: t('deck.statNew') },
+    { value: 'learning', label: t('deck.statLearning') },
+    { value: 'mastered', label: t('deck.statMastered') },
+    { value: 'due', label: t('deck.statDue') },
+]);
+
+const isDue = (card: Card): boolean => {
+    const p = srs.progress[card.id];
+    return !!p && new Date(p.nextReviewAt).getTime() <= Date.now();
+};
+
+const filteredCards = computed(() => {
+    const cards = store.deck?.cards ?? [];
+    const q = search.value.trim().toLowerCase();
+    return cards.filter((card) => {
+        if (q) {
+            const haystack = `${card.word} ${card.definition} ${card.phonetic ?? ''}`.toLowerCase();
+            if (!haystack.includes(q)) return false;
+        }
+        switch (filter.value) {
+            case 'new':
+            case 'learning':
+            case 'mastered':
+                return cardState(card) === filter.value;
+            case 'due':
+                return isDue(card);
+            default:
+                return true;
+        }
+    });
+});
+
+const menuItems = computed(() => [
+    { key: 'edit', label: t('deck.edit'), icon: Pencil },
+    { key: 'delete', label: t('deck.delete'), icon: Trash2, danger: true },
+]);
 
 const cardState = (card: Card): 'mastered' | 'learning' | 'new' => {
     const p = srs.progress[card.id];
@@ -278,7 +413,9 @@ const onMenuSelect = (key: string) => {
 const onConfirmDelete = async () => {
     await remove.execute(id.value);
     if (remove.error.value) {
-        toast.error(t(remove.error.value.message, remove.error.value.message));
+        if (!isAuthExpiry(remove.error.value.code)) {
+            toast.error(t(remove.error.value.message, remove.error.value.message));
+        }
     } else {
         toast.success(t('deck.deleted'));
         await navigateTo('/decks');
@@ -287,11 +424,10 @@ const onConfirmDelete = async () => {
 };
 
 const load = async () => {
+    // The empty state surfaces any load error (with a retry); no toast needed.
     await fetchOne.execute(id.value);
-    if (fetchOne.error.value) {
-        toast.error(t(fetchOne.error.value.message, fetchOne.error.value.message));
-    }
-    await srs.fetchAll();
+    // SRS enriches card state chips; it should not block first paint of the deck.
+    srs.fetchAll().catch(() => {});
 };
 
 watch(id, load, { immediate: true });

@@ -1,42 +1,59 @@
 <template>
-    <MarketingLegal
-        title="Terms of Service"
-        updated="June 2026"
-        :summary="summary"
-        :sections="sections"
-    />
+    <div class="mx-auto max-w-2xl px-6 py-16">
+        <NuxtLink
+            to="/login"
+            class="mb-8 inline-flex items-center gap-2 text-small text-brand-muted hover:text-cream"
+        >
+            <ChevronLeft class="size-4" /> Back to login
+        </NuxtLink>
+        <h1 class="font-display text-h1 text-cream">Terms &amp; Conditions</h1>
+        <p class="mt-2 text-small text-brand-muted">Last updated: June 2025</p>
+        <div class="mt-10 flex flex-col gap-8 text-body text-cream-dim">
+            <section>
+                <h2 class="mb-3 font-display text-h3 text-cream">1. Acceptance</h2>
+                <p>
+                    By creating an account and using Mnemio, you agree to these Terms. If you do not
+                    agree, please do not use the service.
+                </p>
+            </section>
+            <section>
+                <h2 class="mb-3 font-display text-h3 text-cream">2. Use of the service</h2>
+                <p>
+                    Mnemio is provided for personal, non-commercial study purposes. You may not use
+                    the service to distribute harmful content or attempt to circumvent security
+                    measures.
+                </p>
+            </section>
+            <section>
+                <h2 class="mb-3 font-display text-h3 text-cream">3. Your content</h2>
+                <p>
+                    You retain ownership of the flashcard content you create. By using Mnemio, you
+                    grant us a limited licence to store and display that content to you within the
+                    app.
+                </p>
+            </section>
+            <section>
+                <h2 class="mb-3 font-display text-h3 text-cream">4. Availability</h2>
+                <p>
+                    We aim for high availability but cannot guarantee uninterrupted access. The
+                    service may change or be discontinued with reasonable notice.
+                </p>
+            </section>
+            <section>
+                <h2 class="mb-3 font-display text-h3 text-cream">5. Contact</h2>
+                <p>
+                    Questions about these Terms? Reach us at
+                    <a href="mailto:hello@mnemio.app" class="text-accent hover:underline"
+                        >hello@mnemio.app</a
+                    >.
+                </p>
+            </section>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'marketing' });
+import { ChevronLeft } from 'lucide-vue-next';
 
-const summary =
-    'By using Mnemio you agree to these terms. We’ve kept them short and readable — the gist is: be reasonable, and we’ll do the same.';
-
-const sections = [
-    {
-        heading: 'Using Mnemio',
-        body: 'You may use Mnemio for personal or educational study. You’re responsible for the content you add and for keeping your account secure.',
-    },
-    {
-        heading: 'Your content',
-        body: 'You keep ownership of every deck and card you create. You grant us only the permissions needed to store and display them back to you.',
-    },
-    {
-        heading: 'Acceptable use',
-        body: 'Don’t upload unlawful content, attempt to break the service, or abuse other users. We may suspend accounts that do.',
-    },
-    {
-        heading: 'Availability',
-        body: 'We aim for high uptime but the service is provided “as is”. Features may change as Mnemio evolves.',
-    },
-    {
-        heading: 'Termination',
-        body: 'You can stop using Mnemio and delete your account at any time. We may end access if these terms are seriously breached.',
-    },
-    {
-        heading: 'Contact',
-        body: 'Questions about these terms? Reach us any time and we’ll get back to you.',
-    },
-];
+definePageMeta({ layout: 'auth' });
 </script>

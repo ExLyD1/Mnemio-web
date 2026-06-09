@@ -1,7 +1,11 @@
 import { z } from 'zod';
 
 export const cardSchema = z.object({
-    word: z.string().trim().min(1, 'card.errors.word_required').max(120, 'card.errors.word_too_long'),
+    word: z
+        .string()
+        .trim()
+        .min(1, 'card.errors.word_required')
+        .max(120, 'card.errors.word_too_long'),
     definition: z
         .string()
         .trim()

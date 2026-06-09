@@ -7,7 +7,8 @@
         "loading": "Loading…",
         "loadMore": "Load more",
         "language": "Language",
-        "or": "OR"
+        "or": "OR",
+        "retry": "Retry"
     },
     "rail": {
         "home": "Home",
@@ -23,7 +24,8 @@
         "noNotifications": "No notifications yet",
         "newDeck": "New deck",
         "account": "Account",
-        "profile": "Profile"
+        "profile": "Profile",
+        "toggleTheme": "Toggle theme"
     },
     "nav": {
         "dashboard": "Dashboard",
@@ -55,6 +57,11 @@
         "usernamePlaceholder": "Dracula_Rules34",
         "birthdayPlaceholder": "YYYY-MM-DD",
         "next": "Next",
+        "welcomeSubtitle": "Welcome to your study companion",
+        "legalPrefix": "By continuing I agree with the",
+        "termsLink": "Terms & Conditions",
+        "privacyLink": "Privacy Policy",
+        "otpResent": "New code sent.",
         "errors": {
             "email_invalid": "Please enter a valid email address.",
             "password_too_short": "Password must be at least 8 characters.",
@@ -88,6 +95,7 @@
         "noResultsMessage": "No decks match your search.",
         "notFoundTitle": "Deck not found",
         "notFoundMessage": "This deck doesn't exist or was deleted.",
+        "loadErrorTitle": "Couldn't load this deck",
         "backToDecks": "Back to decks",
         "deleteTitle": "Delete this deck?",
         "deleteMessage": "This will permanently remove the deck and all its cards. This cannot be undone.",
@@ -100,6 +108,21 @@
         "sortDue": "Most due",
         "sortMastery": "Highest mastery",
         "filterAll": "All",
+        "menuAria": "Deck options",
+        "studyNow": "Study now",
+        "studyNowHint": "Choose a study mode",
+        "practiceAll": "Practice all",
+        "practiceAllHint": "Jump straight into flashcards",
+        "statTotal": "Total",
+        "statMastered": "Mastered",
+        "statLearning": "Learning",
+        "statDue": "Due",
+        "statNew": "New",
+        "cardSearchPlaceholder": "Search cards…",
+        "noCardsMatch": "No cards match your search.",
+        "addFirstCard": "Add the first one.",
+        "coachReview": "{n} cards are ready for review. Want to start?",
+        "coachGood": "Looking good — nothing due right now. Keep it up!",
         "createHeading": "Create a new deck.",
         "createSubtitle": "Name it, pick the languages, and start adding cards.",
         "createAndAdd": "Create & add cards",
@@ -156,7 +179,10 @@
         "dayStreak": "{n} day streak",
         "keepGoing": "Keep it going today.",
         "mimiSuggests": "Mimi suggests",
-        "startReview": "Start review"
+        "startReview": "Start review",
+        "mostPracticed": "Most practiced",
+        "mostPracticedHint": "Jump back into the decks you train most.",
+        "reviewsCount": "{n} reviews"
     },
     "review": {
         "title": "Review queue",
@@ -257,6 +283,8 @@
         "deleteMessage": "This card will be permanently removed from the deck.",
         "deleted": "Card deleted",
         "added": "Card added",
+        "updated": "Card updated",
+        "addCards": "Add cards",
         "addHeading": "Add a card.",
         "cardInDeck": "Card {n} in {deck}.",
         "thisDeck": "this deck",
@@ -405,6 +433,35 @@
         "photoError": "Could not upload photo",
         "saved": "Profile saved",
         "saveError": "Could not save profile"
+    },
+    "ai": {
+        "titleNew": "Import words with AI",
+        "titleAppend": "Add words with AI",
+        "launchNew": "Import with AI",
+        "launchAppend": "Import with AI",
+        "titleLabel": "Deck title",
+        "titlePlaceholder": "My vocabulary deck",
+        "wordsLabel": "Words",
+        "wordsPlaceholder": "apple\nriver\ngravity",
+        "wordsHint": "Paste words — one per line or comma-separated. {n} ready (max 100).",
+        "toLang": "Words language",
+        "fromLang": "Definitions language",
+        "contextLabel": "Context (optional)",
+        "contextPlaceholder": "e.g. kitchen vocabulary",
+        "generate": "Generate definitions",
+        "generating": "Generating…",
+        "reviewHint": "Review the definitions, edit anything, then save.",
+        "unfilledCount": "{n} still need a definition.",
+        "unfilled": "needs definition",
+        "definitionPlaceholder": "Definition",
+        "remove": "Remove",
+        "addN": "Add {n} cards",
+        "createN": "Create deck · {n} cards",
+        "emptyWords": "Paste at least one word.",
+        "noCommittable": "Fill in at least one definition before saving.",
+        "needTitle": "Give the deck a title.",
+        "added": "Added {n} cards",
+        "enrichError": "AI couldn’t generate definitions. Try again."
     },
     "mimi": {
         "idle": [

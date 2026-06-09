@@ -1,6 +1,6 @@
 <template>
     <header
-        class="flex h-[68px] shrink-0 items-center gap-4 border-b border-line bg-bg-base/80 px-6 backdrop-blur"
+        class="flex h-[68px] shrink-0 items-center gap-4 border-b border-line bg-bg-surface/80 px-6 backdrop-blur"
     >
         <div class="flex flex-1 justify-center">
             <UiInputSearch
@@ -13,11 +13,21 @@
         </div>
 
         <div class="flex items-center gap-2">
+            <button
+                type="button"
+                class="grid size-10 place-items-center rounded-full text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream"
+                :aria-label="t('topbar.toggleTheme')"
+                @click="toggleTheme"
+            >
+                <Moon v-if="colorMode.value === 'dark'" class="size-5" />
+                <Sun v-else class="size-5" />
+            </button>
+
             <UiPopover align="right">
                 <template #trigger="{ toggle }">
                     <button
                         type="button"
-                        class="grid size-10 place-items-center rounded-full text-brand-muted transition-colors hover:bg-white/[0.04] hover:text-cream"
+                        class="grid size-10 place-items-center rounded-full text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream"
                         :aria-label="t('topbar.notifications')"
                         @click="toggle"
                     >
@@ -57,7 +67,7 @@
                 <template #default="{ close }">
                     <NuxtLink
                         to="/profile"
-                        class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-body text-brand-pale transition-colors hover:bg-white/[0.04]"
+                        class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-body text-brand-pale transition-colors hover:bg-brand/20"
                         @click="close"
                     >
                         <User class="size-4" />
@@ -66,7 +76,7 @@
                     <SharedLanguageSwitcher variant="menu" />
                     <button
                         type="button"
-                        class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-body text-brand-pale transition-colors hover:bg-white/[0.04] disabled:opacity-40"
+                        class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-body text-brand-pale transition-colors hover:bg-brand/20 disabled:opacity-40"
                         @click="() => onLogout(close)"
                     >
                         <LogOut class="size-4" />
@@ -79,10 +89,15 @@
 </template>
 
 <script setup lang="ts">
-import { Bell, Plus, User, LogOut } from 'lucide-vue-next';
-import { useAuth, useAuthStore, useToast, useT } from '#imports';
+import { Bell, Plus, User, LogOut, Sun, Moon } from 'lucide-vue-next';
+import { useAuth, useAuthStore, useColorMode, useToast, useT } from '#imports';
 
 defineEmits<{ search: [value: string] }>();
+
+const colorMode = useColorMode();
+const toggleTheme = () => {
+    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark';
+};
 
 const search = ref('');
 const auth = useAuthStore();
@@ -97,7 +112,7 @@ const displayName = computed(
 const onLogout = async (close: () => void) => {
     close();
     await logout.execute();
-    toast.success('You have been signed out');
+    toast.success(t('auth.signedOut'));
     await navigateTo('/login');
 };
 </script>

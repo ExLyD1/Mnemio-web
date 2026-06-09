@@ -34,6 +34,42 @@ export const generateDeck = (
 ): Promise<{ provider: string; draft: AiDeckDraft }> =>
     http('/ai/generate-deck', { method: 'POST', body: input });
 
+export type EnrichField =
+    | 'phonetic'
+    | 'partOfSpeech'
+    | 'example'
+    | 'exampleTranslation'
+    | 'tags'
+    | 'difficulty';
+
+export interface EnrichWordsInput {
+    /** 1–100 words; the server trims + de-dups before the provider sees them. */
+    words: string[];
+    /** Language of the generated definitions (e.g. 'en'). */
+    sourceLanguage: string;
+    /** Language of the input words (e.g. 'es'). */
+    targetLanguage: string;
+    /** Optional ≤200-char disambiguation hint. */
+    context?: string;
+    fields?: EnrichField[];
+}
+
+export interface EnrichWordsResult {
+    provider: string;
+    /** Same order as the (de-duped) input words; definition is '' when unfilled. */
+    cards: AiDraftCard[];
+    meta: {
+        requested: number;
+        enriched: number;
+        durationMs: number;
+        tokensInput: number;
+        tokensOutput: number;
+    };
+}
+
+export const enrichWords = (input: EnrichWordsInput): Promise<EnrichWordsResult> =>
+    http('/ai/enrich-words', { method: 'POST', body: input });
+
 export type AiSuggestContext = 'dashboard' | 'deck_detail' | 'review';
 
 export interface AiSuggestion {

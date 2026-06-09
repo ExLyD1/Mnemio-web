@@ -139,7 +139,7 @@ const onRate = async (rating: SrsRating) => {
         }
     } catch (e) {
         const err = e as { message?: string };
-        toast.error(t(err?.message ?? 'review.errors.rate_failed', 'Could not rate card'));
+        toast.error(err?.message ?? t('review.errors.rate_failed'));
     }
 };
 

@@ -32,8 +32,7 @@ export const updateCardProgress = (
         }
     }
 
-    const nextEase =
-        easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+    const nextEase = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
     easeFactor = Math.max(MIN_EASE_FACTOR, nextEase);
 
     const nextReviewAt = new Date(now.getTime() + intervalDays * MS_PER_DAY).toISOString();

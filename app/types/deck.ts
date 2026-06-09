@@ -102,4 +102,5 @@ export interface DeckCardVM {
     favorite?: boolean;
     author?: string;
     copies?: number;
+    reviewed?: number;
 }

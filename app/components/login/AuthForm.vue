@@ -18,7 +18,13 @@
 
             <div class="flex flex-col gap-[20px]">
                 <p class="text-small">
-                    {{ t(activeTab === 'login' ? 'auth.orLoginWithEmail' : 'auth.orRegisterWithEmail') }}
+                    {{
+                        t(
+                            activeTab === 'login'
+                                ? 'auth.orLoginWithEmail'
+                                : 'auth.orRegisterWithEmail',
+                        )
+                    }}
                 </p>
 
                 <div>
@@ -32,11 +38,7 @@
                             <Check v-if="isEmailValid" class="size-4" />
                         </template>
                     </UiInputField>
-                    <p
-                        v-if="emailError"
-                        class="mt-1.5 text-small text-error"
-                        aria-live="polite"
-                    >
+                    <p v-if="emailError" class="mt-1.5 text-small text-error" aria-live="polite">
                         {{ t(emailError) }}
                     </p>
                 </div>
@@ -54,7 +56,9 @@
                     </UiInputField>
                     <p class="mt-1.5 min-h-[20px] text-small" aria-live="polite">
                         <span v-if="passwordError" class="text-error">{{ t(passwordError) }}</span>
-                        <span v-else-if="activeTab === 'register'">{{ t('auth.passwordHint') }}</span>
+                        <span v-else-if="activeTab === 'register'">{{
+                            t('auth.passwordHint')
+                        }}</span>
                     </p>
                 </div>
             </div>

@@ -4,7 +4,7 @@
     >
         <div class="mb-6 flex flex-col items-center gap-2 text-center">
             <SharedBrandMark />
-            <p class="text-small text-brand-muted">Welcome to your study companion</p>
+            <p class="text-small text-brand-muted">{{ t('auth.welcomeSubtitle') }}</p>
         </div>
         <LoginAuthForm
             v-if="step === 'auth'"
@@ -26,12 +26,15 @@
         />
 
         <p class="mt-5 text-center text-small text-brand-muted">
-            By continuing I agree with the
-            <NuxtLink to="/terms" class="text-accent hover:underline"
-                >Terms &amp; Conditions</NuxtLink
+            {{ t('auth.legalPrefix') }}
+            <NuxtLink to="/terms" class="text-accent hover:underline">{{
+                t('auth.termsLink')
+            }}</NuxtLink
             >,
             <br />
-            <NuxtLink to="/privacy" class="text-accent hover:underline">Privacy Policy</NuxtLink>
+            <NuxtLink to="/privacy" class="text-accent hover:underline">{{
+                t('auth.privacyLink')
+            }}</NuxtLink>
         </p>
     </div>
 </template>
