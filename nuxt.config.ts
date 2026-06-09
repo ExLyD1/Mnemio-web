@@ -42,10 +42,14 @@ export default defineNuxtConfig({
         },
     },
 
-    // Same-origin proxy so the HttpOnly `mnemio_refresh` cookie (SameSite=Lax) is set on
-    // the page origin and sent on every call — fixes being logged out after restart.
+    // Same-origin proxy so the HttpOnly refresh cookie (SameSite=Lax) is set on the page
+    // origin and sent on every call — keeps auth first-party (no logout on cross-site).
+    // Dev → backend on :3001. Prod → set NUXT_API_PROXY_TARGET to the backend's URL
+    // (baked at build time; change it ⇒ redeploy).
     routeRules: {
-        '/api/**': { proxy: 'http://127.0.0.1:3001/api/**' },
+        '/api/**': {
+            proxy: `${process.env.NUXT_API_PROXY_TARGET || 'http://127.0.0.1:3001'}/api/**`,
+        },
     },
 
     css: ['~/assets/css/main.css'],
