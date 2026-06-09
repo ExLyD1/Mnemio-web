@@ -5,18 +5,18 @@
                 <div>
                     <SharedBrandMark />
                     <p class="mt-3 max-w-[34ch] text-small text-cream-dim">
-                        The calm, AI-powered way to learn vocabulary that actually sticks.
+                        {{ t('footer.tagline') }}
                     </p>
                 </div>
                 <div v-for="col in columns" :key="col.title">
-                    <h5 class="mb-3 text-eyebrow uppercase text-cream-faint">{{ col.title }}</h5>
+                    <h5 class="mb-3 text-eyebrow uppercase text-cream-faint">{{ t(col.title) }}</h5>
                     <ul class="space-y-2">
                         <li v-for="l in col.links" :key="l.label">
                             <NuxtLink
                                 :to="l.to"
                                 class="text-small text-cream-dim transition-colors hover:text-cream"
                             >
-                                {{ l.label }}
+                                {{ t(l.label) }}
                             </NuxtLink>
                         </li>
                     </ul>
@@ -26,7 +26,7 @@
             <div
                 class="mt-12 flex flex-col gap-3 border-t border-line pt-6 text-small text-cream-faint sm:flex-row sm:items-center sm:justify-between"
             >
-                <span>© {{ year }} Mnemio. All rights reserved.</span>
+                <span>{{ t('footer.rights').replace('{year}', String(year)) }}</span>
                 <div class="flex gap-3">
                     <a
                         v-for="s in socials"
@@ -47,32 +47,35 @@
 
 <script setup lang="ts">
 import { Twitter, Github, Instagram } from 'lucide-vue-next';
+import { useT } from '#imports';
+
+const { t } = useT();
 
 const year = new Date().getFullYear();
 
 const columns = [
     {
-        title: 'Product',
+        title: 'footer.colProduct',
         links: [
-            { label: 'Features', to: '/#features' },
-            { label: 'Try a card', to: '/#demo' },
-            { label: 'Decks', to: '/discover' },
+            { label: 'footer.linkFeatures', to: '/#features' },
+            { label: 'footer.linkTryCard', to: '/#demo' },
+            { label: 'footer.linkDecks', to: '/discover' },
         ],
     },
     {
-        title: 'Company',
+        title: 'footer.colCompany',
         links: [
-            { label: 'About', to: '/about' },
-            { label: 'Blog', to: '/blog' },
-            { label: 'Contact', to: '/about' },
+            { label: 'footer.linkAbout', to: '/about' },
+            { label: 'footer.linkBlog', to: '/blog' },
+            { label: 'footer.linkContact', to: '/about' },
         ],
     },
     {
-        title: 'Resources',
+        title: 'footer.colResources',
         links: [
-            { label: 'Privacy', to: '/privacy' },
-            { label: 'Terms', to: '/terms' },
-            { label: 'Help center', to: '/about' },
+            { label: 'footer.linkPrivacy', to: '/privacy' },
+            { label: 'footer.linkTerms', to: '/terms' },
+            { label: 'footer.linkHelp', to: '/about' },
         ],
     },
 ];
