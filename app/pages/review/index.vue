@@ -159,9 +159,9 @@ const studyCard = computed<StudyCard | null>(() => {
         meaning: d.card.definition,
         lang: d.deckTitle,
         region: '',
-        pos: '',
-        example: '',
-        exampleTranslation: '',
+        pos: d.card.partOfSpeech ?? '',
+        example: d.card.example ?? '',
+        exampleTranslation: d.card.exampleTranslation ?? '',
     };
 });
 

@@ -146,6 +146,7 @@ const onSubmit = async (payload: {
     description: string | null;
     sourceLanguage: string;
     targetLanguage: string;
+    isPublic: boolean;
 }) => {
     const result = await create.execute(payload);
     if (result) {

@@ -2,8 +2,8 @@ import type { Card, Deck } from '@/types/deck';
 import { LANGUAGES } from '@/schemas/deck';
 
 /**
- * Rich card shown during practice. Real fields (word/definition/phonetic) plus
- * mocked reading/pos/context until the backend grows the model (plan §5.4).
+ * Rich card shown during practice — maps the real backend card fields
+ * (word/definition/phonetic/part-of-speech/example) onto the study view.
  */
 export interface StudyCard {
     id: string;
@@ -18,16 +18,6 @@ export interface StudyCard {
     exampleTranslation: string;
 }
 
-const POS = ['noun', 'verb', 'adjective', 'adverb', 'phrase'];
-
-const hash = (s: string): number => {
-    let h = 0;
-    for (let i = 0; i < s.length; i++) {
-        h = (h * 31 + s.charCodeAt(i)) | 0;
-    }
-    return Math.abs(h);
-};
-
 export const toStudyCard = (card: Card, deck: Deck): StudyCard => {
     const lang =
         LANGUAGES.find((l) => l.code === deck.targetLanguage)?.label ??
@@ -40,8 +30,8 @@ export const toStudyCard = (card: Card, deck: Deck): StudyCard => {
         meaning: card.definition,
         lang,
         region: deck.targetLanguage.toUpperCase(),
-        pos: POS[hash(card.id) % POS.length] ?? 'noun',
-        example: `A sentence using “${card.word}”.`,
-        exampleTranslation: card.definition,
+        pos: card.partOfSpeech ?? '',
+        example: card.example ?? '',
+        exampleTranslation: card.exampleTranslation ?? '',
     };
 };
