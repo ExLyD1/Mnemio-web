@@ -99,6 +99,26 @@ export const resendOtp = async (userId: string): Promise<ResendOtpResponse> => {
 
 export type LoginResult = VerifyEmailResult;
 
+export type OauthExchangeResult = VerifyEmailResult;
+
+/**
+ * Swap the short-lived code from the Google OAuth callback for a session.
+ * The refresh cookie is already set by the backend on this same-origin call.
+ */
+export const oauthExchange = async (code: string): Promise<OauthExchangeResult> => {
+    const res = await http<AuthTokenResponse>('/auth/oauth/exchange', {
+        method: 'POST',
+        body: { code },
+        skipAuth: true,
+    });
+    writeAccessToken(res.accessToken);
+    return {
+        user: toUser(res.user),
+        accessToken: res.accessToken,
+        needsProfile: res.needsProfile,
+    };
+};
+
 export const login = async (email: string, password: string): Promise<LoginResult> => {
     const res = await http<AuthTokenResponse>('/auth/login', {
         method: 'POST',

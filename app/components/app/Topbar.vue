@@ -94,7 +94,11 @@
                         :aria-label="t('topbar.account')"
                         @click="toggle"
                     >
-                        <UiAvatar :name="displayName" :size="38" />
+                        <UiAvatar
+                            :name="displayName"
+                            :src="mediaUrl(auth.currentUser?.avatarUrl)"
+                            :size="38"
+                        />
                     </button>
                 </template>
                 <template #default="{ close }">
@@ -124,6 +128,7 @@
 <script setup lang="ts">
 import { Bell, Plus, User, LogOut, Sun, Moon } from 'lucide-vue-next';
 import { useAuth, useAuthStore, useColorMode, useDecks, useToast, useT } from '#imports';
+import { mediaUrl } from '@/utils/media';
 
 const colorMode = useColorMode();
 const toggleTheme = () => {

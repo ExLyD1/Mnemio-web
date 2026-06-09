@@ -7,6 +7,7 @@ import {
     logout as apiLogout,
     me as apiMe,
     updateProfile as apiUpdateProfile,
+    oauthExchange as apiOauthExchange,
 } from '@/api/auth';
 import { readAccessToken, writeAccessToken } from '@/utils/authToken';
 import type { User, ProfileUpdate } from '@/types/user';
@@ -87,6 +88,12 @@ export const useAuthStore = defineStore('auth', () => {
         return result;
     };
 
+    const oauthExchange = async (code: string) => {
+        const result = await apiOauthExchange(code);
+        setSession(result.user, result.accessToken);
+        return result;
+    };
+
     const logout = async () => {
         await apiLogout();
         clearSession();
@@ -112,5 +119,6 @@ export const useAuthStore = defineStore('auth', () => {
         login,
         logout,
         updateProfile,
+        oauthExchange,
     };
 });

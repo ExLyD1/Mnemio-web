@@ -13,18 +13,21 @@
                         current === l.key ? 'text-cream' : 'text-brand-muted hover:text-cream',
                     ]"
                 >
-                    {{ l.label }}
+                    {{ t(l.label) }}
                 </NuxtLink>
             </div>
 
             <div class="flex items-center gap-2.5">
+                <div class="hidden sm:block">
+                    <SharedLanguageSwitcher variant="menu" />
+                </div>
                 <UiButton
                     v-if="auth.isAuthenticated"
                     variant="primary"
                     class="!px-4 !py-2 text-small"
                     @click="navigateTo('/dashboard')"
                 >
-                    Open app
+                    {{ t('nav.openApp') }}
                 </UiButton>
                 <template v-else>
                     <UiButton
@@ -32,14 +35,14 @@
                         class="!px-3.5 !py-2 text-small"
                         @click="navigateTo('/login?tab=login')"
                     >
-                        Sign in
+                        {{ t('nav.signIn') }}
                     </UiButton>
                     <UiButton
                         variant="primary"
                         class="!px-4 !py-2 text-small"
                         @click="navigateTo('/login?tab=register')"
                     >
-                        Get started
+                        {{ t('nav.getStarted') }}
                     </UiButton>
                 </template>
             </div>
@@ -48,15 +51,16 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '#imports';
+import { useAuthStore, useT } from '#imports';
 
 withDefaults(defineProps<{ current?: string }>(), { current: '' });
 
 const auth = useAuthStore();
+const { t } = useT();
 
 const links = [
-    { key: 'about', label: 'About', to: '/about' },
-    { key: 'blog', label: 'Blog', to: '/blog' },
-    { key: 'features', label: 'Features', to: '/#features' },
+    { key: 'about', label: 'nav.about', to: '/about' },
+    { key: 'blog', label: 'nav.blog', to: '/blog' },
+    { key: 'features', label: 'nav.features', to: '/#features' },
 ];
 </script>

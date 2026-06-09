@@ -9,8 +9,15 @@
                     v-for="social in socials"
                     :key="social.label"
                     type="button"
-                    :aria-label="social.label"
-                    class="flex size-12 items-center justify-center rounded-full bg-neutral-0 shadow-sm transition-opacity hover:opacity-80"
+                    :disabled="!social.enabled"
+                    :aria-label="
+                        social.enabled
+                            ? social.label
+                            : `${social.label} — ${t('auth.socialComingSoon')}`
+                    "
+                    :title="social.enabled ? undefined : t('auth.socialComingSoon')"
+                    class="flex size-12 items-center justify-center rounded-full bg-neutral-0 shadow-sm transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:opacity-40"
+                    @click="onSocial(social)"
                 >
                     <img :src="social.icon" :alt="social.label" class="size-5" />
                 </button>
@@ -122,9 +129,39 @@ const tabs = computed(() => [
     { key: 'login', label: t('auth.tabLogin') },
 ]);
 
-const socials = [
-    { label: 'Apple', icon: '/images/shared/social/apple.svg' },
-    { label: 'Facebook', icon: '/images/shared/social/facebook.svg' },
-    { label: 'Google', icon: '/images/shared/social/google.svg' },
+// Only Google ships at MVP (see docs/api-contract.md). Apple/Facebook stay
+// visible but disabled until their backends exist.
+interface Social {
+    label: string;
+    icon: string;
+    provider: 'apple' | 'facebook' | 'google';
+    enabled: boolean;
+}
+
+const socials: Social[] = [
+    { label: 'Apple', icon: '/images/shared/social/apple.svg', provider: 'apple', enabled: false },
+    {
+        label: 'Facebook',
+        icon: '/images/shared/social/facebook.svg',
+        provider: 'facebook',
+        enabled: false,
+    },
+    {
+        label: 'Google',
+        icon: '/images/shared/social/google.svg',
+        provider: 'google',
+        enabled: true,
+    },
 ];
+
+const config = useRuntimeConfig();
+
+const onSocial = (social: Social) => {
+    if (!social.enabled || social.provider !== 'google') {
+        return;
+    }
+    // Full-page navigation (not $fetch): the backend sets state/PKCE cookies and
+    // redirects to Google. Same-origin path rides the proxy so cookies stay first-party.
+    window.location.assign(`${config.public.apiBase}/api/v1/auth/oauth/google`);
+};
 </script>

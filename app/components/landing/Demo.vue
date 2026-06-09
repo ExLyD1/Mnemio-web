@@ -1,9 +1,13 @@
 <template>
     <div class="mx-auto max-w-md">
         <div class="mb-4 flex items-center justify-between text-small text-brand-muted">
-            <span>Card {{ Math.min(index + 1, deck.length) }} of {{ deck.length }}</span>
+            <span>{{
+                t('demo.cardOf')
+                    .replace('{i}', String(Math.min(index + 1, deck.length)))
+                    .replace('{n}', String(deck.length))
+            }}</span>
             <button type="button" class="transition-colors hover:text-cream" @click="restart">
-                Restart
+                {{ t('demo.restart') }}
             </button>
         </div>
 
@@ -19,7 +23,7 @@
                 <div class="face front rounded-2xl border border-line-strong bg-plum-card p-7">
                     <SharedPill tone="plum">{{ current.lang }}</SharedPill>
                     <p class="font-display text-4xl text-cream">{{ current.front }}</p>
-                    <span class="text-small text-brand-muted">Tap to flip</span>
+                    <span class="text-small text-brand-muted">{{ t('demo.tapToFlip') }}</span>
                 </div>
                 <div class="face back rounded-2xl border border-brand-bright bg-plum-card-back p-7">
                     <SharedPill tone="muted">{{ current.tag }}</SharedPill>
@@ -33,21 +37,21 @@
                     class="rounded-xl border border-error-soft/40 py-2.5 text-small font-semibold text-error-soft transition-colors hover:bg-error-soft/10"
                     @click="rate(false)"
                 >
-                    Forgot
+                    {{ t('demo.forgot') }}
                 </button>
                 <button
                     type="button"
                     class="rounded-xl border border-line-strong py-2.5 text-small font-semibold text-brand-pale transition-colors hover:bg-white/[0.04]"
                     @click="rate(false)"
                 >
-                    Hard
+                    {{ t('demo.hard') }}
                 </button>
                 <button
                     type="button"
                     class="rounded-xl border border-success/50 py-2.5 text-small font-semibold text-success-bright transition-colors hover:bg-success/10"
                     @click="rate(true)"
                 >
-                    Easy
+                    {{ t('demo.easy') }}
                 </button>
             </div>
         </div>
@@ -57,19 +61,24 @@
             class="flex flex-col items-center gap-4 rounded-2xl border border-line bg-bg-surface p-8 text-center"
         >
             <SharedMimi :size="96" />
-            <p class="font-display text-h2 text-cream">{{ score }}% recalled</p>
+            <p class="font-display text-h2 text-cream">
+                {{ t('demo.recalled').replace('{score}', String(score)) }}
+            </p>
             <p class="text-body text-cream-dim">
-                That’s how a real session feels — calm and quick.
+                {{ t('demo.doneBody') }}
             </p>
             <UiButton variant="primary" @click="navigateTo('/login?tab=register')">
-                Start for real
+                {{ t('demo.startForReal') }}
             </UiButton>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import { useT } from '#imports';
 import { SAMPLE_DECK } from '@/composables/useSampleDeck';
+
+const { t } = useT();
 
 const deck = SAMPLE_DECK;
 const index = ref(0);
