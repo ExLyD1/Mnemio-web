@@ -50,6 +50,13 @@ export default defineNuxtConfig({
         '/api/**': {
             proxy: `${process.env.NUXT_API_PROXY_TARGET || 'http://127.0.0.1:3001'}/api/**`,
         },
+        // Uploaded media (avatars, card images/audio) is served by the backend at
+        // its origin under `/media/*` (no `/api/v1` prefix). Mirror the API proxy so
+        // the relative `/media/...` URLs returned by uploads resolve first-party in
+        // dev and prod alike. Without this they 404 against the web origin.
+        '/media/**': {
+            proxy: `${process.env.NUXT_API_PROXY_TARGET || 'http://127.0.0.1:3001'}/media/**`,
+        },
     },
 
     css: ['~/assets/css/main.css'],
