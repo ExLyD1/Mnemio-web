@@ -556,6 +556,30 @@
         "created": "Deck created!",
         "topicRequired": "Tell me a topic first."
     },
+    "chat": {
+        "newChat": "New chat",
+        "noChats": "No conversations yet.",
+        "menu": "Options",
+        "rename": "Rename",
+        "delete": "Delete",
+        "deleteConfirm": "Delete this conversation? This can't be undone.",
+        "emptyTitle": "Ask Mimi anything",
+        "emptyHint": "Chat about your learning — or say \"make a deck from these words…\" and I'll build one for you.",
+        "placeholder": "Message Mimi…",
+        "send": "Send",
+        "openDeck": "Open",
+        "partial": "Reply was interrupted.",
+        "retry": "Retry",
+        "err": {
+            "generic": "Something went wrong. Please try again.",
+            "AI_BUDGET_EXCEEDED": "You've reached today's AI chat limit. Try again tomorrow.",
+            "RATE_LIMITED": "Too many messages — slow down a moment and retry.",
+            "AI_PROVIDER_ERROR": "The AI is unavailable right now. Please try again.",
+            "AI_VALIDATION_FAILED": "The AI couldn't produce a reply. Try rephrasing.",
+            "CHAT_NOT_FOUND": "This conversation no longer exists.",
+            "NETWORK_ERROR": "Network problem — check your connection and retry."
+        }
+    },
     "mimi": {
         "idle": [
             "Ready when you are — tap a card to begin.",

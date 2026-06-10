@@ -1,247 +1,270 @@
 <template>
-    <section class="mx-auto flex max-w-3xl flex-col gap-6 p-8">
-        <header>
-            <p class="text-eyebrow uppercase text-brand-muted">{{ t('aiPage.title') }}</p>
-            <h1 class="mt-1 font-display text-display-sm text-cream">{{ t('aiPage.title') }}</h1>
-            <p class="mt-2 text-body text-cream-dim">{{ t('aiPage.subtitle') }}</p>
-        </header>
+    <section class="flex h-full">
+        <!-- Sidebar: static on md+, drawer on mobile -->
+        <div class="hidden w-64 shrink-0 border-r border-line p-3 md:block">
+            <AiChatSidebar
+                :conversations="chat.conversations.value"
+                :active-id="chat.activeId.value"
+                :loading="chat.loadingList.value"
+                @new="onNew"
+                @select="onSelect"
+                @rename="chat.rename"
+                @delete="chat.remove"
+            />
+        </div>
 
-        <!-- Conversation thread -->
-        <div class="flex flex-col gap-4">
+        <div v-if="sidebarOpen" class="fixed inset-0 z-40 md:hidden">
+            <div class="absolute inset-0 bg-black/50" @click="sidebarOpen = false" />
             <div
-                v-for="(m, i) in messages"
-                :key="i"
-                class="flex gap-3"
-                :class="m.role === 'user' ? 'flex-row-reverse' : ''"
+                class="absolute inset-y-0 left-0 w-72 max-w-[82%] border-r border-line bg-bg-base p-3"
             >
-                <SharedMimi v-if="m.role === 'assistant'" :size="40" class="shrink-0" />
-
-                <div
-                    v-if="m.kind === 'text'"
-                    class="max-w-[80%] rounded-2xl px-4 py-2.5 text-body"
-                    :class="
-                        m.role === 'user'
-                            ? 'bg-brand text-on-color'
-                            : 'border border-line bg-bg-surface text-cream'
-                    "
-                >
-                    {{ m.text }}
-                </div>
-
-                <!-- Draft result card -->
-                <div v-else class="min-w-0 flex-1 rounded-2xl border border-line bg-bg-surface p-4">
-                    <p class="break-words font-display text-h3 text-cream">{{ m.draft.title }}</p>
-                    <p class="mt-1 text-small text-brand-muted">{{ m.draft.description }}</p>
-                    <ul class="mt-3 flex flex-col gap-1">
-                        <li
-                            v-for="(c, ci) in m.draft.cards.slice(0, 6)"
-                            :key="ci"
-                            class="flex justify-between gap-3 text-small text-cream-dim"
-                        >
-                            <span class="min-w-0 truncate font-medium text-cream">{{
-                                c.word
-                            }}</span>
-                            <span class="min-w-0 truncate text-right">{{ c.definition }}</span>
-                        </li>
-                    </ul>
-                    <p v-if="m.draft.cards.length > 6" class="mt-1 text-small text-brand-muted">
-                        {{ t('deck.aiMore').replace('{n}', String(m.draft.cards.length - 6)) }}
-                    </p>
-                    <UiButton
-                        variant="primary"
-                        class="mt-4"
-                        :disabled="creatingIndex === i"
-                        @click="createFromDraft(m.draft, i)"
-                    >
-                        <UiSpinner v-if="creatingIndex === i" size="sm" class="mr-2" />
-                        {{ t('aiPage.createDeck') }}
-                    </UiButton>
-                </div>
-            </div>
-
-            <div v-if="generating" class="flex gap-3">
-                <SharedMimi :size="40" class="shrink-0" />
-                <div
-                    class="flex items-center gap-2 rounded-2xl border border-line bg-bg-surface px-4 py-2.5 text-body text-brand-muted"
-                >
-                    <UiSpinner size="sm" /> {{ t('aiPage.thinking') }}
-                </div>
-            </div>
-        </div>
-
-        <!-- Composer -->
-        <div
-            class="sticky bottom-4 flex flex-col gap-3 rounded-2xl border border-line-strong bg-bg-surface p-3 shadow-soft-elevation"
-        >
-            <div class="flex gap-2">
-                <button
-                    v-for="opt in modeOptions"
-                    :key="opt.value"
-                    type="button"
-                    class="rounded-full px-3 py-1.5 text-small transition-colors"
-                    :class="
-                        mode === opt.value
-                            ? 'bg-brand text-on-color'
-                            : 'text-brand-muted hover:bg-brand/20'
-                    "
-                    @click="mode = opt.value"
-                >
-                    {{ opt.label }}
-                </button>
-            </div>
-
-            <template v-if="mode === 'generate'">
-                <UiInputField
-                    v-model="topic"
-                    :label="t('deck.aiTopic')"
-                    :placeholder="t('deck.aiTopicPlaceholder')"
-                    @keydown.enter="onGenerate"
+                <AiChatSidebar
+                    :conversations="chat.conversations.value"
+                    :active-id="chat.activeId.value"
+                    :loading="chat.loadingList.value"
+                    @new="onNew"
+                    @select="onSelect"
+                    @rename="chat.rename"
+                    @delete="chat.remove"
                 />
-                <div class="flex flex-wrap items-end gap-2">
-                    <UiSelect
-                        v-model="target"
-                        :label="t('deck.frontLang')"
-                        :options="languageOptions"
-                        class="flex-1"
-                    />
-                    <UiSelect
-                        v-model="source"
-                        :label="t('deck.backLang')"
-                        :options="languageOptions"
-                        class="flex-1"
-                    />
-                    <UiSelect
-                        v-model="count"
-                        :label="t('deck.aiCount')"
-                        :options="countOptions"
-                        class="w-24"
+            </div>
+        </div>
+
+        <!-- Main column -->
+        <div class="flex min-w-0 flex-1 flex-col">
+            <header class="flex items-center gap-2 border-b border-line px-4 py-3">
+                <button
+                    type="button"
+                    class="rounded-md p-1.5 text-brand-muted hover:bg-bg-muted hover:text-cream md:hidden"
+                    :aria-label="t('chat.menu')"
+                    @click="sidebarOpen = true"
+                >
+                    <Menu class="size-5" />
+                </button>
+                <p class="min-w-0 flex-1 truncate font-display text-h3 text-cream">
+                    {{ activeTitle || t('aiPage.title') }}
+                </p>
+            </header>
+
+            <!-- Thread -->
+            <div ref="threadEl" class="flex-1 overflow-y-auto px-4 py-6">
+                <div class="mx-auto flex max-w-3xl flex-col gap-4">
+                    <!-- Empty / greeting -->
+                    <div
+                        v-if="!chat.messages.value.length && !chat.loadingThread.value"
+                        class="flex flex-col items-center gap-3 py-12 text-center"
+                    >
+                        <SharedMimi :size="72" />
+                        <h2 class="font-display text-h2 text-cream">{{ t('chat.emptyTitle') }}</h2>
+                        <p class="max-w-[42ch] text-body text-cream-dim">
+                            {{ t('chat.emptyHint') }}
+                        </p>
+                    </div>
+
+                    <div v-if="chat.loadingThread.value" class="flex justify-center py-8">
+                        <UiSpinner />
+                    </div>
+
+                    <div
+                        v-for="(m, i) in chat.messages.value"
+                        :key="m.id"
+                        class="flex gap-3"
+                        :class="m.role === 'user' ? 'flex-row-reverse' : ''"
+                    >
+                        <SharedMimi v-if="m.role === 'assistant'" :size="36" class="shrink-0" />
+
+                        <div
+                            class="flex min-w-0 flex-col gap-1"
+                            :class="m.role === 'user' ? 'items-end' : 'items-start'"
+                        >
+                            <!-- Typing dots: streaming assistant with no text yet -->
+                            <div
+                                v-if="isStreaming(i) && !m.content"
+                                class="flex items-center gap-1.5 rounded-2xl border border-line bg-bg-surface px-4 py-3"
+                            >
+                                <span
+                                    class="size-1.5 animate-typing-dot rounded-full bg-brand-pale"
+                                />
+                                <span
+                                    class="size-1.5 animate-typing-dot rounded-full bg-brand-pale [animation-delay:0.2s]"
+                                />
+                                <span
+                                    class="size-1.5 animate-typing-dot rounded-full bg-brand-pale [animation-delay:0.4s]"
+                                />
+                            </div>
+
+                            <div
+                                v-else-if="m.content"
+                                class="max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-body"
+                                :class="
+                                    m.role === 'user'
+                                        ? 'bg-brand text-on-color'
+                                        : 'border border-line bg-bg-surface text-cream'
+                                "
+                            >
+                                {{ m.content
+                                }}<span
+                                    v-if="isStreaming(i)"
+                                    class="ml-0.5 inline-block w-1.5 animate-pulse"
+                                    >▍</span
+                                >
+                            </div>
+
+                            <!-- Deck attachments -->
+                            <AiDeckCard
+                                v-for="(a, ai) in m.attachments ?? []"
+                                :key="ai"
+                                :deck-id="a.deckId"
+                                :title="a.title"
+                                :card-count="a.cardCount"
+                                class="w-full max-w-[80%]"
+                            />
+
+                            <!-- Partial + retry -->
+                            <div
+                                v-if="m.status === 'partial' && m.role === 'assistant'"
+                                class="flex items-center gap-2 text-small text-brand-muted"
+                            >
+                                <span>{{ t('chat.partial') }}</span>
+                                <button
+                                    type="button"
+                                    class="font-semibold text-brand-pale hover:text-cream"
+                                    :disabled="chat.streaming.value"
+                                    @click="chat.retry"
+                                >
+                                    {{ t('chat.retry') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Composer -->
+            <div class="border-t border-line px-4 py-3">
+                <div
+                    class="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-line-strong bg-bg-surface p-2 focus-within:border-brand-bright"
+                >
+                    <textarea
+                        ref="inputEl"
+                        v-model="draft"
+                        rows="1"
+                        :placeholder="t('chat.placeholder')"
+                        class="max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-body text-cream outline-none placeholder:text-brand-muted"
+                        @input="autoGrow"
+                        @keydown.enter.exact.prevent="onSend"
                     />
                     <UiButton
                         variant="primary"
-                        :disabled="!topic.trim() || generating"
-                        @click="onGenerate"
+                        class="shrink-0"
+                        :disabled="!draft.trim() || chat.streaming.value"
+                        :aria-label="t('chat.send')"
+                        @click="onSend"
                     >
-                        {{ t('aiPage.send') }}
+                        <UiSpinner v-if="chat.streaming.value" size="sm" />
+                        <Send v-else class="size-4" />
                     </UiButton>
                 </div>
-            </template>
-
-            <template v-else>
-                <p class="text-small text-brand-muted">{{ t('aiPage.defineHint') }}</p>
-                <UiButton variant="primary" class="self-start" @click="importOpen = true">
-                    <Sparkles class="size-4" /> {{ t('aiPage.openImporter') }}
-                </UiButton>
-            </template>
+            </div>
         </div>
-
-        <AiImportDialog v-model="importOpen" />
     </section>
 </template>
 
 <script setup lang="ts">
-import { Sparkles } from 'lucide-vue-next';
-import { useDecks, useToast, useT } from '#imports';
-import * as aiApi from '@/api/ai';
-import type { AiDeckDraft } from '@/api/ai';
-import { bulkAddCards } from '@/api/cards';
-import { LANGUAGES } from '@/schemas/deck';
+import { Send, Menu } from 'lucide-vue-next';
+import { useChat, useToast, useT } from '#imports';
 
 definePageMeta({ layout: 'default' });
 
-type AiMessage =
-    | { role: 'assistant' | 'user'; kind: 'text'; text: string }
-    | { role: 'assistant'; kind: 'draft'; draft: AiDeckDraft };
-
-const { create } = useDecks();
+const chat = useChat();
 const toast = useToast();
 const { t } = useT();
 
-const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
-const countOptions = ['8', '12', '16', '20'].map((n) => ({ value: n, label: n }));
-const modeOptions = computed(() => [
-    { value: 'generate' as const, label: t('aiPage.modeGenerate') },
-    { value: 'define' as const, label: t('aiPage.modeDefine') },
-]);
+const draft = ref('');
+const sidebarOpen = ref(false);
+const threadEl = ref<HTMLElement | null>(null);
+const inputEl = ref<HTMLTextAreaElement | null>(null);
 
-const messages = ref<AiMessage[]>([
-    { role: 'assistant', kind: 'text', text: t('aiPage.greeting') },
-]);
-const mode = ref<'generate' | 'define'>('generate');
-const topic = ref('');
-const source = ref('en');
-const target = ref('es');
-const count = ref('12');
-const generating = ref(false);
-const creatingIndex = ref<number | null>(null);
-const importOpen = ref(false);
+const activeTitle = computed(
+    () => chat.conversations.value.find((c) => c.id === chat.activeId.value)?.title ?? '',
+);
 
-const onGenerate = async () => {
-    const value = topic.value.trim();
-    if (!value) {
+// Streaming cursor only on the last assistant message while a reply is in flight.
+const isStreaming = (i: number) =>
+    chat.streaming.value &&
+    i === chat.messages.value.length - 1 &&
+    chat.messages.value[i]?.role === 'assistant';
+
+const scrollToBottom = () => {
+    nextTick(() => {
+        const el = threadEl.value;
+        if (el) {
+            el.scrollTop = el.scrollHeight;
+        }
+    });
+};
+
+const autoGrow = () => {
+    const el = inputEl.value;
+    if (!el) {
         return;
     }
-    messages.value.push({
-        role: 'user',
-        kind: 'text',
-        text: t('aiPage.userGenerate').replace('{topic}', value),
-    });
-    topic.value = '';
-    generating.value = true;
-    try {
-        const res = await aiApi.generateDeck({
-            topic: value,
-            sourceLanguage: source.value,
-            targetLanguage: target.value,
-            count: Number(count.value),
-        });
-        messages.value.push({
-            role: 'assistant',
-            kind: 'text',
-            text: t('aiPage.draftReady')
-                .replace('{topic}', value)
-                .replace('{n}', String(res.draft.cards.length)),
-        });
-        messages.value.push({ role: 'assistant', kind: 'draft', draft: res.draft });
-    } catch {
-        messages.value.push({ role: 'assistant', kind: 'text', text: t('aiPage.error') });
-    } finally {
-        generating.value = false;
-    }
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
 };
 
-const createFromDraft = async (draft: AiDeckDraft, index: number) => {
-    creatingIndex.value = index;
-    try {
-        const deck = await create.execute({
-            title: draft.title,
-            description: draft.description,
-            sourceLanguage: draft.sourceLanguage,
-            targetLanguage: draft.targetLanguage,
-            subject: draft.subject ?? null,
-            glyph: draft.glyph ?? null,
-        });
-        if (!deck) {
-            throw new Error('create failed');
+const resetInput = () => {
+    draft.value = '';
+    nextTick(() => {
+        if (inputEl.value) {
+            inputEl.value.style.height = 'auto';
         }
-        await bulkAddCards(
-            deck.id,
-            draft.cards.map((c) => ({
-                word: c.word,
-                definition: c.definition,
-                phonetic: c.phonetic ?? null,
-                partOfSpeech: c.partOfSpeech,
-                example: c.example,
-                exampleTranslation: c.exampleTranslation,
-                tags: c.tags,
-                difficulty: c.difficulty,
-            })),
-        );
-        toast.success(t('aiPage.created'));
-        await navigateTo(`/decks/${deck.id}`);
-    } catch {
-        toast.error(t('aiPage.error'));
-    } finally {
-        creatingIndex.value = null;
-    }
+        inputEl.value?.focus();
+    });
 };
+
+const onSend = async () => {
+    const text = draft.value.trim();
+    if (!text || chat.streaming.value) {
+        return;
+    }
+    resetInput();
+    await chat.send(text);
+};
+
+const onSelect = (id: string) => {
+    sidebarOpen.value = false;
+    chat.openConversation(id);
+};
+
+const onNew = () => {
+    sidebarOpen.value = false;
+    chat.newConversation();
+    nextTick(() => inputEl.value?.focus());
+};
+
+const errText = (code: string) => t(`chat.err.${code}`, t('chat.err.generic'));
+
+watch(
+    () => chat.streamError.value,
+    (e) => {
+        if (e) {
+            toast.error(errText(e.code));
+        }
+    },
+);
+
+watch(chat.messages, scrollToBottom, { deep: true, flush: 'post' });
+watch(chat.loadingThread, (l) => {
+    if (!l) {
+        scrollToBottom();
+    }
+});
+
+onMounted(async () => {
+    await chat.loadConversations();
+    if (chat.conversations.value.length) {
+        await chat.openConversation(chat.conversations.value[0]!.id);
+    }
+});
 </script>
