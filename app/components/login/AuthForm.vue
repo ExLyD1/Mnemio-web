@@ -157,17 +157,31 @@ const socials: Social[] = [
 const config = useRuntimeConfig();
 const googleBusy = ref(false);
 
+// OAuth initiation must hit the backend ORIGIN directly — NOT the same-origin /api
+// proxy, which follows the backend's 302 to Google and serves Google's HTML under our
+// origin (breaks CSP/CORS, so the Google form's JS never runs). When NUXT_PUBLIC_OAUTH_BASE
+// is set we navigate cross-origin straight to the backend, so its 302 → Google is a real
+// browser redirect. Falls back to apiBase / same-origin only for local/unconfigured setups.
+const oauthBase = computed(() => String(config.public.oauthBase || config.public.apiBase || ''));
+
 const onSocial = async (social: Social) => {
     if (!social.enabled || social.provider !== 'google' || googleBusy.value) {
         return;
     }
-    const url = `${config.public.apiBase}/api/v1/auth/oauth/google`;
+    const base = oauthBase.value;
+    const url = `${base}/api/v1/auth/oauth/google`;
+
+    // Cross-origin (configured backend) → go straight there; a CORS pre-flight probe
+    // would be blocked and is pointless.
+    if (base) {
+        window.location.assign(url);
+        return;
+    }
+
+    // Same-origin fallback (local dev): probe so an unconfigured server shows the
+    // friendly /auth/oauth/error page instead of dumping raw JSON.
     googleBusy.value = true;
     try {
-        // Probe first: a configured server 302s to Google (opaque to fetch) — then we
-        // do the real full-page navigation (which sets state/PKCE cookies first-party
-        // via the proxy). An unconfigured/erroring server returns a JSON error, which we
-        // route to the friendly /auth/oauth/error page instead of dumping raw JSON.
         const res = await fetch(url, { method: 'GET', credentials: 'include', redirect: 'manual' });
         if (res.type === 'opaqueredirect' || res.status === 0 || res.ok) {
             window.location.assign(url);
@@ -184,7 +198,6 @@ const onSocial = async (social: Social) => {
         }
         await navigateTo(`/auth/oauth/error?reason=${encodeURIComponent(code)}`);
     } catch {
-        // Network/opaque failure → fall back to a direct navigation.
         window.location.assign(url);
     } finally {
         googleBusy.value = false;
