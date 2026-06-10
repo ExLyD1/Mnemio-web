@@ -19,7 +19,6 @@
         "node": ">=22"
     },
     "dependencies": {
-        "@nuxt/devtools": "^4.0.0-alpha.3",
         "@nuxt/image": "^2.0.0",
         "@nuxtjs/color-mode": "^4.0.0",
         "@nuxtjs/i18n": "^10.2.3",
