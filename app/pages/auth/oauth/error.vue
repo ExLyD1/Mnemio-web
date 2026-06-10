@@ -19,6 +19,8 @@ definePageMeta({ layout: 'auth' });
 const route = useRoute();
 const { t } = useT();
 
+useSeo({ title: t('seo.loginTitle'), description: t('seo.appDesc'), noindex: true });
+
 const KNOWN = new Set([
     'OAUTH_NOT_CONFIGURED',
     'OAUTH_EMAIL_UNVERIFIED',

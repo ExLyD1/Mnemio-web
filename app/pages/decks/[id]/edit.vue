@@ -53,6 +53,8 @@ const { store, fetchOne, update } = useDecks();
 const toast = useToast();
 const { t } = useT();
 
+useSeo({ title: t('seo.deckEditTitle'), description: t('seo.appDesc'), noindex: true });
+
 const goBack = () => navigateTo(`/decks/${deckId.value}`);
 
 const onSubmit = async (payload: {

@@ -19,6 +19,8 @@ const route = useRoute();
 const { oauthExchange, store } = useAuth();
 const { t } = useT();
 
+useSeo({ title: t('seo.loginTitle'), description: t('seo.appDesc'), noindex: true });
+
 onMounted(async () => {
     const code = typeof route.query.code === 'string' ? route.query.code : '';
     if (!code) {

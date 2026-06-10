@@ -232,6 +232,8 @@ const achievements = useAchievements();
 const toast = useToast();
 const { t } = useT();
 
+useSeo({ title: t('seo.profileTitle'), description: t('seo.appDesc'), noindex: true });
+
 const avatarInput = ref<HTMLInputElement | null>(null);
 const onAvatar = async (e: Event) => {
     const input = e.target as HTMLInputElement;

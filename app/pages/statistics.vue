@@ -138,6 +138,8 @@ definePageMeta({ layout: 'default' });
 const { store, fetchList } = useDecks();
 const { t } = useT();
 const stats = useStats();
+
+useSeo({ title: t('seo.statisticsTitle'), description: t('seo.appDesc'), noindex: true });
 const achievements = useAchievements();
 const dueTotal = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
 

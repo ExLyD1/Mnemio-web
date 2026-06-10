@@ -70,6 +70,8 @@ const deckId = computed(() => String(route.params.deckId));
 const { store, fetchOne } = useDecks();
 const { t } = useT();
 
+useSeo({ title: t('seo.studyTitle'), description: t('seo.appDesc'), noindex: true });
+
 onMounted(() => {
     if (!store.deck || store.deck.id !== deckId.value) {
         fetchOne.execute(deckId.value);

@@ -54,10 +54,17 @@ let apiBase = '';
 export const setApiBase = (base: string): void => {
     apiBase = base;
 };
+/** The resolved API base URL (empty in dev → same-origin proxy). */
+export const getApiBase = (): string => apiBase;
 
 let inflightRefresh: Promise<string | null> | null = null;
 
-const refreshAccessToken = async (): Promise<string | null> => {
+/**
+ * Refresh the access token via the HttpOnly refresh cookie. A single refresh is
+ * shared across concurrent callers. Exported so non-`http` callers (e.g. the SSE
+ * chat stream, which uses native `fetch`) can reuse the same 401-recovery path.
+ */
+export const refreshAccessToken = async (): Promise<string | null> => {
     if (inflightRefresh) return inflightRefresh;
     inflightRefresh = (async () => {
         try {

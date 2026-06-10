@@ -43,4 +43,6 @@ import { useT } from '#imports';
 definePageMeta({ layout: 'marketing' });
 
 const { t } = useT();
+
+useSeo({ title: t('seo.blogTitle'), description: t('seo.blogDesc') });
 </script>

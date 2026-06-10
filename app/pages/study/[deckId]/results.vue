@@ -93,6 +93,8 @@ const practiceStore = usePracticeStore();
 const auth = useAuthStore();
 const { t } = useT();
 
+useSeo({ title: t('seo.studyTitle'), description: t('seo.appDesc'), noindex: true });
+
 const result = computed(() => practiceStore.lastResult);
 const name = computed(() => auth.currentUser?.displayName ?? auth.currentUser?.username ?? '');
 

@@ -1,4 +1,32 @@
 {
+    "seo": {
+        "homeTitle": "Flashcards & spaced repetition",
+        "homeDesc": "Learn anything and remember it. Create flashcard decks, study with a smart SRS scheduler, discover public decks, and generate cards with AI — all in Mnemio.",
+        "aboutTitle": "About",
+        "aboutDesc": "The story behind Mnemio — a modern flashcard and spaced-repetition app built to help you learn faster and remember longer.",
+        "blogTitle": "Blog",
+        "blogDesc": "Tips, updates, and learning-science notes from the Mnemio team on flashcards, spaced repetition, and studying smarter.",
+        "privacyTitle": "Privacy Policy",
+        "privacyDesc": "How Mnemio collects, uses, and protects your data.",
+        "termsTitle": "Terms of Service",
+        "termsDesc": "The terms and conditions for using Mnemio.",
+        "loginTitle": "Sign in",
+        "loginDesc": "Sign in to Mnemio or create an account to start learning with flashcards and spaced repetition.",
+        "dashboardTitle": "Dashboard",
+        "decksTitle": "My Decks",
+        "deckCreateTitle": "Create a deck",
+        "deckEditTitle": "Edit deck",
+        "deckDetailTitle": "Deck",
+        "cardAddTitle": "Add cards",
+        "discoverTitle": "Discover decks",
+        "studyTitle": "Study",
+        "reviewTitle": "Review",
+        "statisticsTitle": "Statistics",
+        "profileTitle": "Profile",
+        "onboardingTitle": "Get started",
+        "aiTitle": "AI deck generator",
+        "appDesc": "Mnemio — flashcards and spaced repetition for faster learning."
+    },
     "common": {
         "cancel": "Cancel",
         "save": "Save",
@@ -555,6 +583,30 @@
         "error": "Sorry, I couldn't generate that. Try a different topic.",
         "created": "Deck created!",
         "topicRequired": "Tell me a topic first."
+    },
+    "chat": {
+        "newChat": "New chat",
+        "noChats": "No conversations yet.",
+        "menu": "Options",
+        "rename": "Rename",
+        "delete": "Delete",
+        "deleteConfirm": "Delete this conversation? This can't be undone.",
+        "emptyTitle": "Ask Mimi anything",
+        "emptyHint": "Chat about your learning — or say \"make a deck from these words…\" and I'll build one for you.",
+        "placeholder": "Message Mimi…",
+        "send": "Send",
+        "openDeck": "Open",
+        "partial": "Reply was interrupted.",
+        "retry": "Retry",
+        "err": {
+            "generic": "Something went wrong. Please try again.",
+            "AI_BUDGET_EXCEEDED": "You've reached today's AI chat limit. Try again tomorrow.",
+            "RATE_LIMITED": "Too many messages — slow down a moment and retry.",
+            "AI_PROVIDER_ERROR": "The AI is unavailable right now. Please try again.",
+            "AI_VALIDATION_FAILED": "The AI couldn't produce a reply. Try rephrasing.",
+            "CHAT_NOT_FOUND": "This conversation no longer exists.",
+            "NETWORK_ERROR": "Network problem — check your connection and retry."
+        }
     },
     "mimi": {
         "idle": [

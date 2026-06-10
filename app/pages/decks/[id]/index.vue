@@ -264,6 +264,8 @@ const srs = useSrsStore();
 const toast = useToast();
 const { t } = useT();
 
+useSeo({ title: t('seo.deckDetailTitle'), description: t('seo.appDesc'), noindex: true });
+
 // Only treat the loaded deck as renderable when it matches the current route —
 // guards against a stale/previous deck flashing for the new URL.
 const ready = computed(() => !!store.deck && store.deck.id === id.value);

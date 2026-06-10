@@ -44,7 +44,9 @@
 
         <!-- Features -->
         <section id="features" class="mx-auto max-w-[1080px] px-6 py-16">
-            <p class="text-eyebrow uppercase text-brand-muted">{{ t('landing.featuresEyebrow') }}</p>
+            <p class="text-eyebrow uppercase text-brand-muted">
+                {{ t('landing.featuresEyebrow') }}
+            </p>
             <h2 class="mt-2 max-w-[20ch] font-display text-h1 text-cream">
                 {{ t('landing.featuresTitle') }}
             </h2>
@@ -89,7 +91,9 @@
                     <p class="text-eyebrow uppercase text-brand-muted">
                         {{ t('landing.demoEyebrow') }}
                     </p>
-                    <h2 class="mt-2 font-display text-h1 text-cream">{{ t('landing.demoTitle') }}</h2>
+                    <h2 class="mt-2 font-display text-h1 text-cream">
+                        {{ t('landing.demoTitle') }}
+                    </h2>
                 </div>
                 <LandingDemo />
             </div>
@@ -169,12 +173,33 @@
 
 <script setup lang="ts">
 import { Star, Upload, Wand2, Brain, Image, Flame, WifiOff } from 'lucide-vue-next';
-import { useT } from '#imports';
+import { useHead, useT } from '#imports';
 import { SAMPLE_DECK } from '@/composables/useSampleDeck';
 
 definePageMeta({ layout: 'marketing' });
 
 const { t } = useT();
+
+useSeo({ title: t('seo.homeTitle'), description: t('seo.homeDesc') });
+
+// Landing-page software schema, in addition to the Organization/WebSite graph
+// emitted by the marketing layout.
+useHead({
+    script: [
+        {
+            type: 'application/ld+json',
+            innerHTML: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'SoftwareApplication',
+                name: 'Mnemio',
+                applicationCategory: 'EducationApplication',
+                operatingSystem: 'Web',
+                description: t('seo.homeDesc'),
+                offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            }),
+        },
+    ],
+});
 
 const heroCards = SAMPLE_DECK.slice(0, 3);
 
