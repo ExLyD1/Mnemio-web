@@ -96,6 +96,13 @@ export default defineNuxtConfig({
             // origin and are proxied (below) to the backend. This keeps the refresh
             // cookie first-party. Set NUXT_PUBLIC_API_BASE in prod (same-site there).
             apiBase: '',
+            // Backend ORIGIN for the Google OAuth redirect, e.g.
+            // https://mnemio-backend-production.up.railway.app (local: http://localhost:3001).
+            // OAuth initiation must hit the backend directly — NOT the same-origin /api
+            // proxy, which follows the backend's 302 and would serve Google's HTML under
+            // our origin (CSP/CORS break). Set NUXT_PUBLIC_OAUTH_BASE wherever Google is
+            // configured; the callback still returns to this app via the backend's WEB_URL.
+            oauthBase: '',
         },
     },
 
