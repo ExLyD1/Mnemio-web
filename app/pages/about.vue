@@ -44,7 +44,8 @@
         <section class="border-t border-line">
             <div class="mx-auto max-w-[1080px] px-6 py-20 text-center">
                 <h2 class="font-display text-h1 text-cream">
-                    {{ t('about.ctaTitle1') }}<span class="italic">{{ t('about.ctaTitleEm') }}</span>
+                    {{ t('about.ctaTitle1')
+                    }}<span class="italic">{{ t('about.ctaTitleEm') }}</span>
                 </h2>
                 <div class="mt-6 flex justify-center gap-3">
                     <UiButton variant="primary" @click="navigateTo('/login?tab=register')">
@@ -65,6 +66,8 @@ import { useT } from '#imports';
 definePageMeta({ layout: 'marketing' });
 
 const { t } = useT();
+
+useSeo({ title: t('seo.aboutTitle'), description: t('seo.aboutDesc') });
 
 const values = [
     { title: 'about.value1Title', body: 'about.value1Body' },

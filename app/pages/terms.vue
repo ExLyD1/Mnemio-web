@@ -45,4 +45,6 @@ import { useT } from '#imports';
 definePageMeta({ layout: 'auth' });
 
 const { t } = useT();
+
+useSeo({ title: t('seo.termsTitle'), description: t('seo.termsDesc') });
 </script>

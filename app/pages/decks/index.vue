@@ -84,6 +84,8 @@ const { store, fetchList } = useDecks();
 const prefs = usePreferencesStore();
 const { t } = useT();
 
+useSeo({ title: t('seo.decksTitle'), description: t('seo.appDesc'), noindex: true });
+
 const loading = ref(true);
 const aiOpen = ref(false);
 const filter = ref('all');

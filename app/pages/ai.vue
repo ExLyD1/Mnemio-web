@@ -180,6 +180,8 @@ const chat = useChat();
 const toast = useToast();
 const { t } = useT();
 
+useSeo({ title: t('seo.aiTitle'), description: t('seo.appDesc'), noindex: true });
+
 const draft = ref('');
 const sidebarOpen = ref(false);
 const threadEl = ref<HTMLElement | null>(null);

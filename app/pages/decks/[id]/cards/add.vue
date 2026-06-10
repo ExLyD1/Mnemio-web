@@ -135,6 +135,8 @@ const { addCard } = useCards();
 const toast = useToast();
 const { t } = useT();
 
+useSeo({ title: t('seo.cardAddTitle'), description: t('seo.appDesc'), noindex: true });
+
 const front = ref('');
 const back = ref('');
 const tags = ref<string[]>([]);

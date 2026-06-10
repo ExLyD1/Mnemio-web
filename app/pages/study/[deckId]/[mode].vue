@@ -134,6 +134,8 @@ const mode = computed(() => String(route.params.mode) as StudyMode);
 const { store, fetchOne } = useDecks();
 const { t } = useT();
 const practice = usePractice();
+
+useSeo({ title: t('seo.studyTitle'), description: t('seo.appDesc'), noindex: true });
 const practiceStore = usePracticeStore();
 
 const loading = ref(true);

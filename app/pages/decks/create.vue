@@ -128,6 +128,8 @@ const { create } = useDecks();
 const toast = useToast();
 const { t } = useT();
 
+useSeo({ title: t('seo.deckCreateTitle'), description: t('seo.appDesc'), noindex: true });
+
 const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
 
 const topic = ref('');

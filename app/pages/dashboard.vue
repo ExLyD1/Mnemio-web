@@ -172,6 +172,8 @@ const sessions = useSessionsStore();
 const { t } = useT();
 const { current: locale } = useAppLocale();
 
+useSeo({ title: t('seo.dashboardTitle'), description: t('seo.appDesc'), noindex: true });
+
 const name = computed(() => auth.currentUser?.displayName ?? auth.currentUser?.username ?? '');
 const dueToday = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
 const suggestAction = ref<{ label: string; href: string } | null>(null);

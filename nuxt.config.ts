@@ -9,7 +9,64 @@ export default defineNuxtConfig({
         '@nuxt/image',
         '@nuxtjs/color-mode',
         '@nuxtjs/tailwindcss',
+        '@nuxtjs/sitemap',
+        '@nuxtjs/robots',
     ],
+
+    // Canonical site identity. Used by @nuxtjs/sitemap + @nuxtjs/robots and as the
+    // base for canonical/OG absolute URLs (see app/composables/useSeo.ts).
+    // Override in prod with NUXT_PUBLIC_SITE_URL.
+    site: {
+        url: 'https://mnemio.xyz',
+        name: 'Mnemio',
+    },
+
+    // Private/app + auth surfaces must never be indexed. The sitemap module
+    // auto-excludes anything robots disallows, so sitemap.xml ends up with just
+    // the public marketing pages (/, /about, /blog, /privacy, /terms).
+    robots: {
+        disallow: [
+            '/dashboard',
+            '/decks',
+            '/study',
+            '/review',
+            '/statistics',
+            '/profile',
+            '/onboarding',
+            '/ai',
+            '/discover',
+            '/login',
+            '/auth',
+        ],
+    },
+
+    app: {
+        head: {
+            htmlAttrs: { lang: 'en' },
+            // `%s` is the per-page title set via useSeo; the default title below fills
+            // it on pages that don't set one (so the brand name never doubles up).
+            titleTemplate: '%s · Mnemio',
+            title: 'Flashcards & spaced repetition',
+            meta: [
+                { charset: 'utf-8' },
+                { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+                {
+                    name: 'description',
+                    content:
+                        'Mnemio is a flashcard and spaced-repetition learning app. Create decks, study smarter with an SRS scheduler, discover public decks, and generate cards with AI.',
+                },
+                { name: 'theme-color', content: '#572E54' },
+                { name: 'twitter:card', content: 'summary_large_image' },
+                { property: 'og:site_name', content: 'Mnemio' },
+                { property: 'og:type', content: 'website' },
+            ],
+            link: [
+                { rel: 'icon', href: '/images/logoico.ico', sizes: 'any' },
+                { rel: 'icon', type: 'image/jpeg', href: '/images/logoico.jpg' },
+                { rel: 'apple-touch-icon', href: '/images/logoico.jpg' },
+            ],
+        },
+    },
 
     colorMode: {
         // Class names go straight on <html> as `light` / `dark` (no suffix) so

@@ -50,6 +50,8 @@ const { login, register, verifyEmail, resendOtp, updateProfile } = useAuth();
 const toast = useToast();
 const { t } = useT();
 
+useSeo({ title: t('seo.loginTitle'), description: t('seo.loginDesc'), noindex: true });
+
 type Tab = 'register' | 'login';
 
 const step = ref<'auth' | 'verify' | 'details'>('auth');

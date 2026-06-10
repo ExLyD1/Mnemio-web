@@ -102,6 +102,8 @@ const toast = useToast();
 const { t } = useT();
 const route = useRoute();
 
+useSeo({ title: t('seo.discoverTitle'), description: t('seo.appDesc'), noindex: true });
+
 // Prefill from ?q so the header search (and "See all results") lands here with the query.
 const search = ref(typeof route.query.q === 'string' ? route.query.q : '');
 const filter = ref('all');

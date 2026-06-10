@@ -126,6 +126,8 @@ const toast = useToast();
 const { t } = useT();
 const mimi = useMimi();
 
+useSeo({ title: t('seo.reviewTitle'), description: t('seo.appDesc'), noindex: true });
+
 const active = ref(false);
 const revealed = ref(false);
 const completedCount = ref(0);
