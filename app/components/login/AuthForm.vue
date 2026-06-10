@@ -9,7 +9,7 @@
                     v-for="social in socials"
                     :key="social.label"
                     type="button"
-                    :disabled="!social.enabled"
+                    :disabled="!social.enabled || (social.provider === 'google' && googleBusy)"
                     :aria-label="
                         social.enabled
                             ? social.label
@@ -155,13 +155,39 @@ const socials: Social[] = [
 ];
 
 const config = useRuntimeConfig();
+const googleBusy = ref(false);
 
-const onSocial = (social: Social) => {
-    if (!social.enabled || social.provider !== 'google') {
+const onSocial = async (social: Social) => {
+    if (!social.enabled || social.provider !== 'google' || googleBusy.value) {
         return;
     }
-    // Full-page navigation (not $fetch): the backend sets state/PKCE cookies and
-    // redirects to Google. Same-origin path rides the proxy so cookies stay first-party.
-    window.location.assign(`${config.public.apiBase}/api/v1/auth/oauth/google`);
+    const url = `${config.public.apiBase}/api/v1/auth/oauth/google`;
+    googleBusy.value = true;
+    try {
+        // Probe first: a configured server 302s to Google (opaque to fetch) — then we
+        // do the real full-page navigation (which sets state/PKCE cookies first-party
+        // via the proxy). An unconfigured/erroring server returns a JSON error, which we
+        // route to the friendly /auth/oauth/error page instead of dumping raw JSON.
+        const res = await fetch(url, { method: 'GET', credentials: 'include', redirect: 'manual' });
+        if (res.type === 'opaqueredirect' || res.status === 0 || res.ok) {
+            window.location.assign(url);
+            return;
+        }
+        let code = 'exchange_failed';
+        try {
+            const j = (await res.json()) as { code?: string };
+            if (j.code) {
+                code = j.code;
+            }
+        } catch {
+            // non-JSON body; keep the default reason
+        }
+        await navigateTo(`/auth/oauth/error?reason=${encodeURIComponent(code)}`);
+    } catch {
+        // Network/opaque failure → fall back to a direct navigation.
+        window.location.assign(url);
+    } finally {
+        googleBusy.value = false;
+    }
 };
 </script>
