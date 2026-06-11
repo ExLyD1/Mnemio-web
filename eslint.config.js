@@ -28,7 +28,12 @@ export default [
         files: ['**/*.ts'],
         languageOptions: {
             parserOptions: {
-                projectService: true,
+                // tailwind.config.ts isn't part of any tsconfig project (nuxt.config.ts
+                // is, via .nuxt/tsconfig.node.json); let it fall back to the default
+                // inferred project so it still parses for type-aware linting.
+                projectService: {
+                    allowDefaultProject: ['tailwind.config.ts'],
+                },
                 tsconfigRootDir,
             },
         },
@@ -105,6 +110,19 @@ export default [
             '@typescript-eslint/restrict-template-expressions': 'error',
             '@typescript-eslint/only-throw-error': 'error',
             '@typescript-eslint/consistent-type-imports': 'error',
+        },
+    },
+
+    // ── 5. Root config files — relax type-aware "unsafe" rules ────────────────
+    // nuxt.config.ts / tailwind.config.ts reference build-time globals (process.env)
+    // that aren't typed in the default project (no @types/node), which would otherwise
+    // trip no-unsafe-* on every `process.env.X`. They're infra, not app code.
+    {
+        files: ['*.config.ts'],
+        rules: {
+            '@typescript-eslint/no-unsafe-member-access': 'off',
+            '@typescript-eslint/no-unsafe-assignment': 'off',
+            '@typescript-eslint/no-unsafe-call': 'off',
         },
     },
 ];

@@ -7,7 +7,7 @@ type MimiKey = MimiMood | 'suggestions';
 type MimiLines = Record<MimiKey, string[]>;
 
 const mimiOf = (code: keyof typeof catalogs): Partial<MimiLines> =>
-    ((catalogs[code] as Record<string, unknown>).mimi ?? {}) as Partial<MimiLines>;
+    (catalogs[code] as Record<string, unknown>).mimi ?? {};
 
 const randomOf = (arr: string[] | undefined): string => {
     if (!arr?.length) {

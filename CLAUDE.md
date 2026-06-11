@@ -1,6 +1,7 @@
 # CLAUDE.md
 
 Guidance for Claude Code (and other AI agents) working in this repository.
+
 > The cross-tool copy in [`AGENTS.md`](./AGENTS.md) points here — **this file is canonical.**
 
 ## What this is
@@ -61,6 +62,7 @@ backend  /api/v1/*
 ```
 
 ### `app/utils/http.ts` (read before touching networking)
+
 - Prefixes paths with `/api/v1` (unless they already start with `/api/` or `http`).
 - Access token from `localStorage` via `app/utils/authToken.ts` → `Authorization: Bearer`.
 - Always sends `credentials: 'include'` so the HttpOnly refresh cookie (`mnemio_refresh`) rides along.
@@ -69,11 +71,13 @@ backend  /api/v1/*
 - Options: `skipAuth`, `skipRefresh`.
 
 ### Auth
+
 - `app/stores/auth.ts` — setup store. Flow: `register → verifyEmail (OTP) → login`. Access token kept in `localStorage`; refresh is an HttpOnly cookie.
 - `app/plugins/01.auth.client.ts` — on boot calls `auth.hydrate()` (then preferences). Hydrate is resilient: only `AUTH_INVALID_REFRESH` clears the session; network errors keep the token so a restart/booting backend doesn't log you out.
 - `app/middleware/auth.global.ts` — route guard. `PUBLIC_ROUTES` = `/ /login /about /blog /privacy /terms`; everything else requires auth; authed users on `/login` go to `/dashboard`. Client-side only.
 
 ### Dev proxy (important)
+
 `nuxt.config.ts` sets `routeRules['/api/**'] = { proxy: 'http://127.0.0.1:3001/api/**' }`.
 In dev `runtimeConfig.public.apiBase` is empty, so the client issues **relative**
 `/api/v1/...` requests to its own origin, which Nuxt proxies to the backend on
@@ -82,19 +86,19 @@ must be running on `:3001`** or every call 502s. In prod set `NUXT_PUBLIC_API_BA
 
 ## Project layout (`app/`)
 
-| Dir | Purpose |
-|---|---|
-| `api/` | One module per domain (`auth, decks, cards, sessions, srs, stats, discover, achievements, preferences, ai, media`). Typed fns over `http`; convert backend wire shapes → FE types. |
-| `stores/` | Pinia setup stores (`auth, decks, sessions, srs, practice, preferences`). |
-| `composables/` | `useAsync` (the async-state primitive), domain composables that wrap store actions, plus `useT`, `useAppLocale`, `useToast`, `useMimi`, etc. |
-| `types/` | Hand-written domain types (FE-facing shapes). |
-| `schemas/` | Zod schemas (`auth, card, deck`) → forms via `utils/zodValidator.ts` + vee-validate. |
-| `utils/` | `http`, `authToken`, `zodValidator`, `grades`, `media`, `deckVm`, `studyCard`, `coverSwatches`. |
-| `components/` | `ui/` = shadcn-vue primitives; `shared/` = reusable app widgets; rest grouped by feature (`study, deck, dashboard, login, marketing, landing, review, card, app, layout`). |
-| `pages/` | File-based routes (`dashboard, decks, discover, statistics, study/[deckId], review, profile, onboarding, login, …`). |
-| `layouts/` | `default, auth, marketing, study`. |
-| `i18n/` | `en.json`, `uk.json`, `index.ts` (catalog + helpers). |
-| `middleware/`, `plugins/`, `assets/css/` | Route guard, boot plugin, global CSS. |
+| Dir                                      | Purpose                                                                                                                                                                            |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api/`                                   | One module per domain (`auth, decks, cards, sessions, srs, stats, discover, achievements, preferences, ai, media`). Typed fns over `http`; convert backend wire shapes → FE types. |
+| `stores/`                                | Pinia setup stores (`auth, decks, sessions, srs, practice, preferences`).                                                                                                          |
+| `composables/`                           | `useAsync` (the async-state primitive), domain composables that wrap store actions, plus `useT`, `useAppLocale`, `useToast`, `useMimi`, etc.                                       |
+| `types/`                                 | Hand-written domain types (FE-facing shapes).                                                                                                                                      |
+| `schemas/`                               | Zod schemas (`auth, card, deck`) → forms via `utils/zodValidator.ts` + vee-validate.                                                                                               |
+| `utils/`                                 | `http`, `authToken`, `zodValidator`, `grades`, `media`, `deckVm`, `studyCard`, `coverSwatches`.                                                                                    |
+| `components/`                            | `ui/` = shadcn-vue primitives; `shared/` = reusable app widgets; rest grouped by feature (`study, deck, dashboard, login, marketing, landing, review, card, app, layout`).         |
+| `pages/`                                 | File-based routes (`dashboard, decks, discover, statistics, study/[deckId], review, profile, onboarding, login, …`).                                                               |
+| `layouts/`                               | `default, auth, marketing, study`.                                                                                                                                                 |
+| `i18n/`                                  | `en.json`, `uk.json`, `index.ts` (catalog + helpers).                                                                                                                              |
+| `middleware/`, `plugins/`, `assets/css/` | Route guard, boot plugin, global CSS.                                                                                                                                              |
 
 `@/` is aliased to `app/` (e.g. `@/utils/http`).
 
@@ -110,6 +114,7 @@ must be running on `:3001`** or every call 502s. In prod set `NUXT_PUBLIC_API_BA
 ## i18n
 
 Two mechanisms coexist:
+
 1. **`@nuxtjs/i18n`** — strategy `no_prefix`, locales `en`/`uk`, locale persisted in the `i18n_locale` cookie, browser detection on root. Drives `useI18n()` / `setLocale`.
 2. **Custom catalog** — `app/i18n/{en,uk}.json` + `useT()` (a dotted-key resolver with EN fallback). **Use `const { t } = useT()` then `t('dashboard.statStreak')` in components.** Interpolation is done manually (e.g. `.replace('{n}', String(x))`).
 
@@ -119,7 +124,7 @@ UI strings, add the key to **both** `en.json` and `uk.json`.
 ## Styling
 
 - Tailwind with a custom design system in `tailwind.config.ts`: color tokens (`cream`, `plum`, `pink`, `brand`, `bg-surface`, `line`), display font + custom `fontSize` scale (`text-display-sm`, `text-h2`, `text-body`, `text-eyebrow`, `text-small`), and gradient utilities.
-- **`new_design/`** holds the static HTML/CSS redesign reference (the "Mnemio *.html" mockups + screenshots). Use it as the visual source of truth when building/adjusting screens.
+- **`new_design/`** holds the static HTML/CSS redesign reference (the "Mnemio \*.html" mockups + screenshots). Use it as the visual source of truth when building/adjusting screens.
 - Prettier: **4-space tabs**, single quotes, semicolons, trailing commas (`all`), `printWidth 100`. ESLint flat config (`eslint.config.js`) integrates Prettier + Vue + TS + Tailwind plugins.
 
 ## Docs

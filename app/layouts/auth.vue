@@ -2,10 +2,7 @@
     <div class="relative min-h-screen bg-bg-base bg-page-glow text-cream">
         <div class="absolute right-6 top-6 flex items-center gap-3">
             <SharedLanguageSwitcher variant="menu" />
-            <NuxtLink
-                to="/"
-                class="text-small text-brand-muted transition-colors hover:text-cream"
-            >
+            <NuxtLink to="/" class="text-small text-brand-muted transition-colors hover:text-cream">
                 {{ t('nav.exit') }}
             </NuxtLink>
         </div>

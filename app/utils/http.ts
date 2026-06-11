@@ -18,9 +18,13 @@ const isApiError = (e: unknown): e is ApiError =>
     !!e && typeof e === 'object' && 'code' in e && 'message' in e;
 
 const normalizeError = (err: unknown): ApiError => {
-    if (isApiError(err)) return err;
-    const anyErr = err as { data?: unknown; message?: string; status?: number };
-    if (anyErr?.data && isApiError(anyErr.data)) return anyErr.data;
+    if (isApiError(err)) {
+        return err;
+    }
+    const anyErr = err as { data?: unknown; message?: string; status?: number } | undefined;
+    if (anyErr?.data && isApiError(anyErr.data)) {
+        return anyErr.data;
+    }
     if (anyErr?.data && typeof anyErr.data === 'object') {
         const d = anyErr.data as Record<string, unknown>;
         if (typeof d.code === 'string' && typeof d.message === 'string') {
@@ -32,10 +36,18 @@ const normalizeError = (err: unknown): ApiError => {
         }
     }
     const status = anyErr?.status ?? 0;
-    if (status === 429) return { code: 'RATE_LIMITED', message: 'Too many requests.' };
-    if (status === 401) return { code: 'AUTH_UNAUTHENTICATED', message: 'Not signed in.' };
-    if (status === 403) return { code: 'AUTH_FORBIDDEN', message: 'Not allowed.' };
-    if (status === 404) return { code: 'NOT_FOUND', message: 'Not found.' };
+    if (status === 429) {
+        return { code: 'RATE_LIMITED', message: 'Too many requests.' };
+    }
+    if (status === 401) {
+        return { code: 'AUTH_UNAUTHENTICATED', message: 'Not signed in.' };
+    }
+    if (status === 403) {
+        return { code: 'AUTH_FORBIDDEN', message: 'Not allowed.' };
+    }
+    if (status === 404) {
+        return { code: 'NOT_FOUND', message: 'Not found.' };
+    }
     return {
         code: 'NETWORK_ERROR',
         message: anyErr?.message ?? 'Network request failed.',
@@ -65,7 +77,9 @@ let inflightRefresh: Promise<string | null> | null = null;
  * chat stream, which uses native `fetch`) can reuse the same 401-recovery path.
  */
 export const refreshAccessToken = async (): Promise<string | null> => {
-    if (inflightRefresh) return inflightRefresh;
+    if (inflightRefresh) {
+        return inflightRefresh;
+    }
     inflightRefresh = (async () => {
         try {
             const data = await $fetch<RefreshResponse>(`${API_PREFIX}/auth/refresh`, {
@@ -101,7 +115,9 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
         const headers: Record<string, string> = { ...(options.headers ?? {}) };
         if (!options.skipAuth) {
             const token = readAccessToken();
-            if (token) headers.Authorization = `Bearer ${token}`;
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
         }
         return headers;
     };
@@ -120,7 +136,7 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
         return await send();
     } catch (err) {
         const normalized = normalizeError(err);
-        const status = (err as { status?: number })?.status ?? 0;
+        const status = (err as { status?: number }).status ?? 0;
 
         if (
             !options.skipAuth &&
@@ -135,9 +151,12 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
                     return await send();
                 } catch (retryErr) {
                     const retryNormalized = normalizeError(retryErr);
-                    if ((retryErr as { status?: number })?.status === 401) {
+                    if ((retryErr as { status?: number }).status === 401) {
                         onAuthFailure();
                     }
+                    // http normalizes every failure to an ApiError object (the app's error
+                    // contract — callers read .code/.message), not an Error instance.
+                    // eslint-disable-next-line @typescript-eslint/only-throw-error
                     throw retryNormalized;
                 }
             }
@@ -148,6 +167,8 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
             onAuthFailure();
         }
 
+        // Intentionally throws the normalized ApiError object (see note above).
+        // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw normalized;
     }
 };

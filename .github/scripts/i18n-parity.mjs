@@ -4,7 +4,8 @@
 // Run: node .github/scripts/i18n-parity.mjs
 import { readFileSync } from 'node:fs';
 
-const load = (p) => JSON.parse(readFileSync(new URL(`../../app/i18n/${p}`, import.meta.url), 'utf8'));
+const load = (p) =>
+    JSON.parse(readFileSync(new URL(`../../app/i18n/${p}`, import.meta.url), 'utf8'));
 const en = load('en.json');
 const uk = load('uk.json');
 
