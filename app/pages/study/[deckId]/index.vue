@@ -46,12 +46,14 @@
                 :icon="Layers"
                 :title="t('study.flashcardTitle')"
                 :description="t('study.flashcardDescription')"
+                :meta="flashcardMeta"
                 @select="navigateTo(`/study/${deckId}/flashcard`)"
             />
             <StudyModeCard
                 :icon="ListChecks"
                 :title="t('study.multipleChoiceTitle')"
                 :description="t('study.multipleChoiceDescription')"
+                :meta="multipleChoiceMeta"
                 @select="navigateTo(`/study/${deckId}/multiple-choice`)"
             />
         </div>
@@ -69,6 +71,18 @@ const deckId = computed(() => String(route.params.deckId));
 
 const { store, fetchOne } = useDecks();
 const { t } = useT();
+
+const cardCount = computed(() => store.deck?.cards.length ?? 0);
+const flashcardMeta = computed(() => {
+    if (!cardCount.value) return undefined;
+    const mins = Math.max(1, Math.ceil((cardCount.value * 10) / 60));
+    return `${cardCount.value} ${t('study.cards')} · ~${mins} ${t('study.min')}`;
+});
+const multipleChoiceMeta = computed(() => {
+    if (!cardCount.value) return undefined;
+    const mins = Math.max(1, Math.ceil((cardCount.value * 15) / 60));
+    return `${cardCount.value} ${t('study.cards')} · ~${mins} ${t('study.min')}`;
+});
 
 onMounted(() => {
     if (!store.deck || store.deck.id !== deckId.value) {

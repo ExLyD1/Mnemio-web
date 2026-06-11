@@ -9,7 +9,8 @@
         </div>
         <h3 class="text-h3 font-semibold text-cream">{{ title }}</h3>
         <p class="text-small text-cream-dim">{{ description }}</p>
-        <span class="mt-2 text-eyebrow uppercase text-lavender">{{ t('study.start') }} →</span>
+        <p v-if="meta" class="text-small text-brand-muted">{{ meta }}</p>
+        <span class="mt-auto text-eyebrow uppercase text-lavender">{{ t('study.start') }} →</span>
     </button>
 </template>
 
@@ -21,6 +22,7 @@ defineProps<{
     icon: Component;
     title: string;
     description: string;
+    meta?: string;
 }>();
 defineEmits<{ select: [] }>();
 

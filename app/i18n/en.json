@@ -209,6 +209,8 @@
     },
     "study": {
         "start": "Start",
+        "cards": "cards",
+        "min": "min",
         "exit": "Exit",
         "front": "Front",
         "back": "Back",

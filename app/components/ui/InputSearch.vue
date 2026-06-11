@@ -31,7 +31,7 @@ defineEmits<{ 'update:modelValue': [value: string] }>();
 const wrappers = {
     light: 'bg-brand-light text-brand',
     brand: 'bg-brand text-brand-pale',
-    dark: 'bg-bg-surface text-brand-muted',
+    dark: 'bg-bg-well text-brand-muted',
 } as const;
 
 const textColors = {

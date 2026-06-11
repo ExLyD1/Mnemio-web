@@ -26,81 +26,65 @@
             @practice="(id) => navigateTo(`/study/${id}`)"
         />
 
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <SharedStatTile
-                :label="t('dashboard.statDueToday')"
-                :value="dueToday"
-                :sub="t('dashboard.statDueSub')"
-                tone="plum"
-            />
-            <SharedStatTile
-                :label="t('dashboard.statReviewed')"
-                :value="stats.reviewed.value"
-                :sub="t('dashboard.statReviewedSub')"
-            />
-            <SharedStatTile :label="t('dashboard.statStreak')" :value="`${stats.streak.value}d`" />
-            <SharedStatTile
-                :label="t('dashboard.statRetention')"
-                :value="`${stats.retention.value}%`"
-            />
+        <div class="grid gap-4 lg:grid-cols-2">
+            <div class="grid grid-cols-3 gap-3 lg:grid-cols-1">
+                <SharedStatTile
+                    :label="t('dashboard.statDueToday')"
+                    :value="dueToday"
+                    :sub="t('dashboard.statDueSub')"
+                    tone="plum"
+                />
+                <SharedStatTile
+                    :label="t('dashboard.statReviewed')"
+                    :value="stats.reviewed.value"
+                    :sub="t('dashboard.statReviewedSub')"
+                />
+                <SharedStatTile
+                    :label="t('dashboard.statRetention')"
+                    :value="`${stats.retention.value}%`"
+                />
+            </div>
+
+            <div class="rounded-[20px] border border-line bg-bg-surface p-5">
+                <SharedMiniCalendar :weeks="weeks" :month-label="monthLabel" />
+            </div>
         </div>
 
-        <div class="grid gap-4 lg:grid-cols-2">
-            <div
-                v-if="featured"
-                class="flex flex-col gap-4 rounded-[20px] border border-line bg-bg-surface p-5"
-            >
+        <div v-if="featured" class="rounded-[20px] border border-line bg-bg-surface">
+            <div class="flex flex-col gap-3 p-4">
                 <div class="flex items-start justify-between gap-3">
-                    <div>
-                        <p class="text-eyebrow uppercase text-brand-muted">
-                            {{ t('dashboard.featuredDeck') }}
-                        </p>
-                        <h2 class="mt-1 font-display text-h2 text-cream">{{ featured.title }}</h2>
-                        <p class="mt-0.5 text-small text-brand-muted">
-                            {{ t('deck.cardCount').replace('{n}', String(featured.total)) }} ·
-                            {{ featured.tag }}
-                        </p>
-                    </div>
+                    <p class="text-eyebrow uppercase text-brand-muted">
+                        {{ t('dashboard.featuredDeck') }}
+                    </p>
                     <SharedPill v-if="featured.due > 0" tone="due">{{
                         t('dashboard.dueCount').replace('{n}', String(featured.due))
                     }}</SharedPill>
                 </div>
                 <div>
-                    <SharedProgressBar :value="featured.masteredPct" />
-                    <p class="mt-1.5 text-small text-brand-muted">
-                        {{ t('dashboard.mastered').replace('{pct}', String(featured.masteredPct)) }}
+                    <h2 class="font-display text-h2 text-cream">{{ featured.title }}</h2>
+                    <p class="mt-0.5 text-small text-brand-muted">
+                        {{ t('deck.cardCount').replace('{n}', String(featured.total)) }}
+                        <span v-if="featured.tag"> · {{ featured.tag }}</span>
                     </p>
                 </div>
-                <div class="mt-auto flex gap-2">
+                <div>
+                    <SharedProgressBar :value="featured.masteredPct" />
+                    <p class="mt-1.5 text-small text-brand-muted">
+                        {{
+                            t('dashboard.mastered').replace('{pct}', String(featured.masteredPct))
+                        }}
+                    </p>
+                </div>
+                <div class="flex justify-end gap-2">
                     <UiButton
                         variant="ghost"
-                        class="flex-1"
                         @click="navigateTo(`/decks/${featured.id}/cards/add`)"
                     >
                         {{ t('dashboard.addCards') }}
                     </UiButton>
-                    <UiButton
-                        variant="primary"
-                        class="flex-1"
-                        @click="navigateTo(`/study/${featured.id}`)"
-                    >
+                    <UiButton variant="primary" @click="navigateTo(`/study/${featured.id}`)">
                         {{ t('dashboard.practice') }}
                     </UiButton>
-                </div>
-            </div>
-
-            <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-                <SharedMiniCalendar :weeks="weeks" :month-label="monthLabel" />
-                <div class="mt-4 flex items-center gap-3 border-t border-line pt-4">
-                    <Flame class="size-6 text-pink-soft" />
-                    <div>
-                        <p class="font-display text-xl text-cream">
-                            {{
-                                t('dashboard.dayStreak').replace('{n}', String(stats.streak.value))
-                            }}
-                        </p>
-                        <p class="text-small text-brand-muted">{{ t('dashboard.keepGoing') }}</p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -147,7 +131,6 @@
 </template>
 
 <script setup lang="ts">
-import { Flame } from 'lucide-vue-next';
 import { useAuthStore, useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useMimi } from '@/composables/useMimi';

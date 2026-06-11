@@ -25,9 +25,15 @@
             <NuxtLink
                 to="/review"
                 :aria-label="t('rail.practice')"
-                class="grid size-11 place-items-center rounded-[13px] bg-brand/30 text-lavender transition-colors hover:bg-brand/50"
+                class="relative grid size-11 place-items-center rounded-[13px] bg-brand/30 text-lavender transition-colors hover:bg-brand/50"
             >
                 <Sparkles class="size-5" />
+                <span
+                    v-if="dueCount > 0"
+                    class="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-lavender px-1 text-[10px] font-bold text-plum-deep"
+                >
+                    {{ dueCount > 99 ? '99+' : dueCount }}
+                </span>
             </NuxtLink>
         </UiTooltip>
 
@@ -48,8 +54,11 @@
 <script setup lang="ts">
 import { LayoutGrid, Library, Compass, BarChart3, Sparkles } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
+import { useSrsStore } from '@/stores/srs';
 
 const { t } = useT();
+const srs = useSrsStore();
+const dueCount = computed(() => srs.dueCount);
 
 const navLinks = computed(() => [
     { label: t('rail.home'), to: '/dashboard', icon: LayoutGrid },

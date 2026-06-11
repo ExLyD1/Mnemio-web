@@ -58,11 +58,35 @@
                     </div>
                 </SharedCoverArt>
 
-                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <SharedStatTile :label="t('deck.statTotal')" :value="store.deck.cards.length" />
-                    <SharedStatTile :label="t('deck.statMastered')" :value="deckStat.mastered" />
-                    <SharedStatTile :label="t('deck.statDue')" :value="deckStat.due" tone="plum" />
-                    <SharedStatTile :label="t('deck.statNew')" :value="deckStat.new" />
+                <div
+                    class="flex flex-wrap gap-x-6 gap-y-1 rounded-2xl border border-line bg-bg-surface px-5 py-3"
+                >
+                    <span class="flex items-baseline gap-1.5">
+                        <span class="font-display text-h2 leading-none text-cream">{{
+                            store.deck.cards.length
+                        }}</span>
+                        <span class="text-small text-brand-muted">{{ t('deck.statTotal') }}</span>
+                    </span>
+                    <span class="flex items-baseline gap-1.5">
+                        <span class="font-display text-h2 leading-none text-cream">{{
+                            deckStat.mastered
+                        }}</span>
+                        <span class="text-small text-brand-muted">{{
+                            t('deck.statMastered')
+                        }}</span>
+                    </span>
+                    <span class="flex items-baseline gap-1.5">
+                        <span class="font-display text-h2 leading-none text-lavender">{{
+                            deckStat.due
+                        }}</span>
+                        <span class="text-small text-brand-muted">{{ t('deck.statDue') }}</span>
+                    </span>
+                    <span class="flex items-baseline gap-1.5">
+                        <span class="font-display text-h2 leading-none text-cream">{{
+                            deckStat.new
+                        }}</span>
+                        <span class="text-small text-brand-muted">{{ t('deck.statNew') }}</span>
+                    </span>
                 </div>
 
                 <div class="rounded-[20px] border border-line bg-bg-surface p-2">
@@ -126,7 +150,7 @@
             </div>
 
             <aside class="flex flex-col gap-4 self-start lg:sticky lg:top-6">
-                <div class="rounded-[20px] border border-line bg-bg-well p-6">
+                <div class="rounded-[20px] border border-line bg-bg-surface-2 p-6">
                     <div class="grid place-items-center">
                         <SharedProgressRing :pct="deckStat.masteredPct" label="mastered" />
                     </div>

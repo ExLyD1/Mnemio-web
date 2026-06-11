@@ -26,7 +26,16 @@
             <SharedSortMenu v-model="sort" :options="sortOptions" />
         </div>
 
-        <SharedPageLoader v-if="loading && !store.summaries.length" />
+        <div
+            v-if="loading && !store.summaries.length"
+            class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        >
+            <div
+                v-for="i in 6"
+                :key="i"
+                class="h-[240px] animate-pulse rounded-[20px] bg-bg-surface"
+            />
+        </div>
 
         <UiEmptyState
             v-else-if="!store.summaries.length"
