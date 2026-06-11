@@ -51,6 +51,10 @@ export default defineNuxtConfig({
                 { charset: 'utf-8' },
                 { name: 'viewport', content: 'width=device-width, initial-scale=1' },
                 {
+                    name: 'google-site-verification',
+                    content: 'o2Qy5YXCdB8Xt1o8mKqP7qWDmLQjBhHIMt7SnSokH1I',
+                },
+                {
                     name: 'description',
                     content:
                         'Mnemio is a flashcard and spaced-repetition learning app. Create decks, study smarter with an SRS scheduler, discover public decks, and generate cards with AI.',
