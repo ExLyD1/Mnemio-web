@@ -12,5 +12,6 @@ export const useAuth = () => {
         resendOtp: useAsync(store.resendOtp),
         logout: useAsync(store.logout),
         updateProfile: useAsync(store.updateProfile),
+        oauthExchange: useAsync(store.oauthExchange),
     };
 };

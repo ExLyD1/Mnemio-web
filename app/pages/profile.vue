@@ -197,8 +197,10 @@
                                 class="size-7"
                                 :class="a.earned ? 'text-pink-soft' : 'text-brand-muted'"
                             />
-                            <span class="text-small font-semibold text-cream">{{ a.name }}</span>
-                            <span class="text-small text-brand-muted">{{ a.note }}</span>
+                            <span class="text-small font-semibold text-cream">{{
+                                achName(a)
+                            }}</span>
+                            <span class="text-small text-brand-muted">{{ achDesc(a) }}</span>
                         </div>
                     </div>
                 </div>
@@ -217,6 +219,7 @@ import { uploadMedia } from '@/api/media';
 import { mediaUrl } from '@/utils/media';
 import { LANGUAGES } from '@/schemas/deck';
 import type { ProfileUpdate } from '@/types/user';
+import type { Achievement } from '@/types/achievement';
 
 definePageMeta({ layout: 'default' });
 
@@ -228,6 +231,8 @@ const stats = useStats();
 const achievements = useAchievements();
 const toast = useToast();
 const { t } = useT();
+
+useSeo({ title: t('seo.profileTitle'), description: t('seo.appDesc'), noindex: true });
 
 const avatarInput = ref<HTMLInputElement | null>(null);
 const onAvatar = async (e: Event) => {
@@ -268,6 +273,11 @@ const memberYear = computed(() =>
 
 const heat = computed(() => stats.yearHeat.value);
 const earnedCount = computed(() => achievements.items.value.filter((a) => a.earned).length);
+
+// Backend ships English name/description; map by the stable `key` to the catalog
+// (falls back to the server text for any key we haven't translated yet).
+const achName = (a: Achievement) => t(`achievements.${a.key}.name`, a.name);
+const achDesc = (a: Achievement) => t(`achievements.${a.key}.description`, a.description);
 
 const quickStats = computed(() => [
     { label: t('profile.statStreak'), value: `${stats.streak.value}d` },

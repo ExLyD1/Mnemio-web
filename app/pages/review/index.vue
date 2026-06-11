@@ -34,6 +34,44 @@
                 </p>
             </template>
 
+            <template v-else-if="finished">
+                <SharedMimi mood="done" :size="120" />
+                <h1 class="font-display text-h1 text-cream">{{ t('review.resultsTitle') }}</h1>
+                <p class="max-w-md text-body text-cream-dim">
+                    {{
+                        t('review.resultsSummary')
+                            .replace('{n}', String(reviewedTotal))
+                            .replace('{pct}', String(accuracy))
+                    }}
+                </p>
+                <div class="grid w-full max-w-md grid-cols-2 gap-3">
+                    <SharedStatTile :label="t('study.reviewed')" :value="reviewedTotal" />
+                    <SharedStatTile
+                        :label="t('study.recalled')"
+                        :value="`${accuracy}%`"
+                        tone="accent"
+                    />
+                </div>
+                <div
+                    class="w-full max-w-md rounded-[20px] border border-line bg-bg-surface p-5 text-left"
+                >
+                    <p class="text-eyebrow uppercase text-brand-muted">
+                        {{ t('study.howItWent') }}
+                    </p>
+                    <div class="mt-3">
+                        <SharedBreakdownBar :segments="segments" />
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                    <UiButton variant="ghost" @click="navigateTo('/decks')">
+                        {{ t('review.browseDecks') }}
+                    </UiButton>
+                    <UiButton variant="primary" @click="navigateTo('/dashboard')">
+                        {{ t('review.backToDashboard') }}
+                    </UiButton>
+                </div>
+            </template>
+
             <UiEmptyState
                 v-else-if="srs.dueCount === 0"
                 :icon="CheckCheck"
@@ -88,12 +126,27 @@ const toast = useToast();
 const { t } = useT();
 const mimi = useMimi();
 
+useSeo({ title: t('seo.reviewTitle'), description: t('seo.appDesc'), noindex: true });
+
 const active = ref(false);
 const revealed = ref(false);
 const completedCount = ref(0);
 const totalQueue = ref(0);
+const finished = ref(false);
+const counts = reactive({ again: 0, hard: 0, good: 0, easy: 0 });
 
 const currentDue = computed(() => srs.dueCards[0] ?? null);
+
+const reviewedTotal = computed(() => completedCount.value);
+const accuracy = computed(() =>
+    reviewedTotal.value ? Math.round(((counts.good + counts.easy) / reviewedTotal.value) * 100) : 0,
+);
+const segments = computed(() => [
+    { label: t('study.unknown'), count: counts.again, color: 'bg-error-soft' },
+    { label: t('review.hard'), count: counts.hard, color: 'bg-brand-bright' },
+    { label: t('review.good'), count: counts.good, color: 'bg-brand' },
+    { label: t('review.easy'), count: counts.easy, color: 'bg-success-bright' },
+]);
 
 const studyCard = computed<StudyCard | null>(() => {
     const d = currentDue.value;
@@ -108,9 +161,9 @@ const studyCard = computed<StudyCard | null>(() => {
         meaning: d.card.definition,
         lang: d.deckTitle,
         region: '',
-        pos: '',
-        example: '',
-        exampleTranslation: '',
+        pos: d.card.partOfSpeech ?? '',
+        example: d.card.example ?? '',
+        exampleTranslation: d.card.exampleTranslation ?? '',
     };
 });
 
@@ -119,6 +172,11 @@ const startReview = () => {
     totalQueue.value = srs.dueCount;
     revealed.value = false;
     active.value = true;
+    finished.value = false;
+    counts.again = 0;
+    counts.hard = 0;
+    counts.good = 0;
+    counts.easy = 0;
     mimi.say('idle');
 };
 
@@ -132,10 +190,11 @@ const onRate = async (rating: SrsRating) => {
     try {
         await srs.rate(due.card.id, due.card.deckId, rating);
         completedCount.value += 1;
+        counts[rating] += 1;
         if (srs.dueCount === 0) {
             active.value = false;
+            finished.value = true;
             mimi.say('done');
-            toast.success(t('review.sessionDone'));
         }
     } catch (e) {
         const err = e as { message?: string };

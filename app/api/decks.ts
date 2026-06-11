@@ -34,7 +34,8 @@ export const createDeck = async (input: DeckInput): Promise<DeckSummary> =>
             description: input.description ?? '',
             sourceLanguage: input.sourceLanguage,
             targetLanguage: input.targetLanguage,
-            ...(input.isPublic !== undefined ? { isPublic: input.isPublic } : {}),
+            // New decks are public by default; callers (the create form) can override.
+            isPublic: input.isPublic ?? true,
             ...(input.coverColor !== undefined ? { coverColor: input.coverColor } : {}),
             ...(input.glyph !== undefined ? { glyph: input.glyph } : {}),
             ...(input.subject !== undefined ? { subject: input.subject } : {}),

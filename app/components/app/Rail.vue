@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { LayoutGrid, Library, Compass, BarChart3, Sparkles } from 'lucide-vue-next';
+import { LayoutGrid, Library, Compass, BarChart3, Sparkles, Bot } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
 import { useSrsStore } from '@/stores/srs';
 
@@ -65,5 +65,6 @@ const navLinks = computed(() => [
     { label: t('rail.decks'), to: '/decks', icon: Library },
     { label: t('rail.discover'), to: '/discover', icon: Compass },
     { label: t('rail.statistics'), to: '/statistics', icon: BarChart3 },
+    { label: t('rail.ai'), to: '/ai', icon: Bot },
 ]);
 </script>

@@ -1,11 +1,60 @@
 # Mnemio Backend — API Contract for Frontend Integration
 
-> Authoritative spec of what the backend must implement to satisfy the current
-> `mnemio-frontend` codebase. Everything below is exercised by Phase 1–4 of
-> the frontend's MVP. If the backend implements _exactly_ this, the frontend
-> cuts over by swapping `app/api/*.ts` and nothing else.
->
+> Audience: the frontend (`mnemio-frontend`) developer / AI replacing the
+> `localStorage`-backed mocks in `app/api/*.ts` with real HTTP calls.
 > Read [`backend-plan.md`](./backend-plan.md) for the _why_; this file is the _what_.
+
+## 0. Status
+
+**Contract is complete.** P0 + P1 + P2 from `backend-plan.md` are all shipped,
+plus the post-MVP additions (Google OAuth, account deletion, welcome flags,
+Quizlet/text imports, deck import/export, real-time AI chat). **57 endpoints
+under `/api/v1`** + `GET /health` + `GET /ready` + static `/media/*`. Nothing
+in this document is "coming later" unless it says so explicitly.
+
+### Endpoint inventory (57 under `/api/v1`)
+
+| Domain       | Endpoints                                                                                                                                                                                             |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth         | `POST /auth/register`, `verify-email`, `resend-otp`, `login`, `refresh`, `logout` · `GET /auth/me` · `GET /auth/oauth/google`, `/auth/oauth/google/callback` · `POST /auth/oauth/exchange`            |
+| Users        | `PATCH /users/me` · `DELETE /users/me` · `GET /users/me/preferences` · `PATCH /users/me/preferences`                                                                                                  |
+| Decks        | `GET /decks` · `POST /decks` · `GET /decks/:id` · `PATCH /decks/:id` · `DELETE /decks/:id` · `GET /decks/:id/export` · `POST /decks/:id/cards/import`                                                 |
+| Cards        | `POST /decks/:id/cards` · `POST /decks/:id/cards/bulk` · `PATCH /cards/:id` · `DELETE /cards/:id`                                                                                                     |
+| Sessions     | `POST /sessions` · `PATCH /sessions/:id` · `POST /sessions/:id/complete` · `POST /sessions/:id/exit` · `POST /sessions/:id/resume` · `GET /sessions/active` · `GET /sessions/incomplete`              |
+| SRS          | `POST /srs/rate` · `GET /srs/due` · `GET /srs/progress`                                                                                                                                               |
+| Dashboard    | `GET /dashboard`                                                                                                                                                                                      |
+| Achievements | `GET /achievements`                                                                                                                                                                                   |
+| Stats        | `GET /stats/overview` · `GET /stats/series` · `GET /stats/activity` · `GET /stats/decks`                                                                                                              |
+| Discover     | `GET /discover/decks` · `GET /discover/featured` · `GET /discover/categories` · `POST /decks/:id/copy`                                                                                                |
+| AI           | `POST /ai/enrich-words` · `POST /ai/generate-deck` · `POST /ai/suggest`                                                                                                                               |
+| Imports      | `POST /imports/quizlet` · `POST /imports/text`                                                                                                                                                        |
+| Chat         | `GET /chat/conversations` · `POST /chat/conversations` · `GET /chat/conversations/:id` · `PATCH /chat/conversations/:id` · `DELETE /chat/conversations/:id` · `POST /chat/conversations/:id/messages` |
+| Media        | `POST /media/uploads` (+ static serve at `GET /media/<userId>/<file>`)                                                                                                                                |
+| Ops          | `GET /health` · `GET /ready` (both un-prefixed)                                                                                                                                                       |
+
+### Invariants the FE must respect
+
+| #   | Rule                                                                                                                                                                                                                                                                               |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Refresh token is an **HttpOnly cookie** `mnemio_refresh` on path `/api/v1/auth`. **Never in any body.** Send `credentials: 'include'` on every call.                                                                                                                               |
+| 2   | Access token in `localStorage`, sent as `Authorization: Bearer …`.                                                                                                                                                                                                                 |
+| 3   | On `{ code: 'AUTH_INVALID_TOKEN' }` → `POST /auth/refresh` (no body), retry once; on `{ code: 'AUTH_INVALID_REFRESH' }` → hard logout, never retry.                                                                                                                                |
+| 4   | `POST /srs/rate` body is `{ cardId, rating }` — `'again'\|'hard'\|'good'\|'easy'`. Server derives `deckId`.                                                                                                                                                                        |
+| 5   | Session XP is **server-computed** `correct*10 + 25`. Never send `xp`. The user's total `xp` changes server-side — refresh via `/auth/me` or `/dashboard.stats.xp`.                                                                                                                 |
+| 6   | `User.fullName` (was `displayName`); `User.streak` is exposed but always `0` — use `/stats/overview.streak` instead.                                                                                                                                                               |
+| 7   | Username-taken error code is `AUTH_USERNAME_TAKEN`.                                                                                                                                                                                                                                |
+| 8   | Every list response is `{ items, nextCursor }`; one variant (`GET /decks`) adds `total`. Cursor is opaque.                                                                                                                                                                         |
+| 9   | Ownership is checked at the repo layer — listing/getting/modifying someone else's deck/card/session always returns `404 *_NOT_FOUND` or `403 *_FORBIDDEN`.                                                                                                                         |
+| 10  | Only one `active` session per user. Both `POST /sessions` and `POST /sessions/:id/resume` flip a pre-existing active session to `incomplete` atomically.                                                                                                                           |
+| 11  | Every auth response (`login`, `verify-email`, `refresh`, `me`) now carries `welcome: { hasDeck, hasSession, hasReviewed }` — use it for dashboard variant selection instead of fanning out three count probes from the FE.                                                         |
+| 12  | `/imports/*` and `/ai/*` share a per-user daily-cap rollup in `ai_usage`. A user can hit the import cap without affecting AI calls and vice versa — distinct error codes (`IMPORT_BUDGET_EXCEEDED` vs `AI_BUDGET_EXCEEDED`).                                                       |
+| 13  | `/chat/conversations/:id/messages` is the only endpoint where partial-success matters: a streamed assistant reply that gets cut mid-flight is persisted with `status: 'partial'` and the user is NOT charged a daily-cap unit. The FE can render the half-reply and offer "retry." |
+
+### Demo data
+
+`npm run seed` creates `demo@mnemio.local` / `demo-password-123` (pre-verified,
+profile complete, 2 decks of 8–10 cards). Skips the OTP scrape during FE
+integration testing.
 
 ---
 
@@ -13,157 +62,183 @@
 
 ### Base URL
 
-- All endpoints prefixed `/api/v1`.
-- Dev: backend on `http://127.0.0.1:3001`, frontend on `http://localhost:3000`.
-- Configured via `NUXT_PUBLIC_API_BASE` on the frontend (default `http://127.0.0.1:3001`).
-- CORS: backend must allow origin `http://localhost:3000` **with credentials**
-  (no wildcards — `Access-Control-Allow-Credentials: true` requires an explicit origin).
+- All endpoints are prefixed `/api/v1`.
+- Dev: `http://localhost:3001/api/v1` (backend on **3001**; Nuxt frontend on **3000**).
+- CORS: server allows `WEB_URL` only (default `http://localhost:3000`) with
+  **`credentials: true`** (required so the browser sends the refresh cookie).
+- Frontend `fetch` must use `credentials: 'include'` on every call.
 
 ### Authentication
 
-**Two-token scheme:**
+- **Access token** — JWT (HS256), 15 min TTL. Claims: `sub` (userId),
+  `emailVerified`, `role`. **Lives in `localStorage`**, sent as
+  `Authorization: Bearer <accessToken>` on every non-public request.
+- **Refresh token** — opaque base64url string (32 bytes of entropy), 30-day TTL,
+  rotates on every `/auth/refresh`. **Lives in an HttpOnly cookie named
+  `mnemio_refresh`**, scoped to path `/api/v1/auth`. The frontend never reads,
+  writes, or sees this token — the browser handles it automatically because
+  CORS uses `credentials: true`.
+- **Cookie attributes:** `HttpOnly`, `SameSite=Lax`, `Path=/api/v1/auth`.
+  `Secure` is set only when `NODE_ENV === 'production'` (so it works on
+  `http://localhost` in dev).
+- **Reuse detection:** presenting a previously-rotated refresh token revokes
+  _all_ of that user's refresh tokens. The next `/auth/refresh` will return
+  `AUTH_INVALID_REFRESH` — force a full logout.
 
-- **Access token** — JWT (HS256), 15-min TTL. Claims: `sub` (userId), `emailVerified`, `role`.
-  Stored in `localStorage` on the frontend. Sent as `Authorization: Bearer <token>`
-  on every authenticated request.
-- **Refresh token** — opaque random string (≥ 32 bytes of entropy), 30-day TTL,
-  **stored in an HttpOnly + Secure + SameSite=Lax cookie** named `mnemio_refresh`
-  (path `/api/v1/auth`). The frontend never reads or writes this cookie directly —
-  it just sends every request with `credentials: 'include'` (already wired in
-  `app/utils/http.ts`).
-- Refresh rotates on every `/auth/refresh`. Old token is revoked.
-  **Reuse detection**: presenting a revoked refresh cookie revokes _all_ of that
-  user's refresh tokens — the next `/auth/refresh` returns 401 `AUTH_INVALID_REFRESH`
-  and the frontend hard-logs-out.
-
-**Public endpoints (no access token required):**
-
-- `POST /auth/register`, `POST /auth/verify-email`, `POST /auth/resend-otp`
-- `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`
-- OAuth endpoints (when added)
-- `GET /health`
-
-All other endpoints require a valid access token.
+Public endpoints (no access token required): everything under `/auth/*`
+except `/auth/me`, plus `/health`.
 
 ### Request / response format
 
-- Bodies and responses are JSON (`Content-Type: application/json`).
-- All timestamps are ISO 8601 UTC strings (`2026-05-25T17:42:00.000Z`).
-- `birthday` is `MM/DD/YYYY` (matches what the frontend form captures) **or**
-  `YYYY-MM-DD` if the backend prefers — pick one and we'll normalize on the FE.
-  _Recommend `MM/DD/YYYY` to avoid a frontend change._
-- IDs are UUID strings (v7 recommended for index locality).
+- Bodies and responses are JSON. `Content-Type: application/json`.
+- All dates are ISO 8601 UTC strings (`2026-05-25T17:42:00.000Z`).
+- Birthday is `YYYY-MM-DD` (date-only).
+- IDs are UUID strings.
+- The refresh token is **never** present in any request body or response body —
+  it's only ever in the `mnemio_refresh` cookie.
 
 ### Error envelope
 
-Every error response — for every status code — follows this shape:
+Every error response follows the same shape:
 
 ```ts
 type ApiError = {
-    code: string; // SCREAMING_SNAKE
-    message: string; // human-readable English; i18n is FE's job
-    details?: Record<string, unknown>; // optional, e.g. per-field validation
+    code: string; // machine-readable, SCREAMING_SNAKE_CASE
+    message: string; // human-readable English (FE handles i18n)
+    details?: Record<string, unknown>; // optional, e.g. Zod tree of issues
 };
 ```
 
-This matches `ApiError` in [`app/composables/useAsync.ts`](../app/composables/useAsync.ts).
-The frontend's [`http`](../app/utils/http.ts) wrapper already normalizes anything
-that doesn't match into this shape — but the backend should produce it directly.
+| Status | Meaning                                                       |
+| ------ | ------------------------------------------------------------- |
+| 400    | Validation error (`VALIDATION_ERROR` or domain code)          |
+| 401    | Unauthenticated (bad / expired access token, bad credentials) |
+| 403    | Authenticated but not allowed (ownership check failed)        |
+| 404    | Not found                                                     |
+| 409    | Conflict (e.g. duplicate email / username)                    |
+| 422    | Business-rule violation                                       |
+| 429    | Rate-limited                                                  |
+| 500    | Internal — backend bug                                        |
 
-Status code → meaning:
+**Codes the FE should map specifically:**
+| Code | Where | UX |
+|---|---|---|
+| `VALIDATION_ERROR` | any | Field errors from `details` |
+| `AUTH_EMAIL_TAKEN` | `POST /auth/register` | "An account already exists. Log in instead." |
+| `AUTH_INVALID_CREDENTIALS` | `POST /auth/login` | "Email or password is incorrect." (do **not** distinguish "no such user" from "wrong password") |
+| `AUTH_INVALID_CODE` | `POST /auth/verify-email` | "Invalid verification code." |
+| `AUTH_OTP_EXHAUSTED` | `POST /auth/verify-email` | "Too many attempts. Request a new code." |
+| `AUTH_OTP_COOLDOWN` | `POST /auth/resend-otp` | "Wait {N}s before requesting another code." |
+| `EMAIL_NOT_VERIFIED` | `POST /auth/login` | Route the user to OTP step; `details.userId` included |
+| `AUTH_INVALID_TOKEN` | any auth-required endpoint | Try `/auth/refresh`; on failure → logout |
+| `AUTH_INVALID_REFRESH` | `POST /auth/refresh` | Hard logout — token is revoked or stolen |
+| `AUTH_USERNAME_TAKEN` | `PATCH /users/me` | Inline field error on `username` |
+| `DECK_NOT_FOUND` / `CARD_NOT_FOUND` / `SESSION_NOT_FOUND` | resource routes | 404 page or toast |
+| `DECK_EMPTY` | `POST /sessions` | Disable "Study" CTA when `cardCount === 0` |
+| `SESSION_NOT_ACTIVE` | `POST /sessions/:id/complete` | Refetch session, sync FE state |
+| `AI_TOO_MANY_WORDS` | `POST /ai/enrich-words` | "Max {max} words per batch — got {got}." `details.{max,got}` |
+| `AI_BUDGET_EXCEEDED` | any `/ai/*` | "Daily AI quota reached." `details.kind`, `details.capPerDay` |
+| `AI_PROVIDER_ERROR` | any `/ai/*` | Generic "AI is having a moment — try again." `details.providerStatus` for logs |
+| `AI_VALIDATION_FAILED` | any `/ai/*` | Same UX as provider error; LLM returned garbage |
+| `IMPORT_BAD_URL` | `POST /imports/quizlet` | "URL must be a `quizlet.com` set link." |
+| `IMPORT_NOT_FOUND` | `POST /imports/quizlet` | "Set is private, removed, or doesn't exist." |
+| `IMPORT_PARSE_FAILED` | `POST /imports/*` · `POST /decks/:id/cards/import` | "Couldn't parse this content." Suggest pasting text instead for Quizlet. |
+| `IMPORT_UPSTREAM_ERROR` | `POST /imports/quizlet` | "Quizlet didn't respond — try again." `details.providerStatus` |
+| `IMPORT_BUDGET_EXCEEDED` | `POST /imports/*` | "Daily import quota reached." `details.capPerDay` |
+| `OAUTH_NOT_CONFIGURED` | `/auth/oauth/*` | "Google sign-in isn't enabled on this deployment." Hide the button. |
+| `OAUTH_BAD_EXCHANGE_CODE` | `POST /auth/oauth/exchange` | "Sign-in code missing — start over." |
+| `OAUTH_EXCHANGE_EXPIRED` | `POST /auth/oauth/exchange` | "Sign-in took too long — start over." |
+| `OAUTH_EMAIL_UNVERIFIED` | `/auth/oauth/google/callback` | Surface via the `/auth/oauth/error?reason=` redirect. |
+| `AUTH_EMAIL_UNVERIFIED_LINK` | `/auth/oauth/google/callback` | The user already has an unverified password account with that email; tell them to verify it first or use a different Google account. |
+| `NOT_READY` | `GET /ready` | 503 — DB ping failed. Ops-only; FE doesn't call `/ready`. |
+| `CHAT_NOT_FOUND` | any `/chat/conversations/:id*` | 404 — conversation missing or owned by someone else. |
 
-| Status | Meaning                                                        |
-| ------ | -------------------------------------------------------------- |
-| 400    | Validation error (`VALIDATION_ERROR`, or domain-specific code) |
-| 401    | Unauthenticated (bad / expired access token, bad credentials)  |
-| 403    | Authenticated but not allowed (e.g. ownership check failed)    |
-| 404    | Not found                                                      |
-| 409    | Conflict (e.g. duplicate email / username)                     |
-| 422    | Business-rule violation                                        |
-| 429    | Rate-limited                                                   |
-| 500    | Internal — backend bug                                         |
-
-**Error codes the frontend already handles by name (don't rename them):**
-
-| Code                                                      | Endpoint(s)                | Frontend UX                                                                                                |
-| --------------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `VALIDATION_ERROR`                                        | any                        | Show inline field errors from `details`                                                                    |
-| `AUTH_EMAIL_TAKEN`                                        | `POST /auth/register`      | Toast: "An account with this email already exists."                                                        |
-| `AUTH_INVALID_CREDENTIALS`                                | `POST /auth/login`         | Toast: "Email or password is incorrect." (same code for "no user" and "wrong pw" — don't leak enumeration) |
-| `AUTH_INVALID_CODE`                                       | `POST /auth/verify-email`  | Inline error on the OTP input                                                                              |
-| `AUTH_OTP_EXHAUSTED`                                      | `POST /auth/verify-email`  | "Too many attempts. Request a new code."                                                                   |
-| `AUTH_OTP_COOLDOWN`                                       | `POST /auth/resend-otp`    | "Wait {N}s before requesting another code." (FE reads `details.cooldownSeconds`)                           |
-| `EMAIL_NOT_VERIFIED`                                      | `POST /auth/login`         | Route the user to the OTP step; `details.userId` must be included                                          |
-| `AUTH_INVALID_TOKEN`                                      | any auth-required endpoint | http wrapper calls `/auth/refresh` once, retries; if refresh fails → log out                               |
-| `AUTH_INVALID_REFRESH`                                    | `POST /auth/refresh`       | Hard log-out; cookie cleared                                                                               |
-| `AUTH_USER_NOT_FOUND`                                     | `PATCH /users/me`          | Toast                                                                                                      |
-| `AUTH_USERNAME_TAKEN`                                     | `PATCH /users/me`          | Inline error on the `username` field                                                                       |
-| `DECK_NOT_FOUND` / `CARD_NOT_FOUND` / `SESSION_NOT_FOUND` | resource routes            | Toast + redirect to listing                                                                                |
-| `DECK_LIMIT_REACHED`                                      | `POST /decks`              | "Maximum 200 decks per user." (frontend already limits at 200)                                             |
-| `CARD_LIMIT_REACHED`                                      | `POST /decks/:id/cards`    | "Maximum 1000 cards per deck."                                                                             |
-| `SESSION_EMPTY_DECK`                                      | `POST /sessions`           | Disable the "Study" CTA when `cardCount === 0`                                                             |
-| `RATE_LIMITED`                                            | any                        | Toast: "Too many requests."                                                                                |
+**429 envelope:** `@fastify/rate-limit` is now configured with our standard
+envelope, so a rate-limited request returns
+`{ code: 'RATE_LIMITED', message, details: { retryAfter, max } }`.
 
 ### Rate limiting
 
 - Global default: 120 req/min/IP.
 - `/auth/register`, `/auth/login`: 10 req/min/IP.
-- `/auth/verify-email`: 5 attempts per OTP code (then `AUTH_OTP_EXHAUSTED`).
-- `/auth/resend-otp`: 1 req/min per user (60-second cooldown).
+- `/auth/verify-email`, `/auth/resend-otp`: 5 req/min/IP.
 - `/auth/refresh`: 30 req/min/IP.
-- On 429, return the standard envelope with `code: 'RATE_LIMITED'`.
 
-### Pagination
+### Pagination contract
 
-Cursor-based, opaque. Send `?cursor=<opaque>&limit=<n>`; receive
-`{ items, nextCursor, total }`. `nextCursor` is `null` when no more pages.
-Hard cap on `limit`: 100.
-
-The frontend currently encodes cursors as `btoa("offset:N")` in its mock; the
-backend is free to use any opaque format (e.g. base64 of `last_id|last_updated_at`
-for keyset pagination). Treat as black-box on both sides.
+- Cursor-based. Send `?cursor=<opaque>&limit=<n>`; receive `{ items, nextCursor }`.
+- `nextCursor === null` → no more pages.
+- Hard cap on `limit`: **100** for general lists.
+- A few endpoints expose `total` alongside the page (currently `GET /decks`) for
+  list-header counters; most omit it because counting on every page is expensive.
+- The cursor is **opaque** — never parse or construct it; pass it through verbatim.
 
 ```ts
 type Page<T> = {
     items: T[];
     nextCursor: string | null;
-    total: number;
 };
+type PageWithTotal<T> = Page<T> & { total: number };
 ```
 
 ---
 
-## 2. Domain types (response shapes)
-
-These match the frontend's TypeScript interfaces verbatim. Field order is not
-significant; presence and types are.
+## 2. Domain types
 
 ```ts
-// app/types/user.ts
 type User = {
     id: string; // uuid
     email: string;
-    displayName: string | null; // null until profile completion
+    fullName: string | null; // null until profile completion
     username: string | null; // null until profile completion
-    birthday: string | null; // 'MM/DD/YYYY' or null
-    createdAt: string; // ISO
-};
-
-// app/types/deck.ts
-type Deck = {
-    id: string;
-    ownerId: string;
-    title: string;
-    description: string | null;
-    sourceLanguage: string; // ISO 639-1, e.g. 'en'
-    targetLanguage: string;
-    isPublic: boolean; // always false at MVP
-    cards: Card[]; // nested in GET /decks/:id; absent in list responses
+    birthday: string | null; // 'YYYY-MM-DD' or null
+    avatarUrl: string | null; // populated by POST /media/uploads?kind=avatar
+    emailVerified: boolean;
+    role: 'user' | 'admin';
+    xp: number; // updated atomically on session complete
+    streak: number; // ALWAYS 0 — use /stats/overview.streak instead
     createdAt: string;
     updatedAt: string;
 };
 
-type DeckSummary = Omit<Deck, 'cards'> & { cardCount: number };
+type DeckStats = {
+    total: number; // = cardCount
+    mastered: number; // cards with interval ≥ 21 days
+    learning: number; // has progress but interval < 21
+    new: number; // cards without a CardProgress row
+    due: number; // cards due now (nextReviewAt ≤ now)
+    masteredPct: number; // 0..100, rounded
+};
+
+type Deck = {
+    id: string;
+    ownerId: string;
+    title: string;
+    description: string;
+    sourceLanguage: string; // ISO 639-1, e.g. 'en'
+    targetLanguage: string;
+    isPublic: boolean;
+    cardCount: number;
+    coverColor: string | null; // P2: '#RRGGBB' hex
+    glyph: string | null; // P2: short symbol/emoji, ≤ 8 chars
+    subject: string | null; // P2: e.g. 'languages', 'science'
+    featured: boolean; // P2: curator-flagged for Discover home
+    copyCount: number; // P2: # of times this deck has been cloned
+    sourceDeckId: string | null; // P2: id of the public deck this was copied from
+    stats: DeckStats; // P1: embedded per-deck stats
+    createdAt: string;
+    updatedAt: string;
+};
+
+// Discover responses use a variant that bundles an author summary so the FE
+// doesn't need a second roundtrip to render a username.
+type DeckWithAuthor = Deck & {
+    author: {
+        id: string;
+        username: string | null;
+        fullName: string | null;
+    };
+};
 
 type Card = {
     id: string;
@@ -171,56 +246,161 @@ type Card = {
     word: string;
     definition: string;
     phonetic: string | null;
+    reading: string | null; // P1
+    partOfSpeech: string | null; // P1
+    example: string | null; // P1
+    exampleTranslation: string | null; // P1
+    tags: string[]; // P1
+    difficulty: 'easy' | 'medium' | 'hard'; // P1; default 'medium'
+    type: 'basic' | 'cloze' | 'image'; // P1; default 'basic'
+    audioUrl: string | null; // P1
+    imageUrl: string | null;
     position: number; // 0-indexed, server-assigned on create
     createdAt: string;
     updatedAt: string;
 };
 
-// app/types/srs.ts
 type CardProgress = {
     cardId: string;
-    deckId: string;
-    easeFactor: number; // SM-2, min 1.3
-    intervalDays: number;
     repetitions: number;
-    nextReviewAt: string; // ISO
+    interval: number; // in days
+    easeFactor: number; // SM-2, min 1.3
+    nextReviewAt: string;
     lastReviewedAt: string | null;
 };
 
-type SrsRating = 'again' | 'hard' | 'good' | 'easy';
-// Server-side mapping to SM-2 quality: again=0, hard=3, good=4, easy=5
-
-// app/types/session.ts
-type StudyMode = 'flashcard' | 'multiple-choice' | 'srs';
-type SessionStatus = 'active' | 'incomplete' | 'complete';
+type SessionCounts = {
+    again: number;
+    hard: number;
+    good: number;
+    easy: number;
+};
 
 type StudySession = {
     id: string;
     userId: string;
     deckId: string;
-    mode: StudyMode;
+    mode: 'flashcard' | 'multiple_choice' | 'srs';
+    status: 'active' | 'incomplete' | 'complete';
     cardIds: string[]; // snapshot of the queue at session start
-    index: number; // 0-indexed cursor into cardIds
+    cardIndex: number;
     correct: number;
     xpAwarded: number;
-    status: SessionStatus;
+    cardsStudied: number;
+    correctAnswers: number;
+    counts: SessionCounts; // P1: per-grade tally
+    revisitCardIds: string[]; // P1: cards the user flagged to revisit
+    durationMs: number; // P1: ms spent in this session
     startedAt: string;
     endedAt: string | null;
+    completedAt: string;
+};
+
+type Rating = 'again' | 'hard' | 'good' | 'easy';
+
+type Achievement = {
+    id: string; // = key
+    key: string;
+    name: string;
+    description: string;
+    iconKey: string; // FE maps to the actual asset
+    earned: boolean;
+    earnedAt: string | null;
+    progress: number; // 0..100
+};
+
+type Preference = {
+    interests: string[];
+    goal: string | null;
+    nativeLanguage: string | null;
+    learningLanguages: string[];
+    avatarHue: number | null; // 0..360
+    mimiPlacement: 'left' | 'right' | null;
+    favorites: string[]; // deckIds
+    updatedAt: string;
+};
+
+// Returned on every token-issuing auth response + GET /auth/me.
+type WelcomeState = {
+    hasDeck: boolean;
+    hasSession: boolean;
+    hasReviewed: boolean;
+};
+
+// Ephemeral card draft — used as both the AI-enrichment / generate-deck
+// output and the /imports/* output, so the FE renders one review/preview
+// UI for all three sources.
+type AiCardDraft = {
+    word: string;
+    definition: string;
+    phonetic?: string;
+    partOfSpeech?: string;
+    example?: string;
+    exampleTranslation?: string;
+    tags?: string[];
+    difficulty?: 'easy' | 'medium' | 'hard';
+};
+
+// Real-time chat (POST /chat/*). Conversations are server-persisted so the
+// user can resume across devices. Messages are append-only — re-sending the
+// same prompt creates a new ChatMessage row, never edits an existing one.
+type Conversation = {
+    id: string;
+    title: string; // auto-set from the first user message; user can rename
+    createdAt: string;
+    updatedAt: string;
+    lastMessageAt: string; // drives sidebar order
+};
+
+type ChatMessageRole = 'user' | 'assistant' | 'system';
+type ChatMessageStatus = 'complete' | 'partial'; // 'partial' when a stream got cut
+
+type ChatMessage = {
+    id: string;
+    conversationId: string;
+    role: ChatMessageRole;
+    content: string; // plain text or markdown — no HTML
+    status: ChatMessageStatus;
+    tokensInput: number | null; // assistant rows only
+    tokensOutput: number | null; // assistant rows only
+    createdAt: string;
 };
 ```
 
 ### `needsProfile` flag
 
-Login / verify-email / refresh / `GET /auth/me` responses all include
-`needsProfile: boolean` alongside `user`. It's `true` when `user.username` is `null`.
-The frontend uses this flag — not local heuristics — to route the user to the
-account-details step.
+Most auth responses include `needsProfile: boolean` alongside `user`. It's
+`true` when `user.username` or `user.fullName` is `null`. **Use this flag — not
+local heuristics — to decide whether to send the user to the account-details
+step.**
+
+### `welcome` flags
+
+Auth responses also carry a `welcome` block — three booleans the FE can use to
+pick between the empty-state dashboard and "Continue studying":
+
+```ts
+welcome: {
+  hasDeck:     boolean,  // user has authored at least one deck
+  hasSession:  boolean,  // user has at least one completed study session
+  hasReviewed: boolean,  // user has at least one CardProgress row
+}
+```
+
+Computed via three `count > 0` probes in parallel (~3ms). Refreshed on every
+`/auth/me`, `/auth/login`, `/auth/refresh`, `/auth/verify-email` — so once a
+user creates their first deck, the next response flips `hasDeck`.
 
 ---
 
 ## 3. Endpoint reference
 
-### 3.1 Auth
+### Auth
+
+All auth responses that issue tokens set the `mnemio_refresh` HttpOnly cookie
+as a side effect; the JSON body contains **only** `accessToken`, `user`,
+`needsProfile`. Frontend stashes `accessToken` in `localStorage` and forgets
+the cookie exists.
 
 #### `POST /auth/register` _(public)_
 
@@ -239,33 +419,29 @@ Create an unverified user; trigger OTP email. **No tokens issued.**
     email: string;
 }
 
-// Errors
-// 409 AUTH_EMAIL_TAKEN
-// 400 VALIDATION_ERROR
+// Errors: 409 AUTH_EMAIL_TAKEN · 400 VALIDATION_ERROR
 ```
 
 #### `POST /auth/verify-email` _(public)_
 
-Consume an OTP code; on success, mark verified, issue tokens, set refresh cookie.
+Consume an OTP; on success, mark verified, set refresh cookie, return access token.
 
 ```ts
 // Request
 {
     userId: string;
     code: string;
-} // code: 6 digits
+} // 6-digit code
 
-// 200 Response
-// Set-Cookie: mnemio_refresh=<opaque>; HttpOnly; Secure; SameSite=Lax; Path=/api/v1/auth
+// 200 Response  +  Set-Cookie: mnemio_refresh=...
 {
     accessToken: string;
     user: User;
     needsProfile: boolean;
+    welcome: WelcomeState;
 }
 
-// Errors
-// 400 AUTH_INVALID_CODE
-// 400 AUTH_OTP_EXHAUSTED
+// Errors: 400 AUTH_INVALID_CODE · 400 AUTH_OTP_EXHAUSTED
 ```
 
 #### `POST /auth/resend-otp` _(public)_
@@ -273,504 +449,1444 @@ Consume an OTP code; on success, mark verified, issue tokens, set refresh cookie
 60-second cooldown per user.
 
 ```ts
-// Request
-{
-    userId: string;
-}
-
-// 200 Response
-{
-    ok: true;
-    cooldownSeconds: number;
-}
-
-// Errors
-// 429 AUTH_OTP_COOLDOWN  (details.cooldownSeconds = remaining seconds)
+// Request: { userId: string }
+// 200 Response: { ok: true; cooldownSeconds: number }
+// Errors: 429 AUTH_OTP_COOLDOWN (message includes remaining seconds)
 ```
 
 #### `POST /auth/login` _(public)_
 
 ```ts
-// Request
-{
-    email: string;
-    password: string;
-}
+// Request: { email: string; password: string }
 
-// 200 Response
-// Set-Cookie: mnemio_refresh=<opaque>; HttpOnly; Secure; SameSite=Lax
+// 200 Response  +  Set-Cookie: mnemio_refresh=...
 {
     accessToken: string;
     user: User;
     needsProfile: boolean;
+    welcome: WelcomeState;
 }
 
-// Errors
+// Errors:
 // 401 AUTH_INVALID_CREDENTIALS
-// 401 EMAIL_NOT_VERIFIED  (details.userId — route to OTP step)
+// 401 EMAIL_NOT_VERIFIED  (details.userId — route the user to OTP step)
 ```
 
-#### `POST /auth/refresh` _(public)_
+#### `POST /auth/refresh` _(public — uses cookie, **no body**)_
 
-Reads `mnemio_refresh` cookie, rotates it, returns a new access token.
+Reads `mnemio_refresh` cookie, rotates the token (old one revoked, new one
+sent via `Set-Cookie`), returns a fresh access token.
 
 ```ts
-// Request: empty body (refresh is in cookie)
-// Set-Cookie: mnemio_refresh=<NEW>; HttpOnly; Secure; SameSite=Lax
-// 200 Response — same shape as login
+// Request: (no body)
+// 200 Response  +  Set-Cookie: mnemio_refresh=... (rotated)
 {
-    (accessToken, user, needsProfile);
+    accessToken: string;
+    user: User;
+    needsProfile: boolean;
+    welcome: WelcomeState;
 }
 
-// Errors
-// 401 AUTH_INVALID_REFRESH  (cookie missing, expired, or rotated)
-//   → frontend clears accessToken from localStorage and redirects to /login
+// Errors: 401 AUTH_INVALID_REFRESH  → hard logout (cookie was rotated/stolen)
 ```
 
-#### `POST /auth/logout` _(public)_
+#### `POST /auth/logout` _(public — uses cookie, **no body**)_
 
-Reads refresh cookie, revokes that single session, clears the cookie.
+Revokes the current refresh token and clears the cookie. Idempotent.
 
 ```ts
-// Request: empty body
-// 204 No Content
-// Set-Cookie: mnemio_refresh=; Max-Age=0  (cleared)
+// 204 No Content  +  Set-Cookie: mnemio_refresh=; Max-Age=0
 ```
 
-Frontend also clears the access token from localStorage after this call.
+FE should also delete `accessToken` from `localStorage` after this call.
 
 #### `GET /auth/me` _(auth)_
 
 ```ts
-// 200 Response
-{
-    user: User;
-    needsProfile: boolean;
-}
-
-// Errors
-// 401 AUTH_INVALID_TOKEN  → http wrapper auto-retries via /auth/refresh
+// 200 Response: { user: User; needsProfile: boolean; welcome: WelcomeState }
+// Errors: 401 AUTH_INVALID_TOKEN → try /auth/refresh
 ```
 
-### 3.2 Users
+#### Google OAuth flow (3 endpoints)
+
+End-to-end:
+
+1. FE redirects the user to `GET /auth/oauth/google` (backend sets state
+    - PKCE cookies, redirects to Google).
+2. Google sends the user to `/auth/oauth/google/callback?code=...&state=...`.
+   Backend validates state, exchanges the code, looks up or creates the
+   user, **sets the `mnemio_refresh` cookie**, generates a short-lived
+   exchange code, and 302-redirects to
+   `${WEB_URL}/auth/oauth/callback?code=<short_lived>`.
+3. FE swaps the short code via `POST /auth/oauth/exchange { code }` and
+   gets `{ accessToken, user, needsProfile, welcome }`.
+
+Identity-linking policy:
+
+- Existing OAuth identity for `(provider, providerUserId)` → sign in that user.
+- Existing **verified** password user with the same email → link OAuth
+  identity, sign in.
+- Existing **unverified** password user with the same email → error
+  `AUTH_EMAIL_UNVERIFIED_LINK` (would let an attacker hijack a half-finished
+  registration).
+- Else → create a new user with `emailVerifiedAt = now()`, link identity, sign in.
+
+```ts
+GET /auth/oauth/google      → 302 to https://accounts.google.com/...
+GET /auth/oauth/google/callback?code=&state=
+  → on success: 302 to ${WEB_URL}/auth/oauth/callback?code=<short>
+  → on failure: 302 to ${WEB_URL}/auth/oauth/error?reason=<...>
+                 (reasons: missing_state | bad_state | missing_code |
+                  exchange_failed | OAUTH_EMAIL_UNVERIFIED | etc.)
+
+POST /auth/oauth/exchange
+  Body: { code: string }
+  200:  { accessToken, user, needsProfile, welcome }   // refresh cookie already set
+  Errors:
+    400 OAUTH_BAD_EXCHANGE_CODE
+    400 OAUTH_EXCHANGE_EXPIRED      — older than 60s or already redeemed
+    400 OAUTH_NOT_CONFIGURED        — server is missing Google creds
+```
+
+### Users
 
 #### `PATCH /users/me` _(auth)_
 
-Profile-completion step (after OTP) and any later edits.
+Profile completion. All fields optional; at least one required.
 
 ```ts
-// Request — frontend currently sends all three at once
+// Request
 {
-    fullName: string; // 1+ chars; trimmed; stored as User.displayName
-    username: string; // /^[a-zA-Z0-9_]{3,20}$/, case-insensitive uniqueness
-    birthday: string; // 'MM/DD/YYYY'; must be ≥ 13 years ago
+  fullName?: string;      // trimmed, 1–64 chars
+  username?: string;      // 3–24 chars, /^[a-zA-Z0-9_]+$/, lowercased server-side,
+                          // reserved names rejected (admin, root, mnemio, …)
+  birthday?: string;      // 'YYYY-MM-DD'; must be ≥ 13 years ago
 }
 
-// 200 Response: User
+// 200 Response: { user: User; needsProfile: boolean }
 
-// Errors
-// 400 VALIDATION_ERROR        (bad username format, age < 13)
-// 409 AUTH_USERNAME_TAKEN
-// 404 AUTH_USER_NOT_FOUND
+// Errors: 400 VALIDATION_ERROR · 409 AUTH_USERNAME_TAKEN
 ```
 
-Field naming: the frontend sends `fullName` (form field); the backend stores it
-as `displayName` on the `User`. Keep that mapping server-side.
+#### `DELETE /users/me` _(auth)_
 
-### 3.3 Decks
+Permanently delete the signed-in account. Cascades wipe decks, cards,
+sessions, progress, achievements, preferences, AI usage, refresh tokens,
+email verifications, and OAuth identities. `audit_log` rows survive with
+`userId = NULL` (security trail). Idempotent — re-issuing returns 204.
+
+```ts
+// Request: (no body)
+// 204 No Content  +  Set-Cookie: mnemio_refresh=; Max-Age=0
+```
+
+FE should also delete `accessToken` from `localStorage` and hard-redirect
+to the marketing landing page.
+
+### Decks
 
 #### `GET /decks` _(auth)_
 
 ```ts
-// Query
-?cursor?=string&limit?=number(default 20, max 100)&q?=string
-
-// 200 Response: Page<DeckSummary>
-//   items: DeckSummary[]   (no nested cards; cardCount only)
-//   nextCursor: string | null
-//   total: number
+// Query: ?cursor?=string&limit?=number(<=100)&q?=string  default limit 20
+// 200 Response: PageWithTotal<Deck>
+//   = { items: Deck[]; nextCursor: string | null; total: number }
 ```
 
-- `q` is case-insensitive `contains` over `title` and `description`.
-- Sort: `updatedAt DESC, id DESC` (stable for keyset pagination).
+`q` does case-insensitive `contains` over `title` + `description`. Sort:
+`updatedAt DESC, id DESC` (stable keyset). `total` is the full match count for
+the filter, independent of the current page.
+
+Example (after `npm run seed`):
+
+```json
+{
+    "items": [
+        { "id": "…", "title": "Japanese: Hiragana Starter", "cardCount": 10, "…": "…" },
+        { "id": "…", "title": "Spanish: Greetings & Basics", "cardCount": 8, "…": "…" }
+    ],
+    "nextCursor": null,
+    "total": 2
+}
+```
 
 #### `POST /decks` _(auth)_
 
 ```ts
 // Request
 {
-    title: string; // 2–120 chars
-    description: string | null; // null or ≤ 500 chars
-    sourceLanguage: string; // ISO 639-1
-    targetLanguage: string; // must differ from sourceLanguage
+  title: string;              // 2–120 chars
+  description?: string;       // ≤ 500 chars, default ''
+  sourceLanguage: string;     // 2–10 chars
+  targetLanguage: string;
+  isPublic?: boolean;         // P2; default false
+  coverColor?: string | null; // P2: '#RRGGBB' hex
+  glyph?: string | null;      // P2: 1–8 chars (emoji ok)
+  subject?: string | null;    // P2: 1–40 chars
 }
-
-// 201 Response: Deck  (with cards: [])
-
-// Errors
-// 422 DECK_LIMIT_REACHED  (user already has 200 decks)
-// 400 VALIDATION_ERROR
+// 201 Response: Deck
 ```
 
 #### `GET /decks/:id` _(auth)_
 
-Returns the deck **with all cards nested**. The frontend reads `deck.cards` directly
-and paginates client-side at 50 per page (cards are capped at 1000 per deck).
+The FE's Deck Detail page, study queue, and Add Card flow all assume the entire
+card list is present, so the deck detail returns cards **inline** rather than
+paged. Hard cap is 1000 (matches the FE per-deck limit).
 
 ```ts
-// 200 Response: Deck
-//   (cards sorted by position ASC, id ASC)
+// Query: ?cardsLimit?=number(<=1000)  default 1000
 
-// Errors
-// 404 DECK_NOT_FOUND
-// 403 if user doesn't own the deck
+// 200 Response
+{
+  deck: Deck;
+  cards: Card[];              // sorted by (position ASC, id ASC), up to cap
+}
+// Errors: 404 DECK_NOT_FOUND
 ```
 
-> Backend may switch to paginated cards later; if it does, change the FE store
-> at the same time. For now, nested is simplest and within the 1000-card cap.
+Example:
+
+```json
+{
+    "deck": { "id": "…", "title": "Japanese: Hiragana Starter", "cardCount": 10, "…": "…" },
+    "cards": [
+        {
+            "id": "…",
+            "deckId": "…",
+            "word": "あ",
+            "definition": "a (vowel)",
+            "phonetic": "/a/",
+            "position": 0,
+            "…": "…"
+        },
+        {
+            "id": "…",
+            "deckId": "…",
+            "word": "い",
+            "definition": "i (vowel)",
+            "phonetic": "/i/",
+            "position": 1,
+            "…": "…"
+        }
+    ]
+}
+```
 
 #### `PATCH /decks/:id` _(auth)_
 
 ```ts
-// Request: any subset of { title, description, sourceLanguage, targetLanguage }
+// Request: any subset of the POST /decks body, including isPublic /
+//          coverColor / glyph / subject. null clears the optional fields.
 // 200 Response: Deck
-
-// Errors
-// 404 DECK_NOT_FOUND
 ```
 
 #### `DELETE /decks/:id` _(auth)_
 
 ```ts
-// 204 No Content
-// Cascade: deletes the deck's cards, card progress, and any sessions on it.
-
-// Errors
-// 404 DECK_NOT_FOUND
+// 204 No Content   (cascades to cards, progress, sessions)
 ```
 
-### 3.4 Cards
+#### `GET /decks/:id/export?format=csv|json` _(auth)_
 
-#### `POST /decks/:id/cards` _(auth)_
+File download of every card in the deck (in `position` order).
+
+- `csv` (default): columns `word,definition,phonetic,reading,partOfSpeech,
+example,exampleTranslation,tags,difficulty,type`. `tags` are joined with
+  `;`. Quoting follows RFC 4180 for embedded commas, quotes, and newlines.
+- `json`: `{ deck: { title, description, sourceLanguage, targetLanguage },
+cards: Card[] }` — drop IDs, timestamps, and media URLs (those don't
+  re-import).
+
+```ts
+// 200 Response:
+//   Content-Type: text/csv | application/json
+//   Content-Disposition: attachment; filename="<deck-slug>.<ext>"
+//   Body: file payload
+// Errors: 404 DECK_NOT_FOUND
+```
+
+#### `POST /decks/:id/cards/import` _(auth)_
+
+Bulk-add cards to an existing deck from a CSV or JSON payload (typically
+produced by `GET /decks/:id/export` from this app or another). Pasted text
+is fine — multipart isn't required.
 
 ```ts
 // Request
 {
-    word: string; // 1–120 chars
-    definition: string; // 1–500 chars
-    phonetic: string | null; // null or ≤ 120 chars
+    format: 'csv' | 'json';
+    text: string; // ≤ 1 000 000 chars
 }
 
-// 201 Response: Card
-//   position = max(existing positions) + 1, or 0 if empty
+// 201 Response: { created: number }
 
-// Errors
-// 422 CARD_LIMIT_REACHED  (deck has 1000 cards)
-// 404 DECK_NOT_FOUND
+// Errors:
+// 400 VALIDATION_ERROR        — empty body or unknown format
+// 404 DECK_NOT_FOUND          — caller doesn't own the deck
+// 422 IMPORT_PARSE_FAILED     — couldn't extract any cards from the input
+```
+
+CSV must include a header row with at least `word` and `definition`.
+Unknown columns are ignored. Invalid `difficulty`/`type` values are
+dropped (the import doesn't fail). JSON accepts either a bare card array
+or `{ deck?, cards: [...] }` — `deck` metadata is ignored, only `cards`
+are imported.
+
+### Cards
+
+#### `POST /decks/:id/cards` _(auth)_
+
+```ts
+// Request — all fields beyond word/definition optional (P1 rich fields)
+{
+  word: string;                          // 1–120 chars
+  definition: string;                    // 1–1000 chars
+  phonetic?: string;                     // ≤ 120 chars
+  reading?: string;                      // ≤ 120 chars
+  partOfSpeech?: string;                 // ≤ 40 chars
+  example?: string;                      // ≤ 500 chars
+  exampleTranslation?: string;           // ≤ 500 chars
+  tags?: string[];                       // ≤ 20 tags, each ≤ 40 chars
+  difficulty?: 'easy' | 'medium' | 'hard';  // default 'medium'
+  type?: 'basic' | 'cloze' | 'image';    // default 'basic'
+  audioUrl?: string;                     // URL
+  imageUrl?: string;                     // URL
+}
+// 201 Response: Card  (position is server-assigned: last + 1)
+```
+
+#### `POST /decks/:id/cards/bulk` _(auth)_
+
+```ts
+// Request: { cards: <same field set as POST /decks/:id/cards>[] }   // 1–100 items
+// 201 Response: { created: number }
 ```
 
 #### `PATCH /cards/:id` _(auth)_
 
 ```ts
-// Request: any subset of { word, definition, phonetic }
+// Request: any subset of the create body + { position? }
 // 200 Response: Card
-
-// Errors
-// 404 CARD_NOT_FOUND
-// 403 if user doesn't own the parent deck
+// Errors: 404 CARD_NOT_FOUND · 403 CARD_FORBIDDEN
 ```
 
 #### `DELETE /cards/:id` _(auth)_
 
 ```ts
-// 204 No Content
-// Side effect: remaining cards in the deck get position renumbered to 0..N-1
-//              (this matches frontend behavior).
-
-// Errors
-// 404 CARD_NOT_FOUND
+// 204 No Content  (deck.cardCount recomputed)
 ```
 
-### 3.5 Sessions
+### Sessions
 
-The frontend's `sessions` store calls these on study-engine and review flows.
+**Invariant:** at most one `active` session per user. Both `POST /sessions` and
+`POST /sessions/:id/resume` enforce this atomically — any pre-existing active
+session is flipped to `incomplete` before the new one becomes `active`.
 
 #### `POST /sessions` _(auth)_
 
-Start a new study session. **Side effect:** if the user has an `active` session
-already, it is atomically marked `incomplete` (and pushed onto the user's
-incomplete list, capped at 10) before the new one is created. This is what
-satisfies the FE's "only one active session at a time" invariant.
+```ts
+// Request: { deckId: string; mode: 'flashcard' | 'multiple_choice' | 'srs' }
+
+// 201 Response: StudySession  (status: 'active', cardIds: deck snapshot,
+//                              cardIndex: 0, correct: 0)
+// Errors: 404 DECK_NOT_FOUND · 400 DECK_EMPTY
+```
+
+#### `PATCH /sessions/:id` _(auth)_
+
+Append progress and Session Summary state mid-session. **At least one** field
+required; FE patches incrementally.
 
 ```ts
 // Request
 {
-  deckId: string;
-  mode: 'flashcard' | 'multiple-choice' | 'srs';
-  cardIds: string[];     // FE-supplied snapshot; backend stores verbatim
+  cardIndex?: number;
+  correct?: number;
+  counts?: { again, hard, good, easy };     // P1: per-grade tally
+  revisitCardIds?: string[];                // P1: ≤ 1000 ids
+  durationMs?: number;                      // P1: ms spent so far
 }
-
-// 201 Response: StudySession
-//   status: 'active', index: 0, correct: 0, xpAwarded: 0
-
-// Errors
-// 400 SESSION_EMPTY_DECK   (cardIds is empty)
-// 404 DECK_NOT_FOUND
-```
-
-> Note: the FE supplies `cardIds` so the deck-fetch logic stays client-side
-> for now. Backend can change this contract later (e.g. server-side card
-> shuffling) without affecting the rest.
-
-#### `PATCH /sessions/:id` _(auth)_
-
-Append progress mid-session.
-
-```ts
-// Request: subset of { index: number, correct: number }
 // 200 Response: StudySession
-
-// Errors
-// 404 SESSION_NOT_FOUND   (also returned if the session is no longer 'active')
+// Errors: 404 SESSION_NOT_FOUND  (also if no longer 'active')
 ```
 
 #### `POST /sessions/:id/complete` _(auth)_
 
-Close the session and award XP.
+Close session. **XP is server-computed**: `correct * 10 + 25`. User's total XP
+incremented atomically.
 
 ```ts
-// Request
-{
-    xpAwarded: number;
-} // FE computes via correct*10 + 25; backend SHOULD
-// recompute server-side and ignore the body value
-// (server is the authority — see backend-plan §9.7)
-
-// 200 Response: StudySession
-//   status: 'complete', xpAwarded set, endedAt set
-
-// Errors
-// 404 SESSION_NOT_FOUND
-// 422 SESSION_NOT_ACTIVE
+// Request: (empty body)
+// 200 Response: StudySession  (status: 'complete', xpAwarded set)
+// Errors: 400 SESSION_NOT_ACTIVE · 404 SESSION_NOT_FOUND
 ```
+
+> **Side effect:** `user.xp` increases by `xpAwarded`. The response contains the
+> session, not the user — refresh user state via `GET /auth/me` (or
+> `GET /dashboard.stats.xp`) if the UI shows it.
 
 #### `POST /sessions/:id/exit` _(auth)_
 
-User left mid-session. Marks `active` → `incomplete`, pushes to incomplete list.
+Explicit user-triggered exit. Marks an active session as `incomplete` (no XP
+awarded). Use this for the "Exit" button in study mode.
 
 ```ts
-// Request: empty body
-// 204 No Content
-
-// Errors
-// 404 SESSION_NOT_FOUND   (or already not active — return 204 in that case)
+// Request: (empty body)
+// 200 Response: StudySession  (status: 'incomplete', endedAt set)
+// Errors: 404 SESSION_NOT_FOUND  (no active session with that id)
 ```
 
 #### `POST /sessions/:id/resume` _(auth)_
 
-Resume an incomplete session. If another session is currently `active`, it gets
-ended-as-incomplete first (same rule as `POST /sessions`).
+Flip an incomplete session back to `active`. Atomically marks any _other_
+currently-active session as `incomplete` first.
 
 ```ts
-// Request: empty body
-// 200 Response: StudySession  (status: 'active', endedAt: null)
-
-// Errors
-// 404 SESSION_NOT_FOUND
+// Request: (empty body)
+// 200 Response: StudySession  (status: 'active')
+// Errors: 404 SESSION_NOT_FOUND  (no incomplete session with that id)
 ```
 
 #### `GET /sessions/active` _(auth)_
+
+Current active session (or `null`).
 
 ```ts
 // 200 Response: { session: StudySession | null }
 ```
 
-Called on app boot (frontend's `sessions.hydrate()`).
-
 #### `GET /sessions/incomplete` _(auth)_
 
-Most-recent-first, capped at 10.
+Most-recent incomplete session (or `null`). Powers "Continue studying" CTA.
 
 ```ts
-// 200 Response: { sessions: StudySession[] }
+// 200 Response: { session: StudySession | null }
 ```
 
-The frontend reads `sessions[0]` as `latestIncomplete` (powers the
-"Continue studying" CTA on the dashboard).
-
-### 3.6 SRS
-
-#### `GET /srs/progress` _(auth)_
-
-Returns all `CardProgress` rows for the user — used to compute the due queue
-client-side.
-
-```ts
-// 200 Response
-{
-    progress: Record<cardId, CardProgress>;
-}
-```
-
-Optimization note: filter server-side to only cards inside decks the user still
-owns. If progress grows past a few thousand rows, swap this for a paginated
-`GET /srs/due?limit=50` and update the FE store at the same time.
+### SRS
 
 #### `POST /srs/rate` _(auth)_
 
 Rate a card. Server runs SM-2 and upserts the user's `CardProgress`.
-**A `CardProgress` row is created on first rate**, not when the card is created.
+
+```ts
+// Request: { cardId: string; rating: 'again' | 'hard' | 'good' | 'easy' }
+// 200 Response: CardProgress
+// Errors: 404 CARD_NOT_FOUND · 403 CARD_FORBIDDEN
+```
+
+Rating → SM-2 quality mapping (matches the frontend composable). EF delta uses
+the standard SuperMemo-2 formula `ΔEF = 0.1 − (5−q)(0.08 + (5−q)·0.02)`, with EF
+floored at 1.3.
+| Rating | Quality | Effect |
+|---|---|---|
+| `again` | 0 | Failure path: repetitions=0, interval=1d, **EF −0.2** |
+| `hard` | 2 | Treated as failure (q<3): same reset path, **EF −0.32** |
+| `good` | 3 | Advance: repetitions++, interval = 1 / 6 / round(prev × prevEF), **EF −0.14** |
+| `easy` | 5 | Advance same way, **EF +0.10** |
+
+#### `GET /srs/due` _(auth)_
+
+```ts
+// Query: ?limit?=number(<=200)  default 50
+
+// 200 Response
+{
+    items: {
+        cardId: string;
+        deckId: string;
+        word: string;
+        definition: string;
+        phonetic: string | null;
+        nextReviewAt: string;
+        interval: number;
+        easeFactor: number;
+        repetitions: number;
+    }
+    [];
+}
+```
+
+`nextReviewAt ASC` (most-overdue first). Only cards with an existing
+`CardProgress` row appear (i.e. rated at least once and now due).
+
+#### `GET /srs/progress` _(auth)_
+
+Full progress map for the user. Powers the FE's `srs.progress` store. Capped
+at 2000 entries (well above the MVP perf budget of 200 decks × 1000 cards =
+200k cards, but only studied cards have rows).
+
+```ts
+// Query: ?limit?=number(<=2000)  default 2000
+
+// 200 Response: { items: CardProgress[] }   // sorted by nextReviewAt ASC
+```
+
+### Dashboard
+
+#### `GET /dashboard` _(auth)_
+
+One round-trip for the dashboard page.
+
+```ts
+// 200 Response
+{
+  stats: { decks: number; cards: number; xp: number };
+  dueCount: number;
+  recentDecks: Deck[];          // up to 5, by updatedAt DESC
+  continueStudying: StudySession | null;
+}
+```
+
+### Preferences _(P1)_
+
+User preferences live on a separate endpoint from `/users/me` so the FE can
+PATCH them independently (avatar hue picker, favorite toggle, onboarding goals,
+etc.).
+
+#### `GET /users/me/preferences` _(auth)_
+
+Lazy-creates an empty row on first access; never returns 404.
+
+```ts
+// 200 Response: Preference
+```
+
+#### `PATCH /users/me/preferences` _(auth)_
+
+All fields optional; **at least one** required. `null` clears the field; arrays
+replace.
 
 ```ts
 // Request
 {
-    cardId: string;
-    deckId: string;
-    rating: SrsRating;
+  interests?: string[];            // ≤ 40 items, each ≤ 40 chars
+  goal?: string | null;            // 1–120 chars, or null to clear
+  nativeLanguage?: string | null;  // 2–10 chars (ISO 639-1)
+  learningLanguages?: string[];    // ≤ 10 entries
+  avatarHue?: number | null;       // 0..360
+  mimiPlacement?: 'left' | 'right' | null;
+  favorites?: string[];            // deckIds, ≤ 500
 }
-// rating: 'again' | 'hard' | 'good' | 'easy'
-// Server maps to SM-2 quality: again=0, hard=3, good=4, easy=5
-
-// 200 Response: CardProgress
-
-// Errors
-// 404 CARD_NOT_FOUND
-// 403 if user doesn't own the parent deck
+// 200 Response: Preference
+// Errors: 400 VALIDATION_ERROR
 ```
 
-The frontend's pure SM-2 implementation lives at
-[`app/composables/useSpacedRepetition.ts`](../app/composables/useSpacedRepetition.ts).
-Backend must produce **identical** outputs — port the same algorithm and the
-same test cases. Specifically:
+### Achievements _(P1)_
 
-- Quality < 3 → repetitions = 0, intervalDays = 1.
-- Quality ≥ 3 → repetitions++; intervalDays = 1, 6, or round(prev × ease).
-- easeFactor += 0.1 − (5 − q) × (0.08 + (5 − q) × 0.02); clamped at 1.3.
-- nextReviewAt = now + intervalDays.
+Catalog is server-defined (currently 7 entries: `first_steps`, `quick_learner`,
+`marathoner`, `accuracy_ace`, `reviewer_100`, `builder_50`, `polyglot`).
+Evaluated automatically on `/sessions/:id/complete`, `/srs/rate`, and card
+create.
 
-### 3.7 Health
+#### `GET /achievements` _(auth)_
 
-#### `GET /health` _(public, no `/api/v1` prefix)_
+```ts
+// 200 Response: { items: Achievement[] }
+```
+
+Each entry includes `earned: boolean`, `earnedAt: string|null`, and
+`progress: 0..100` so the FE can show progress bars even before unlock.
+
+### Statistics _(P1)_
+
+Backed by a `DailyActivity` rollup table that updates on every `/srs/rate`.
+All endpoints scoped to the authenticated user.
+
+#### `GET /stats/overview?range=7|30|90|all` _(auth)_ — default `30`
+
+```ts
+// 200 Response
+{
+    range: '7' | '30' | '90' | 'all';
+    reviewed: number; // total reviews in the range
+    correct: number; // total correct (rating 'good' | 'easy') in the range
+    retention: number; // 0..100, rounded
+    streak: number; // consecutive-day streak ending today (UTC)
+    dueCount: number; // cards due now (same as /srs counter)
+    trends: {
+        reviewed: {
+            current: number;
+            previous: number;
+            deltaPct: number;
+        }
+        retention: {
+            current: number;
+            previous: number;
+            deltaPct: number;
+        }
+    }
+}
+```
+
+`trends.*.previous` is the same-length window immediately before the current
+one (e.g. `range=30` compares last 30 days vs the 30 days before that).
+`deltaPct` is rounded.
+
+#### `GET /stats/series?range=7|30|90|all` _(auth)_ — default `30`
+
+Per-day review counts. Always one point per day in the range, including zeros.
+
+```ts
+// 200 Response
+{
+    range: '7' | '30' | '90' | 'all';
+    points: {
+        label: string;
+        value: number;
+    }
+    []; // label = 'YYYY-MM-DD' UTC
+}
+```
+
+#### `GET /stats/activity` _(auth)_
+
+Year heatmap (53 weeks × 7 days, Sun..Sat) and current-month calendar.
+
+```ts
+// 200 Response
+{
+  yearHeat: number[][];                    // 53 columns × 7 rows; values = reviews
+  monthCalendar: {
+    month: string;                         // 'YYYY-MM' (current UTC month)
+    days: ({ date: string; reviews: number } | null)[];
+    //   ^ leading nulls pad to start of week; each entry is one day of the month
+  };
+}
+```
+
+#### `GET /stats/decks` _(auth)_
+
+Per-deck performance for the Statistics screen.
+
+```ts
+// 200 Response
+{
+    items: {
+        deckId: string;
+        title: string;
+        cardCount: number;
+        masteryPct: number; // 0..100
+        retention: number; // 0..100 — proxy from CardProgress repetitions
+        reviewed: number; // all-time review count over the deck's cards
+    }
+    [];
+}
+```
+
+> Note: until a per-rating event log lands (post-P1), `retention` and
+> `reviewed` come from `CardProgress.repetitions` as a proxy. Matches the FE's
+> current `useDeckStats` heuristic — same numbers either way.
+
+### Discover _(P2)_
+
+Browse, search, and clone public decks.
+
+#### `GET /discover/decks` _(auth)_
+
+Paginated public-deck catalog. Same opaque cursor model as `GET /decks`.
+
+```ts
+// Query
+?cursor?=string
+&limit?=number(<=50)             // default 20
+&q?=string                       // case-insensitive search on title/description
+&lang?=string                    // ISO 639-1; matches sourceLanguage OR targetLanguage
+&subject?=string                 // e.g. 'languages', 'science'
+&sort?='popular' | 'recent'      // default 'recent'
+
+// 200 Response: PageWithTotal<DeckWithAuthor>
+//   = { items: DeckWithAuthor[]; nextCursor: string | null; total: number }
+```
+
+Sort keys:
+
+- `recent` → `updatedAt DESC, id DESC`
+- `popular` → `copyCount DESC, id DESC`
+
+#### `GET /discover/featured` _(auth)_
+
+Curator-flagged decks (`featured = true`), max 12. Sorted by `updatedAt DESC`.
+
+```ts
+// 200 Response: { items: DeckWithAuthor[] }
+```
+
+#### `GET /discover/categories` _(auth)_
+
+Distinct `subject` values across the public catalog, with deck counts. Top 50
+by count.
+
+```ts
+// 200 Response: { items: { subject: string; count: number }[] }
+```
+
+#### `POST /decks/:id/copy` _(auth)_
+
+Clone a public deck (cards + cosmetics) into the viewer's account. Atomic:
+the source's `copyCount` is incremented in the same transaction. The clone
+starts **private** (`isPublic: false`) and carries `sourceDeckId = <original>`.
+
+```ts
+// Request: (empty body)
+// 201 Response: Deck                          // the freshly-created copy
+// Errors:
+// 404 DECK_NOT_FOUND  (no such public deck)
+```
+
+### AI _(P2)_
+
+Mnemio's AI surface. The backend supports two providers via `AI_PROVIDER` env:
+
+- `mock` (default) — deterministic placeholders; FE-safe, no LLM cost.
+- `anthropic` — Claude Haiku 4.5 via `@anthropic-ai/sdk`. Requires
+  `ANTHROPIC_API_KEY`.
+
+**Response shapes are identical across providers.** The FE never branches on
+provider.
+
+#### `POST /ai/enrich-words` _(auth)_ ⭐ key feature
+
+Takes a user-supplied list of words and returns one `AiCardDraft` per word
+with definition + optional metadata. **Server does not persist** — the FE
+shows the result, lets the user review, then commits via the existing
+`POST /decks/:id/cards/bulk` (works for both "add to open deck" and
+"create new deck then bulk-add" flows).
+
+```ts
+// Request
+{
+  words: string[];               // 1–100 (server-enforced cap), each 1–80 chars
+  sourceLanguage: string;        // language for the definition (e.g. 'en')
+  targetLanguage: string;        // language of the input words (e.g. 'es')
+  context?: string;              // optional disambiguation hint, ≤ 200 chars
+  fields?: ('phonetic' | 'partOfSpeech' | 'example' | 'exampleTranslation'
+            | 'tags' | 'difficulty')[];   // which optional fields to fill;
+                                          // default: all
+}
+
+// 200 Response (non-streaming — no Accept: text/event-stream)
+{
+  provider: 'mock' | 'anthropic';
+  cards: AiCardDraft[];          // SAME order/length as request `words`
+                                 // (after server-side trim + de-dup)
+  meta: {
+    requested: number;           // = words.length after de-dup
+    enriched: number;            // = cards where definition !== ''
+    durationMs: number;
+    tokensInput: number;
+    tokensOutput: number;
+  };
+}
+```
+
+**Invariants:**
+
+- **Order preserved.** `cards[i].word` matches `words[i]` (post-trim/dedup).
+- **Partial success.** Words the LLM can't define come back with
+  `definition: ''` and `tags: ['ai-unfilled']`. Blocked content returns
+  `tags: ['ai-blocked']`. Never fails the whole batch on a single bad word.
+- **Server-side dedup.** Duplicates in the paste are collapsed before the
+  LLM call (case-insensitive). FE re-expands if it needs the user's paste
+  order verbatim.
+
+**Errors:**
+
+- `400 AI_TOO_MANY_WORDS` — input exceeds `AI_MAX_WORDS_PER_ENRICH` (default 100).
+- `429 AI_BUDGET_EXCEEDED` — daily per-user cap hit.
+- `502 AI_PROVIDER_ERROR` — upstream LLM failure; retry with backoff.
+- `502 AI_VALIDATION_FAILED` — provider output failed schema validation
+  after one retry.
+
+##### Streaming variant — same endpoint, `Accept: text/event-stream`
+
+For 50-word batches that take 5–8s, the FE can stream cards as they arrive
+instead of staring at a spinner. Send `Accept: text/event-stream` on the same
+POST (or `?stream=1`) and the backend writes Server-Sent Events:
+
+```
+event: start
+data: { "provider": "anthropic" }
+
+event: card
+data: { "type": "card", "position": 0,
+        "card": { "word": "agua", "definition": "water", "..." } }
+
+event: card
+data: { "type": "card", "position": 1,
+        "card": { "word": "pan", "definition": "bread", "..." } }
+
+...
+
+event: done
+data: { "type": "done", "meta": { "requested": 8, "enriched": 8, "..." } }
+```
+
+If a mid-stream error occurs, the backend emits one `event: error` frame with
+the standard envelope (`{ code, message, details? }`) before closing.
+
+FE pattern: read with `fetch().then(r => r.body.getReader())` and parse the
+SSE frames; map each `card` event into the table by `position`.
+
+#### `POST /ai/generate-deck` _(auth)_
+
+Generates a deck draft from a topic (no input word list). Useful when the
+user has no list yet ("just give me 8 Italian café terms"). **Server does
+not persist** — the FE shows the draft and the user accepts via
+`POST /decks` + `POST /decks/:id/cards/bulk`.
+
+```ts
+// Request
+{
+  topic: string;                 // 2–160 chars
+  sourceLanguage?: string;       // default 'en'
+  targetLanguage: string;        // ISO 639-1
+  count?: number;                // 1–20, default 8
+}
+
+// 200 Response (non-streaming)
+{
+  provider: 'mock' | 'anthropic';
+  draft: {
+    title: string;
+    description: string;
+    sourceLanguage: string;
+    targetLanguage: string;
+    subject?: string;
+    glyph?: string;
+    cards: AiCardDraft[];
+  };
+}
+```
+
+##### Streaming variant — `Accept: text/event-stream`
+
+Same SSE protocol as enrich-words, but with one additional event type:
+`header` fires first (with `title/description/subject/glyph/…`) so the FE can
+render the deck shell before any cards arrive. Then `card` events for each
+generated card, then `done`.
+
+#### `POST /ai/suggest` _(auth)_
+
+Contextual Mimi nudge for the dashboard / deck detail / review screens.
+Always single-response (small payload, no streaming needed).
+
+```ts
+// Request
+{
+  context: 'dashboard' | 'deck_detail' | 'review';  // default 'dashboard'
+  deckId?: string;                                   // for context='deck_detail'
+}
+
+// 200 Response
+{
+  suggestion: string;
+  kind: 'tip' | 'deck' | 'review';
+  actions: { label: string; href: string }[];
+}
+```
+
+#### Common — rate limits + budget
+
+| Limit                       | Value                                  | Throws                   |
+| --------------------------- | -------------------------------------- | ------------------------ |
+| Request rate                | 30/min/user across all three endpoints | `429 RATE_LIMITED`       |
+| Daily `enrich` cap          | 5/day/user (default)                   | `429 AI_BUDGET_EXCEEDED` |
+| Daily `generate` cap        | 20/day/user (default)                  | `429 AI_BUDGET_EXCEEDED` |
+| Daily `suggest` cap         | 60/day/user (default)                  | `429 AI_BUDGET_EXCEEDED` |
+| Max words per `enrich` call | 100 (default)                          | `400 AI_TOO_MANY_WORDS`  |
+
+Caps are configurable via env (`AI_DAILY_*_CAP_PER_USER`, `AI_MAX_WORDS_PER_ENRICH`).
+
+### Imports _(Quizlet + paste-text)_
+
+Stateless: nothing is persisted by these endpoints. They return
+`AiCardDraft[]` in the same shape as `/ai/enrich-words` so the FE reuses
+the existing review/preview UI, then commits with `POST /decks` and
+`POST /decks/:id/cards/bulk`.
+
+#### `POST /imports/quizlet` _(auth)_
+
+Fetches a Quizlet public-set URL, extracts term/definition pairs from the
+embedded `__NEXT_DATA__` JSON, returns the cards.
+
+```ts
+// Request
+{ url: string }   // https://quizlet.com/<setId>/<slug>/
+
+// 200 Response
+{
+  source: { kind: 'quizlet'; setId: string; title: string };
+  cards: AiCardDraft[];     // same shape as /ai/enrich-words result
+}
+
+// Errors:
+// 400 IMPORT_BAD_URL          — url isn't a quizlet.com set URL
+// 404 IMPORT_NOT_FOUND        — set is private, removed, or 404
+// 422 IMPORT_PARSE_FAILED     — fetched OK but couldn't extract cards
+//                               (Quizlet may have changed their HTML)
+// 429 IMPORT_BUDGET_EXCEEDED  — daily per-user cap reached (details.capPerDay)
+// 502 IMPORT_UPSTREAM_ERROR   — Quizlet returned non-200 or timed out
+```
+
+Counts against a shared `import` daily cap (`IMPORT_DAILY_CAP_PER_USER`,
+default 20) regardless of which import endpoint is used.
+
+> **ToS note for the FE:** add a one-line confirmation in the FE flow —
+> "By importing, you confirm you have the right to use this content."
+> Quizlet's ToS prohibits automated scraping; this is the same pattern
+> Anki-style importers use, but the legal responsibility ultimately
+> belongs to the importing user.
+
+#### `POST /imports/text` _(auth)_
+
+Paste-fallback for users who can't or won't share a Quizlet URL. Parses
+TSV (`word<TAB>definition`), CSV (`word,definition`), or newline-paired
+(`word\ndefinition\nword\n…`).
+
+```ts
+// Request
+{
+  text: string;
+  format?: 'tsv'|'csv'|'newline'|'auto'   // default 'auto' (detect by first-line punctuation)
+}
+
+// 200 Response
+{
+  source: { kind: 'text'; format: 'tsv'|'csv'|'newline' };
+  cards: AiCardDraft[];
+}
+
+// Errors:
+// 400 VALIDATION_ERROR       — empty text or > 100 000 chars
+// 422 IMPORT_PARSE_FAILED    — no card pairs could be extracted
+// 429 IMPORT_BUDGET_EXCEEDED — shared cap with /imports/quizlet
+```
+
+### Chat _(real-time AI)_
+
+Server-persisted multi-turn chat against Claude Haiku 4.5. Conversations
+live in their own tables so users can resume on any device; the sidebar
+orders by `lastMessageAt DESC`. Each user-message turn counts against the
+`chat` daily cap (`AI_DAILY_CHAT_CAP_PER_USER`, default 50).
+
+The send-message endpoint streams tokens via SSE; all other endpoints are
+plain JSON. SSE-or-JSON negotiation is the same `Accept: text/event-stream`
+
+- `?stream=1` switch the other AI endpoints use.
+
+#### `GET /chat/conversations` _(auth)_
+
+Sidebar list. Cursor-paginated by `lastMessageAt DESC, id DESC`.
+
+```ts
+// Query: ?cursor?=string&limit?=number(<=100)   default limit 20
+// 200 Response: Page<Conversation>
+```
+
+#### `POST /chat/conversations` _(auth)_
+
+Create a new conversation. Empty body is fine — the FE typically creates
+first and sends the user's first message in a follow-up call.
+
+```ts
+// Request
+{ title?: string }                  // 1..120 chars; defaults to 'New chat'
+
+// 201 Response: Conversation
+```
+
+#### `GET /chat/conversations/:id` _(auth)_
+
+Fetch the conversation header plus its most recent 50 messages
+(`createdAt ASC, id ASC`).
+
+```ts
+// 200 Response: { conversation: Conversation; messages: ChatMessage[] }
+// Errors: 404 CHAT_NOT_FOUND
+```
+
+#### `PATCH /chat/conversations/:id` _(auth)_
+
+Rename. Replaces the auto-generated title.
+
+```ts
+// Request: { title: string }       // 1..120 chars
+// 200 Response: Conversation
+// Errors: 404 CHAT_NOT_FOUND
+```
+
+#### `DELETE /chat/conversations/:id` _(auth)_
+
+Hard delete. Cascades to all messages.
+
+```ts
+// 204 No Content
+// Errors: 404 CHAT_NOT_FOUND
+```
+
+#### `POST /chat/conversations/:id/messages` _(auth)_
+
+Append a user message and stream the assistant reply.
+
+```ts
+// Request
+{
+    content: string;
+} // 1..4000 chars (trimmed)
+```
+
+**SSE response** (when `Accept: text/event-stream` or `?stream=1`):
+
+```
+event: start
+data: {
+  userMessage: ChatMessage,
+  assistantMessageId: string        // the still-empty placeholder we'll fill via tokens
+}
+
+event: token
+data: { delta: string }             // one event per provider chunk
+
+event: done
+data: {
+  assistantMessage: ChatMessage,    // status: 'complete', tokens populated
+  conversationTitle: string,        // may have been auto-set on the first turn
+  tokensInput: number,
+  tokensOutput: number
+}
+
+event: error                         // mid-stream failure
+data: { code: string, message: string, details?: object }
+```
+
+After an `event: error` the assistant message stays in the database with
+`status: 'partial'` and whatever text we got before the failure. The user
+is NOT charged a daily-cap unit. The FE should render the partial reply
+and offer the user a "retry" affordance.
+
+**Non-SSE response** (default JSON):
+
+```ts
+// 200 Response
+{
+  userMessage: ChatMessage,
+  assistantMessage: ChatMessage,
+  conversationTitle: string,
+  tokensInput: number,
+  tokensOutput: number
+}
+
+// Errors:
+// 404 CHAT_NOT_FOUND        — caller doesn't own this conversation
+// 429 AI_BUDGET_EXCEEDED    — details.kind === 'chat', details.capPerDay
+// 429 RATE_LIMITED          — per-route 30 req/min/user throttle
+// 502 AI_PROVIDER_ERROR     — Anthropic returned non-200
+// 502 AI_VALIDATION_FAILED  — provider returned nothing usable
+```
+
+**Context window:** the backend sends only the most recent
+`AI_CHAT_CONTEXT_TURNS` (default 20) `user`+`assistant` messages to the
+LLM, oldest first. Older messages remain in the DB and are returned by
+`GET /chat/conversations/:id` for display but don't ride along to Claude.
+
+**Auto-title rule:** on the user's first message in a conversation, the
+title flips from `"New chat"` to the trimmed message (up to 60 chars, ellipsis
+suffix when truncated). Subsequent turns leave the title alone.
+
+### Media _(P2)_
+
+Single multipart upload endpoint for avatars / card images / card audio. The
+MVP backend stores files on local disk and serves them via static handler;
+production swaps in S3 presigned PUT URLs without changing the contract shape.
+
+#### `POST /media/uploads?kind=avatar|card_image|card_audio` _(auth)_
+
+Multipart form: one field named `file`.
+
+| Kind         | MIME allowlist                    | Max size |
+| ------------ | --------------------------------- | -------- |
+| `avatar`     | `image/png\|jpeg\|webp`           | 2 MB     |
+| `card_image` | `image/png\|jpeg\|webp\|gif`      | 5 MB     |
+| `card_audio` | `audio/mpeg\|mp3\|wav\|ogg\|webm` | 10 MB    |
+
+```ts
+// Request: multipart/form-data with `file` field
+// Query:   ?kind=avatar | card_image | card_audio
+
+// 201 Response (card_image / card_audio)
+{
+    url: string; // public URL — store this in card.imageUrl/audioUrl
+    kind: 'card_image' | 'card_audio';
+    size: number;
+    mimeType: string;
+}
+
+// 201 Response (avatar) — side-effect: also sets user.avatarUrl
+{
+    url: string;
+    kind: 'avatar';
+    size: number;
+    mimeType: string;
+    user: User; // the updated user row
+}
+
+// Errors:
+// 400 MEDIA_NO_FILE      (no `file` field in the multipart)
+// 400 MEDIA_BAD_MIME     (MIME outside the allowlist for the kind)
+// 422 MEDIA_TOO_LARGE    (exceeds the per-kind size cap)
+```
+
+After upload, the URL is served at `GET <url>` (no auth needed; treat as a
+public link). For card uploads, `PATCH /cards/:id { audioUrl | imageUrl }` to
+attach. For avatars, the response already updated the user row.
+
+### Health (ops)
+
+Both endpoints are unauthenticated and live **outside** the `/api/v1`
+prefix. Hit them at the server root.
+
+#### `GET /health` _(public, **no** `/api/v1` prefix)_
+
+Cheap liveness — no I/O. Point uptime monitors (BetterUptime, etc.) here.
 
 ```ts
 // 200 Response: { status: 'ok' }
 ```
 
+#### `GET /ready` _(public, **no** `/api/v1` prefix)_
+
+Readiness — runs `SELECT 1` against Postgres. Use this as the container
+orchestrator's healthcheck path (Railway, k8s, Docker `HEALTHCHECK`).
+A 503 here means "don't route traffic yet."
+
+```ts
+// 200 Response: { status: 'ready' }
+// 503 Response: { code: 'NOT_READY', message: 'Database is not reachable.' }
+```
+
 ---
 
-## 4. Frontend wiring notes
+## 4. Recommended frontend wiring
 
-### Token storage / lifecycle
+### `$fetch` / `useFetch` wrapper
 
-1. On `login` / `verify-email` / `refresh`:
-    - Persist `accessToken` to localStorage.
-    - Refresh token arrives in `Set-Cookie` (HttpOnly, never read by FE).
-2. The [`http`](../app/utils/http.ts) wrapper:
-    - Sends `Authorization: Bearer <accessToken>` if present.
-    - Sends every request with `credentials: 'include'` so the refresh cookie tags along.
-    - On 401 with `code: 'AUTH_INVALID_TOKEN'`, calls `POST /auth/refresh` once
-      (the cookie does the work), updates `accessToken`, retries the original request.
-    - On 401 with `code: 'AUTH_INVALID_REFRESH'`, hard log-out — clears
-      accessToken, navigates to `/login`.
-3. On `logout`: `POST /auth/logout` (backend clears the cookie), then clear
-   accessToken locally.
+Single client in `app/api/_client.ts`:
+
+1. **Base URL**: `http://localhost:3001/api/v1` (read from runtime config).
+2. **`credentials: 'include'`** on every call — required so the browser sends
+   the `mnemio_refresh` cookie on `/auth/refresh` and `/auth/logout`.
+3. **Auth header**: if `accessToken` in `localStorage` → `Authorization: Bearer …`.
+4. **401 → auto-refresh**: on response `{ code: 'AUTH_INVALID_TOKEN' }`, call
+   `POST /auth/refresh` (no body, cookie travels automatically). On success,
+   store the new `accessToken`, retry the original request **once**. On failure
+   (`AUTH_INVALID_REFRESH`), hard logout: delete `accessToken`, redirect to
+   `/login`.
+5. **401 with `AUTH_INVALID_REFRESH`**: hard logout immediately; **never retry**.
 
 ### Auth-flow state machine
 
 ```
 register(email, password)
-  → 201 { userId, email }
-     → go to OTP step (carry userId)
+  → 201 { userId, email }                  → OTP step (carry userId)
+verifyEmail(userId, code)
+  → 200 { accessToken, user, needsProfile, welcome } + cookie set
+       needsProfile === true → account-details step (PATCH /users/me)
+       needsProfile === false → /dashboard
+```
 
-verify-email(userId, code)
-  → 200 { accessToken, user, needsProfile } + cookie set
-     → if needsProfile → account-details step
-     → else → /dashboard
+For login:
 
+```
 login(email, password)
-  → 200 → if needsProfile → account-details step; else /dashboard
+  → 200 → if needsProfile: account-details step; else /dashboard
   → 401 EMAIL_NOT_VERIFIED → OTP step with details.userId
 ```
 
-### Session-flow contract
+For Google sign-in (when `OAUTH_GOOGLE_CLIENT_ID` is set on the server):
 
-- Starting / resuming a session implicitly ends any currently `active` one.
-- Don't trust `xpAwarded` from the client; recompute server-side.
-- "Continue studying" CTA = `sessions[0]` from `GET /sessions/incomplete`.
+```
+click "Continue with Google"
+  → window.location = `${API}/auth/oauth/google`     // backend redirects to Google
+                                                     // → user picks an account
+                                                     // → Google → /auth/oauth/google/callback
+                                                     // → backend sets refresh cookie
+                                                     // → 302 to ${WEB_URL}/auth/oauth/callback?code=<short>
+on FE /auth/oauth/callback?code=<short>:
+  POST /auth/oauth/exchange { code }
+  → 200 { accessToken, user, needsProfile, welcome }
+  → route by needsProfile, same as login
+on FE /auth/oauth/error?reason=<...>:
+  show a friendly error; common reasons: missing_state, bad_state,
+  exchange_failed, AUTH_EMAIL_UNVERIFIED_LINK, OAUTH_EMAIL_UNVERIFIED.
+```
+
+### Welcome-state wiring
+
+Every token-issuing auth response carries `welcome: { hasDeck, hasSession,
+hasReviewed }`. Use those to pick the dashboard variant:
+
+- `hasDeck === false` → empty-state CTA "Create your first deck"
+- `hasDeck && !hasReviewed` → "Pick a card to start reviewing"
+- `hasReviewed && hasSession` → "Continue studying" card
+
+These flip naturally on the next `/auth/refresh`, so the dashboard stays in
+sync without extra count calls.
+
+### Import + commit pattern
+
+Both `/imports/quizlet` and `/imports/text` are **stateless** — they return
+`AiCardDraft[]` without writing anything. The FE reuses the AI-enrichment
+preview UI, then commits with the existing endpoints:
+
+```
+POST /imports/quizlet { url } | /imports/text { text }
+  → { source, cards: AiCardDraft[] }
+   → preview UI (same as /ai/enrich-words)
+       → "Create new deck":  POST /decks → POST /decks/:id/cards/bulk
+       → "Add to <deck>":    POST /decks/:id/cards/bulk
+```
+
+For deck round-trips between users, `GET /decks/:id/export?format=csv|json`
+produces a file the recipient can re-import via
+`POST /decks/:id/cards/import { format, text }`.
+
+### Account deletion
+
+`DELETE /users/me` cascades everything the user owns and clears the refresh
+cookie. After the 204:
+
+1. Delete `accessToken` from `localStorage`.
+2. Hard-redirect to the marketing page (don't try to refresh — the cookie is
+   gone and the user no longer exists).
+
+### Chat / SSE consumption
+
+The send-message endpoint is the only place in the API where a single
+response can fail _after_ it has already started writing data. The FE
+must treat the stream as authoritative for the live message rendering,
+but fall back to refetching `GET /chat/conversations/:id` for the final
+persisted state.
+
+Outline of a Nuxt-side consumer:
+
+```ts
+// 1. Open the stream
+const res = await fetch(`${API}/chat/conversations/${id}/messages`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+        authorization: `Bearer ${accessToken}`,
+        'content-type': 'application/json',
+        accept: 'text/event-stream',
+    },
+    body: JSON.stringify({ content }),
+});
+
+// 2. Parse SSE frames (one event: line + one data: line per frame, blank line terminator).
+const reader = res.body!.getReader();
+const decoder = new TextDecoder();
+let buf = '';
+let assistantId: string | null = null;
+let assistantContent = '';
+
+for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    // Frames are separated by a blank line ("\n\n").
+    let idx;
+    while ((idx = buf.indexOf('\n\n')) >= 0) {
+        const frame = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        const event = /^event:\s*(.+)$/m.exec(frame)?.[1] ?? 'message';
+        const data = JSON.parse(/^data:\s*(.+)$/m.exec(frame)?.[1] ?? '{}');
+        switch (event) {
+            case 'start':
+                assistantId = data.assistantMessageId;
+                // optimistic-insert userMessage into the FE store
+                break;
+            case 'token':
+                assistantContent += data.delta;
+                // append delta to the placeholder in the FE store
+                break;
+            case 'done':
+                // replace the placeholder with data.assistantMessage; update title.
+                break;
+            case 'error':
+                // surface a toast; the partial reply is preserved server-side
+                // so a refetch of GET /chat/conversations/:id will show it.
+                break;
+        }
+    }
+}
+```
+
+Important edge cases:
+
+- **User navigates away mid-stream:** the FE just stops reading. The
+  server keeps the partial assistant row (`status: 'partial'`); the next
+  `GET /chat/conversations/:id` returns it with whatever content the
+  server saw. No charge against the daily cap.
+- **Multiple tabs:** each opens its own stream. The server doesn't
+  multiplex — two concurrent sends to the same conversation produce two
+  independent assistant rows, both of which the next fetch returns.
+- **JSON fallback:** if SSE is awkward (proxy, library, test rig), omit
+  the `Accept: text/event-stream` header and the endpoint returns the
+  same final payload as a single JSON body.
+
+### Session flow
+
+- Starting a new session implicitly ends the active one. Don't fight it from FE.
+- Exit button → `POST /sessions/:id/exit`.
+- "Continue studying" → `POST /sessions/:id/resume` then route into the study page.
+- Don't send `xp` to `/complete`; read it back from the response.
 
 ### Pagination wiring
 
-Stash `nextCursor` per list view; "Load more" passes it as `?cursor`. `null`
-means no more pages. Don't try to compute totals on the client.
+Stash `nextCursor` per list view. "Load more" passes `?cursor=<nextCursor>`.
+`null` means "no more pages". Only `GET /decks` exposes `total` (for the
+Library header counter); other lists don't, by design.
 
 ---
 
 ## 5. Local development
 
-1. **Backend up:** `http://127.0.0.1:3001` (configurable via `NUXT_PUBLIC_API_BASE`).
-2. **OTP in dev:** print to backend stdout (e.g. `MAIL_PROVIDER=console`).
-   The frontend's OTP step accepts any 6 digits in mock mode; once backend is wired,
-   real codes come from the backend's log.
-3. **CORS:** must include `Access-Control-Allow-Origin: http://localhost:3000` and
-   `Access-Control-Allow-Credentials: true`. No wildcard.
-4. **Cookies in dev over HTTP:** `Secure` cookies don't work on plain `http://`.
-   Either (a) serve dev backend over HTTPS, or (b) relax `Secure` only when
-   `NODE_ENV !== 'production'`.
-5. **Smoke (curl):**
-    ```bash
-    BASE=http://127.0.0.1:3001/api/v1
-    curl -isX POST "$BASE/auth/register" -H 'content-type: application/json' \
-         -d '{"email":"alice@example.com","password":"hunter22!"}'
-    # → 201 { "userId": "...", "email": "alice@example.com" }
-    # grab the OTP from backend stdout
-    curl -isX POST "$BASE/auth/verify-email" -H 'content-type: application/json' \
-         --cookie-jar /tmp/cookies.txt \
-         -d '{"userId":"<id>","code":"123456"}'
-    # → 200 { "accessToken": "...", "user": {...}, "needsProfile": true }
-    # → Set-Cookie: mnemio_refresh=...
-    ```
+```bash
+# 1. Start Postgres (Docker Compose)
+docker compose up -d db
+
+# 2. Apply migrations
+npx prisma migrate deploy
+# (If it complains about a prior failed migration:
+#   PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION="yes" npx prisma migrate reset --force )
+
+# 3. Seed demo data (skip the OTP scrape during FE integration)
+npm run seed
+#   → demo@mnemio.local / demo-password-123  (verified, profile complete,
+#                                              2 decks of 8–10 cards)
+
+# 4. Run the backend
+npm run dev                   # http://localhost:3001
+```
+
+For brand-new users in dev, `MAIL_PROVIDER=console` prints OTPs to the backend's
+stdout — grep the dev console after `POST /auth/register` for the 6-digit code.
+
+### Quick smoke against the seed (curl)
+
+```bash
+BASE=http://localhost:3001/api/v1
+
+# 1. Login (sets mnemio_refresh cookie in cookies.txt)
+curl -sX POST "$BASE/auth/login" -c cookies.txt \
+     -H 'content-type: application/json' \
+     -d '{"email":"demo@mnemio.local","password":"demo-password-123"}'
+# → { "accessToken": "...", "user": { ... }, "needsProfile": false, "welcome": { ... } }
+
+ACCESS=...      # paste the accessToken from above
+
+# 2. List decks
+curl -s "$BASE/decks" -H "Authorization: Bearer $ACCESS"
+# → { items: Deck[2], nextCursor: null, total: 2 }
+
+# 3. Deck detail (note: cards is inline, not paginated)
+curl -s "$BASE/decks/<deckId>" -H "Authorization: Bearer $ACCESS"
+# → { deck: Deck, cards: Card[] }
+
+# 4. Refresh (no body; cookie travels via -b)
+curl -sX POST "$BASE/auth/refresh" -b cookies.txt -c cookies.txt
+# → { accessToken (new), user, needsProfile, welcome }
+```
+
+### Chat smoke (mock provider — no Anthropic credits burned)
+
+```bash
+# Make sure AI_PROVIDER=mock in .env to avoid hitting Claude.
+
+# 1. Create a new conversation
+CONV=$(curl -sX POST "$BASE/chat/conversations" \
+     -H "authorization: Bearer $ACCESS" \
+     -H 'content-type: application/json' \
+     -d '{}' | jq -r .id)
+
+# 2. Stream a reply via SSE (-N disables buffering)
+curl -N -X POST "$BASE/chat/conversations/$CONV/messages" \
+     -H "authorization: Bearer $ACCESS" \
+     -H 'accept: text/event-stream' \
+     -H 'content-type: application/json' \
+     -d '{"content":"Teach me three Spanish words for fruit."}'
+# Expect:  event: start   event: token (xN)   event: done
+
+# 3. Or get the whole reply at once (JSON, no streaming)
+curl -sX POST "$BASE/chat/conversations/$CONV/messages" \
+     -H "authorization: Bearer $ACCESS" \
+     -H 'content-type: application/json' \
+     -d '{"content":"Another question"}' | jq
+# → { userMessage, assistantMessage, conversationTitle, tokensInput, tokensOutput }
+
+# 4. Read the conversation back
+curl -s "$BASE/chat/conversations/$CONV" \
+     -H "authorization: Bearer $ACCESS" | jq '.messages | map({role, content, status})'
+```
+
+### Full sign-up flow (manual OTP)
+
+```bash
+# 1. Register
+curl -sX POST "$BASE/auth/register" -H 'content-type: application/json' \
+     -d '{"email":"alice@example.com","password":"hunter22!"}'
+# → { "userId": "...", "email": "..." }
+
+# 2. Grab the OTP from the backend stdout, then verify
+curl -sX POST "$BASE/auth/verify-email" -c cookies.txt \
+     -H 'content-type: application/json' \
+     -d '{"userId":"<id>","code":"123456"}'
+# → { accessToken, user, needsProfile: true, welcome } + cookie set
+```
 
 ---
 
-## 6. Out of scope at MVP
+## 6. What's NOT in this contract
 
-The frontend never calls (and the backend should 404) any of these:
+Full deferral list with rationale is in [`backlog.md`](./backlog.md); this
+section captures only the items that interact with this contract directly.
 
-- Password reset / forgot-password.
-- File uploads (avatar).
-- OAuth (Apple / Facebook / Google) — UI buttons exist but have no handlers yet.
-  Add when those click handlers go in.
-- `POST /decks/:id/cards/bulk` (paste-import) — no UI consumer yet.
-- `GET /dashboard` aggregation — frontend parallel-fetches and that's fine for now.
-- `GET /srs/due` — frontend computes due client-side from `GET /srs/progress`.
-  Add if progress rows grow past a few thousand per user.
-- Public deck browsing / explore / clone.
-- Folders, achievements, leagues.
-- Account deletion (`DELETE /users/me`) — Phase 5 hardening.
+### Operational gaps (contract stays the same when these land)
+
+- **Admin surface for `featured`**: today, the `featured` flag is set directly
+  in the DB. A `POST /admin/decks/:id/feature` (gated on `user.role='admin'`)
+  is a small post-MVP addition when curation moves out of SQL.
+- **S3-backed media**: `/media/uploads` shape stays; storage backend swaps
+  from local FS to S3 presigned PUTs (see `src/services/media.service.ts`
+  comment header for the migration steps).
+
+### Chat — designed-around but deferred
+
+The `/chat/*` endpoints intentionally ship without:
+
+- **Grounding** (auto-injecting the user's recent decks, due count, last
+  mistakes into the system prompt). Hook lives at
+  `src/services/chat.prompt.ts`.
+- **Tool use** (`createDeck`, `addCardsToDeck`, etc.). The Anthropic SDK
+  supports `tools` blocks; the provider interface accepts them when we add
+  them.
+- **Image / audio attachments**. `ChatMessage.content` is text-only at MVP.
+- **AI-generated titles**. First-user-message truncation is the auto-title
+  rule for now.
+
+### Optional sub-stats deferred from P1
+
+Tagged "Optional P2" in `backend-plan.md §7`; not built but can be added later
+without breaking existing `/stats/*` shapes:
+
+- `/stats/forecast` (14-day due projection)
+- `/stats/study-patterns` (hour × day-of-week heatmap)
+- `/stats/xp` and league/leaderboard
+
+### Out of MVP entirely (see [`backlog.md`](./backlog.md) for full reasoning)
+
+- Password reset / forgot-password (manual support intervention at MVP).
+- Folders, leagues (leaderboard).
 - WebSockets / push notifications.
-
-If any of these is needed sooner, file it as an addition to `backend-plan.md` §10
-(Phase 5) before wiring the frontend.
-
----
-
-## 7. Diff vs prior version of this contract
-
-For reviewers who read the previous draft, the changes are:
-
-- **Ports flipped:** backend `:3001`, frontend `:3000` (was the other way around).
-- **Refresh token moved from localStorage to HttpOnly cookie.** All endpoints
-  that returned `refreshToken` in the body now set a cookie instead.
-  `POST /auth/logout` body changed to empty.
-- **Session shape matches the FE's `StudySession` type:** `index` (was `cardIndex`),
-  `correct` (was `cardsStudied`/`correctAnswers`), `endedAt` (was `completedAt`).
-- **`POST /sessions/:id/exit`** added (FE calls it; was missing from prior spec).
-- **`GET /sessions/active`** + **`POST /sessions/:id/resume`** added.
-- **`POST /srs/rate`** now accepts an `SrsRating` string (`'again' | 'hard' | 'good' | 'easy'`)
-    - a `deckId` parameter, matching the FE call site. Server maps to SM-2 quality internally.
-- **`GET /srs/progress`** replaces (and is simpler than) `GET /srs/due` for MVP.
-- **`GET /decks/:id`** returns the deck with **nested cards**, not paginated cards.
-- **`GET /dashboard` removed** from MVP (FE parallel-fetches instead).
-- **`POST /decks/:id/cards/bulk` removed** (no UI consumer).
-- **User type simplified:** dropped `avatarUrl`, `xp`, `streak`, `role`, `emailVerified`
-  — none of these are read by the FE yet. Add them back when their UI gets built.
+- Apple / Facebook / Microsoft OAuth (only Google ships at MVP).

@@ -1,4 +1,32 @@
 {
+    "seo": {
+        "homeTitle": "Flashcards & spaced repetition",
+        "homeDesc": "Learn anything and remember it. Create flashcard decks, study with a smart SRS scheduler, discover public decks, and generate cards with AI — all in Mnemio.",
+        "aboutTitle": "About",
+        "aboutDesc": "The story behind Mnemio — a modern flashcard and spaced-repetition app built to help you learn faster and remember longer.",
+        "blogTitle": "Blog",
+        "blogDesc": "Tips, updates, and learning-science notes from the Mnemio team on flashcards, spaced repetition, and studying smarter.",
+        "privacyTitle": "Privacy Policy",
+        "privacyDesc": "How Mnemio collects, uses, and protects your data.",
+        "termsTitle": "Terms of Service",
+        "termsDesc": "The terms and conditions for using Mnemio.",
+        "loginTitle": "Sign in",
+        "loginDesc": "Sign in to Mnemio or create an account to start learning with flashcards and spaced repetition.",
+        "dashboardTitle": "Dashboard",
+        "decksTitle": "My Decks",
+        "deckCreateTitle": "Create a deck",
+        "deckEditTitle": "Edit deck",
+        "deckDetailTitle": "Deck",
+        "cardAddTitle": "Add cards",
+        "discoverTitle": "Discover decks",
+        "studyTitle": "Study",
+        "reviewTitle": "Review",
+        "statisticsTitle": "Statistics",
+        "profileTitle": "Profile",
+        "onboardingTitle": "Get started",
+        "aiTitle": "AI deck generator",
+        "appDesc": "Mnemio — flashcards and spaced repetition for faster learning."
+    },
     "common": {
         "cancel": "Cancel",
         "save": "Save",
@@ -7,13 +35,15 @@
         "loading": "Loading…",
         "loadMore": "Load more",
         "language": "Language",
-        "or": "OR"
+        "or": "OR",
+        "retry": "Retry"
     },
     "rail": {
         "home": "Home",
         "decks": "My Decks",
         "discover": "Discover",
         "statistics": "Statistics",
+        "ai": "AI assistant",
         "practice": "Practice",
         "profile": "Profile"
     },
@@ -24,7 +54,9 @@
         "newDeck": "New deck",
         "account": "Account",
         "profile": "Profile",
-        "toggleTheme": "Toggle theme"
+        "toggleTheme": "Toggle theme",
+        "searchSeeAll": "See all results",
+        "searchNoMatches": "No decks match “{q}”"
     },
     "nav": {
         "dashboard": "Dashboard",
@@ -33,7 +65,13 @@
         "ai": "AI",
         "signOut": "Sign out",
         "signIn": "Sign in",
-        "register": "Register"
+        "register": "Register",
+        "about": "About",
+        "blog": "Blog",
+        "features": "Features",
+        "getStarted": "Get started",
+        "openApp": "Open app",
+        "exit": "Exit"
     },
     "auth": {
         "tabLogin": "Log in",
@@ -61,6 +99,7 @@
         "termsLink": "Terms & Conditions",
         "privacyLink": "Privacy Policy",
         "otpResent": "New code sent.",
+        "socialComingSoon": "Coming soon",
         "errors": {
             "email_invalid": "Please enter a valid email address.",
             "password_too_short": "Password must be at least 8 characters.",
@@ -69,6 +108,21 @@
             "username_invalid": "Username must be 3–20 letters, numbers, or underscores.",
             "birthday_invalid": "Use YYYY-MM-DD format.",
             "birthday_too_young": "You must be at least 13 years old."
+        }
+    },
+    "oauth": {
+        "signingIn": "Signing you in…",
+        "backToSignIn": "Back to sign in",
+        "err": {
+            "title": "Sign-in failed",
+            "generic": "Something went wrong while signing you in. Please try again.",
+            "missing_code": "The sign-in link was incomplete. Please start over.",
+            "exchange_failed": "We couldn't complete the sign-in. Please try again.",
+            "OAUTH_EXCHANGE_EXPIRED": "Your sign-in took too long. Please start over.",
+            "OAUTH_BAD_EXCHANGE_CODE": "The sign-in code was invalid. Please start over.",
+            "OAUTH_NOT_CONFIGURED": "Google sign-in isn't enabled on this deployment.",
+            "OAUTH_EMAIL_UNVERIFIED": "Your Google email isn't verified yet. Verify it with Google and try again.",
+            "AUTH_EMAIL_UNVERIFIED_LINK": "An account with this email already exists but isn't verified. Verify it first, or use a different Google account."
         }
     },
     "deck": {
@@ -86,6 +140,12 @@
         "descriptionPlaceholder": "What this deck is about",
         "sourceLanguage": "From language",
         "targetLanguage": "To language",
+        "frontLang": "Word you're learning",
+        "frontLangHint": "Front of the card",
+        "backLang": "Explanations in",
+        "backLangHint": "Back of the card / your language",
+        "public": "Public deck",
+        "publicHint": "Anyone can find this deck in Discover and copy it.",
         "searchPlaceholder": "Search your decks",
         "cardCount": "{n} cards",
         "emptyTitle": "No decks yet",
@@ -94,6 +154,7 @@
         "noResultsMessage": "No decks match your search.",
         "notFoundTitle": "Deck not found",
         "notFoundMessage": "This deck doesn't exist or was deleted.",
+        "loadErrorTitle": "Couldn't load this deck",
         "backToDecks": "Back to decks",
         "deleteTitle": "Delete this deck?",
         "deleteMessage": "This will permanently remove the deck and all its cards. This cannot be undone.",
@@ -106,6 +167,9 @@
         "sortDue": "Most due",
         "sortMastery": "Highest mastery",
         "filterAll": "All",
+        "filterFavorites": "Favorites",
+        "addFavorite": "Add to favorites",
+        "removeFavorite": "Remove from favorites",
         "menuAria": "Deck options",
         "studyNow": "Study now",
         "studyNowHint": "Choose a study mode",
@@ -130,6 +194,7 @@
         "aiTopicPlaceholder": "e.g. Kitchen vocabulary",
         "aiFrom": "From",
         "aiTo": "To",
+        "aiCount": "Number of words",
         "aiGenerate": "Generate draft",
         "aiMore": "+{n} more",
         "aiDiscard": "Discard",
@@ -203,6 +268,9 @@
         "heading": "Review",
         "inHours": "in {h}h",
         "inDays": "in {d}d",
+        "resultsTitle": "Review complete!",
+        "resultsSummary": "You reviewed {n} cards · {pct}% recalled.",
+        "backToDashboard": "Back to dashboard",
         "errors": {
             "rate_failed": "Could not save your rating. Try again."
         }
@@ -243,6 +311,7 @@
         "backToDeck": "Back to deck",
         "noResultsTitle": "No completed session",
         "noResultsMessage": "Start a study session to see your results here.",
+        "couldNotStartTitle": "Couldn't start",
         "endSession": "End session",
         "revealHint": "Tap the card or press Space to reveal.",
         "toReveal": "to reveal",
@@ -305,6 +374,8 @@
         "tagsPlaceholder": "Add a tag…",
         "uploaded": "Uploaded",
         "uploadFailed": "Upload failed",
+        "playAudio": "Play audio",
+        "statusAria": "Status: {state}",
         "errors": {
             "word_required": "Word is required.",
             "word_too_long": "Word is too long (max 120).",
@@ -329,7 +400,10 @@
         "previewSoon": "Deck preview is coming soon.",
         "filterAll": "All",
         "sortNewest": "Newest",
-        "sortPopular": "Most popular"
+        "sortPopular": "Most popular",
+        "copies": "{n} copies",
+        "preview": "Preview",
+        "copy": "Copy"
     },
     "statistics": {
         "title": "Your statistics.",
@@ -434,6 +508,108 @@
         "saved": "Profile saved",
         "saveError": "Could not save profile"
     },
+    "achievements": {
+        "first_steps": {
+            "name": "First steps",
+            "description": "Complete your first study session."
+        },
+        "quick_learner": {
+            "name": "Quick learner",
+            "description": "Complete 5 study sessions."
+        },
+        "marathoner": {
+            "name": "Marathoner",
+            "description": "Complete 25 study sessions."
+        },
+        "accuracy_ace": {
+            "name": "Accuracy ace",
+            "description": "Finish a session with 100% accuracy on at least 5 cards."
+        },
+        "reviewer_100": {
+            "name": "Centurion",
+            "description": "Rate 100 cards."
+        },
+        "builder_50": {
+            "name": "Deck builder",
+            "description": "Create 50 cards."
+        },
+        "polyglot": {
+            "name": "Polyglot",
+            "description": "Study decks in 3 different target languages."
+        }
+    },
+    "ai": {
+        "titleNew": "Import words with AI",
+        "titleAppend": "Add words with AI",
+        "launchNew": "Import with AI",
+        "launchAppend": "Import with AI",
+        "titleLabel": "Deck title",
+        "titlePlaceholder": "My vocabulary deck",
+        "wordsLabel": "Words",
+        "wordsPlaceholder": "apple\nriver\ngravity",
+        "wordsHint": "Paste words — one per line or comma-separated. {n} ready (max 100).",
+        "toLang": "Words language",
+        "fromLang": "Definitions language",
+        "contextLabel": "Context (optional)",
+        "contextPlaceholder": "e.g. kitchen vocabulary",
+        "generate": "Generate definitions",
+        "generating": "Generating…",
+        "reviewHint": "Review the definitions, edit anything, then save.",
+        "reviewSummary": "AI defined {enriched} of {requested} words.",
+        "includeCard": "Include this card",
+        "unfilledCount": "{n} still need a definition.",
+        "unfilled": "needs definition",
+        "definitionPlaceholder": "Definition",
+        "remove": "Remove",
+        "addN": "Add {n} cards",
+        "createN": "Create deck · {n} cards",
+        "emptyWords": "Paste at least one word.",
+        "noCommittable": "Fill in at least one definition before saving.",
+        "needTitle": "Give the deck a title.",
+        "added": "Added {n} cards",
+        "enrichError": "AI couldn’t generate definitions. Try again."
+    },
+    "aiPage": {
+        "title": "AI assistant",
+        "subtitle": "Generate a deck from a topic, or turn a word list into flashcards.",
+        "greeting": "Hi! Give me a topic and I'll draft a deck, or switch to “Define words” to turn a list into flashcards.",
+        "modeGenerate": "Generate a deck",
+        "modeDefine": "Define words",
+        "send": "Generate",
+        "thinking": "Thinking…",
+        "draftReady": "Here's a draft for “{topic}” — {n} cards:",
+        "createDeck": "Create this deck",
+        "defineHint": "Paste a list of words and I'll generate definitions you can review and save.",
+        "openImporter": "Open word importer",
+        "userGenerate": "Make a deck about: {topic}",
+        "error": "Sorry, I couldn't generate that. Try a different topic.",
+        "created": "Deck created!",
+        "topicRequired": "Tell me a topic first."
+    },
+    "chat": {
+        "newChat": "New chat",
+        "noChats": "No conversations yet.",
+        "menu": "Options",
+        "rename": "Rename",
+        "delete": "Delete",
+        "deleteConfirm": "Delete this conversation? This can't be undone.",
+        "emptyTitle": "Ask Mimi anything",
+        "emptyHint": "Chat about your learning — or say \"make a deck from these words…\" and I'll build one for you.",
+        "placeholder": "Message Mimi…",
+        "send": "Send",
+        "openDeck": "Open",
+        "partial": "Reply was interrupted.",
+        "retry": "Retry",
+        "err": {
+            "generic": "Something went wrong. Please try again.",
+            "AI_BUDGET_EXCEEDED": "You've reached today's AI chat limit. Try again tomorrow.",
+            "RATE_LIMITED": "Too many messages — slow down a moment and retry.",
+            "AI_PROVIDER_ERROR": "The AI is unavailable right now. Please try again.",
+            "AI_VALIDATION_FAILED": "The AI couldn't produce a reply. Try rephrasing.",
+            "CHAT_NOT_FOUND": "This conversation no longer exists.",
+            "NETWORK_ERROR": "Network problem — check your connection and retry."
+        }
+    },
     "mimi": {
         "idle": [
             "Ready when you are — tap a card to begin.",
@@ -476,5 +652,145 @@
             "Evening is your best focus window — perfect time for a session.",
             "A couple of words slipped last time. Shall we drill them?"
         ]
+    },
+    "landing": {
+        "heroBadge": "Loved by 240,000 learners",
+        "heroTitle1": "Turn new words into ",
+        "heroTitleEm": "lasting",
+        "heroTitle2": " memory.",
+        "heroBody": "Mnemio schedules every review at the perfect moment and gives you a friendly companion to keep you going. Learn it once — remember it for good.",
+        "ctaGetStartedFree": "Get started free",
+        "ctaSeeHow": "See how it works",
+        "ctaExplore": "Explore decks",
+        "featuresEyebrow": "Why Mnemio",
+        "featuresTitle": "Everything you need to remember more.",
+        "feat1Title": "Bring your own deck",
+        "feat1Body": "Import or type the exact words you need to learn.",
+        "feat2Title": "AI-drafted cards",
+        "feat2Body": "Mimi turns a topic or note into a ready-to-study deck.",
+        "feat3Title": "Spaced repetition",
+        "feat3Body": "A proven SM-2 core schedules every review for you.",
+        "feat4Title": "Image & cloze",
+        "feat4Body": "Picture prompts and fill-the-gap cards, coming soon.",
+        "feat5Title": "Streaks that bend",
+        "feat5Body": "Gentle momentum without the all-or-nothing guilt.",
+        "feat6Title": "Yours, anywhere",
+        "feat6Body": "Your decks and progress belong to you — export anytime.",
+        "howEyebrow": "How it works",
+        "howTitle": "Three steps to durable memory.",
+        "step1Title": "Add your words",
+        "step1Body": "Create a deck and drop in the vocabulary you care about.",
+        "step2Title": "Let AI build it",
+        "step2Body": "Mimi fills in meanings and examples so you don’t have to.",
+        "step3Title": "Study & track",
+        "step3Body": "Review at the right moment and watch mastery climb.",
+        "demoEyebrow": "Try a card",
+        "demoTitle": "Feel the flow.",
+        "aiEyebrow": "Meet Mimi",
+        "aiTitle": "A companion that actually helps.",
+        "aiBody": "Mimi drafts cards from your notes, points out what you keep forgetting, and cheers you on — without the guilt-trips.",
+        "aiBubble1": "You forgot “saudade” twice. Want to drill it now?",
+        "aiBubble2": "Yes please!",
+        "stat1Value": "240K",
+        "stat1Label": "Active learners",
+        "stat2Value": "1.2B",
+        "stat2Label": "Cards reviewed",
+        "stat3Value": "34",
+        "stat3Label": "Languages",
+        "stat4Value": "94%",
+        "stat4Label": "Avg. retention",
+        "finalCtaTitle1": "Start remembering more, ",
+        "finalCtaTitleEm": "today.",
+        "finalCtaBody": "Free to start. Bring your own words and let Mnemio do the scheduling."
+    },
+    "about": {
+        "eyebrow": "About Mnemio",
+        "title1": "Learn it once. ",
+        "titleEm": "Remember it for good.",
+        "subtitle": "Mnemio pairs spaced repetition with a friendly companion so vocabulary sticks without the cram-and-forget cycle.",
+        "missionEyebrow": "Our mission",
+        "missionTitle": "Make durable memory feel effortless and a little bit joyful.",
+        "value1Title": "Calm by design",
+        "value1Body": "No streak guilt-trips. Just steady, sustainable progress.",
+        "value2Title": "Science-backed",
+        "value2Body": "A proven SM-2 spaced-repetition core schedules every review.",
+        "value3Title": "Bring your own words",
+        "value3Body": "Build decks from the vocabulary you actually need.",
+        "value4Title": "AI that helps",
+        "value4Body": "Mimi drafts cards and nudges you toward what to revisit.",
+        "value5Title": "Yours, always",
+        "value5Body": "Your decks and progress belong to you — export anytime.",
+        "value6Title": "Delightfully small",
+        "value6Body": "A focused tool that does one thing exceptionally well.",
+        "builtWith": "Built with",
+        "ctaTitle1": "Start remembering more, ",
+        "ctaTitleEm": "today.",
+        "ctaGetStarted": "Get started",
+        "ctaExplore": "Explore decks"
+    },
+    "blog": {
+        "eyebrow": "Journal",
+        "title": "The Mnemio blog",
+        "subtitle": "Notes on memory, language learning, and building Mnemio.",
+        "draftBadge": "Draft in progress",
+        "emptyTitle": "Nothing published yet",
+        "emptyBody": "Mimi is busy writing the first post. Check back soon — or start learning in the meantime.",
+        "ctaGetStarted": "Get started",
+        "ctaAbout": "About Mnemio"
+    },
+    "footer": {
+        "tagline": "The calm, AI-powered way to learn vocabulary that actually sticks.",
+        "colProduct": "Product",
+        "linkFeatures": "Features",
+        "linkTryCard": "Try a card",
+        "linkDecks": "Decks",
+        "colCompany": "Company",
+        "linkAbout": "About",
+        "linkBlog": "Blog",
+        "linkContact": "Contact",
+        "colResources": "Resources",
+        "linkPrivacy": "Privacy",
+        "linkTerms": "Terms",
+        "linkHelp": "Help center",
+        "rights": "© {year} Mnemio. All rights reserved."
+    },
+    "demo": {
+        "cardOf": "Card {i} of {n}",
+        "restart": "Restart",
+        "tapToFlip": "Tap to flip",
+        "forgot": "Forgot",
+        "hard": "Hard",
+        "easy": "Easy",
+        "recalled": "{score}% recalled",
+        "doneBody": "That’s how a real session feels — calm and quick.",
+        "startForReal": "Start for real"
+    },
+    "privacy": {
+        "backToLogin": "Back to login",
+        "title": "Privacy Policy",
+        "updated": "Last updated: June 2025",
+        "s1Title": "1. Information we collect",
+        "s1Body": "We collect the email address and password you provide when creating an account, along with usage data such as the decks you study and your session history. We do not sell your personal data to third parties.",
+        "s2Title": "2. How we use it",
+        "s2Body": "Your data is used solely to operate the service — to authenticate you, sync your study progress, and improve the app experience.",
+        "s3Title": "3. Data retention",
+        "s3Body": "You can delete your account at any time from the Profile page. Upon deletion, all associated data is permanently removed within 30 days.",
+        "s4Title": "4. Contact",
+        "s4Body": "For privacy-related questions contact us at"
+    },
+    "terms": {
+        "backToLogin": "Back to login",
+        "title": "Terms & Conditions",
+        "updated": "Last updated: June 2025",
+        "s1Title": "1. Acceptance",
+        "s1Body": "By creating an account and using Mnemio, you agree to these Terms. If you do not agree, please do not use the service.",
+        "s2Title": "2. Use of the service",
+        "s2Body": "Mnemio is provided for personal, non-commercial study purposes. You may not use the service to distribute harmful content or attempt to circumvent security measures.",
+        "s3Title": "3. Your content",
+        "s3Body": "You retain ownership of the flashcard content you create. By using Mnemio, you grant us a limited licence to store and display that content to you within the app.",
+        "s4Title": "4. Availability",
+        "s4Body": "We aim for high availability but cannot guarantee uninterrupted access. The service may change or be discontinued with reasonable notice.",
+        "s5Title": "5. Contact",
+        "s5Body": "Questions about these Terms? Reach us at"
     }
 }

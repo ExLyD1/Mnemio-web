@@ -3,13 +3,46 @@
         class="flex h-[68px] shrink-0 items-center gap-4 border-b border-line bg-bg-surface/80 px-6 backdrop-blur"
     >
         <div class="flex flex-1 justify-center">
-            <UiInputSearch
-                v-model="search"
-                :placeholder="t('topbar.search')"
-                variant="dark"
-                class="w-full max-w-md"
-                @update:model-value="$emit('search', $event)"
-            />
+            <div
+                class="relative w-full max-w-md"
+                @focusin="searchFocused = true"
+                @focusout="onSearchBlur"
+            >
+                <UiInputSearch
+                    v-model="search"
+                    :placeholder="t('topbar.search')"
+                    variant="dark"
+                    class="w-full"
+                    @keydown.enter="goToDiscover"
+                />
+                <div
+                    v-if="showSuggestions"
+                    class="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-line-strong bg-bg-surface p-1.5 shadow-soft-elevation"
+                >
+                    <NuxtLink
+                        v-for="d in suggestions"
+                        :key="d.id"
+                        :to="`/decks/${d.id}`"
+                        class="flex items-center gap-3 rounded-xl px-3 py-2 text-body text-brand-pale transition-colors hover:bg-brand/20"
+                        @click="closeSearch"
+                    >
+                        <span class="min-w-0 flex-1 truncate">{{ d.title }}</span>
+                        <span class="shrink-0 text-small text-brand-muted">
+                            {{ t('deck.cardCount').replace('{n}', String(d.cardCount)) }}
+                        </span>
+                    </NuxtLink>
+                    <p v-if="!suggestions.length" class="px-3 py-2 text-small text-brand-muted">
+                        {{ t('topbar.searchNoMatches').replace('{q}', search.trim()) }}
+                    </p>
+                    <button
+                        type="button"
+                        class="mt-1 flex w-full items-center justify-center gap-1.5 rounded-xl border-t border-line px-3 py-2 text-small text-lavender transition-colors hover:bg-brand/20"
+                        @click="goToDiscover"
+                    >
+                        {{ t('topbar.searchSeeAll') }}
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="flex items-center gap-2">
@@ -61,7 +94,11 @@
                         :aria-label="t('topbar.account')"
                         @click="toggle"
                     >
-                        <UiAvatar :name="displayName" :size="38" />
+                        <UiAvatar
+                            :name="displayName"
+                            :src="mediaUrl(auth.currentUser?.avatarUrl)"
+                            :size="38"
+                        />
                     </button>
                 </template>
                 <template #default="{ close }">
@@ -90,9 +127,8 @@
 
 <script setup lang="ts">
 import { Bell, Plus, User, LogOut, Sun, Moon } from 'lucide-vue-next';
-import { useAuth, useAuthStore, useColorMode, useToast, useT } from '#imports';
-
-defineEmits<{ search: [value: string] }>();
+import { useAuth, useAuthStore, useColorMode, useDecks, useToast, useT } from '#imports';
+import { mediaUrl } from '@/utils/media';
 
 const colorMode = useColorMode();
 const toggleTheme = () => {
@@ -100,10 +136,47 @@ const toggleTheme = () => {
 };
 
 const search = ref('');
+const searchFocused = ref(false);
 const auth = useAuthStore();
+const { store, fetchList } = useDecks();
 const { logout } = useAuth();
 const toast = useToast();
 const { t } = useT();
+
+// Quick matches against the user's own decks; the full search lives on /discover.
+const suggestions = computed(() => {
+    const q = search.value.trim().toLowerCase();
+    if (!q) {
+        return [];
+    }
+    return store.summaries.filter((d) => d.title.toLowerCase().includes(q)).slice(0, 4);
+});
+const showSuggestions = computed(() => searchFocused.value && search.value.trim().length > 0);
+
+const closeSearch = () => {
+    searchFocused.value = false;
+};
+
+const onSearchBlur = (e: FocusEvent) => {
+    // Keep the panel open while focus moves within the search container.
+    const next = e.relatedTarget as Node | null;
+    const container = e.currentTarget as HTMLElement;
+    if (!next || !container.contains(next)) {
+        searchFocused.value = false;
+    }
+};
+
+const goToDiscover = () => {
+    const q = search.value.trim();
+    searchFocused.value = false;
+    navigateTo(q ? `/discover?q=${encodeURIComponent(q)}` : '/discover');
+};
+
+onMounted(() => {
+    if (!store.summaries.length) {
+        fetchList.execute({ cursor: null, append: false });
+    }
+});
 
 const displayName = computed(
     () => auth.currentUser?.displayName ?? auth.currentUser?.username ?? '',

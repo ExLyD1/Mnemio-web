@@ -5,20 +5,23 @@
             <div>
                 <SharedPill tone="plum">
                     <Star class="size-3.5 fill-pink-soft text-pink-soft" />
-                    Loved by 240,000 learners
+                    {{ t('landing.heroBadge') }}
                 </SharedPill>
                 <h1 class="mt-5 font-display text-display text-cream">
-                    Turn new words into <span class="italic">lasting</span> memory.
+                    {{ t('landing.heroTitle1')
+                    }}<span class="italic">{{ t('landing.heroTitleEm') }}</span
+                    >{{ t('landing.heroTitle2') }}
                 </h1>
                 <p class="mt-5 max-w-[46ch] text-body text-cream-dim">
-                    Mnemio schedules every review at the perfect moment and gives you a friendly
-                    companion to keep you going. Learn it once — remember it for good.
+                    {{ t('landing.heroBody') }}
                 </p>
                 <div class="mt-7 flex flex-wrap gap-3">
                     <UiButton variant="primary" @click="navigateTo('/login?tab=register')">
-                        Get started free
+                        {{ t('landing.ctaGetStartedFree') }}
                     </UiButton>
-                    <UiButton variant="ghost" @click="scrollTo('#how')">See how it works</UiButton>
+                    <UiButton variant="ghost" @click="scrollTo('#how')">{{
+                        t('landing.ctaSeeHow')
+                    }}</UiButton>
                 </div>
             </div>
 
@@ -41,9 +44,11 @@
 
         <!-- Features -->
         <section id="features" class="mx-auto max-w-[1080px] px-6 py-16">
-            <p class="text-eyebrow uppercase text-brand-muted">Why Mnemio</p>
+            <p class="text-eyebrow uppercase text-brand-muted">
+                {{ t('landing.featuresEyebrow') }}
+            </p>
             <h2 class="mt-2 max-w-[20ch] font-display text-h1 text-cream">
-                Everything you need to remember more.
+                {{ t('landing.featuresTitle') }}
             </h2>
             <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <div
@@ -56,16 +61,16 @@
                     >
                         <component :is="f.icon" class="size-5" />
                     </span>
-                    <h3 class="mt-4 font-display text-h3 text-cream">{{ f.title }}</h3>
-                    <p class="mt-2 text-small text-cream-dim">{{ f.body }}</p>
+                    <h3 class="mt-4 font-display text-h3 text-cream">{{ t(f.title) }}</h3>
+                    <p class="mt-2 text-small text-cream-dim">{{ t(f.body) }}</p>
                 </div>
             </div>
         </section>
 
         <!-- How it works -->
         <section id="how" class="mx-auto max-w-[1080px] px-6 py-16">
-            <p class="text-eyebrow uppercase text-brand-muted">How it works</p>
-            <h2 class="mt-2 font-display text-h1 text-cream">Three steps to durable memory.</h2>
+            <p class="text-eyebrow uppercase text-brand-muted">{{ t('landing.howEyebrow') }}</p>
+            <h2 class="mt-2 font-display text-h1 text-cream">{{ t('landing.howTitle') }}</h2>
             <div class="mt-10 grid gap-5 sm:grid-cols-3">
                 <div
                     v-for="(s, i) in steps"
@@ -73,8 +78,8 @@
                     class="rounded-[20px] border border-line bg-bg-surface p-6"
                 >
                     <span class="font-display text-4xl text-brand-bright">{{ i + 1 }}</span>
-                    <h3 class="mt-3 font-display text-h3 text-cream">{{ s.title }}</h3>
-                    <p class="mt-2 text-small text-cream-dim">{{ s.body }}</p>
+                    <h3 class="mt-3 font-display text-h3 text-cream">{{ t(s.title) }}</h3>
+                    <p class="mt-2 text-small text-cream-dim">{{ t(s.body) }}</p>
                 </div>
             </div>
         </section>
@@ -83,8 +88,12 @@
         <section id="demo" class="border-y border-line bg-bg-surface/40">
             <div class="mx-auto max-w-[1080px] px-6 py-16">
                 <div class="mb-8 text-center">
-                    <p class="text-eyebrow uppercase text-brand-muted">Try a card</p>
-                    <h2 class="mt-2 font-display text-h1 text-cream">Feel the flow.</h2>
+                    <p class="text-eyebrow uppercase text-brand-muted">
+                        {{ t('landing.demoEyebrow') }}
+                    </p>
+                    <h2 class="mt-2 font-display text-h1 text-cream">
+                        {{ t('landing.demoTitle') }}
+                    </h2>
                 </div>
                 <LandingDemo />
             </div>
@@ -96,25 +105,24 @@
             class="mx-auto grid max-w-[1080px] items-center gap-10 px-6 py-16 lg:grid-cols-2"
         >
             <div>
-                <p class="text-eyebrow uppercase text-brand-muted">Meet Mimi</p>
+                <p class="text-eyebrow uppercase text-brand-muted">{{ t('landing.aiEyebrow') }}</p>
                 <h2 class="mt-2 font-display text-h1 text-cream">
-                    A companion that actually helps.
+                    {{ t('landing.aiTitle') }}
                 </h2>
                 <p class="mt-4 max-w-[44ch] text-body text-cream-dim">
-                    Mimi drafts cards from your notes, points out what you keep forgetting, and
-                    cheers you on — without the guilt-trips.
+                    {{ t('landing.aiBody') }}
                 </p>
             </div>
             <div class="flex flex-col gap-3 rounded-[20px] border border-line bg-bg-surface p-6">
                 <div
                     class="max-w-[80%] self-start rounded-2xl rounded-bl-sm border border-line-strong bg-bg-surface-2 px-4 py-3 text-body text-cream"
                 >
-                    You forgot “saudade” twice. Want to drill it now?
+                    {{ t('landing.aiBubble1') }}
                 </div>
                 <div
                     class="max-w-[80%] self-end rounded-2xl rounded-br-sm bg-brand px-4 py-3 text-body text-cream"
                 >
-                    Yes please!
+                    {{ t('landing.aiBubble2') }}
                 </div>
                 <div class="flex items-center gap-2 self-start text-small text-brand-muted">
                     <span class="size-1.5 animate-typing-dot rounded-full bg-brand-pale" />
@@ -134,8 +142,8 @@
                 class="grid grid-cols-2 gap-6 rounded-[20px] border border-line bg-bg-surface p-8 sm:grid-cols-4"
             >
                 <div v-for="s in stats" :key="s.label" class="text-center">
-                    <p class="font-display text-h1 text-cream">{{ s.value }}</p>
-                    <p class="mt-1 text-small text-brand-muted">{{ s.label }}</p>
+                    <p class="font-display text-h1 text-cream">{{ t(s.value) }}</p>
+                    <p class="mt-1 text-small text-brand-muted">{{ t(s.label) }}</p>
                 </div>
             </div>
         </section>
@@ -144,17 +152,18 @@
         <section class="mx-auto max-w-[1080px] px-6 pb-24 pt-10">
             <div class="rounded-[28px] bg-mimi-ambient p-12 text-center">
                 <h2 class="font-display text-display-sm text-cream">
-                    Start remembering more, <span class="italic">today.</span>
+                    {{ t('landing.finalCtaTitle1')
+                    }}<span class="italic">{{ t('landing.finalCtaTitleEm') }}</span>
                 </h2>
                 <p class="mx-auto mt-3 max-w-[44ch] text-body text-cream-dim">
-                    Free to start. Bring your own words and let Mnemio do the scheduling.
+                    {{ t('landing.finalCtaBody') }}
                 </p>
                 <div class="mt-6 flex justify-center gap-3">
                     <UiButton variant="primary" @click="navigateTo('/login?tab=register')">
-                        Get started free
+                        {{ t('landing.ctaGetStartedFree') }}
                     </UiButton>
                     <UiButton variant="ghost" @click="navigateTo('/discover')">
-                        Explore decks
+                        {{ t('landing.ctaExplore') }}
                     </UiButton>
                 </div>
             </div>
@@ -164,9 +173,33 @@
 
 <script setup lang="ts">
 import { Star, Upload, Wand2, Brain, Image, Flame, WifiOff } from 'lucide-vue-next';
+import { useHead, useT } from '#imports';
 import { SAMPLE_DECK } from '@/composables/useSampleDeck';
 
 definePageMeta({ layout: 'marketing' });
+
+const { t } = useT();
+
+useSeo({ title: t('seo.homeTitle'), description: t('seo.homeDesc') });
+
+// Landing-page software schema, in addition to the Organization/WebSite graph
+// emitted by the marketing layout.
+useHead({
+    script: [
+        {
+            type: 'application/ld+json',
+            innerHTML: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'SoftwareApplication',
+                name: 'Mnemio',
+                applicationCategory: 'EducationApplication',
+                operatingSystem: 'Web',
+                description: t('seo.homeDesc'),
+                offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            }),
+        },
+    ],
+});
 
 const heroCards = SAMPLE_DECK.slice(0, 3);
 
@@ -177,49 +210,25 @@ const stackStyle = (i: number) => ({
 });
 
 const features = [
-    {
-        icon: Upload,
-        title: 'Bring your own deck',
-        body: 'Import or type the exact words you need to learn.',
-    },
-    {
-        icon: Wand2,
-        title: 'AI-drafted cards',
-        body: 'Mimi turns a topic or note into a ready-to-study deck.',
-    },
-    {
-        icon: Brain,
-        title: 'Spaced repetition',
-        body: 'A proven SM-2 core schedules every review for you.',
-    },
-    {
-        icon: Image,
-        title: 'Image & cloze',
-        body: 'Picture prompts and fill-the-gap cards, coming soon.',
-    },
-    {
-        icon: Flame,
-        title: 'Streaks that bend',
-        body: 'Gentle momentum without the all-or-nothing guilt.',
-    },
-    {
-        icon: WifiOff,
-        title: 'Yours, anywhere',
-        body: 'Your decks and progress belong to you — export anytime.',
-    },
+    { icon: Upload, title: 'landing.feat1Title', body: 'landing.feat1Body' },
+    { icon: Wand2, title: 'landing.feat2Title', body: 'landing.feat2Body' },
+    { icon: Brain, title: 'landing.feat3Title', body: 'landing.feat3Body' },
+    { icon: Image, title: 'landing.feat4Title', body: 'landing.feat4Body' },
+    { icon: Flame, title: 'landing.feat5Title', body: 'landing.feat5Body' },
+    { icon: WifiOff, title: 'landing.feat6Title', body: 'landing.feat6Body' },
 ];
 
 const steps = [
-    { title: 'Add your words', body: 'Create a deck and drop in the vocabulary you care about.' },
-    { title: 'Let AI build it', body: 'Mimi fills in meanings and examples so you don’t have to.' },
-    { title: 'Study & track', body: 'Review at the right moment and watch mastery climb.' },
+    { title: 'landing.step1Title', body: 'landing.step1Body' },
+    { title: 'landing.step2Title', body: 'landing.step2Body' },
+    { title: 'landing.step3Title', body: 'landing.step3Body' },
 ];
 
 const stats = [
-    { value: '240K', label: 'Active learners' },
-    { value: '1.2B', label: 'Cards reviewed' },
-    { value: '34', label: 'Languages' },
-    { value: '94%', label: 'Avg. retention' },
+    { value: 'landing.stat1Value', label: 'landing.stat1Label' },
+    { value: 'landing.stat2Value', label: 'landing.stat2Label' },
+    { value: 'landing.stat3Value', label: 'landing.stat3Label' },
+    { value: 'landing.stat4Value', label: 'landing.stat4Label' },
 ];
 
 const scrollTo = (sel: string) => {

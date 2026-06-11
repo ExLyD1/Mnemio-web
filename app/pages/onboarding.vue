@@ -152,6 +152,8 @@ const mimi = useMimi();
 const toast = useToast();
 const { t } = useT();
 
+useSeo({ title: t('seo.onboardingTitle'), description: t('seo.appDesc'), noindex: true });
+
 const HUES = [286, 210, 24, 140, 330];
 const INTERESTS = [
     'Languages',

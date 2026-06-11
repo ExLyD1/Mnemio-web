@@ -100,8 +100,12 @@ definePageMeta({ layout: 'default' });
 const discover = useDiscover();
 const toast = useToast();
 const { t } = useT();
+const route = useRoute();
 
-const search = ref('');
+useSeo({ title: t('seo.discoverTitle'), description: t('seo.appDesc'), noindex: true });
+
+// Prefill from ?q so the header search (and "See all results") lands here with the query.
+const search = ref(typeof route.query.q === 'string' ? route.query.q : '');
 const filter = ref('all');
 const subject = ref<string | null>(null);
 const sort = ref<'recent' | 'popular'>('recent');
@@ -118,6 +122,16 @@ const debouncedReload = useDebounceFn(reload, 300);
 
 watch([filter, subject, sort], reload);
 watch(search, debouncedReload);
+// React when the header search navigates here again with a new ?q while mounted.
+watch(
+    () => route.query.q,
+    (q) => {
+        const next = typeof q === 'string' ? q : '';
+        if (next !== search.value) {
+            search.value = next;
+        }
+    },
+);
 
 const onCategory = (s: string) => {
     subject.value = subject.value === s ? null : s;

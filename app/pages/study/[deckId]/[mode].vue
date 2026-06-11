@@ -92,12 +92,12 @@
 
             <UiEmptyState
                 v-else-if="practice.study.error.value"
-                title="Couldn't start"
-                :message="practice.study.error.value"
+                :title="t('study.couldNotStartTitle')"
+                :message="t(practice.study.error.value, practice.study.error.value)"
             >
                 <template #action>
                     <UiButton variant="primary" @click="navigateTo(`/decks/${deckId}`)">
-                        Back to deck
+                        {{ t('study.backToDeck') }}
                     </UiButton>
                 </template>
             </UiEmptyState>
@@ -134,6 +134,8 @@ const mode = computed(() => String(route.params.mode) as StudyMode);
 const { store, fetchOne } = useDecks();
 const { t } = useT();
 const practice = usePractice();
+
+useSeo({ title: t('seo.studyTitle'), description: t('seo.appDesc'), noindex: true });
 const practiceStore = usePracticeStore();
 
 const loading = ref(true);

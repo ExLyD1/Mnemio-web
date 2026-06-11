@@ -18,7 +18,7 @@
                 v-if="card.audioUrl"
                 type="button"
                 class="grid size-8 place-items-center rounded-full text-brand-muted transition-colors hover:text-cream"
-                aria-label="Play audio"
+                :aria-label="t('card.playAudio')"
                 @click="playAudio"
             >
                 <Volume2 class="size-4" />
@@ -26,7 +26,7 @@
             <button
                 type="button"
                 class="grid size-8 place-items-center rounded-full text-brand-muted transition hover:text-cream sm:opacity-0 sm:group-hover:opacity-100"
-                aria-label="Edit card"
+                :aria-label="t('card.edit')"
                 @click="$emit('edit', card.id)"
             >
                 <Pencil class="size-4" />
@@ -34,7 +34,7 @@
             <button
                 type="button"
                 class="grid size-8 place-items-center rounded-full text-brand-muted transition hover:text-error sm:opacity-0 sm:group-hover:opacity-100"
-                aria-label="Delete card"
+                :aria-label="t('card.delete')"
                 @click="$emit('delete', card.id)"
             >
                 <Trash2 class="size-4" />
@@ -42,7 +42,7 @@
             <span
                 :class="['inline-block size-2.5 rounded-full', dotClass]"
                 role="img"
-                :aria-label="`Status: ${stateLabel}`"
+                :aria-label="t('card.statusAria').replace('{state}', stateLabel)"
                 :title="stateLabel"
             />
         </div>
@@ -51,8 +51,11 @@
 
 <script setup lang="ts">
 import { Volume2, Pencil, Trash2 } from 'lucide-vue-next';
+import { useT } from '#imports';
 import type { Card } from '@/types/deck';
 import { mediaUrl } from '@/utils/media';
+
+const { t } = useT();
 
 const props = defineProps<{
     index: number;
@@ -81,9 +84,9 @@ const dotClass = computed(
 const stateLabel = computed(
     () =>
         ({
-            mastered: 'Mastered',
-            learning: 'Learning',
-            new: 'New',
+            mastered: t('deck.statMastered'),
+            learning: t('deck.statLearning'),
+            new: t('deck.statNew'),
         })[props.state],
 );
 </script>

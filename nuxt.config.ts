@@ -1,6 +1,6 @@
 export default defineNuxtConfig({
     compatibilityDate: '2025-07-15',
-    devtools: { enabled: true },
+    devtools: { enabled: false },
 
     modules: [
         '@pinia/nuxt',
@@ -9,7 +9,68 @@ export default defineNuxtConfig({
         '@nuxt/image',
         '@nuxtjs/color-mode',
         '@nuxtjs/tailwindcss',
+        '@nuxtjs/sitemap',
+        '@nuxtjs/robots',
     ],
+
+    // Canonical site identity. Used by @nuxtjs/sitemap + @nuxtjs/robots and as the
+    // base for canonical/OG absolute URLs (see app/composables/useSeo.ts).
+    // Override in prod with NUXT_PUBLIC_SITE_URL.
+    site: {
+        url: 'https://mnemio.xyz',
+        name: 'Mnemio',
+    },
+
+    // Private/app + auth surfaces must never be indexed. The sitemap module
+    // auto-excludes anything robots disallows, so sitemap.xml ends up with just
+    // the public marketing pages (/, /about, /blog, /privacy, /terms).
+    robots: {
+        disallow: [
+            '/dashboard',
+            '/decks',
+            '/study',
+            '/review',
+            '/statistics',
+            '/profile',
+            '/onboarding',
+            '/ai',
+            '/discover',
+            '/login',
+            '/auth',
+        ],
+    },
+
+    app: {
+        head: {
+            htmlAttrs: { lang: 'en' },
+            // `%s` is the per-page title set via useSeo; the default title below fills
+            // it on pages that don't set one (so the brand name never doubles up).
+            titleTemplate: '%s · Mnemio',
+            title: 'Flashcards & spaced repetition',
+            meta: [
+                { charset: 'utf-8' },
+                { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+                {
+                    name: 'google-site-verification',
+                    content: 'o2Qy5YXCdB8Xt1o8mKqP7qWDmLQjBhHIMt7SnSokH1I',
+                },
+                {
+                    name: 'description',
+                    content:
+                        'Mnemio is a flashcard and spaced-repetition learning app. Create decks, study smarter with an SRS scheduler, discover public decks, and generate cards with AI.',
+                },
+                { name: 'theme-color', content: '#572E54' },
+                { name: 'twitter:card', content: 'summary_large_image' },
+                { property: 'og:site_name', content: 'Mnemio' },
+                { property: 'og:type', content: 'website' },
+            ],
+            link: [
+                { rel: 'icon', href: '/images/logoico.ico', sizes: 'any' },
+                { rel: 'icon', type: 'image/jpeg', href: '/images/logoico.jpg' },
+                { rel: 'apple-touch-icon', href: '/images/logoico.jpg' },
+            ],
+        },
+    },
 
     colorMode: {
         // Class names go straight on <html> as `light` / `dark` (no suffix) so
@@ -39,13 +100,31 @@ export default defineNuxtConfig({
             // origin and are proxied (below) to the backend. This keeps the refresh
             // cookie first-party. Set NUXT_PUBLIC_API_BASE in prod (same-site there).
             apiBase: '',
+            // Backend ORIGIN for the Google OAuth redirect, e.g.
+            // https://mnemio-backend-production.up.railway.app (local: http://localhost:3001).
+            // OAuth initiation must hit the backend directly — NOT the same-origin /api
+            // proxy, which follows the backend's 302 and would serve Google's HTML under
+            // our origin (CSP/CORS break). Set NUXT_PUBLIC_OAUTH_BASE wherever Google is
+            // configured; the callback still returns to this app via the backend's WEB_URL.
+            oauthBase: '',
         },
     },
 
-    // Same-origin proxy so the HttpOnly `mnemio_refresh` cookie (SameSite=Lax) is set on
-    // the page origin and sent on every call — fixes being logged out after restart.
+    // Same-origin proxy so the HttpOnly refresh cookie (SameSite=Lax) is set on the page
+    // origin and sent on every call — keeps auth first-party (no logout on cross-site).
+    // Dev → backend on :3001. Prod → set NUXT_API_PROXY_TARGET to the backend's URL
+    // (baked at build time; change it ⇒ redeploy).
     routeRules: {
-        '/api/**': { proxy: 'http://127.0.0.1:3001/api/**' },
+        '/api/**': {
+            proxy: `${process.env.NUXT_API_PROXY_TARGET ?? 'http://127.0.0.1:3001'}/api/**`,
+        },
+        // Uploaded media (avatars, card images/audio) is served by the backend at
+        // its origin under `/media/*` (no `/api/v1` prefix). Mirror the API proxy so
+        // the relative `/media/...` URLs returned by uploads resolve first-party in
+        // dev and prod alike. Without this they 404 against the web origin.
+        '/media/**': {
+            proxy: `${process.env.NUXT_API_PROXY_TARGET ?? 'http://127.0.0.1:3001'}/media/**`,
+        },
     },
 
     css: ['~/assets/css/main.css'],

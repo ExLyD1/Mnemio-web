@@ -1,89 +1,145 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code (and other AI agents) working in this repository.
+
+> The cross-tool copy in [`AGENTS.md`](./AGENTS.md) points here — **this file is canonical.**
 
 ## What this is
 
-Mnemio-web — the **frontend** for an AI-powered flashcard/vocabulary app (Nuxt 4 + Vue 3 + TypeScript). It talks to a separate Fastify backend (`mnemio-api`) over REST; there is no database access here and the `server/` middleware is minimal. The README's "Project Structure" and "pnpm" references are partly aspirational — trust the actual tree (everything lives under `app/`) and use **npm** (the repo is locked with `package-lock.json`).
+**Mnemio** — the frontend for a flashcard / spaced-repetition learning app
+(Quizlet-like). Decks of cards, study/practice/review sessions, an SRS scheduler,
+discovery of public decks, stats, achievements, and an AI deck generator.
+
+> ⚠️ The npm package is still named `quizlet` (legacy). The product is **Mnemio**.
+
+The backend lives in a separate repo and is the source of truth for data; this
+repo only talks to it over HTTP. The full API is documented in
+[`docs/api-contract.md`](./docs/api-contract.md) (42 endpoints under `/api/v1`).
+
+## Stack
+
+- **Nuxt 4** (`compatibilityDate 2025-07-15`) + **Vue 3** (`<script setup>`, Composition API)
+- **TypeScript**, `strict` + `strictNullChecks`
+- **Pinia** (`@pinia/nuxt`) — setup-style stores
+- **Tailwind CSS** (`@nuxtjs/tailwindcss`) + **shadcn-vue** (style `new-york`, base `reka`, `lucide` icons)
+- **@nuxtjs/i18n** (en / uk) + a small custom catalog resolver (see [i18n](#i18n))
+- **@nuxtjs/color-mode**, **@nuxt/image**, **@vueuse/nuxt** + **@vueuse/motion**
+- **vee-validate** + **zod** for forms/validation
 
 ## Commands
 
 ```bash
-npm run dev            # dev server — Nuxt picks port 3000, or increments if taken
-npm run build          # production build (nuxt build)
-npm run lint           # eslint .   (see gotcha below)
-npm run lint:fix
+npm run dev            # dev server (needs the backend on :3001 — see Dev proxy)
+npm run build          # production build
+npm run generate       # static generate
+npm run preview        # preview a build
+npm run lint           # eslint .
+npm run lint:fix       # eslint . --fix
 npm run format         # prettier --write
-npm run format:check
-npm run validate       # lint + format:check — run before considering work done
+npm run format:check   # prettier --check
+npm run validate       # lint + format:check  (run before considering work done)
 ```
 
-There is **no test runner** configured. "Verifying" a change means `npm run dev` and exercising it, plus `npm run validate`.
+There is **no test runner configured**. Verify changes via `npm run validate`
+and by running the app.
 
-The dev server needs the backend running at `http://127.0.0.1:3001` (see proxy below).
+## Architecture — request flow
 
-## Critical gotchas
+Data flows through clear layers; respect them when adding features.
 
-- **ESLint does not lint `.vue` files** — the flat config (`eslint.config.js`) only matches `**/*.{js,ts}`. Running eslint on a `.vue` file prints "File ignored because no matching configuration was supplied". Vue files are only checked by Prettier. Don't assume `npm run lint` covered your template changes.
-- **Config files (`nuxt.config.ts`, `tailwind.config.ts`) are not in the TS project service**, so `npm run lint` reports a parsing error and a `process.env` unsafe-access error on them. These are pre-existing and unrelated to your edits.
-- **Line endings**: edits can introduce CRLF that Prettier rejects. Run `npm run format` on touched files if you see a wall of `Delete ␍` errors.
-- **`useColorMode()` from `@nuxtjs/color-mode` fails outside Nuxt context** — don't call it inside components that may render during SSR or inside async Pinia actions. To react to the current theme inside a component, detect it via DOM: `document.documentElement.classList.contains('dark')` and observe changes with a `MutationObserver` (see `components/study/FlashCard.vue` for the pattern).
-- **`useRuntimeConfig()` must not be called after async await boundaries** — Nuxt's async context is lost across some Pinia action boundaries. `http.ts` solves this by caching `apiBase` on first call via `getBaseURL()`. Follow the same pattern if you need runtime config in a utility function.
-- **`bg-white/[0.0x]` is invisible in light mode** — these near-transparent white overlays vanish on cream/lavender surfaces. Use `bg-brand/20` for hover states and `bg-bg-surface` or `bg-bg-surface-2` for fills.
-- **`PUBLIC_ROUTES`** in `middleware/auth.global.ts` is a hard-coded `Set`. Add new public pages (e.g. `/privacy`, `/terms`) there or the auth guard will redirect unauthenticated visitors to `/login`.
-- **Throwing API-shaped errors in app code**: the linter enforces `only-throw-error` (must throw `Error` instances). Use `throw Object.assign(new Error(message), { code: 'MY_CODE' })` when you need to surface an `ApiError`-shaped throw that `useAsync` will pick up correctly.
+```
+pages / components
+        │  call
+composables (useAuth, useDecks, …)   ← wrap store actions in useAsync → {data,error,loading,execute}
+        │
+Pinia stores (app/stores/*)          ← setup stores: defineStore(id, () => {...}); hold state + orchestrate
+        │  call
+api modules (app/api/*)              ← typed async fns, one per backend domain; adapt wire types → FE types
+        │  call
+app/utils/http.ts                    ← the ONLY fetch wrapper
+        │
+backend  /api/v1/*
+```
 
-## Architecture
+### `app/utils/http.ts` (read before touching networking)
 
-### Data flow: `api/ → stores/ → composables/ → pages/`
+- Prefixes paths with `/api/v1` (unless they already start with `/api/` or `http`).
+- Access token from `localStorage` via `app/utils/authToken.ts` → `Authorization: Bearer`.
+- Always sends `credentials: 'include'` so the HttpOnly refresh cookie (`mnemio_refresh`) rides along.
+- **401 handling:** refresh once via `POST /auth/refresh`, then retry the request; a single in-flight refresh is shared. `AUTH_INVALID_REFRESH` → hard logout (`/login`), never retried.
+- Normalizes all errors to `{ code, message, details? }` (`ApiError`). Always `throw` normalized errors.
+- Options: `skipAuth`, `skipRefresh`.
 
-1. **`app/api/*.ts`** — thin, typed `async` functions, one file per domain (decks, cards, auth, ai, srs, sessions, stats…). Each calls the shared `http()` helper and returns typed data. No state.
-2. **`app/stores/*.ts`** — Pinia stores hold normalized state and call the `api/` functions. Stores expose a `hydrate()` for boot-time loading.
-3. **`app/composables/use*.ts`** — the binding layer pages use. The common pattern wraps each store action in `useAsync` to get `{ data, error, loading, execute }` (see `useDecks.ts` → `useAsync(store.fetchList)`). `useAsync` (`composables/useAsync.ts`) is the canonical way to run an async op with loading/error state — prefer it over hand-rolled `try/catch + ref`.
-4. **`app/pages/`** — file-based routes. Dynamic study routes live under `pages/study/[deckId]/[mode].vue`.
+### Auth
 
-### Study flow (`useStudySession` → `usePractice` → page)
+- `app/stores/auth.ts` — setup store. Flow: `register → verifyEmail (OTP) → login`. Access token kept in `localStorage`; refresh is an HttpOnly cookie.
+- `app/plugins/01.auth.client.ts` — on boot calls `auth.hydrate()` (then preferences). Hydrate is resilient: only `AUTH_INVALID_REFRESH` clears the session; network errors keep the token so a restart/booting backend doesn't log you out.
+- `app/middleware/auth.global.ts` — route guard. `PUBLIC_ROUTES` = `/ /login /about /blog /privacy /terms`; everything else requires auth; authed users on `/login` go to `/dashboard`. Client-side only.
 
-- **`useStudySession`** (`composables/useStudySession.ts`) — the queue state machine. Manages session state (`idle | loading | active | paused | results`), the shuffled card queue, elapsed timer, and API calls to `sessionsStore`. It knows nothing about SRS grades or UI.
-- **`usePractice`** (`composables/usePractice.ts`) — the layer pages use. Wraps `useStudySession` and adds SRS grading (calls `srsStore.rate()`), streak tracking, a revisit list, and Mimi mood triggers. Pages should call `usePractice()`, never `useStudySession()` directly.
-- **`StudyCard`** (`utils/studyCard.ts`) — adapts a raw `Card` for display. Currently `pos`, `example`, and `exampleTranslation` are mocked client-side (deterministic hash + template string); they're expected to come from the backend eventually.
-- **Grades** (`utils/grades.ts`) — the four SRS ratings (`again / hard / good / easy`) with their display labels, intervals, and key hints are defined once here. Import `GRADES` rather than redefining them.
+### Dev proxy (important)
 
-### HTTP + auth (`app/utils/http.ts`, `utils/authToken.ts`)
+`nuxt.config.ts` sets `routeRules['/api/**'] = { proxy: 'http://127.0.0.1:3001/api/**' }`.
+In dev `runtimeConfig.public.apiBase` is empty, so the client issues **relative**
+`/api/v1/...` requests to its own origin, which Nuxt proxies to the backend on
+**`:3001`**. This keeps the refresh cookie first-party (same-site). **The backend
+must be running on `:3001`** or every call 502s. In prod set `NUXT_PUBLIC_API_BASE`.
 
-- All requests go through `http<T>(path, opts)`. It prefixes `/api/v1`, attaches `Authorization: Bearer <token>`, sends `credentials: 'include'`, and **normalizes every error** into an `Error` instance that also carries `{ code, message, details? }` (i.e. `Error & ApiError`). Downstream code should branch on `error.code`, not HTTP status. `useAsync` normalizes catches the same way, so consumers always see a typed `ApiError` on `.error.value`.
-- **Auth is split**: a short-lived **access token in `localStorage`** (`mnemio:auth:accessToken`) + an **HttpOnly refresh cookie** (`mnemio_refresh`). On a `401`, `http()` transparently calls `/auth/refresh` (deduped via a single in-flight promise), retries once, and redirects to `/login` if refresh fails. Use `skipAuth` / `skipRefresh` opts for auth endpoints themselves.
-- **Same-origin proxy** (`nuxt.config.ts` `routeRules`): in dev `apiBase` is empty, so requests hit `/api/**` on the Nuxt origin and are proxied to `http://127.0.0.1:3001`. This keeps the refresh cookie first-party (SameSite=Lax). In prod set `NUXT_PUBLIC_API_BASE`.
-- Boot sequence: `plugins/01.auth.client.ts` runs `auth.hydrate()` then prefs; `middleware/auth.global.ts` (client-only) guards routes, redirecting unauthenticated users to `/login` (allow-list in `PUBLIC_ROUTES`).
+## Project layout (`app/`)
 
-### Toast system (`composables/useToast.ts`)
+| Dir                                      | Purpose                                                                                                                                                                            |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api/`                                   | One module per domain (`auth, decks, cards, sessions, srs, stats, discover, achievements, preferences, ai, media`). Typed fns over `http`; convert backend wire shapes → FE types. |
+| `stores/`                                | Pinia setup stores (`auth, decks, sessions, srs, practice, preferences`).                                                                                                          |
+| `composables/`                           | `useAsync` (the async-state primitive), domain composables that wrap store actions, plus `useT`, `useAppLocale`, `useToast`, `useMimi`, etc.                                       |
+| `types/`                                 | Hand-written domain types (FE-facing shapes).                                                                                                                                      |
+| `schemas/`                               | Zod schemas (`auth, card, deck`) → forms via `utils/zodValidator.ts` + vee-validate.                                                                                               |
+| `utils/`                                 | `http`, `authToken`, `zodValidator`, `grades`, `media`, `deckVm`, `studyCard`, `coverSwatches`.                                                                                    |
+| `components/`                            | `ui/` = shadcn-vue primitives; `shared/` = reusable app widgets; rest grouped by feature (`study, deck, dashboard, login, marketing, landing, review, card, app, layout`).         |
+| `pages/`                                 | File-based routes (`dashboard, decks, discover, statistics, study/[deckId], review, profile, onboarding, login, …`).                                                               |
+| `layouts/`                               | `default, auth, marketing, study`.                                                                                                                                                 |
+| `i18n/`                                  | `en.json`, `uk.json`, `index.ts` (catalog + helpers).                                                                                                                              |
+| `middleware/`, `plugins/`, `assets/css/` | Route guard, boot plugin, global CSS.                                                                                                                                              |
 
-`useToast()` is a **module-level singleton** (plain refs, not Pinia). Call `.info()`, `.success()`, or `.error()` from anywhere. Important: **do not toast auth-expiry error codes** — `http.ts` handles those centrally (refresh + redirect). Check `isAuthExpiry(error.code)` before surfacing a toast for API errors.
-
-### Mimi mascot (`composables/useMimi.ts`)
-
-`useMimi()` picks random lines from the `mimi.*` keys in the active i18n catalog. Call `mimi.say(mood)` with a `MimiMood` value (`'idle' | 'forgot' | 'hard' | 'good' | 'easy' | 'streak' | 'done'`). Lines are arrays in the JSON catalogs — `useT()` can't resolve arrays, so `useMimi` reads the catalog directly.
-
-### i18n — custom layer, NOT vue-i18n's `$t`
-
-Translations are plain JSON in `app/i18n/{en,uk}.json`, combined in `app/i18n/index.ts` into `catalogs`. Components use the project's own `useT()` (`composables/useT.ts`): `const { t } = useT(); t('dashboard.greeting')`. It does dotted-path lookup with English fallback. **It has no interpolation** — templates substitute manually, e.g. `t('deck.cardCount').replace('{n}', String(n))`. When adding UI strings, add the key to **both** `en.json` and `uk.json`.
-
-**Option arrays with translated labels must be `computed()`**, not plain `const`, or they won't re-render when the locale changes: `const filterOptions = computed(() => [{ value: 'all', label: t('deck.filterAll') }, ...])`. A plain `const` captures the initial locale and stays stale.
-
-### Styling & theming
-
-- Tailwind with a semantic color system in `tailwind.config.ts`. **Theme-aware tokens are backed by RGB-channel CSS variables** (e.g. `bg.base` → `rgb(var(--c-bg-base) / <alpha-value>)`), defined in `app/assets/css/main.css` under `:root, .dark` and `.light`. This lets `/<alpha>` opacity modifiers keep working while the palette flips with color mode.
-- **`@nuxtjs/color-mode`** is configured with `classSuffix: ''` and `preference/fallback: 'dark'`, so `<html>` gets a plain `dark`/`light` class and dark is the default. To add a new themed surface/text color, add a `--c-*` channel triplet to **both** blocks in `main.css` and reference it as a `rgb(var(--c-*) / <alpha-value>)` token in the config — don't hardcode hex on components.
-- `text-on-color` is for light text that must stay light on colored fills (active nav, chips) in both themes.
-- For theme-conditional styles that Tailwind's `dark:` prefix can't express (e.g. gradient `background-image`), bind an inline `:style` computed from a `MutationObserver` on `document.documentElement` — see `components/study/FlashCard.vue`.
-- Icons: `lucide-vue-next`. Components are auto-imported with directory prefixes (e.g. `app/components/app/Topbar.vue` → `<AppTopbar>`, `shared/DeckCard.vue` → `<SharedDeckCard>`, `ui/Button.vue` → `<UiButton>`).
-
-### Validation
-
-Zod schemas live in `app/schemas/` and are applied with `utils/zodValidator.ts` (used with vee-validate for forms).
+`@/` is aliased to `app/` (e.g. `@/utils/http`).
 
 ## Conventions
 
-- TypeScript throughout; arrow-function style (the codebase and lint config favor arrow callbacks). `eqeqeq`, `curly`, `prefer-template`, `no-floating-promises` are enforced on `.ts`.
-- Path aliases: `@/` and `~/` both map to `app/`.
-- Reference data shapes via the types in `app/types/` rather than redeclaring inline.
+- **Stores:** setup syntax — `defineStore('id', () => { const x = ref(); … return {…} })`, importing `defineStore/ref/computed` from `#imports`.
+- **API modules:** export small typed `async` fns that call `http<T>()`; keep backend↔FE field adaptation here (see the `BackendUser → User` `toUser` mapper in `api/auth.ts`).
+- **Composables:** wrap store actions with `useAsync` to expose `{ data, error, loading, execute }`. Don't call `http` directly from components.
+- **Components are auto-imported with a path-derived prefix** (Nuxt default — no `components` config). `components/shared/StatTile.vue` → `<SharedStatTile>`; `components/ui/Button.vue` → `<UiButton>`; `components/ui/Spinner.vue` → `<UiSpinner>`. Match the prefix pattern in nearby files rather than importing manually.
+- **Errors:** surface `ApiError.code`/`message`; never let raw `$fetch` errors escape `http`.
+- **TypeScript:** strict — no implicit `any`, handle `null`.
+
+## i18n
+
+Two mechanisms coexist:
+
+1. **`@nuxtjs/i18n`** — strategy `no_prefix`, locales `en`/`uk`, locale persisted in the `i18n_locale` cookie, browser detection on root. Drives `useI18n()` / `setLocale`.
+2. **Custom catalog** — `app/i18n/{en,uk}.json` + `useT()` (a dotted-key resolver with EN fallback). **Use `const { t } = useT()` then `t('dashboard.statStreak')` in components.** Interpolation is done manually (e.g. `.replace('{n}', String(x))`).
+
+`useAppLocale()` exposes the active locale + setter + `LOCALE_OPTIONS`. When adding
+UI strings, add the key to **both** `en.json` and `uk.json`.
+
+## Styling
+
+- Tailwind with a custom design system in `tailwind.config.ts`: color tokens (`cream`, `plum`, `pink`, `brand`, `bg-surface`, `line`), display font + custom `fontSize` scale (`text-display-sm`, `text-h2`, `text-body`, `text-eyebrow`, `text-small`), and gradient utilities.
+- **`new_design/`** holds the static HTML/CSS redesign reference (the "Mnemio \*.html" mockups + screenshots). Use it as the visual source of truth when building/adjusting screens.
+- Prettier: **4-space tabs**, single quotes, semicolons, trailing commas (`all`), `printWidth 100`. ESLint flat config (`eslint.config.js`) integrates Prettier + Vue + TS + Tailwind plugins.
+
+## Docs
+
+- [`docs/api-contract.md`](./docs/api-contract.md) — **the** backend contract: every endpoint, payload, error code, and the invariants the FE must respect (refresh-cookie rules, SRS `rate` body, server-computed XP, list `{ items, nextCursor }` shape, ownership 404/403, etc.). Consult it before changing any `app/api/*` call.
+- [`docs/backend-plan.md`](./docs/backend-plan.md) — backend build plan. Note it describes an older **hybrid** state where Decks/Cards/Sessions/SRS were `localStorage` mocks; that migration is **done** — all `app/api/*` modules now use real `http`, `mockStore` is gone, and `app/services/` is empty.
+
+## Backend / demo data
+
+Backend repo runs on `:3001`. `npm run seed` (in the backend) creates
+`demo@mnemio.local` / `demo-password-123` (pre-verified, profile complete, 2 seeded decks)
+so you can skip the OTP flow during integration testing.
+
+## Git
+
+- Current working branch: `development`. PR target: `main`.
+- Conventional commits in history: `feat(i18n): …`, `fix(auth): …`.
+- Commit/push only when asked. End commit messages with the required co-author trailer.

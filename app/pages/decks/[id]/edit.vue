@@ -21,6 +21,7 @@
                     description: store.deck.description,
                     sourceLanguage: store.deck.sourceLanguage,
                     targetLanguage: store.deck.targetLanguage,
+                    isPublic: store.deck.isPublic,
                 }"
                 :loading="update.loading.value"
                 :submit-label="t('common.save')"
@@ -52,6 +53,8 @@ const { store, fetchOne, update } = useDecks();
 const toast = useToast();
 const { t } = useT();
 
+useSeo({ title: t('seo.deckEditTitle'), description: t('seo.appDesc'), noindex: true });
+
 const goBack = () => navigateTo(`/decks/${deckId.value}`);
 
 const onSubmit = async (payload: {
@@ -59,6 +62,7 @@ const onSubmit = async (payload: {
     description: string | null;
     sourceLanguage: string;
     targetLanguage: string;
+    isPublic: boolean;
 }) => {
     const result = await update.execute(deckId.value, payload);
     if (result) {

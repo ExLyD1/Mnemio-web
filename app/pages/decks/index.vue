@@ -12,10 +12,16 @@
                     }}
                 </p>
             </div>
-            <UiButton variant="primary" @click="navigateTo('/decks/create')">
-                <Plus class="size-4" />
-                {{ t('topbar.newDeck') }}
-            </UiButton>
+            <div class="flex gap-2">
+                <UiButton variant="ghost" @click="aiOpen = true">
+                    <Sparkles class="size-4" />
+                    {{ t('ai.launchNew') }}
+                </UiButton>
+                <UiButton variant="primary" @click="navigateTo('/decks/create')">
+                    <Plus class="size-4" />
+                    {{ t('topbar.newDeck') }}
+                </UiButton>
+            </div>
         </header>
 
         <div
@@ -70,11 +76,13 @@
                 </span>
             </NuxtLink>
         </div>
+
+        <AiImportDialog v-model="aiOpen" />
     </section>
 </template>
 
 <script setup lang="ts">
-import { Plus, Library } from 'lucide-vue-next';
+import { Plus, Library, Sparkles } from 'lucide-vue-next';
 import { useDecks, usePreferencesStore, useT } from '#imports';
 import { deckToCardVm } from '@/utils/deckVm';
 import { LANGUAGES } from '@/schemas/deck';
@@ -85,7 +93,10 @@ const { store, fetchList } = useDecks();
 const prefs = usePreferencesStore();
 const { t } = useT();
 
+useSeo({ title: t('seo.decksTitle'), description: t('seo.appDesc'), noindex: true });
+
 const loading = ref(true);
+const aiOpen = ref(false);
 const filter = ref('all');
 const sort = ref('recent');
 
@@ -99,6 +110,8 @@ const sortOptions = computed(() => [
 const totalCards = computed(() => store.summaries.reduce((sum, d) => sum + d.cardCount, 0));
 const totalDue = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
 
+const favCount = computed(() => store.summaries.filter((d) => prefs.isFavorite(d.id)).length);
+
 const filterOptions = computed(() => {
     const counts = new Map<string, number>();
     for (const d of store.summaries) {
@@ -109,13 +122,23 @@ const filterOptions = computed(() => {
         label: LANGUAGES.find((l) => l.code === code)?.label ?? code.toUpperCase(),
         count,
     }));
-    return [{ key: 'all', label: t('deck.filterAll'), count: store.summaries.length }, ...langs];
+    const base = [{ key: 'all', label: t('deck.filterAll'), count: store.summaries.length }];
+    if (favCount.value > 0) {
+        base.push({ key: 'favorites', label: t('deck.filterFavorites'), count: favCount.value });
+    }
+    return [...base, ...langs];
 });
 
 const deckVms = computed(() => {
-    const list = store.summaries.filter(
-        (d) => filter.value === 'all' || d.targetLanguage === filter.value,
-    );
+    const list = store.summaries.filter((d) => {
+        if (filter.value === 'all') {
+            return true;
+        }
+        if (filter.value === 'favorites') {
+            return prefs.isFavorite(d.id);
+        }
+        return d.targetLanguage === filter.value;
+    });
     const rows = list.map((d) => ({
         vm: deckToCardVm(d, prefs.isFavorite(d.id)),
         updatedAt: d.updatedAt,
