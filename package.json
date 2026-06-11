@@ -15,7 +15,7 @@
         "format": "prettier . --write --ignore-path .prettierignore",
         "validate": "npm run lint && npm run format:check",
         "i18n:check": "node .github/scripts/i18n-parity.mjs",
-        "ci": "npm run i18n:check && npm run build && (npm run validate || echo '⚠️  lint/format issues above are ADVISORY (non-blocking in CI)')"
+        "ci": "npm run i18n:check && npm run build && npm run validate"
     },
     "engines": {
         "node": ">=22"

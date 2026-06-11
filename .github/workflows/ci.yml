@@ -39,11 +39,8 @@ jobs:
               run: npm run build
 
     quality:
-        name: Lint & format (advisory)
+        name: Lint & format
         runs-on: ubuntu-latest
-        # Non-blocking: the repo carries known house-style debt (eslint/prettier).
-        # Surfaces issues without failing the run. Flip to required once the debt is cleared.
-        continue-on-error: true
         steps:
             - uses: actions/checkout@v4
 
