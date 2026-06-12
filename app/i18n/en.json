@@ -808,5 +808,92 @@
         "s4Body": "We aim for high availability but cannot guarantee uninterrupted access. The service may change or be discontinued with reasonable notice.",
         "s5Title": "5. Contact",
         "s5Body": "Questions about these Terms? Reach us at"
+    },
+    "pricing": {
+        "seoTitle": "Pricing — Mnemio Premium",
+        "seoDesc": "Upgrade to Mnemio Premium for unlimited AI, advanced study features, and more.",
+        "title": "Simple, honest pricing.",
+        "subtitle": "Everything you need to learn more and remember longer.",
+        "toggleMonthly": "Monthly",
+        "toggleAnnual": "Annual",
+        "saveBadge": "Save 20%",
+        "freePlanName": "Free",
+        "premiumPlanName": "Premium",
+        "ctaUpgrade": "Get Premium",
+        "ctaSignIn": "Sign in to upgrade",
+        "ctaManage": "Manage subscription",
+        "ctaContact": "Contact us to upgrade",
+        "notConfigured": "Premium plans aren't available on this deployment.",
+        "priceNotConfigured": "This plan is temporarily unavailable — try the other option.",
+        "monthly": "month",
+        "annual": "year",
+        "billedAnnually": "billed annually",
+        "features": {
+            "srs": "Spaced repetition",
+            "decksUnlimited": "Unlimited decks",
+            "aiLimited": "AI generator (10/day)",
+            "aiUnlimited": "Unlimited AI generator",
+            "advancedStats": "Advanced statistics",
+            "prioritySupport": "Priority support"
+        }
+    },
+    "billing": {
+        "success": {
+            "seoTitle": "Activating your plan…",
+            "polling": "We're confirming your payment…",
+            "pollingHint": "This usually takes just a moment.",
+            "activated": "Premium activated! Welcome.",
+            "timeoutTitle": "Still processing",
+            "timeoutBody": "Your payment went through but activation is taking a moment. You can check back shortly.",
+            "refreshButton": "Check now"
+        },
+        "cancel": {
+            "seoTitle": "Checkout cancelled",
+            "title": "No worries — you weren't charged.",
+            "body": "Changed your mind? You can upgrade any time.",
+            "backToPricing": "Back to pricing"
+        },
+        "settings": {
+            "seoTitle": "Billing",
+            "title": "Billing & subscription",
+            "freePlan": "Free plan",
+            "freeBody": "You're on the free plan. Upgrade to unlock premium features.",
+            "upgradeCta": "Upgrade to Premium",
+            "manageBilling": "Manage billing",
+            "notConfigured": "Billing management is not available on this deployment.",
+            "renewsOn": "Renews {date}",
+            "expiresOn": "Expires {date}",
+            "trialEnds": "Trial ends {date}",
+            "cancelNote": "Cancels at end of period",
+            "pastDueWarning": "Your payment failed. Update your billing details to stay on Premium.",
+            "status": {
+                "active": "Active",
+                "trialing": "Trial",
+                "past_due": "Past due",
+                "canceled": "Canceled",
+                "expired": "Expired"
+            },
+            "plan": {
+                "monthly": "Monthly",
+                "annual": "Annual"
+            }
+        }
+    },
+    "premiumGate": {
+        "title": "Unlock Premium",
+        "body": "Upgrade to get unlimited AI, advanced features, and more.",
+        "bodyAiBudget": "You've used all {cap} free AI requests for today. Upgrade to continue.",
+        "ctaMonthly": "Go monthly",
+        "ctaAnnual": "Go annual (save 20%)",
+        "ctaContact": "Contact us",
+        "dismiss": "Maybe later"
+    },
+    "banner": {
+        "trialing": "Your free trial ends on {date}. Upgrade now to keep access.",
+        "trialCta": "Upgrade now",
+        "pastDue": "Payment failed — please update your card to keep premium access.",
+        "pastDueCta": "Update billing",
+        "canceled": "Your premium plan ends on {date}. Resubscribe to keep access.",
+        "canceledCta": "Renew"
     }
 }

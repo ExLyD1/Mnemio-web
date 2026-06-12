@@ -173,12 +173,16 @@
 <script setup lang="ts">
 import { Send, Menu } from 'lucide-vue-next';
 import { useChat, useToast, useT } from '#imports';
+import { useAuthStore } from '@/stores/auth';
+import { usePremiumGateStore } from '@/stores/premiumGate';
 
 definePageMeta({ layout: 'default' });
 
 const chat = useChat();
 const toast = useToast();
 const { t } = useT();
+const auth = useAuthStore();
+const premiumGate = usePremiumGateStore();
 
 useSeo({ title: t('seo.aiTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -250,7 +254,11 @@ const errText = (code: string) => t(`chat.err.${code}`, t('chat.err.generic'));
 watch(
     () => chat.streamError.value,
     (e) => {
-        if (e) {
+        if (!e) return;
+        if (e.code === 'AI_BUDGET_EXCEEDED' && !auth.isPremium) {
+            const cap = (e as { capPerDay?: number }).capPerDay;
+            premiumGate.show('ai_budget', cap !== undefined ? { capPerDay: cap } : undefined);
+        } else {
             toast.error(errText(e.code));
         }
     },

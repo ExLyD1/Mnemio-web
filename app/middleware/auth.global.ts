@@ -7,6 +7,9 @@ const PUBLIC_ROUTES = new Set([
     '/blog',
     '/privacy',
     '/terms',
+    '/pricing',
+    '/billing/success',
+    '/billing/cancel',
     '/auth/oauth/callback',
     '/auth/oauth/error',
 ]);
