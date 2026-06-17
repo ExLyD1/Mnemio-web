@@ -1,5 +1,5 @@
 <template>
-    <section class="mx-auto max-w-5xl p-8">
+    <section class="mx-auto max-w-5xl p-8 transition-all" :class="mimiOpen ? 'lg:mr-80' : ''">
         <nav class="mb-5 flex items-center gap-1.5 text-small text-brand-muted">
             <NuxtLink to="/decks" class="transition-colors hover:text-brand-pale">{{
                 t('dashboard.decks')
@@ -116,14 +116,89 @@
             </div>
         </div>
     </section>
+
+    <!-- Floating Mimi button -->
+    <button
+        type="button"
+        class="fixed bottom-6 right-6 z-30 flex size-14 items-center justify-center rounded-full bg-brand shadow-soft-elevation transition-transform hover:scale-105 active:scale-95"
+        :aria-label="t('card.mimiHelp')"
+        @click="mimiOpen = !mimiOpen"
+    >
+        <SharedMimi :size="40" class="pointer-events-none" />
+    </button>
+
+    <!-- Docked Mimi enrich panel -->
+    <Transition name="panel-slide">
+        <div
+            v-if="mimiOpen"
+            class="fixed inset-y-0 right-0 z-20 flex w-80 flex-col border-l border-line bg-bg-surface shadow-soft-elevation"
+            :style="{ top: '0' }"
+        >
+            <div class="flex items-center justify-between border-b border-line px-5 py-4">
+                <div class="flex items-center gap-2">
+                    <SharedMimi :size="32" class="shrink-0" />
+                    <p class="font-display text-base text-cream">{{ t('card.mimiPanelTitle') }}</p>
+                </div>
+                <button
+                    type="button"
+                    class="grid size-8 place-items-center rounded-full text-brand-muted hover:text-cream"
+                    @click="mimiOpen = false"
+                >
+                    <X class="size-4" />
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5">
+                <div v-if="enrichLoading" class="flex flex-col items-center gap-3 py-8">
+                    <UiSpinner />
+                    <p class="text-small text-brand-muted">{{ t('card.mimiThinking') }}</p>
+                </div>
+                <div v-else-if="enrichResult" class="flex flex-col gap-4">
+                    <div
+                        v-for="(card, i) in enrichResult.cards"
+                        :key="i"
+                        class="rounded-2xl border border-line bg-bg-surface-2 p-4"
+                    >
+                        <p class="font-display text-base text-cream">{{ card.word }}</p>
+                        <p v-if="card.definition" class="mt-1 text-small text-brand-muted">
+                            {{ card.definition }}
+                        </p>
+                        <p v-if="card.example" class="mt-2 text-small italic text-cream-dim">
+                            {{ card.example }}
+                        </p>
+                        <UiButton
+                            variant="ghost"
+                            class="mt-3 !py-1 !text-small"
+                            @click="applyEnrich(card)"
+                        >
+                            {{ t('card.mimiApply') }}
+                        </UiButton>
+                    </div>
+                </div>
+                <div v-else class="flex flex-col items-center gap-3 py-8 text-center">
+                    <p class="text-body text-cream-dim">{{ t('card.mimiHint') }}</p>
+                    <UiButton variant="primary" :disabled="!front.trim()" @click="onEnrich">
+                        {{ t('card.mimiEnrich') }}
+                    </UiButton>
+                </div>
+            </div>
+            <div v-if="enrichResult" class="border-t border-line p-4">
+                <UiButton variant="ghost" class="w-full" @click="onEnrich">
+                    {{ t('card.mimiRefresh') }}
+                </UiButton>
+            </div>
+        </div>
+    </Transition>
+    <div v-if="mimiOpen" class="fixed inset-0 z-10 lg:hidden" @click="mimiOpen = false" />
 </template>
 
 <script setup lang="ts">
-import { Volume2, Image, Check } from 'lucide-vue-next';
+import { Volume2, Image, Check, X } from 'lucide-vue-next';
 import { useDecks, useCards, useToast, useT } from '#imports';
 import { uploadMedia } from '@/api/media';
+import * as aiApi from '@/api/ai';
 import type { MediaKind } from '@/api/media';
 import type { CardDifficulty } from '@/types/deck';
+import type { AiDraftCard } from '@/api/ai';
 
 definePageMeta({ layout: 'default' });
 
@@ -146,6 +221,9 @@ const imageUrl = ref<string | null>(null);
 const uploading = ref<MediaKind | null>(null);
 const audioInput = ref<HTMLInputElement | null>(null);
 const imageInput = ref<HTMLInputElement | null>(null);
+const mimiOpen = ref(false);
+const enrichLoading = ref(false);
+const enrichResult = ref<aiApi.EnrichWordsResult | null>(null);
 
 const difficultyOptions = computed(() => [
     { value: 'easy', label: t('card.diffEasy') },
@@ -183,6 +261,28 @@ const onPick = async (e: Event, kind: MediaKind) => {
     } finally {
         uploading.value = null;
     }
+};
+
+const onEnrich = async () => {
+    if (!front.value.trim()) return;
+    enrichLoading.value = true;
+    enrichResult.value = null;
+    try {
+        const lang = store.deck?.targetLanguage ?? 'en';
+        enrichResult.value = await aiApi.enrichWords({
+            words: [front.value.trim()],
+            targetLanguage: lang,
+        });
+    } catch {
+        // leave enrichResult null — template shows hint
+    } finally {
+        enrichLoading.value = false;
+    }
+};
+
+const applyEnrich = (card: AiDraftCard) => {
+    if (card.definition) back.value = card.definition;
+    mimiOpen.value = false;
 };
 
 const reset = () => {
@@ -232,3 +332,14 @@ onMounted(() => {
     }
 });
 </script>
+
+<style scoped>
+.panel-slide-enter-active,
+.panel-slide-leave-active {
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.panel-slide-enter-from,
+.panel-slide-leave-to {
+    transform: translateX(100%);
+}
+</style>

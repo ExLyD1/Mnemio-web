@@ -67,39 +67,8 @@
         <div class="flex flex-col gap-5">
             <UiSegmentedControl v-model="tab" :options="tabs" />
 
-            <!-- Overview -->
-            <template v-if="tab === 'overview'">
-                <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-                    <p class="mb-3 text-eyebrow uppercase text-brand-muted">
-                        {{ t('profile.activity') }}
-                    </p>
-                    <SharedActivityHeatmap :weeks="heat" />
-                </div>
-                <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-                    <p class="mb-3 text-eyebrow uppercase text-brand-muted">
-                        {{ t('profile.yourDecks') }}
-                    </p>
-                    <div v-if="store.summaries.length" class="flex flex-col gap-1">
-                        <NuxtLink
-                            v-for="d in store.summaries"
-                            :key="d.id"
-                            :to="`/decks/${d.id}`"
-                            class="flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors hover:bg-brand/10"
-                        >
-                            <span class="truncate font-display text-base text-cream">{{
-                                d.title
-                            }}</span>
-                            <span class="w-28 shrink-0">
-                                <SharedProgressBar :value="d.stats.masteredPct" />
-                            </span>
-                        </NuxtLink>
-                    </div>
-                    <p v-else class="text-body text-brand-muted">{{ t('profile.noDecks') }}</p>
-                </div>
-            </template>
-
             <!-- Edit -->
-            <template v-else-if="tab === 'edit'">
+            <template v-if="tab === 'edit'">
                 <div
                     class="flex flex-col gap-4 rounded-[20px] border border-line bg-bg-surface p-6"
                 >
@@ -167,7 +136,7 @@
             </template>
 
             <!-- Achievements -->
-            <template v-else>
+            <template v-else-if="tab === 'achievements'">
                 <div class="rounded-[20px] border border-line bg-bg-surface p-5">
                     <div class="mb-4 flex items-center justify-between">
                         <p class="text-eyebrow uppercase text-brand-muted">
@@ -249,9 +218,8 @@ const onAvatar = async (e: Event) => {
     }
 };
 
-const tab = ref('overview');
+const tab = ref('edit');
 const tabs = computed(() => [
-    { value: 'overview', label: t('profile.overview') },
     { value: 'edit', label: t('profile.editProfile') },
     { value: 'achievements', label: t('profile.achievements') },
 ]);
@@ -279,8 +247,10 @@ const earnedCount = computed(() => achievements.items.value.filter((a) => a.earn
 const achName = (a: Achievement) => t(`achievements.${a.key}.name`, a.name);
 const achDesc = (a: Achievement) => t(`achievements.${a.key}.description`, a.description);
 
+const daysPracticed = computed(() => stats.series.value.filter((p) => p.value > 0).length);
+
 const quickStats = computed(() => [
-    { label: t('profile.statStreak'), value: `${stats.streak.value}d` },
+    { label: t('profile.statDaysPracticed'), value: daysPracticed.value },
     { label: t('profile.statReviewed'), value: stats.reviewed.value },
     { label: t('profile.statDecks'), value: store.summaries.length },
     { label: t('profile.statRetention'), value: `${stats.retention.value}%` },
@@ -352,6 +322,7 @@ onMounted(async () => {
     await Promise.all([
         fetchList.execute({ cursor: null, append: false }),
         stats.load(),
+        stats.loadSeries('7'),
         achievements.load(),
         prefs.hydrate().catch(() => {}),
     ]);

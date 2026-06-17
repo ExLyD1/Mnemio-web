@@ -18,6 +18,29 @@
             <SharedSortMenu v-model="sort" :options="discover.sorts.value" />
         </div>
 
+        <div v-if="discover.categories.value.length">
+            <h2 class="mb-3 font-display text-h2 text-cream">{{ t('discover.categories') }}</h2>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <button
+                    v-for="cat in discover.categories.value"
+                    :key="cat.subject"
+                    type="button"
+                    class="flex items-center justify-between rounded-2xl border border-line border-l-2 border-l-brand-bright bg-bg-surface px-5 py-4 text-left transition-transform hover:translate-x-0.5"
+                    @click="onCategory(cat.subject)"
+                >
+                    <span>
+                        <span class="block font-display text-h3 capitalize text-cream">
+                            {{ cat.subject }}
+                        </span>
+                        <span class="text-small text-brand-muted">{{
+                            t('discover.categoryCount').replace('{n}', String(cat.count))
+                        }}</span>
+                    </span>
+                    <ArrowRight class="size-4 text-brand-muted" />
+                </button>
+            </div>
+        </div>
+
         <div
             v-if="discover.featured.value.length"
             class="rounded-[20px] border border-line bg-mimi-ambient p-5"
@@ -50,29 +73,6 @@
         <p v-else-if="!discover.loading.value" class="text-body text-brand-muted">
             {{ t('discover.noResults') }}
         </p>
-
-        <div v-if="discover.categories.value.length">
-            <h2 class="mb-3 font-display text-h2 text-cream">{{ t('discover.categories') }}</h2>
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <button
-                    v-for="cat in discover.categories.value"
-                    :key="cat.subject"
-                    type="button"
-                    class="flex items-center justify-between rounded-2xl border border-line border-l-2 border-l-brand-bright bg-bg-surface px-5 py-4 text-left transition-transform hover:translate-x-0.5"
-                    @click="onCategory(cat.subject)"
-                >
-                    <span>
-                        <span class="block font-display text-h3 capitalize text-cream">
-                            {{ cat.subject }}
-                        </span>
-                        <span class="text-small text-brand-muted">{{
-                            t('discover.categoryCount').replace('{n}', String(cat.count))
-                        }}</span>
-                    </span>
-                    <ArrowRight class="size-4 text-brand-muted" />
-                </button>
-            </div>
-        </div>
 
         <div
             class="flex flex-col items-center gap-5 rounded-[20px] border border-line bg-mimi-ambient p-6 text-center sm:flex-row sm:text-left"
