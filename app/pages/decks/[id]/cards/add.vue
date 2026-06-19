@@ -1,41 +1,41 @@
 <template>
-    <section class="mx-auto max-w-5xl p-8 transition-all" :class="mimiOpen ? 'lg:mr-80' : ''">
-        <nav class="mb-5 flex items-center gap-1.5 text-small text-brand-muted">
-            <NuxtLink to="/decks" class="transition-colors hover:text-brand-pale">{{
-                t('dashboard.decks')
-            }}</NuxtLink>
-            <span>/</span>
-            <NuxtLink :to="`/decks/${id}`" class="transition-colors hover:text-brand-pale">
-                {{ deckTitle }}
-            </NuxtLink>
-            <span>/</span>
-            <span class="text-brand-pale">{{ t('card.add') }}</span>
-        </nav>
+    <section
+        class="mx-auto max-w-[1100px] p-6 transition-all lg:p-8"
+        :class="mimiOpen ? 'lg:pr-[360px]' : ''"
+    >
+        <div
+            class="grid items-start"
+            :style="{
+                gridTemplateColumns: mimiOpen ? '1fr 340px' : '1fr 400px',
+                gap: mimiOpen ? '40px' : '56px',
+            }"
+        >
+            <!-- LEFT — form -->
+            <div>
+                <h1 class="font-display text-[52px] leading-[1.05] text-cream">
+                    {{ t('card.addHeading') }}
+                </h1>
+                <p class="mb-7 mt-2.5 text-[16px] text-cream-dim">
+                    {{
+                        t('card.cardInDeck')
+                            .replace('{n}', String(nextNumber))
+                            .replace('{deck}', deckTitle)
+                    }}
+                </p>
 
-        <div class="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
-            <div class="flex max-w-xl flex-col gap-5">
-                <div>
-                    <h1 class="font-display text-display-sm text-cream">
-                        {{ t('card.addHeading') }}
-                    </h1>
-                    <p class="mt-1 text-body text-cream-dim">
-                        {{
-                            t('card.cardInDeck')
-                                .replace('{n}', String(nextNumber))
-                                .replace('{deck}', deckTitle)
-                        }}
-                    </p>
+                <!-- Front field -->
+                <div class="card-field">
+                    <p class="mb-1.5 text-[12px] text-cream-dim">{{ t('card.front') }}</p>
+                    <textarea
+                        v-model="front"
+                        class="block w-full resize-none bg-transparent font-display text-[28px] italic leading-snug text-cream-faint outline-none placeholder:text-cream-faint/60"
+                        rows="2"
+                        :placeholder="t('card.frontPlaceholder')"
+                    />
                 </div>
 
-                <UiTextarea
-                    v-model="front"
-                    :label="t('card.front')"
-                    :rows="2"
-                    serif
-                    :placeholder="t('card.frontPlaceholder')"
-                />
-
-                <div class="flex gap-2">
+                <!-- Audio / image chips -->
+                <div class="mt-3 flex gap-2.5">
                     <input
                         ref="audioInput"
                         type="file"
@@ -66,34 +66,72 @@
                         @click="imageInput?.click()"
                     >
                         <UiSpinner v-if="uploading === 'card_image'" size="sm" />
-                        <component :is="imageUrl ? Check : Image" v-else class="size-4" />
+                        <component :is="imageUrl ? Check : ImageIcon" v-else class="size-4" />
                         {{ imageUrl ? t('card.imageAdded') : t('card.addImage') }}
                     </button>
                 </div>
 
-                <UiTextarea
-                    v-model="back"
-                    :label="t('study.meaning')"
-                    :rows="4"
-                    :maxlength="200"
-                    :placeholder="t('card.backPlaceholder')"
-                />
-
-                <div>
-                    <span class="mb-1.5 block text-small text-brand-muted">{{
-                        t('card.tags')
-                    }}</span>
-                    <UiChipInput v-model="tags" :placeholder="t('card.tagsPlaceholder')" />
+                <!-- Meaning field -->
+                <div class="card-field mt-[18px]">
+                    <p class="mb-1.5 text-[12px] text-cream-dim">{{ t('card.meaning') }}</p>
+                    <textarea
+                        v-model="back"
+                        class="block w-full resize-none bg-transparent text-[16px] text-cream-faint outline-none placeholder:text-cream-faint/60"
+                        style="min-height: 92px"
+                        :maxlength="200"
+                        :placeholder="t('card.backPlaceholder')"
+                    />
+                    <p class="mt-1 text-right text-[12px] text-cream-faint/60">
+                        {{ back.length }}/200
+                    </p>
                 </div>
 
-                <div>
-                    <span class="mb-1.5 block text-small text-brand-muted">{{
-                        t('card.difficulty')
-                    }}</span>
-                    <UiRadioCards v-model="difficulty" :options="difficultyOptions" />
+                <!-- Tags -->
+                <div class="mt-[18px]">
+                    <p class="mb-2 text-[13px] text-cream-dim">{{ t('card.tags') }}</p>
+                    <div class="card-field py-3">
+                        <UiChipInput v-model="tags" :placeholder="t('card.tagsPlaceholder')" />
+                    </div>
                 </div>
 
-                <div class="flex gap-2">
+                <!-- Difficulty -->
+                <div class="mt-[18px]">
+                    <p class="mb-2 text-[13px] text-cream-dim">{{ t('card.difficulty') }}</p>
+                    <div class="flex gap-3">
+                        <button
+                            v-for="opt in difficultyOptions"
+                            :key="opt.value"
+                            type="button"
+                            class="flex flex-1 cursor-pointer items-center justify-between rounded-xl border px-[18px] py-3.5 transition-colors"
+                            :class="
+                                difficulty === opt.value
+                                    ? 'border-[rgba(169,142,227,.55)] bg-[rgba(87,47,84,.5)]'
+                                    : 'border-line-strong bg-[rgba(255,255,255,.03)] hover:border-line'
+                            "
+                            @click="difficulty = opt.value"
+                        >
+                            <span class="text-[15px] font-semibold text-cream">{{
+                                opt.label
+                            }}</span>
+                            <span
+                                class="grid size-4 place-items-center rounded-full border-[1.5px]"
+                                :class="
+                                    difficulty === opt.value
+                                        ? 'border-lavender'
+                                        : 'border-cream-faint/60'
+                                "
+                            >
+                                <span
+                                    v-if="difficulty === opt.value"
+                                    class="size-2 rounded-full bg-lavender"
+                                />
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="mt-[26px] flex gap-3">
                     <UiButton
                         variant="ghost"
                         :disabled="!canSubmit || addCard.loading.value"
@@ -111,94 +149,155 @@
                 </div>
             </div>
 
-            <div class="self-start lg:sticky lg:top-8">
-                <SharedCardPreview :front="front" :back="back" :tags="tags" />
+            <!-- RIGHT — tall card preview -->
+            <div class="pt-6">
+                <div
+                    class="flex w-full flex-col items-center justify-between rounded-[22px] border border-line-strong px-6 py-7"
+                    style="
+                        height: 480px;
+                        background: linear-gradient(160deg, #241420 0%, #160e1a 100%);
+                        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+                    "
+                >
+                    <span
+                        class="text-[11px] font-semibold uppercase tracking-[.22em] text-cream-faint"
+                        >FRONT</span
+                    >
+                    <p class="font-display text-[36px] text-cream-dim">
+                        {{ front || 'Your word…' }}
+                    </p>
+                    <span class="text-[13px] text-cream-faint">Tap to flip</span>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Floating Mimi button -->
+    <!-- Floating Mimi button (hidden when panel open) -->
     <button
+        v-if="!mimiOpen"
         type="button"
-        class="fixed bottom-6 right-6 z-30 flex size-14 items-center justify-center rounded-full bg-brand shadow-soft-elevation transition-transform hover:scale-105 active:scale-95"
+        class="fixed bottom-[26px] right-[28px] z-30 grid size-[58px] cursor-pointer place-items-center rounded-full border border-[rgba(242,188,255,.35)] p-0"
+        style="
+            background: linear-gradient(150deg, #572f54, #2c1a2a);
+            box-shadow: 0 10px 28px -6px rgba(169, 142, 227, 0.55);
+        "
         :aria-label="t('card.mimiHelp')"
-        @click="mimiOpen = !mimiOpen"
+        @click="openMimi"
     >
         <SharedMimi :size="40" class="pointer-events-none" />
+        <span
+            class="absolute -right-0.5 -top-0.5 size-3.5 rounded-full border-2 border-bg-base bg-[#C2E083]"
+        />
     </button>
 
-    <!-- Docked Mimi enrich panel -->
+    <!-- Docked Mimi chat panel -->
     <Transition name="panel-slide">
         <div
             v-if="mimiOpen"
-            class="fixed inset-y-0 right-0 z-20 flex w-80 flex-col border-l border-line bg-bg-surface shadow-soft-elevation"
-            :style="{ top: '0' }"
+            class="fixed bottom-0 right-0 z-20 flex w-[340px] flex-col border-l border-line-strong bg-[rgba(13,10,18,.97)]"
+            style="top: 64px"
         >
-            <div class="flex items-center justify-between border-b border-line px-5 py-4">
-                <div class="flex items-center gap-2">
-                    <SharedMimi :size="32" class="shrink-0" />
-                    <p class="font-display text-base text-cream">{{ t('card.mimiPanelTitle') }}</p>
+            <!-- Header -->
+            <div class="flex items-center gap-2.5 border-b border-line px-4 py-3.5">
+                <SharedMimi :size="30" class="shrink-0" />
+                <div class="flex-1">
+                    <p class="text-[14px] font-bold text-cream">{{ t('card.mimiChatTitle') }}</p>
+                    <p class="text-[11px] text-[#C2E083]">● {{ t('card.mimiOnline') }}</p>
                 </div>
                 <button
                     type="button"
-                    class="grid size-8 place-items-center rounded-full text-brand-muted hover:text-cream"
+                    class="grid size-8 place-items-center text-cream-faint hover:text-cream"
                     @click="mimiOpen = false"
                 >
                     <X class="size-4" />
                 </button>
             </div>
-            <div class="flex-1 overflow-y-auto p-5">
-                <div v-if="enrichLoading" class="flex flex-col items-center gap-3 py-8">
-                    <UiSpinner />
-                    <p class="text-small text-brand-muted">{{ t('card.mimiThinking') }}</p>
-                </div>
-                <div v-else-if="enrichResult" class="flex flex-col gap-4">
+
+            <!-- Messages -->
+            <div ref="chatBodyEl" class="flex flex-1 flex-col gap-2.5 overflow-y-auto p-3.5">
+                <template v-for="(msg, i) in chatMessages" :key="i">
                     <div
-                        v-for="(card, i) in enrichResult.cards"
-                        :key="i"
-                        class="rounded-2xl border border-line bg-bg-surface-2 p-4"
+                        v-if="msg.role === 'mimi'"
+                        class="max-w-[88%] self-start rounded-[4px_14px_14px_14px] border border-line bg-bg-surface px-3 py-2.5 text-[13px] leading-[1.5] text-cream"
+                        v-html="msg.html"
+                    />
+                    <div
+                        v-else-if="msg.role === 'user'"
+                        class="max-w-[88%] self-end rounded-[14px_4px_14px_14px] border border-[rgba(242,188,255,.25)] bg-brand px-3 py-2.5 text-[13px] leading-[1.5] text-cream"
                     >
-                        <p class="font-display text-base text-cream">{{ card.word }}</p>
-                        <p v-if="card.definition" class="mt-1 text-small text-brand-muted">
-                            {{ card.definition }}
-                        </p>
-                        <p v-if="card.example" class="mt-2 text-small italic text-cream-dim">
-                            {{ card.example }}
-                        </p>
-                        <UiButton
-                            variant="ghost"
-                            class="mt-3 !py-1 !text-small"
-                            @click="applyEnrich(card)"
-                        >
-                            {{ t('card.mimiApply') }}
-                        </UiButton>
+                        {{ msg.text }}
+                    </div>
+                </template>
+
+                <div v-if="chatLoading" class="flex items-center gap-2">
+                    <div
+                        class="flex items-center gap-1 rounded-[4px_14px_14px_14px] bg-bg-surface px-3 py-3 text-cream-faint"
+                    >
+                        <span class="mimi-dot" />
+                        <span class="mimi-dot" />
+                        <span class="mimi-dot" />
                     </div>
                 </div>
-                <div v-else class="flex flex-col items-center gap-3 py-8 text-center">
-                    <p class="text-body text-cream-dim">{{ t('card.mimiHint') }}</p>
-                    <UiButton variant="primary" :disabled="!front.trim()" @click="onEnrich">
-                        {{ t('card.mimiEnrich') }}
-                    </UiButton>
+
+                <!-- Quick actions (appear after first Mimi reply) -->
+                <div
+                    v-if="chatMessages.length > 0 && !chatLoading"
+                    class="mt-0.5 flex flex-wrap gap-1.5"
+                >
+                    <button
+                        class="rounded-full border border-line-strong px-2.5 py-1.5 text-[11.5px] font-bold text-cream-dim transition-colors hover:text-cream"
+                        @click="onQuickAction('tags')"
+                    >
+                        {{ t('card.mimiSuggestTags') }}
+                    </button>
+                    <button
+                        class="rounded-full border border-line-strong px-2.5 py-1.5 text-[11.5px] font-bold text-cream-dim transition-colors hover:text-cream"
+                        @click="onQuickAction('harder')"
+                    >
+                        {{ t('card.mimiHarderExample') }}
+                    </button>
+                    <button
+                        class="rounded-full border border-line-strong px-2.5 py-1.5 text-[11.5px] font-bold text-cream-dim transition-colors hover:text-cream"
+                        @click="onQuickAction('translate')"
+                    >
+                        {{ t('card.mimiTranslate') }}
+                    </button>
                 </div>
             </div>
-            <div v-if="enrichResult" class="border-t border-line p-4">
-                <UiButton variant="ghost" class="w-full" @click="onEnrich">
-                    {{ t('card.mimiRefresh') }}
-                </UiButton>
+
+            <!-- Input -->
+            <div class="border-t border-line p-3">
+                <div
+                    class="flex items-center gap-2 rounded-xl border border-line-strong bg-bg-surface px-3 py-2.5"
+                >
+                    <input
+                        v-model="chatInput"
+                        class="min-w-0 flex-1 bg-transparent text-[13px] text-cream-faint outline-none placeholder:text-cream-faint"
+                        :placeholder="t('deck.aiInputPlaceholder')"
+                        :disabled="chatLoading"
+                        @keydown.enter.prevent="onChatSend"
+                    />
+                    <button
+                        type="button"
+                        class="grid size-7 shrink-0 place-items-center rounded-lg bg-lavender text-plum-deep disabled:opacity-40"
+                        :disabled="!chatInput.trim() || chatLoading"
+                        @click="onChatSend"
+                    >
+                        <ArrowRight class="size-3.5" />
+                    </button>
+                </div>
             </div>
         </div>
     </Transition>
-    <div v-if="mimiOpen" class="fixed inset-0 z-10 lg:hidden" @click="mimiOpen = false" />
 </template>
 
 <script setup lang="ts">
-import { Volume2, Image, Check, X } from 'lucide-vue-next';
+import { Volume2, Image as ImageIcon, Check, X, ArrowRight } from 'lucide-vue-next';
 import { useDecks, useCards, useToast, useT } from '#imports';
 import { uploadMedia } from '@/api/media';
 import * as aiApi from '@/api/ai';
 import type { MediaKind } from '@/api/media';
 import type { CardDifficulty } from '@/types/deck';
-import type { AiDraftCard } from '@/api/ai';
 
 definePageMeta({ layout: 'default' });
 
@@ -212,6 +311,7 @@ const { t } = useT();
 
 useSeo({ title: t('seo.cardAddTitle'), description: t('seo.appDesc'), noindex: true });
 
+// --- Card form state ---
 const front = ref('');
 const back = ref('');
 const tags = ref<string[]>([]);
@@ -221,9 +321,15 @@ const imageUrl = ref<string | null>(null);
 const uploading = ref<MediaKind | null>(null);
 const audioInput = ref<HTMLInputElement | null>(null);
 const imageInput = ref<HTMLInputElement | null>(null);
+
+// --- Mimi chat state ---
+type ChatMsg = { role: 'mimi'; html: string } | { role: 'user'; text: string };
+
 const mimiOpen = ref(false);
-const enrichLoading = ref(false);
-const enrichResult = ref<aiApi.EnrichWordsResult | null>(null);
+const chatBodyEl = ref<HTMLElement | null>(null);
+const chatMessages = ref<ChatMsg[]>([]);
+const chatInput = ref('');
+const chatLoading = ref(false);
 
 const difficultyOptions = computed(() => [
     { value: 'easy', label: t('card.diffEasy') },
@@ -236,12 +342,122 @@ const nextNumber = computed(() => (store.deck?.cards.length ?? 0) + 1);
 const canSubmit = computed(() => front.value.trim().length > 0 && back.value.trim().length > 0);
 
 const chipClass = (attached: boolean) => [
-    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-small transition-colors',
+    'inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-[13px] font-semibold transition-colors',
     attached
-        ? 'border-brand-bright text-cream'
-        : 'border-line-strong text-brand-muted hover:text-brand-pale',
+        ? 'border-lavender/60 text-cream'
+        : 'border-line-strong text-cream-dim hover:text-cream',
 ];
 
+const scrollChat = () => {
+    nextTick(() => {
+        if (chatBodyEl.value) chatBodyEl.value.scrollTop = chatBodyEl.value.scrollHeight;
+    });
+};
+
+const openMimi = () => {
+    mimiOpen.value = true;
+    if (!chatMessages.value.length) {
+        const word = front.value.trim();
+        const cardNum = nextNumber.value;
+        const deck = deckTitle.value;
+        chatMessages.value.push({
+            role: 'mimi',
+            html: word
+                ? `I see you're on card ${cardNum} of <b>${deck}</b>. Want me to draft the meaning for "<b>${word}</b>"?`
+                : `I'm here to help with card ${cardNum} of <b>${deck}</b>. Type a word on the left, and I'll draft the meaning.`,
+        });
+        scrollChat();
+    }
+};
+
+const callEnrich = async (fields: aiApi.EnrichField[]) => {
+    if (!front.value.trim()) {
+        chatMessages.value.push({
+            role: 'mimi',
+            html: `Type a word in the Front field first, then I can help!`,
+        });
+        scrollChat();
+        return;
+    }
+    chatLoading.value = true;
+    scrollChat();
+    try {
+        const res = await aiApi.enrichWords({
+            words: [front.value.trim()],
+            sourceLanguage: store.deck?.sourceLanguage ?? 'en',
+            targetLanguage: store.deck?.targetLanguage ?? 'en',
+            fields,
+        });
+        const card = res.cards[0];
+        if (!card) return;
+
+        if (fields.includes('tags') && card.tags?.length) {
+            tags.value = [...new Set([...tags.value, ...(card.tags ?? [])])];
+            chatMessages.value.push({
+                role: 'mimi',
+                html: `Added tags: <b>${card.tags.join(', ')}</b>`,
+            });
+        } else if (fields.includes('example') && card.example) {
+            chatMessages.value.push({
+                role: 'mimi',
+                html: `Here's a harder example: "<i>${card.example}</i>"`,
+            });
+        } else if (fields.includes('exampleTranslation') && card.exampleTranslation) {
+            chatMessages.value.push({
+                role: 'mimi',
+                html: `Translation: "<i>${card.exampleTranslation}</i>"`,
+            });
+        } else if (card.definition) {
+            back.value = card.definition;
+            chatMessages.value.push({
+                role: 'mimi',
+                html: `Done — I filled in the meaning. Review it on the left, or tap a quick action below.`,
+            });
+        } else {
+            chatMessages.value.push({
+                role: 'mimi',
+                html: `I couldn't find data for that word. Try a different term.`,
+            });
+        }
+    } catch {
+        chatMessages.value.push({
+            role: 'mimi',
+            html: `Hmm, something went wrong. Try again?`,
+        });
+    } finally {
+        chatLoading.value = false;
+        scrollChat();
+    }
+};
+
+const onChatSend = async () => {
+    const text = chatInput.value.trim();
+    if (!text || chatLoading.value) return;
+    chatMessages.value.push({ role: 'user', text });
+    chatInput.value = '';
+    await callEnrich([
+        'phonetic',
+        'partOfSpeech',
+        'example',
+        'exampleTranslation',
+        'tags',
+        'difficulty',
+    ]);
+};
+
+const onQuickAction = async (action: 'tags' | 'harder' | 'translate') => {
+    const labels: Record<string, string> = {
+        tags: t('card.mimiSuggestTags'),
+        harder: t('card.mimiHarderExample'),
+        translate: t('card.mimiTranslate'),
+    };
+    chatMessages.value.push({ role: 'user', text: labels[action]! });
+    if (action === 'tags') await callEnrich(['tags']);
+    else if (action === 'harder') await callEnrich(['example']);
+    else await callEnrich(['exampleTranslation']);
+};
+
+// --- Media upload ---
 const onPick = async (e: Event, kind: MediaKind) => {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -263,28 +479,7 @@ const onPick = async (e: Event, kind: MediaKind) => {
     }
 };
 
-const onEnrich = async () => {
-    if (!front.value.trim()) return;
-    enrichLoading.value = true;
-    enrichResult.value = null;
-    try {
-        const lang = store.deck?.targetLanguage ?? 'en';
-        enrichResult.value = await aiApi.enrichWords({
-            words: [front.value.trim()],
-            targetLanguage: lang,
-        });
-    } catch {
-        // leave enrichResult null — template shows hint
-    } finally {
-        enrichLoading.value = false;
-    }
-};
-
-const applyEnrich = (card: AiDraftCard) => {
-    if (card.definition) back.value = card.definition;
-    mimiOpen.value = false;
-};
-
+// --- Card save ---
 const reset = () => {
     front.value = '';
     back.value = '';
@@ -292,6 +487,7 @@ const reset = () => {
     difficulty.value = 'medium';
     audioUrl.value = null;
     imageUrl.value = null;
+    chatMessages.value = [];
 };
 
 const save = async (): Promise<boolean> => {
@@ -334,6 +530,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.card-field {
+    border: 1px solid rgba(227, 210, 200, 0.18);
+    border-radius: 14px;
+    padding: 12px 16px 14px;
+    background: rgba(255, 255, 255, 0.015);
+}
+
 .panel-slide-enter-active,
 .panel-slide-leave-active {
     transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -341,5 +544,31 @@ onMounted(() => {
 .panel-slide-enter-from,
 .panel-slide-leave-to {
     transform: translateX(100%);
+}
+
+@keyframes mimi-dot-pulse {
+    0%,
+    60%,
+    100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+    30% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+.mimi-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: mimi-dot-pulse 1.2s ease-in-out infinite;
+}
+.mimi-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+.mimi-dot:nth-child(3) {
+    animation-delay: 0.4s;
 }
 </style>
