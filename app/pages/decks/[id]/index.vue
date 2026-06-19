@@ -10,61 +10,61 @@
         <SharedPageLoader v-if="store.loadingDeck && !ready" />
 
         <div v-else-if="ready" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-            <div class="flex flex-col gap-5">
-                <SharedCoverArt :swatch="swatch" class="p-6">
-                    <div class="relative flex flex-col gap-[18px]">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
-                                <p class="text-eyebrow uppercase text-cream/70">{{ eyebrow }}</p>
-                                <h1
-                                    class="mt-1 break-words font-display text-h1 leading-[1.1] text-cream"
-                                >
-                                    {{ store.deck.title }}
-                                </h1>
-                                <p class="mt-1 text-small text-cream/80">
-                                    {{ store.deck.sourceLanguage.toUpperCase() }} →
-                                    {{ store.deck.targetLanguage.toUpperCase() }}
-                                </p>
+            <div class="min-w-0 flex flex-col gap-5">
+                <div class="relative">
+                    <SharedCoverArt :swatch="swatch" class="p-6">
+                        <div class="relative flex flex-col gap-[18px]">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="text-eyebrow uppercase text-cream/70">
+                                        {{ eyebrow }}
+                                    </p>
+                                    <h1
+                                        class="mt-1 break-words font-display text-h1 leading-[1.1] text-cream"
+                                    >
+                                        {{ store.deck.title }}
+                                    </h1>
+                                    <p class="mt-1 text-small text-cream/80">
+                                        {{ store.deck.sourceLanguage.toUpperCase() }} →
+                                        {{ store.deck.targetLanguage.toUpperCase() }}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="shrink-0">
-                                <UiDropdownMenu
-                                    :items="menuItems"
-                                    align="right"
-                                    @select="onMenuSelect"
+                            <div class="flex flex-wrap gap-2.5">
+                                <UiButton
+                                    variant="primary"
+                                    :disabled="!store.deck.cards.length"
+                                    :title="t('deck.studyNowHint')"
+                                    @click="navigateTo(`/study/${id}`)"
                                 >
-                                    <template #trigger="{ toggle }">
-                                        <button
-                                            type="button"
-                                            class="grid size-9 place-items-center rounded-full bg-black/20 text-cream backdrop-blur transition-colors hover:bg-black/35 dark:bg-black/25 dark:hover:bg-black/40"
-                                            :aria-label="t('deck.menuAria')"
-                                            @click="toggle"
-                                        >
-                                            <MoreVertical class="size-4" />
-                                        </button>
-                                    </template>
-                                </UiDropdownMenu>
+                                    {{ t('deck.studyNow') }}
+                                </UiButton>
+                                <UiButton
+                                    variant="ghost"
+                                    :disabled="!store.deck.cards.length"
+                                    :title="t('deck.practiceAllHint')"
+                                    @click="navigateTo(`/study/${id}/flashcard`)"
+                                >
+                                    {{ t('deck.practiceAll') }}
+                                </UiButton>
                             </div>
                         </div>
-                        <div class="flex flex-wrap gap-2.5">
-                            <UiButton
-                                variant="primary"
-                                :disabled="!store.deck.cards.length"
-                                :title="t('deck.studyNowHint')"
-                                @click="navigateTo(`/study/${id}`)"
-                            >
-                                {{ t('deck.studyNow') }}
-                            </UiButton>
-                            <UiButton
-                                variant="ghost"
-                                :disabled="!store.deck.cards.length"
-                                :title="t('deck.practiceAllHint')"
-                                @click="navigateTo(`/study/${id}/flashcard`)"
-                            >
-                                {{ t('deck.practiceAll') }}
-                            </UiButton>
-                        </div>
+                    </SharedCoverArt>
+                    <div class="absolute right-4 top-4">
+                        <UiDropdownMenu :items="menuItems" align="right" @select="onMenuSelect">
+                            <template #trigger="{ toggle }">
+                                <button
+                                    type="button"
+                                    class="grid size-9 place-items-center rounded-full bg-black/20 text-cream backdrop-blur transition-colors hover:bg-black/35"
+                                    :aria-label="t('deck.menuAria')"
+                                    @click="toggle"
+                                >
+                                    <MoreVertical class="size-4" />
+                                </button>
+                            </template>
+                        </UiDropdownMenu>
                     </div>
-                </SharedCoverArt>
+                </div>
 
                 <div
                     class="flex flex-wrap gap-x-7 gap-y-1.5 rounded-2xl border border-line bg-bg-surface px-[22px] py-3.5"
