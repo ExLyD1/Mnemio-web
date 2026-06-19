@@ -185,6 +185,133 @@
                     </div>
                 </div>
             </template>
+
+            <!-- Billing -->
+            <template v-else-if="tab === 'billing'">
+                <div class="rounded-[20px] border border-line bg-bg-surface p-6">
+                    <div v-if="billingStore.loading" class="flex justify-center py-8">
+                        <UiSpinner />
+                    </div>
+
+                    <template v-else-if="!billingStore.subscription">
+                        <p class="text-eyebrow uppercase text-brand-muted">
+                            {{ t('billing.settings.freePlan') }}
+                        </p>
+                        <p class="mt-2 text-body text-cream-dim">
+                            {{ t('billing.settings.freeBody') }}
+                        </p>
+                        <div class="mt-6">
+                            <NuxtLink to="/pricing">
+                                <UiButton variant="primary">{{
+                                    t('billing.settings.upgradeCta')
+                                }}</UiButton>
+                            </NuxtLink>
+                        </div>
+                    </template>
+
+                    <template v-else>
+                        <div class="flex items-center gap-3">
+                            <span
+                                :class="[
+                                    'rounded-full px-3 py-1 text-small font-semibold',
+                                    subStatusClass,
+                                ]"
+                            >
+                                {{
+                                    t(`billing.settings.status.${billingStore.subscription.status}`)
+                                }}
+                            </span>
+                            <span class="text-body text-cream-dim">
+                                {{ t(`billing.settings.plan.${billingStore.subscription.plan}`) }}
+                            </span>
+                        </div>
+
+                        <div
+                            v-if="billingStore.subscription.status === 'past_due'"
+                            class="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-small text-red-300"
+                        >
+                            {{ t('billing.settings.pastDueWarning') }}
+                        </div>
+
+                        <div class="mt-4 space-y-1 text-body text-cream-dim">
+                            <p
+                                v-if="
+                                    billingStore.subscription.status === 'trialing' &&
+                                    billingStore.subscription.trialEnd
+                                "
+                            >
+                                {{
+                                    t('billing.settings.trialEnds').replace(
+                                        '{date}',
+                                        fmtDate(billingStore.subscription.trialEnd),
+                                    )
+                                }}
+                            </p>
+                            <p
+                                v-if="
+                                    billingStore.subscription.status === 'active' ||
+                                    billingStore.subscription.status === 'trialing'
+                                "
+                            >
+                                {{
+                                    t('billing.settings.renewsOn').replace(
+                                        '{date}',
+                                        fmtDate(billingStore.subscription.currentPeriodEnd),
+                                    )
+                                }}
+                            </p>
+                            <p
+                                v-if="
+                                    billingStore.subscription.status === 'canceled' ||
+                                    billingStore.subscription.status === 'expired'
+                                "
+                            >
+                                {{
+                                    t('billing.settings.expiresOn').replace(
+                                        '{date}',
+                                        fmtDate(billingStore.subscription.currentPeriodEnd),
+                                    )
+                                }}
+                            </p>
+                            <p
+                                v-if="billingStore.subscription.cancelAtPeriodEnd"
+                                class="text-amber-400"
+                            >
+                                {{ t('billing.settings.cancelNote') }}
+                            </p>
+                        </div>
+
+                        <div class="mt-6 flex flex-wrap gap-3">
+                            <NuxtLink
+                                v-if="
+                                    billingStore.subscription.status === 'canceled' ||
+                                    billingStore.subscription.status === 'expired'
+                                "
+                                to="/pricing"
+                            >
+                                <UiButton variant="primary">{{
+                                    t('billing.settings.upgradeCta')
+                                }}</UiButton>
+                            </NuxtLink>
+                            <template v-if="billingStore.notConfigured">
+                                <p class="text-small text-cream-dim">
+                                    {{ t('billing.settings.notConfigured') }}
+                                </p>
+                            </template>
+                            <template v-else>
+                                <UiButton
+                                    variant="ghost"
+                                    :disabled="billing.portal.loading.value"
+                                    @click="billing.portal.execute()"
+                                >
+                                    <UiSpinner v-if="billing.portal.loading.value" size="sm" />
+                                    {{ t('billing.settings.manageBilling') }}
+                                </UiButton>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
         </div>
     </section>
 </template>
@@ -192,6 +319,8 @@
 <script setup lang="ts">
 import { Trophy, Lock, Camera, X } from 'lucide-vue-next';
 import { useAuthStore, useAuth, useDecks, useToast, useT } from '#imports';
+import { useBillingStore } from '@/stores/billing';
+import { useBilling } from '@/composables/useBilling';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
@@ -209,6 +338,8 @@ const { store, fetchList } = useDecks();
 const prefs = usePreferencesStore();
 const stats = useStats();
 const achievements = useAchievements();
+const billingStore = useBillingStore();
+const billing = useBilling();
 const toast = useToast();
 const { t } = useT();
 
@@ -233,6 +364,7 @@ const tab = ref('edit');
 const tabs = computed(() => [
     { value: 'edit', label: t('profile.editProfile') },
     { value: 'achievements', label: t('profile.achievements') },
+    { value: 'billing', label: t('billing.settings.tabLabel') },
 ]);
 
 const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
@@ -338,6 +470,22 @@ const onSave = async () => {
     syncDraft();
 };
 
+const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    });
+
+const subStatusClass = computed(() => {
+    const s = billingStore.subscription?.status;
+    if (s === 'active') return 'bg-green-500/15 text-green-400';
+    if (s === 'trialing') return 'bg-brand/15 text-brand';
+    if (s === 'past_due') return 'bg-red-500/15 text-red-400';
+    if (s === 'canceled') return 'bg-amber-500/15 text-amber-400';
+    return 'bg-bg-muted text-cream-dim';
+});
+
 watch(() => auth.currentUser, syncDraft, { immediate: true });
 
 onMounted(async () => {
@@ -347,6 +495,7 @@ onMounted(async () => {
         stats.loadSeries('7'),
         achievements.load(),
         prefs.hydrate().catch(() => {}),
+        billingStore.load(),
     ]);
     syncDraft();
 });
