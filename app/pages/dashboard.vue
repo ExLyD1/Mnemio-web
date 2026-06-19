@@ -1,9 +1,9 @@
 <template>
-    <section class="mx-auto flex max-w-5xl flex-col gap-6 p-6 lg:p-8">
+    <section class="mx-auto flex max-w-[920px] flex-col gap-6 p-6 lg:p-8">
         <header>
             <p class="text-eyebrow uppercase text-brand-muted">{{ todayLabel }}</p>
             <h1 class="mt-1 font-display text-display-sm text-cream">
-                {{ greeting }}<span v-if="name">, {{ name }}</span>
+                {{ greeting }}<span v-if="name" class="italic text-lavender">, {{ name }}.</span>
             </h1>
         </header>
 
@@ -14,73 +14,92 @@
             @resume="onResume"
         />
 
-        <!-- Hero: today's review -->
-        <div class="overflow-hidden rounded-[24px] border border-line bg-bg-surface">
-            <div class="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:gap-6">
-                <SharedMimi
-                    :message="mimi.message.value"
-                    :mood="mimi.mood.value"
-                    placement="left"
-                    :size="80"
-                    class="shrink-0"
-                />
+        <!-- Hero: today's review — dark plum gradient -->
+        <div
+            class="rounded-[24px] border border-[rgba(242,188,255,0.18)] px-9 py-8"
+            style="background: linear-gradient(160deg, #572f54 0%, #2c1a2a 100%)"
+        >
+            <!-- Content -->
+            <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0 flex-1">
-                    <p class="text-eyebrow uppercase text-brand-muted">
+                    <p class="text-eyebrow uppercase text-brand-pale">
                         {{ t('dashboard.todayReview') }}
                     </p>
-                    <div class="mt-1 flex items-baseline gap-2">
-                        <span class="font-display text-display-sm text-cream">{{ dueCount }}</span>
-                        <span class="text-body text-cream-dim">{{
-                            t('dashboard.cardsToReview')
+                    <h2 class="mt-2 font-display text-[34px] leading-tight text-cream">
+                        {{ dueCount }} {{ t('dashboard.cardsShort') }}
+                        <span class="text-cream/60">·</span>
+                        {{ t('dashboard.aboutMinutes').replace('{n}', String(reviewMins)) }}
+                    </h2>
+                    <p v-if="heroSubtitle" class="mt-1.5 text-small text-cream/60">
+                        {{ heroSubtitle }}
+                    </p>
+                    <div class="mt-5 flex flex-wrap items-center gap-3">
+                        <UiButton
+                            variant="primary"
+                            class="gap-1.5"
+                            @click="navigateTo(suggestAction?.href ?? '/review')"
+                        >
+                            {{ suggestAction?.label ?? t('dashboard.startReview') }}
+                            <ArrowRight class="size-4" />
+                        </UiButton>
+                        <span class="text-small text-cream/50">{{
+                            t('dashboard.orPickDeck')
                         }}</span>
                     </div>
-                    <p
-                        v-if="mimi.message.value"
-                        class="mt-1 line-clamp-1 text-small text-brand-muted"
-                    >
-                        {{ mimi.message.value }}
-                    </p>
                 </div>
-                <UiButton
-                    variant="primary"
-                    class="shrink-0"
-                    @click="navigateTo(suggestAction?.href ?? '/review')"
-                >
-                    {{ suggestAction?.label ?? t('dashboard.startReview') }}
-                </UiButton>
+
+                <!-- Mimi + bubble on the right -->
+                <div class="relative hidden shrink-0 sm:block">
+                    <SharedMimi
+                        :message="mimi.message.value"
+                        :mood="mimi.mood.value"
+                        placement="right"
+                        :size="96"
+                    />
+                </div>
             </div>
         </div>
 
         <!-- Two-column body -->
-        <div class="grid gap-6 lg:grid-cols-2">
-            <!-- Up next: decks with due cards -->
-            <div class="flex flex-col gap-3">
-                <h2 class="font-display text-h2 text-cream">{{ t('dashboard.upNext') }}</h2>
-                <div v-if="upNextDecks.length" class="flex flex-col gap-2">
+        <div class="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+            <!-- Up next -->
+            <div class="flex flex-col rounded-[20px] border border-line bg-bg-surface">
+                <div class="border-b border-line px-5 py-4">
+                    <p class="text-eyebrow uppercase text-brand-muted">
+                        {{ t('dashboard.upNext') }}
+                    </p>
+                </div>
+
+                <!-- Deck rows -->
+                <div v-if="upNextDecks.length" class="flex flex-1 flex-col">
                     <div
                         v-for="deck in upNextDecks"
                         :key="deck.id"
-                        class="flex items-center gap-3 rounded-2xl border border-line bg-bg-surface p-3 transition-colors hover:border-brand-bright/40"
+                        class="flex items-center gap-3 border-b border-line px-5 py-3 transition-colors last:border-b-0 hover:bg-white/[0.02]"
                     >
                         <div
-                            class="h-10 w-1.5 shrink-0 rounded-full"
-                            :style="{ backgroundImage: deck.swatch }"
+                            class="h-9 w-2.5 shrink-0 rounded-full"
+                            :style="{ background: deck.swatch }"
                         />
                         <div class="min-w-0 flex-1">
                             <p class="truncate font-display text-base text-cream">
                                 {{ deck.title }}
                             </p>
-                            <div class="mt-1 flex items-center gap-2">
-                                <SharedProgressBar :value="deck.masteredPct" class="w-16" />
-                                <span class="text-small text-brand-muted"
-                                    >{{ deck.masteredPct }}%</span
-                                >
-                            </div>
+                            <p class="text-small text-brand-muted">
+                                {{
+                                    t('dashboard.mastered').replace(
+                                        '{pct}',
+                                        String(deck.masteredPct),
+                                    )
+                                }}
+                            </p>
                         </div>
                         <div class="flex shrink-0 items-center gap-2">
-                            <SharedPill v-if="deck.due > 0" tone="due">{{ deck.due }}</SharedPill>
+                            <span v-if="deck.due > 0" class="text-xs font-bold text-pink-soft"
+                                >{{ deck.due }} {{ t('dashboard.dueShort') }}</span
+                            >
                             <UiButton
-                                variant="ghost"
+                                variant="primary"
                                 class="!py-1.5 !text-small"
                                 @click="navigateTo(`/study/${deck.id}`)"
                             >
@@ -88,10 +107,17 @@
                             </UiButton>
                         </div>
                     </div>
+                    <div class="px-5 py-3">
+                        <NuxtLink to="/decks" class="text-small text-lavender hover:underline">
+                            {{ t('dashboard.allDecks') }} →
+                        </NuxtLink>
+                    </div>
                 </div>
+
+                <!-- Empty state -->
                 <div
                     v-else
-                    class="flex flex-col items-center gap-3 rounded-[20px] border border-line bg-bg-surface px-4 py-8 text-center"
+                    class="flex flex-1 flex-col items-center justify-center gap-3 px-4 py-8 text-center"
                 >
                     <SharedMimi mood="done" :size="56" />
                     <p class="text-body text-brand-muted">{{ t('dashboard.allCaughtUp') }}</p>
@@ -100,21 +126,28 @@
 
             <!-- This week -->
             <div class="flex flex-col gap-4 rounded-[20px] border border-line bg-bg-surface p-5">
-                <h2 class="font-display text-h2 text-cream">{{ t('dashboard.thisWeek') }}</h2>
+                <p class="text-eyebrow uppercase text-brand-muted">{{ t('dashboard.thisWeek') }}</p>
 
-                <!-- 7-day bar strip -->
-                <div class="flex h-16 items-end gap-1">
+                <!-- 7-day pips -->
+                <div class="flex justify-between">
                     <div
                         v-for="(pt, i) in weekSeries"
                         :key="i"
-                        class="flex flex-1 flex-col items-center gap-0.5"
+                        class="flex flex-col items-center gap-1.5"
                     >
                         <div
-                            class="min-h-[3px] w-full rounded-t-sm bg-brand transition-all hover:bg-brand-bright"
-                            :style="{ height: `${weekBarHeight(pt.value)}px` }"
-                            :title="`${pt.label}: ${pt.value}`"
-                        />
-                        <span class="text-[10px] leading-none text-brand-muted">{{
+                            class="grid size-8 place-items-center rounded-full text-[11px] font-bold transition-all"
+                            :class="
+                                pt.value > 0
+                                    ? isToday(i)
+                                        ? 'border border-pink/40 bg-gradient-to-b from-brand-bright to-plum text-cream shadow-md'
+                                        : 'border border-pink/30 bg-gradient-to-b from-brand-bright to-plum text-cream'
+                                    : 'border border-line bg-white/[0.03] text-cream-faint'
+                            "
+                        >
+                            {{ pt.value > 0 ? pt.value : '' }}
+                        </div>
+                        <span class="text-[10px] leading-none tracking-wide text-cream-faint">{{
                             pt.label
                         }}</span>
                     </div>
@@ -127,15 +160,23 @@
                             t('dashboard.weeklyGoal')
                         }}</span>
                         <span class="text-small text-cream"
-                            >{{ weekReviewed }} / {{ weekGoal }}</span
+                            >{{ weekReviewed }} / {{ weekGoal }} {{ t('dashboard.cards') }}</span
                         >
                     </div>
-                    <SharedProgressBar :value="weekGoalPct" />
+                    <div class="h-1.5 w-full overflow-hidden rounded-full bg-line">
+                        <div
+                            class="h-full rounded-full transition-[width] duration-500 ease-out"
+                            :style="{
+                                width: `${weekGoalPct}%`,
+                                background: 'linear-gradient(90deg, #7c4576, #c2e083)',
+                            }"
+                        />
+                    </div>
                 </div>
 
                 <!-- Stats row -->
-                <div class="flex gap-4 border-t border-line pt-4">
-                    <div class="flex-1 text-center">
+                <div class="flex gap-6 border-t border-line pt-4">
+                    <div>
                         <p class="font-display text-h2 leading-none text-cream">
                             {{ daysPracticed }}
                         </p>
@@ -144,9 +185,9 @@
                         </p>
                     </div>
                     <div class="w-px bg-line" />
-                    <div class="flex-1 text-center">
+                    <div>
                         <p class="font-display text-h2 leading-none text-cream">
-                            {{ weekReviewed }}
+                            {{ weekReviewed.toLocaleString() }}
                         </p>
                         <p class="mt-1 text-small text-brand-muted">
                             {{ t('dashboard.cardsReviewed') }}
@@ -159,6 +200,7 @@
 </template>
 
 <script setup lang="ts">
+import { ArrowRight } from 'lucide-vue-next';
 import { useAuthStore, useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useMimi } from '@/composables/useMimi';
@@ -203,6 +245,19 @@ const todayLabel = computed(() =>
     }),
 );
 
+// Hero derived values — ~35 sec per card average
+const reviewMins = computed(() => Math.max(1, Math.ceil((dueCount.value * 35) / 60)));
+const topDueDeck = computed(
+    () =>
+        store.summaries
+            .filter((d) => d.stats.due > 0)
+            .sort((a, b) => b.stats.due - a.stats.due)[0] ?? null,
+);
+const heroSubtitle = computed(() => {
+    if (!topDueDeck.value) return '';
+    return t('dashboard.mostlyFrom').replace('{deck}', topDueDeck.value.title);
+});
+
 // Up next: decks with due cards, sorted by due desc, max 5
 const upNextDecks = computed(() =>
     store.summaries
@@ -228,12 +283,21 @@ const onResume = () => {
     navigateTo(`/study/${s.deckId}/${s.mode}`);
 };
 
-// This week — last 7 points of series
-const weekSeries = computed(() => stats.series.value.slice(-7));
+// This week — last 7 points of series, with 2-char day labels derived client-side
+const DAY_ABBR = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
+const weekSeries = computed(() => {
+    const pts = stats.series.value.slice(-7);
+    const today = new Date();
+    return pts.map((pt, i) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() - (pts.length - 1 - i));
+        return { value: pt.value, label: DAY_ABBR[d.getDay()] as string };
+    });
+});
 const weekReviewed = computed(() => weekSeries.value.reduce((sum, p) => sum + p.value, 0));
 const daysPracticed = computed(() => weekSeries.value.filter((p) => p.value > 0).length);
-const maxWeekValue = computed(() => Math.max(1, ...weekSeries.value.map((p) => p.value)));
-const weekBarHeight = (v: number) => Math.round((v / maxWeekValue.value) * 44);
+// Highlight today's pip (last point in the 7-day series is today)
+const isToday = (i: number) => i === weekSeries.value.length - 1;
 
 const goalMap: Record<string, number> = { casual: 50, steady: 100, serious: 250 };
 const weekGoal = computed(() => goalMap[prefs.goal ?? 'steady'] ?? 100);
