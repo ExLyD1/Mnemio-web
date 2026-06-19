@@ -16,22 +16,26 @@ export const useAuthStore = defineStore('auth', () => {
     const user = ref<User | null>(null);
     const accessToken = ref<string | null>(null);
     const pendingUserId = ref<string | null>(null);
+    const plan = ref<'free' | 'premium'>('free');
 
     const isAuthenticated = computed(() => !!accessToken.value && !!user.value);
     const currentUser = computed(() => user.value);
     const needsProfile = computed(() => !!user.value && !user.value.username);
+    const isPremium = computed(() => plan.value === 'premium');
 
-    const setSession = (u: User, token: string) => {
+    const setSession = (u: User, token: string, p: 'free' | 'premium' = 'free') => {
         user.value = u;
         accessToken.value = token;
         writeAccessToken(token);
         pendingUserId.value = null;
+        plan.value = p;
     };
 
     const clearSession = () => {
         user.value = null;
         accessToken.value = null;
         writeAccessToken(null);
+        plan.value = 'free';
     };
 
     const hydrate = async () => {
@@ -45,6 +49,7 @@ export const useAuthStore = defineStore('auth', () => {
             // retries, so an expired access token alone does not end the session.
             const result = await apiMe();
             user.value = result.user;
+            plan.value = result.plan;
             accessToken.value = readAccessToken();
         } catch (e) {
             // Only a revoked/stolen refresh token is a real logout. Network errors or a
@@ -69,7 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
             });
         }
         const result = await apiVerifyEmail(pendingUserId.value, code);
-        setSession(result.user, result.accessToken);
+        setSession(result.user, result.accessToken, result.plan);
         return result;
     };
 
@@ -84,13 +89,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     const login = async (email: string, password: string) => {
         const result = await apiLogin(email, password);
-        setSession(result.user, result.accessToken);
+        setSession(result.user, result.accessToken, result.plan);
         return result;
     };
 
     const oauthExchange = async (code: string) => {
         const result = await apiOauthExchange(code);
-        setSession(result.user, result.accessToken);
+        setSession(result.user, result.accessToken, result.plan);
         return result;
     };
 
@@ -109,9 +114,11 @@ export const useAuthStore = defineStore('auth', () => {
         user,
         accessToken,
         pendingUserId,
+        plan,
         isAuthenticated,
         currentUser,
         needsProfile,
+        isPremium,
         hydrate,
         register,
         verifyEmail,

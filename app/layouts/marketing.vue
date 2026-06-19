@@ -42,6 +42,16 @@ const jsonLd = {
             url: base,
             publisher: { '@id': `${base}/#organization` },
             inLanguage: 'en',
+            // Sitelinks search box: lets Google offer an in-results search that lands
+            // on the public discover catalog. Valid now that /discover is indexable.
+            potentialAction: {
+                '@type': 'SearchAction',
+                target: {
+                    '@type': 'EntryPoint',
+                    urlTemplate: `${base}/discover?q={search_term_string}`,
+                },
+                'query-input': 'required name=search_term_string',
+            },
         },
     ],
 };
