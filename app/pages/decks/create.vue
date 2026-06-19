@@ -337,12 +337,8 @@
                 </button>
             </div>
 
-            <!-- Footer: lang selects + input -->
+            <!-- Footer: input -->
             <div class="border-t border-line p-3">
-                <div class="mb-2 grid grid-cols-2 gap-2">
-                    <UiSelect v-model="aiTarget" :options="languageOptions" />
-                    <UiSelect v-model="aiSource" :options="languageOptions" />
-                </div>
                 <div class="flex gap-2">
                     <input
                         v-model="chatInput"
@@ -353,7 +349,7 @@
                     />
                     <button
                         type="button"
-                        class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-lavender text-plum-deep transition-opacity disabled:opacity-40"
+                        class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand text-cream transition-opacity disabled:opacity-40"
                         :disabled="!chatInput.trim() || generating"
                         @click="onSend"
                     >
@@ -374,7 +370,6 @@ import { useDecks, useToast, useT } from '#imports';
 import * as aiApi from '@/api/ai';
 import type { AiDeckDraft } from '@/api/ai';
 import { bulkAddCards } from '@/api/cards';
-import { LANGUAGES } from '@/schemas/deck';
 import type { DeckInput } from '@/types/deck';
 
 definePageMeta({ layout: 'default' });
@@ -400,8 +395,6 @@ const toast = useToast();
 const { t } = useT();
 
 useSeo({ title: t('seo.deckCreateTitle'), description: t('seo.appDesc'), noindex: true });
-
-const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
 
 // Form state
 const title = ref('');

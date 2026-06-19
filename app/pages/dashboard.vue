@@ -30,10 +30,7 @@
                         <span class="text-cream/60">·</span>
                         {{ t('dashboard.aboutMinutes').replace('{n}', String(reviewMins)) }}
                     </h2>
-                    <p v-if="heroSubtitle" class="mt-1.5 text-small text-cream/60">
-                        {{ heroSubtitle }}
-                    </p>
-                    <div class="mt-5 flex flex-wrap items-center gap-3">
+                    <div class="mt-5">
                         <UiButton
                             variant="primary"
                             class="gap-1.5"
@@ -42,20 +39,7 @@
                             {{ suggestAction?.label ?? t('dashboard.startReview') }}
                             <ArrowRight class="size-4" />
                         </UiButton>
-                        <span class="text-small text-cream/50">{{
-                            t('dashboard.orPickDeck')
-                        }}</span>
                     </div>
-                </div>
-
-                <!-- Mimi + bubble on the right -->
-                <div class="relative hidden shrink-0 sm:block">
-                    <SharedMimi
-                        :message="mimi.message.value"
-                        :mood="mimi.mood.value"
-                        placement="right"
-                        :size="96"
-                    />
                 </div>
             </div>
         </div>
@@ -159,9 +143,19 @@
                         <span class="text-small text-brand-muted">{{
                             t('dashboard.weeklyGoal')
                         }}</span>
-                        <span class="text-small text-cream"
-                            >{{ weekReviewed }} / {{ weekGoal }} {{ t('dashboard.cards') }}</span
-                        >
+                        <div class="flex items-center gap-2">
+                            <span class="text-small text-cream"
+                                >{{ weekReviewed }} / {{ weekGoal }}
+                                {{ t('dashboard.cards') }}</span
+                            >
+                            <NuxtLink
+                                to="/profile"
+                                class="text-brand-muted transition-colors hover:text-cream"
+                                :aria-label="t('dashboard.editGoal')"
+                            >
+                                <Settings class="size-3.5" />
+                            </NuxtLink>
+                        </div>
                     </div>
                     <div class="h-1.5 w-full overflow-hidden rounded-full bg-line">
                         <div
@@ -200,10 +194,9 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRight } from 'lucide-vue-next';
+import { ArrowRight, Settings } from 'lucide-vue-next';
 import { useAuthStore, useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
-import { useMimi } from '@/composables/useMimi';
 import { useAppLocale } from '@/composables/useAppLocale';
 import { useSessionsStore } from '@/stores/sessions';
 import { useSrsStore } from '@/stores/srs';
@@ -217,7 +210,6 @@ definePageMeta({ layout: 'default' });
 const auth = useAuthStore();
 const { store, fetchList } = useDecks();
 const stats = useStats();
-const mimi = useMimi();
 const sessions = useSessionsStore();
 const srs = useSrsStore();
 const prefs = usePreferencesStore();
@@ -306,7 +298,6 @@ const weekGoalPct = computed(() =>
 );
 
 onMounted(async () => {
-    mimi.message.value = mimi.suggestion();
     await Promise.all([
         fetchList.execute({ cursor: null, append: false }),
         stats.load(),

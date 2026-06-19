@@ -26,7 +26,7 @@
                 <div
                     v-for="v in values"
                     :key="v.title"
-                    class="rounded-[20px] border border-line border-l-2 border-l-brand-bright bg-bg-surface p-6 transition-transform hover:-translate-y-0.5"
+                    class="rounded-[20px] border border-line border-l-2 border-l-brand-bright bg-bg-surface p-6 transition-all hover:shadow-lg hover:shadow-brand/10"
                 >
                     <h3 class="font-display text-h3 text-cream">{{ t(v.title) }}</h3>
                     <p class="mt-2 text-small text-cream-dim">{{ t(v.body) }}</p>

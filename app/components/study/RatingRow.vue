@@ -5,7 +5,7 @@
             :key="g.key"
             type="button"
             :class="[
-                'relative flex min-h-[44px] flex-col items-center gap-1 rounded-2xl border px-4 py-3 transition-all hover:-translate-y-0.5',
+                'relative flex min-h-[44px] flex-col items-center gap-1 rounded-2xl border px-4 py-3 transition-all hover:shadow-md hover:shadow-brand/15',
                 toneClass[g.tone],
             ]"
             @click="$emit('grade', g.key)"

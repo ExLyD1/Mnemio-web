@@ -12,9 +12,7 @@
         -->
         <div
             class="absolute inset-y-0 left-0 z-50 flex flex-col items-stretch overflow-hidden border-r border-line bg-bg-surface px-3.5 py-[18px] transition-[width,box-shadow] duration-[240ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-            :class="
-                expanded ? 'w-[240px] shadow-[8px_0_40px_-8px_rgba(0,0,0,0.6)]' : 'w-[76px]'
-            "
+            :class="expanded ? 'w-[240px] shadow-[8px_0_40px_-8px_rgba(0,0,0,0.6)]' : 'w-[76px]'"
         >
             <!-- Brand -->
             <NuxtLink
@@ -125,7 +123,7 @@
                     <NuxtLink
                         to="/profile"
                         :aria-label="t('rail.profile')"
-                        class="flex w-full items-center gap-3 rounded-[13px] px-0 transition-transform hover:scale-105"
+                        class="flex w-full items-center gap-3 rounded-[13px] px-0 transition-colors hover:bg-brand/10"
                         :class="expanded ? 'h-[54px]' : 'h-11'"
                     >
                         <span class="grid w-11 shrink-0 place-items-center">

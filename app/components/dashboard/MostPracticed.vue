@@ -8,7 +8,7 @@
             <div
                 v-for="deck in decks"
                 :key="deck.id"
-                class="group flex flex-col gap-3 rounded-[20px] border border-line bg-bg-surface p-3 transition-all hover:-translate-y-0.5 hover:border-brand-bright/50"
+                class="group flex flex-col gap-3 rounded-[20px] border border-line bg-bg-surface p-3 transition-all hover:border-brand-bright/50 hover:shadow-lg hover:shadow-brand/10"
             >
                 <NuxtLink :to="`/decks/${deck.id}`" class="block">
                     <SharedCoverArt :swatch="deck.swatch" :glyph="deck.glyph" class="aspect-[16/9]">

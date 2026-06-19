@@ -33,14 +33,14 @@
             {{ t('discover.noResults') }}
         </p>
 
-        <div v-if="categories.length">
+        <div v-if="categories.length && !search.trim()">
             <h2 class="mb-3 font-display text-h2 text-cream">{{ t('discover.categories') }}</h2>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <NuxtLink
                     v-for="cat in categories"
                     :key="cat.subject"
                     :to="`/discover/${slugify(cat.subject)}`"
-                    class="flex items-center justify-between rounded-2xl border border-line border-l-2 border-l-brand-bright bg-bg-surface px-5 py-4 text-left transition-transform hover:translate-x-0.5"
+                    class="flex items-center justify-between rounded-2xl border border-line border-l-2 border-l-brand-bright bg-bg-surface px-5 py-4 text-left transition-all hover:shadow-md hover:shadow-brand/10"
                 >
                     <span>
                         <span class="block font-display text-h3 capitalize text-cream">
@@ -56,6 +56,7 @@
         </div>
 
         <div
+            v-if="!search.trim()"
             class="flex flex-col items-center gap-5 rounded-[20px] border border-line bg-mimi-ambient p-6 text-center sm:flex-row sm:text-left"
         >
             <SharedMimi :size="96" placement="left" />
@@ -81,7 +82,7 @@ import { deckToCardVm } from '@/utils/deckVm';
 import { useAuthStore } from '@/stores/auth';
 import type { DeckCardVM, DeckWithAuthor } from '@/types/deck';
 
-definePageMeta({ layout: 'marketing' });
+definePageMeta({ layout: 'default' });
 
 const { t } = useT();
 const route = useRoute();
@@ -142,7 +143,7 @@ const decks = computed<DeckCardVM[]>(() => (data.value?.[0].items ?? []).map(toV
 const categories = computed(() => data.value?.[1].items ?? []);
 
 // Debounced refetch as the user types (re-runs the same useAsyncData handler).
-const debouncedRefresh = useDebounceFn(() => refreshNuxtData('discover-catalog'), 300);
+const debouncedRefresh = useDebounceFn(() => refreshNuxtData('discover-catalog'), 150);
 watch(search, debouncedRefresh);
 
 const onCopy = async (deckId: string) => {

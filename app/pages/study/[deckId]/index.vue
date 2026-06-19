@@ -13,6 +13,10 @@
                 {{ store.deck.title }}
             </h1>
             <p class="mt-2 text-body text-cream-dim">{{ t('study.modePickerHint') }}</p>
+            <p v-if="cardCount" class="mt-1 text-small text-brand-muted">
+                {{ t('study.deckCardCount').replace('{n}', String(cardCount)) }}
+                · {{ t('study.practiceSrsNote') }}
+            </p>
         </header>
 
         <SharedPageLoader v-if="store.loadingDeck && !store.deck" />

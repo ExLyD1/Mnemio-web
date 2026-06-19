@@ -1,7 +1,7 @@
 <template>
     <button
         type="button"
-        class="group flex flex-col items-start gap-3 rounded-2xl border border-line bg-bg-surface p-6 text-left transition-all hover:-translate-y-0.5 hover:border-line-strong"
+        class="group flex flex-col items-start gap-3 rounded-2xl border border-line bg-bg-surface p-6 text-left transition-all hover:border-line-strong hover:shadow-lg hover:shadow-brand/10"
         @click="$emit('select')"
     >
         <div class="grid size-10 place-items-center rounded-xl bg-lavender-soft text-lavender">
