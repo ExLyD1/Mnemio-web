@@ -105,8 +105,8 @@
                             class="flex flex-1 cursor-pointer items-center justify-between rounded-xl border px-[18px] py-3.5 transition-colors"
                             :class="
                                 difficulty === opt.value
-                                    ? 'border-[rgba(169,142,227,.55)] bg-[rgba(87,47,84,.5)]'
-                                    : 'border-line-strong bg-[rgba(255,255,255,.03)] hover:border-line'
+                                    ? 'border-brand-bright/55 bg-brand/30'
+                                    : 'border-line-strong bg-bg-well/30 hover:border-line'
                             "
                             @click="difficulty = opt.value"
                         >
@@ -131,21 +131,26 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="mt-[26px] flex gap-3">
-                    <UiButton
-                        variant="ghost"
-                        :disabled="!canSubmit || addCard.loading.value"
-                        @click="onAddNext"
-                    >
-                        {{ t('card.addNext') }}
+                <div class="mt-[26px] flex items-center gap-3">
+                    <UiButton variant="ghost" @click="navigateTo(`/decks/${id}`)">
+                        {{ t('common.back') }}
                     </UiButton>
-                    <UiButton
-                        variant="primary"
-                        :disabled="!canSubmit || addCard.loading.value"
-                        @click="onDone"
-                    >
-                        {{ t('card.done') }}
-                    </UiButton>
+                    <div class="flex flex-1 justify-end gap-3">
+                        <UiButton
+                            variant="ghost"
+                            :disabled="!canSubmit || addCard.loading.value"
+                            @click="onAddNext"
+                        >
+                            {{ t('card.addNext') }}
+                        </UiButton>
+                        <UiButton
+                            variant="primary"
+                            :disabled="!canSubmit || addCard.loading.value"
+                            @click="onDone"
+                        >
+                            {{ t('card.done') }}
+                        </UiButton>
+                    </div>
                 </div>
             </div>
 
@@ -179,22 +184,19 @@
         class="fixed bottom-[26px] right-[28px] z-30 grid size-[58px] cursor-pointer place-items-center rounded-full border border-[rgba(242,188,255,.35)] p-0"
         style="
             background: linear-gradient(150deg, #572f54, #2c1a2a);
-            box-shadow: 0 10px 28px -6px rgba(169, 142, 227, 0.55);
+            box-shadow: 0 10px 28px -6px rgba(169, 142, 227, 0.3);
         "
         :aria-label="t('card.mimiHelp')"
         @click="openMimi"
     >
-        <SharedMimi :size="40" class="pointer-events-none" />
-        <span
-            class="absolute -right-0.5 -top-0.5 size-3.5 rounded-full border-2 border-bg-base bg-[#C2E083]"
-        />
+        <SharedMimi :size="40" :bob="false" class="pointer-events-none" />
     </button>
 
     <!-- Docked Mimi chat panel -->
     <Transition name="panel-slide">
         <div
             v-if="mimiOpen"
-            class="fixed bottom-0 right-0 z-20 flex w-[340px] flex-col border-l border-line-strong bg-[rgba(13,10,18,.97)]"
+            class="fixed bottom-0 right-0 z-20 flex w-[340px] flex-col border-l border-line-strong bg-bg-well"
             style="top: 64px"
         >
             <!-- Header -->
@@ -202,7 +204,6 @@
                 <SharedMimi :size="30" class="shrink-0" />
                 <div class="flex-1">
                     <p class="text-[14px] font-bold text-cream">{{ t('card.mimiChatTitle') }}</p>
-                    <p class="text-[11px] text-[#C2E083]">● {{ t('card.mimiOnline') }}</p>
                 </div>
                 <button
                     type="button"
@@ -238,31 +239,6 @@
                         <span class="mimi-dot" />
                     </div>
                 </div>
-
-                <!-- Quick actions (appear after first Mimi reply) -->
-                <div
-                    v-if="chatMessages.length > 0 && !chatLoading"
-                    class="mt-0.5 flex flex-wrap gap-1.5"
-                >
-                    <button
-                        class="rounded-full border border-line-strong px-2.5 py-1.5 text-[11.5px] font-bold text-cream-dim transition-colors hover:text-cream"
-                        @click="onQuickAction('tags')"
-                    >
-                        {{ t('card.mimiSuggestTags') }}
-                    </button>
-                    <button
-                        class="rounded-full border border-line-strong px-2.5 py-1.5 text-[11.5px] font-bold text-cream-dim transition-colors hover:text-cream"
-                        @click="onQuickAction('harder')"
-                    >
-                        {{ t('card.mimiHarderExample') }}
-                    </button>
-                    <button
-                        class="rounded-full border border-line-strong px-2.5 py-1.5 text-[11.5px] font-bold text-cream-dim transition-colors hover:text-cream"
-                        @click="onQuickAction('translate')"
-                    >
-                        {{ t('card.mimiTranslate') }}
-                    </button>
-                </div>
             </div>
 
             <!-- Input -->
@@ -279,7 +255,7 @@
                     />
                     <button
                         type="button"
-                        class="grid size-7 shrink-0 place-items-center rounded-lg bg-lavender text-plum-deep disabled:opacity-40"
+                        class="grid size-7 shrink-0 place-items-center rounded-lg bg-brand text-cream disabled:opacity-40"
                         :disabled="!chatInput.trim() || chatLoading"
                         @click="onChatSend"
                     >
