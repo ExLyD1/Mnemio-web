@@ -99,10 +99,24 @@
                         <span class="mb-1.5 block text-small text-brand-muted">{{
                             t('profile.learning')
                         }}</span>
-                        <UiChipInput
-                            v-model="draft.learning"
+                        <UiSelect
+                            :model-value="''"
+                            :options="learningAddOptions"
                             :placeholder="t('profile.learningPlaceholder')"
+                            @update:model-value="addLearning"
                         />
+                        <div v-if="draft.learning.length" class="mt-2 flex flex-wrap gap-1.5">
+                            <button
+                                v-for="code in draft.learning"
+                                :key="code"
+                                type="button"
+                                class="inline-flex items-center gap-1 rounded-full border border-line-strong px-2.5 py-1 text-small text-cream-dim transition-colors hover:border-brand-muted hover:text-cream"
+                                @click="removeLearning(code)"
+                            >
+                                {{ LANGUAGES.find((l) => l.code === code)?.label ?? code }}
+                                <X class="size-3" />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -179,7 +193,7 @@
 </template>
 
 <script setup lang="ts">
-import { Trophy, Lock, Camera } from 'lucide-vue-next';
+import { Trophy, Lock, Camera, X } from 'lucide-vue-next';
 import { useAuthStore, useAuth, useDecks, useToast, useT } from '#imports';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useStats } from '@/composables/useStats';
@@ -225,6 +239,17 @@ const tabs = computed(() => [
 ]);
 
 const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
+const learningAddOptions = computed(() =>
+    languageOptions.filter((o) => !draft.learning.includes(o.value)),
+);
+const addLearning = (code: string) => {
+    if (!code || draft.learning.includes(code)) return;
+    draft.learning.push(code);
+};
+const removeLearning = (code: string) => {
+    const i = draft.learning.indexOf(code);
+    if (i !== -1) draft.learning.splice(i, 1);
+};
 const goalOptions = computed(() => [
     { value: 'casual', label: t('profile.goalCasual'), note: t('profile.goalCasualNote') },
     { value: 'steady', label: t('profile.goalSteady'), note: t('profile.goalSteadyNote') },
