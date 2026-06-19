@@ -1,8 +1,8 @@
 <template>
-    <section class="mx-auto max-w-5xl p-8">
+    <section class="mx-auto max-w-5xl px-10 py-8">
         <NuxtLink
             to="/decks"
-            class="mb-5 flex w-fit items-center gap-1 text-small text-brand-muted transition-colors hover:text-brand-pale"
+            class="mb-5 flex w-fit items-center gap-1.5 text-small text-cream-dim transition-colors hover:text-cream"
         >
             <ArrowLeft class="size-4" /> {{ t('deck.backToDecks') }}
         </NuxtLink>
@@ -12,11 +12,13 @@
         <div v-else-if="ready" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
             <div class="flex flex-col gap-5">
                 <SharedCoverArt :swatch="swatch" class="p-6">
-                    <div class="relative flex flex-col gap-4">
+                    <div class="relative flex flex-col gap-[18px]">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="text-eyebrow uppercase text-cream/70">{{ eyebrow }}</p>
-                                <h1 class="mt-1 break-words font-display text-h1 text-cream">
+                                <h1
+                                    class="mt-1 break-words font-display text-h1 leading-[1.1] text-cream"
+                                >
                                     {{ store.deck.title }}
                                 </h1>
                                 <p class="mt-1 text-small text-cream/80">
@@ -43,7 +45,7 @@
                                 </UiDropdownMenu>
                             </div>
                         </div>
-                        <div class="flex flex-wrap gap-2">
+                        <div class="flex flex-wrap gap-2.5">
                             <UiButton
                                 variant="primary"
                                 :disabled="!store.deck.cards.length"
@@ -65,7 +67,7 @@
                 </SharedCoverArt>
 
                 <div
-                    class="flex flex-wrap gap-x-6 gap-y-1 rounded-2xl border border-line bg-bg-surface px-5 py-3"
+                    class="flex flex-wrap gap-x-7 gap-y-1.5 rounded-2xl border border-line bg-bg-surface px-[22px] py-3.5"
                 >
                     <span class="flex items-baseline gap-1.5">
                         <span class="font-display text-h2 leading-none text-cream">{{
@@ -126,7 +128,7 @@
                         </div>
 
                         <div
-                            class="flex flex-wrap gap-4 border-t border-line px-3 py-2.5 text-small text-brand-muted"
+                            class="flex flex-wrap gap-[18px] border-t border-line px-[14px] py-[11px] text-small text-brand-muted"
                         >
                             <span class="flex items-center gap-1.5">
                                 <span class="size-2.5 rounded-full bg-lavender" />
@@ -166,7 +168,7 @@
                 </div>
 
                 <div
-                    class="flex flex-col gap-3 rounded-[20px] border border-line bg-mimi-ambient p-4"
+                    class="flex flex-col gap-3 rounded-[20px] border border-line bg-mimi-ambient p-[18px]"
                 >
                     <SharedMimi :message="coachTip" placement="left" :size="64" />
                     <UiButton
