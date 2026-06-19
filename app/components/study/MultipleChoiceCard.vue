@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col items-center gap-6">
         <div
-            class="w-full max-w-2xl rounded-3xl border border-line bg-plum-card p-10 text-center shadow-flash-card"
+            class="flex min-h-[280px] w-full max-w-2xl items-center justify-center rounded-3xl border border-line bg-plum-card p-10 text-center shadow-flash-card"
         >
             <div class="text-eyebrow uppercase text-cream-faint">{{ t('study.front') }}</div>
             <div
