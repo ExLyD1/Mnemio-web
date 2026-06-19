@@ -42,9 +42,6 @@
                         l
                     }}</SharedPill>
                 </div>
-                <UiButton variant="ghost" class="mt-5 w-full" @click="tab = 'edit'">{{
-                    t('profile.editProfile')
-                }}</UiButton>
             </div>
 
             <div class="rounded-[20px] border border-line bg-bg-surface p-5">

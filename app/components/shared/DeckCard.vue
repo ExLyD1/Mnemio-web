@@ -170,7 +170,7 @@ defineEmits<{
 }>();
 
 const cardClass = computed(() => [
-    'group rounded-[20px] border border-line bg-bg-surface transition-all hover:-translate-y-0.5 hover:border-brand-bright/50',
+    'group rounded-[20px] border border-line bg-bg-surface transition-all hover:border-brand-bright/50 hover:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]',
     props.variant === 'library'
         ? 'flex flex-col p-[22px]'
         : props.variant === 'recent'
