@@ -43,7 +43,13 @@ export const createDeck = async (input: DeckInput): Promise<DeckSummary> =>
     });
 
 export const updateDeck = async (id: string, input: Partial<DeckInput>): Promise<DeckSummary> =>
-    http<DeckSummary>(`/decks/${id}`, { method: 'PATCH', body: input });
+    http<DeckSummary>(`/decks/${id}`, {
+        method: 'PATCH',
+        body: {
+            ...input,
+            ...(input.description !== undefined ? { description: input.description ?? '' } : {}),
+        },
+    });
 
 export const deleteDeck = async (id: string): Promise<void> => {
     await http<void>(`/decks/${id}`, { method: 'DELETE' });

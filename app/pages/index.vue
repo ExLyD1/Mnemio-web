@@ -54,7 +54,7 @@
                 <div
                     v-for="f in features"
                     :key="f.title"
-                    class="rounded-[20px] border border-line bg-bg-surface p-6 transition-transform hover:-translate-y-0.5"
+                    class="rounded-[20px] border border-line bg-bg-surface p-6 transition-all hover:shadow-lg hover:shadow-brand/10"
                 >
                     <span
                         class="grid size-11 place-items-center rounded-xl bg-brand/30 text-lavender"

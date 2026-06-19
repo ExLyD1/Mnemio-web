@@ -48,6 +48,7 @@ export default defineNuxtConfig({
     },
 
     app: {
+        pageTransition: { name: 'page', mode: 'out-in' },
         head: {
             htmlAttrs: { lang: 'en' },
             // `%s` is the per-page title set via useSeo; the default title below fills

@@ -1,6 +1,6 @@
 <template>
     <div
-        class="rounded-xl border border-brand-muted px-4 pb-3 pt-2 focus-within:border-brand-pale transition-colors"
+        class="rounded-xl border border-brand-muted bg-transparent px-4 pb-3 pt-2 focus-within:border-brand-pale transition-colors"
     >
         <span class="mb-0.5 block text-[11px] leading-none text-brand-muted">{{ label }}</span>
         <div class="flex items-center gap-2">

@@ -10,19 +10,71 @@
 
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <SharedStatTile
+                :label="t('statistics.due')"
+                :value="dueTotal"
+                :sub="t('statistics.dueSub')"
+                tone="plum"
+            />
+            <SharedStatTile
                 :label="t('statistics.reviewed')"
                 :value="stats.reviewed.value"
                 :sub="t('statistics.reviewedSub')"
                 :trend="reviewedTrend"
+                tone="blue"
             />
             <SharedStatTile
                 :label="t('statistics.retention')"
                 :value="`${stats.retention.value}%`"
                 :trend="retentionTrend"
-                tone="accent"
+                tone="green"
             />
-            <SharedStatTile :label="t('statistics.streak')" :value="`${stats.streak.value}d`" />
-            <SharedStatTile :label="t('statistics.due')" :value="dueTotal" tone="plum" />
+            <SharedStatTile
+                :label="t('statistics.daysPracticed')"
+                :value="daysPracticed"
+                :sub="t('statistics.daysPracticedSub')"
+                tone="pink"
+            />
+        </div>
+
+        <!-- Weakest decks -->
+        <div v-if="weakestDecks.length" class="rounded-[20px] border border-line bg-bg-surface p-5">
+            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
+                {{ t('statistics.weakestDecks') }}
+            </p>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div
+                    v-for="d in weakestDecks"
+                    :key="d.id"
+                    class="flex flex-col gap-3 rounded-2xl border border-line bg-bg-surface-2 p-4"
+                >
+                    <div class="flex items-start justify-between gap-2">
+                        <p class="line-clamp-2 font-display text-base text-cream">{{ d.title }}</p>
+                        <SharedPill v-if="d.due > 0" tone="due" class="shrink-0">{{
+                            t('dashboard.dueCount').replace('{n}', String(d.due))
+                        }}</SharedPill>
+                    </div>
+                    <SharedProgressBar
+                        :value="d.masteredPct"
+                        :class="
+                            d.masteredPct < 40
+                                ? '[&_[data-fill]]:bg-error-soft'
+                                : d.masteredPct < 65
+                                  ? '[&_[data-fill]]:bg-vib-amber'
+                                  : '[&_[data-fill]]:bg-success'
+                        "
+                    />
+                    <div class="flex items-center justify-between">
+                        <span class="text-small text-brand-muted">{{ d.masteredPct }}%</span>
+                        <UiButton
+                            variant="ghost"
+                            class="!py-1 !text-small"
+                            @click="navigateTo(`/study/${d.id}`)"
+                        >
+                            {{ t('statistics.review') }}
+                        </UiButton>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="rounded-[20px] border border-line bg-bg-surface p-5">
@@ -143,6 +195,23 @@ useSeo({ title: t('seo.statisticsTitle'), description: t('seo.appDesc'), noindex
 const achievements = useAchievements();
 const dueTotal = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
 
+const weakestDecks = computed(() =>
+    [...store.summaries]
+        .sort((a, b) => a.stats.masteredPct - b.stats.masteredPct)
+        .slice(0, 4)
+        .map((d) => ({
+            id: d.id,
+            title: d.title,
+            masteredPct: d.stats.masteredPct,
+            due: d.stats.due,
+        })),
+);
+
+const daysPracticed = computed(() => {
+    const pts = stats.series.value;
+    return pts.filter((p) => p.value > 0).length;
+});
+
 const range = ref<StatsRange>('30');
 const rangeOptions = computed(() => [
     { value: '7', label: t('statistics.range7') },
@@ -184,7 +253,7 @@ onMounted(async () => {
     await Promise.all([
         fetchList.execute({ cursor: null, append: false }),
         stats.load(range.value),
-        stats.loadSeries(range.value),
+        stats.loadSeries('7'),
         achievements.load(),
     ]);
 });

@@ -1,8 +1,8 @@
 <template>
-    <section class="mx-auto max-w-5xl p-8">
+    <section class="mx-auto max-w-5xl px-10 py-8">
         <NuxtLink
             to="/decks"
-            class="mb-5 flex w-fit items-center gap-1 text-small text-brand-muted transition-colors hover:text-brand-pale"
+            class="mb-5 flex w-fit items-center gap-1.5 text-small text-cream-dim transition-colors hover:text-cream"
         >
             <ArrowLeft class="size-4" /> {{ t('deck.backToDecks') }}
         </NuxtLink>
@@ -10,65 +10,91 @@
         <SharedPageLoader v-if="store.loadingDeck && !ready" />
 
         <div v-else-if="ready" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-            <div class="flex flex-col gap-5">
-                <SharedCoverArt :swatch="swatch" class="p-6">
-                    <div class="relative flex flex-col gap-4">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
-                                <p class="text-eyebrow uppercase text-cream/70">{{ eyebrow }}</p>
-                                <h1 class="mt-1 break-words font-display text-h1 text-cream">
-                                    {{ store.deck.title }}
-                                </h1>
-                                <p class="mt-1 text-small text-cream/80">
-                                    {{ store.deck.sourceLanguage.toUpperCase() }} →
-                                    {{ store.deck.targetLanguage.toUpperCase() }}
-                                </p>
+            <div class="min-w-0 flex flex-col gap-5">
+                <div class="relative">
+                    <SharedCoverArt :swatch="swatch" class="p-6">
+                        <div class="relative flex flex-col gap-[18px]">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="text-eyebrow uppercase text-cream/70">
+                                        {{ eyebrow }}
+                                    </p>
+                                    <h1
+                                        class="mt-1 break-words font-display text-h1 leading-[1.1] text-cream"
+                                    >
+                                        {{ store.deck.title }}
+                                    </h1>
+                                    <p class="mt-1 text-small text-cream/80">
+                                        {{ store.deck.sourceLanguage.toUpperCase() }} →
+                                        {{ store.deck.targetLanguage.toUpperCase() }}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="shrink-0">
-                                <UiDropdownMenu
-                                    :items="menuItems"
-                                    align="right"
-                                    @select="onMenuSelect"
+                            <div class="flex flex-wrap gap-2.5">
+                                <UiButton
+                                    variant="primary"
+                                    :disabled="!store.deck.cards.length"
+                                    :title="t('deck.studyNowHint')"
+                                    @click="navigateTo(`/study/${id}`)"
                                 >
-                                    <template #trigger="{ toggle }">
-                                        <button
-                                            type="button"
-                                            class="grid size-9 place-items-center rounded-full bg-black/20 text-cream backdrop-blur transition-colors hover:bg-black/35 dark:bg-black/25 dark:hover:bg-black/40"
-                                            :aria-label="t('deck.menuAria')"
-                                            @click="toggle"
-                                        >
-                                            <MoreVertical class="size-4" />
-                                        </button>
-                                    </template>
-                                </UiDropdownMenu>
+                                    {{ t('deck.studyNow') }}
+                                </UiButton>
+                                <UiButton
+                                    variant="ghost"
+                                    :disabled="!store.deck.cards.length"
+                                    :title="t('deck.practiceAllHint')"
+                                    @click="navigateTo(`/study/${id}/flashcard`)"
+                                >
+                                    {{ t('deck.practiceAll') }}
+                                </UiButton>
                             </div>
                         </div>
-                        <div class="flex flex-wrap gap-2">
-                            <UiButton
-                                variant="primary"
-                                :disabled="!store.deck.cards.length"
-                                :title="t('deck.studyNowHint')"
-                                @click="navigateTo(`/study/${id}`)"
-                            >
-                                {{ t('deck.studyNow') }}
-                            </UiButton>
-                            <UiButton
-                                variant="ghost"
-                                :disabled="!store.deck.cards.length"
-                                :title="t('deck.practiceAllHint')"
-                                @click="navigateTo(`/study/${id}/flashcard`)"
-                            >
-                                {{ t('deck.practiceAll') }}
-                            </UiButton>
-                        </div>
+                    </SharedCoverArt>
+                    <div class="absolute right-4 top-4">
+                        <UiDropdownMenu :items="menuItems" align="right" @select="onMenuSelect">
+                            <template #trigger="{ toggle }">
+                                <button
+                                    type="button"
+                                    class="grid size-9 place-items-center rounded-full bg-black/20 text-cream backdrop-blur transition-colors hover:bg-black/35"
+                                    :aria-label="t('deck.menuAria')"
+                                    @click="toggle"
+                                >
+                                    <MoreVertical class="size-4" />
+                                </button>
+                            </template>
+                        </UiDropdownMenu>
                     </div>
-                </SharedCoverArt>
+                </div>
 
-                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <SharedStatTile :label="t('deck.statTotal')" :value="store.deck.cards.length" />
-                    <SharedStatTile :label="t('deck.statMastered')" :value="deckStat.mastered" />
-                    <SharedStatTile :label="t('deck.statDue')" :value="deckStat.due" tone="plum" />
-                    <SharedStatTile :label="t('deck.statNew')" :value="deckStat.new" />
+                <div
+                    class="flex flex-wrap gap-x-7 gap-y-1.5 rounded-2xl border border-line bg-bg-surface px-[22px] py-3.5"
+                >
+                    <span class="flex items-baseline gap-1.5">
+                        <span class="font-display text-h2 leading-none text-cream">{{
+                            store.deck.cards.length
+                        }}</span>
+                        <span class="text-small text-brand-muted">{{ t('deck.statTotal') }}</span>
+                    </span>
+                    <span class="flex items-baseline gap-1.5">
+                        <span class="font-display text-h2 leading-none text-cream">{{
+                            deckStat.mastered
+                        }}</span>
+                        <span class="text-small text-brand-muted">{{
+                            t('deck.statMastered')
+                        }}</span>
+                    </span>
+                    <span class="flex items-baseline gap-1.5">
+                        <span class="font-display text-h2 leading-none text-lavender">{{
+                            deckStat.due
+                        }}</span>
+                        <span class="text-small text-brand-muted">{{ t('deck.statDue') }}</span>
+                    </span>
+                    <span class="flex items-baseline gap-1.5">
+                        <span class="font-display text-h2 leading-none text-cream">{{
+                            deckStat.new
+                        }}</span>
+                        <span class="text-small text-brand-muted">{{ t('deck.statNew') }}</span>
+                    </span>
                 </div>
 
                 <div class="rounded-[20px] border border-line bg-bg-surface p-2">
@@ -102,7 +128,7 @@
                         </div>
 
                         <div
-                            class="flex flex-wrap gap-4 border-t border-line px-3 py-2.5 text-small text-brand-muted"
+                            class="flex flex-wrap gap-[18px] border-t border-line px-[14px] py-[11px] text-small text-brand-muted"
                         >
                             <span class="flex items-center gap-1.5">
                                 <span class="size-2.5 rounded-full bg-lavender" />
@@ -132,7 +158,7 @@
             </div>
 
             <aside class="flex flex-col gap-4 self-start lg:sticky lg:top-6">
-                <div class="rounded-[20px] border border-line bg-bg-well p-6">
+                <div class="rounded-[20px] border border-line bg-bg-surface-2 p-6">
                     <div class="grid place-items-center">
                         <SharedProgressRing :pct="deckStat.masteredPct" label="mastered" />
                     </div>
@@ -142,7 +168,7 @@
                 </div>
 
                 <div
-                    class="flex flex-col gap-3 rounded-[20px] border border-line bg-mimi-ambient p-4"
+                    class="flex flex-col gap-3 rounded-[20px] border border-line bg-mimi-ambient p-[18px]"
                 >
                     <SharedMimi :message="coachTip" placement="left" :size="64" />
                     <UiButton

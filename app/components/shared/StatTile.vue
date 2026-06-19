@@ -28,7 +28,7 @@ withDefaults(
         label: string;
         value: string | number;
         sub?: string;
-        tone?: 'plain' | 'plum' | 'accent';
+        tone?: 'plain' | 'plum' | 'accent' | 'blue' | 'green' | 'pink';
         trend?: { dir: 'up' | 'down'; label: string };
     }>(),
     { tone: 'plain' },
@@ -38,5 +38,8 @@ const tones = {
     plain: 'border-line bg-bg-surface',
     plum: 'border-lavender/60 bg-lavender/20 dark:border-brand-bright/40 dark:bg-brand/25',
     accent: 'border-accent/30 bg-accent/10',
+    blue: 'border-accent-light/45 bg-gradient-to-br from-accent-light/25 to-accent/15',
+    green: 'border-success/45 bg-gradient-to-br from-success-bright/25 to-success/15',
+    pink: 'border-pink-soft/45 bg-gradient-to-br from-pink-soft/25 to-error-soft/15',
 } as const;
 </script>

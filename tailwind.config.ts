@@ -9,7 +9,7 @@ const config: Config = {
                 display: ['Fraunces', 'Georgia', 'serif'],
             },
             fontSize: {
-                h1: ['32px', { lineHeight: '64px', fontWeight: '700' }],
+                h1: ['32px', { lineHeight: '40px', fontWeight: '700' }],
                 h2: ['24px', { lineHeight: '32px', fontWeight: '700' }],
                 h3: ['18px', { lineHeight: '24px', fontWeight: '600' }],
                 body: ['16px', { lineHeight: '24px', fontWeight: '400' }],
@@ -83,6 +83,14 @@ const config: Config = {
                 success: {
                     DEFAULT: '#A6C261',
                     bright: '#C2E083',
+                },
+                vib: {
+                    violet: 'oklch(0.62 0.19 300)',
+                    blue: 'oklch(0.62 0.15 252)',
+                    teal: 'oklch(0.68 0.13 175)',
+                    pink: 'oklch(0.66 0.21 350)',
+                    amber: 'oklch(0.74 0.14 70)',
+                    coral: 'oklch(0.65 0.19 25)',
                 },
                 error: '#EB3D3D',
                 'error-soft': {

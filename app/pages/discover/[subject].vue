@@ -39,7 +39,7 @@ import { deckToCardVm } from '@/utils/deckVm';
 import { useAuthStore } from '@/stores/auth';
 import type { DeckCardVM, DeckWithAuthor } from '@/types/deck';
 
-definePageMeta({ layout: 'marketing' });
+definePageMeta({ layout: 'default' });
 
 const { t } = useT();
 const route = useRoute();

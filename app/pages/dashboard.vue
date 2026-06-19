@@ -1,16 +1,10 @@
 <template>
-    <section class="mx-auto flex max-w-5xl flex-col gap-6 p-8">
-        <header class="flex flex-wrap items-end justify-between gap-4">
-            <div>
-                <p class="text-eyebrow uppercase text-brand-muted">{{ todayLabel }}</p>
-                <h1 class="mt-1 font-display text-display-sm text-cream">
-                    {{ greeting }}<span v-if="name">, {{ name }}</span>
-                </h1>
-            </div>
-            <p class="text-body text-cream-dim">
-                <span class="font-semibold text-pink-soft">{{ dueToday }}</span>
-                {{ t('dashboard.dueTodaySuffix') }}
-            </p>
+    <section class="mx-auto flex max-w-[920px] flex-col gap-6 p-6 lg:p-8">
+        <header>
+            <p class="text-eyebrow uppercase text-brand-muted">{{ todayLabel }}</p>
+            <h1 class="mt-1 font-display text-display-sm text-cream">
+                {{ greeting }}<span v-if="name" class="italic text-lavender">, {{ name }}.</span>
+            </h1>
         </header>
 
         <DashboardContinueStudying
@@ -20,162 +14,212 @@
             @resume="onResume"
         />
 
-        <DashboardMostPracticed
-            v-if="topDecks.length"
-            :decks="topDecks"
-            @practice="(id) => navigateTo(`/study/${id}`)"
-        />
-
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <SharedStatTile
-                :label="t('dashboard.statDueToday')"
-                :value="dueToday"
-                :sub="t('dashboard.statDueSub')"
-                tone="plum"
-            />
-            <SharedStatTile
-                :label="t('dashboard.statReviewed')"
-                :value="stats.reviewed.value"
-                :sub="t('dashboard.statReviewedSub')"
-            />
-            <SharedStatTile :label="t('dashboard.statStreak')" :value="`${stats.streak.value}d`" />
-            <SharedStatTile
-                :label="t('dashboard.statRetention')"
-                :value="`${stats.retention.value}%`"
-            />
+        <!-- Hero: today's review — dark plum gradient -->
+        <div
+            class="rounded-[24px] border border-[rgba(242,188,255,0.18)] px-9 py-8"
+            style="background: linear-gradient(160deg, #572f54 0%, #2c1a2a 100%)"
+        >
+            <!-- Content -->
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                    <p class="text-eyebrow uppercase text-brand-pale">
+                        {{ t('dashboard.todayReview') }}
+                    </p>
+                    <h2 class="mt-2 font-display text-[34px] leading-tight text-cream">
+                        {{ dueCount }} {{ t('dashboard.cardsShort') }}
+                        <span class="text-cream/60">·</span>
+                        {{ t('dashboard.aboutMinutes').replace('{n}', String(reviewMins)) }}
+                    </h2>
+                    <div class="mt-5">
+                        <UiButton
+                            variant="primary"
+                            class="gap-1.5"
+                            @click="navigateTo(suggestAction?.href ?? '/review')"
+                        >
+                            {{ suggestAction?.label ?? t('dashboard.startReview') }}
+                            <ArrowRight class="size-4" />
+                        </UiButton>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="grid gap-4 lg:grid-cols-2">
-            <div
-                v-if="featured"
-                class="flex flex-col gap-4 rounded-[20px] border border-line bg-bg-surface p-5"
-            >
-                <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0">
-                        <p class="text-eyebrow uppercase text-brand-muted">
-                            {{ t('dashboard.featuredDeck') }}
-                        </p>
-                        <h2 class="mt-1 break-words font-display text-h2 text-cream">
-                            {{ featured.title }}
-                        </h2>
-                        <p class="mt-0.5 text-small text-brand-muted">
-                            {{ t('deck.cardCount').replace('{n}', String(featured.total)) }} ·
-                            {{ featured.tag }}
-                        </p>
-                    </div>
-                    <SharedPill v-if="featured.due > 0" tone="due">{{
-                        t('dashboard.dueCount').replace('{n}', String(featured.due))
-                    }}</SharedPill>
-                </div>
-                <div>
-                    <SharedProgressBar :value="featured.masteredPct" />
-                    <p class="mt-1.5 text-small text-brand-muted">
-                        {{ t('dashboard.mastered').replace('{pct}', String(featured.masteredPct)) }}
+        <!-- Two-column body -->
+        <div class="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+            <!-- Up next -->
+            <div class="flex flex-col rounded-[20px] border border-line bg-bg-surface">
+                <div class="border-b border-line px-5 py-4">
+                    <p class="text-eyebrow uppercase text-brand-muted">
+                        {{ t('dashboard.upNext') }}
                     </p>
                 </div>
-                <div class="mt-auto flex gap-2">
-                    <UiButton
-                        variant="ghost"
-                        class="flex-1"
-                        @click="navigateTo(`/decks/${featured.id}/cards/add`)"
-                    >
-                        {{ t('dashboard.addCards') }}
-                    </UiButton>
-                    <UiButton
-                        variant="primary"
-                        class="flex-1"
-                        @click="navigateTo(`/study/${featured.id}`)"
-                    >
-                        {{ t('dashboard.practice') }}
-                    </UiButton>
-                </div>
-            </div>
 
-            <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-                <SharedMiniCalendar :weeks="weeks" :month-label="monthLabel" />
-                <div class="mt-4 flex items-center gap-3 border-t border-line pt-4">
-                    <Flame class="size-6 text-pink-soft" />
-                    <div>
-                        <p class="font-display text-xl text-cream">
-                            {{
-                                t('dashboard.dayStreak').replace('{n}', String(stats.streak.value))
-                            }}
-                        </p>
-                        <p class="text-small text-brand-muted">{{ t('dashboard.keepGoing') }}</p>
+                <!-- Deck rows -->
+                <div v-if="upNextDecks.length" class="flex flex-1 flex-col">
+                    <div
+                        v-for="deck in upNextDecks"
+                        :key="deck.id"
+                        class="flex items-center gap-3 border-b border-line px-5 py-3 transition-colors last:border-b-0 hover:bg-white/[0.02]"
+                    >
+                        <div
+                            class="h-9 w-2.5 shrink-0 rounded-full"
+                            :style="{ background: deck.swatch }"
+                        />
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate font-display text-base text-cream">
+                                {{ deck.title }}
+                            </p>
+                            <p class="text-small text-brand-muted">
+                                {{
+                                    t('dashboard.mastered').replace(
+                                        '{pct}',
+                                        String(deck.masteredPct),
+                                    )
+                                }}
+                            </p>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-2">
+                            <span v-if="deck.due > 0" class="text-xs font-bold text-pink-soft"
+                                >{{ deck.due }} {{ t('dashboard.dueShort') }}</span
+                            >
+                            <UiButton
+                                variant="primary"
+                                class="!py-1.5 !text-small"
+                                @click="navigateTo(`/study/${deck.id}`)"
+                            >
+                                {{ t('dashboard.practice') }}
+                            </UiButton>
+                        </div>
+                    </div>
+                    <div class="px-5 py-3">
+                        <NuxtLink to="/decks" class="text-small text-lavender hover:underline">
+                            {{ t('dashboard.allDecks') }} →
+                        </NuxtLink>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div
-            class="flex flex-col items-center gap-5 rounded-[20px] border border-line bg-mimi-ambient p-6 sm:flex-row"
-        >
-            <SharedMimi
-                :message="mimi.message.value"
-                :mood="mimi.mood.value"
-                placement="left"
-                :size="96"
-            />
-            <div class="flex-1">
-                <p class="text-eyebrow uppercase text-brand-pale">
-                    {{ t('dashboard.mimiSuggests') }}
-                </p>
-                <p class="mt-1 text-body text-cream">{{ mimi.message.value }}</p>
+                <!-- Empty state -->
+                <div
+                    v-else
+                    class="flex flex-1 flex-col items-center justify-center gap-3 px-4 py-8 text-center"
+                >
+                    <SharedMimi mood="done" :size="56" />
+                    <p class="text-body text-brand-muted">{{ t('dashboard.allCaughtUp') }}</p>
+                </div>
             </div>
-            <UiButton variant="primary" @click="navigateTo(suggestAction?.href ?? '/review')">
-                {{ suggestAction?.label ?? t('dashboard.startReview') }}
-            </UiButton>
-        </div>
 
-        <div v-if="recentVms.length">
-            <div class="mb-3 flex items-center justify-between">
-                <h2 class="font-display text-h2 text-cream">{{ t('dashboard.recentDecks') }}</h2>
-                <NuxtLink to="/decks" class="text-small text-lavender hover:underline">
-                    {{ t('dashboard.viewAll') }}
-                </NuxtLink>
-            </div>
-            <div class="flex gap-4 overflow-x-auto pb-2">
-                <SharedDeckCard
-                    v-for="vm in recentVms"
-                    :key="vm.id"
-                    :deck="vm"
-                    variant="recent"
-                    @practice="(id) => navigateTo(`/study/${id}`)"
-                    @add-cards="(id) => navigateTo(`/decks/${id}/cards/add`)"
-                />
+            <!-- This week -->
+            <div class="flex flex-col gap-4 rounded-[20px] border border-line bg-bg-surface p-5">
+                <p class="text-eyebrow uppercase text-brand-muted">{{ t('dashboard.thisWeek') }}</p>
+
+                <!-- 7-day pips -->
+                <div class="flex justify-between">
+                    <div
+                        v-for="(pt, i) in weekSeries"
+                        :key="i"
+                        class="flex flex-col items-center gap-1.5"
+                    >
+                        <div
+                            class="grid size-8 place-items-center rounded-full text-[11px] font-bold transition-all"
+                            :class="
+                                pt.value > 0
+                                    ? isToday(i)
+                                        ? 'border border-pink/40 bg-gradient-to-b from-brand-bright to-plum text-cream shadow-md'
+                                        : 'border border-pink/30 bg-gradient-to-b from-brand-bright to-plum text-cream'
+                                    : 'border border-line bg-white/[0.03] text-cream-faint'
+                            "
+                        >
+                            {{ pt.value > 0 ? pt.value : '' }}
+                        </div>
+                        <span class="text-[10px] leading-none tracking-wide text-cream-faint">{{
+                            pt.label
+                        }}</span>
+                    </div>
+                </div>
+
+                <!-- Weekly goal bar -->
+                <div>
+                    <div class="mb-1.5 flex items-center justify-between">
+                        <span class="text-small text-brand-muted">{{
+                            t('dashboard.weeklyGoal')
+                        }}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-small text-cream"
+                                >{{ weekReviewed }} / {{ weekGoal }}
+                                {{ t('dashboard.cards') }}</span
+                            >
+                            <NuxtLink
+                                to="/profile"
+                                class="text-brand-muted transition-colors hover:text-cream"
+                                :aria-label="t('dashboard.editGoal')"
+                            >
+                                <Settings class="size-3.5" />
+                            </NuxtLink>
+                        </div>
+                    </div>
+                    <div class="h-1.5 w-full overflow-hidden rounded-full bg-line">
+                        <div
+                            class="h-full rounded-full transition-[width] duration-500 ease-out"
+                            :style="{
+                                width: `${weekGoalPct}%`,
+                                background: 'linear-gradient(90deg, #7c4576, #c2e083)',
+                            }"
+                        />
+                    </div>
+                </div>
+
+                <!-- Stats row -->
+                <div class="flex gap-6 border-t border-line pt-4">
+                    <div>
+                        <p class="font-display text-h2 leading-none text-cream">
+                            {{ daysPracticed }}
+                        </p>
+                        <p class="mt-1 text-small text-brand-muted">
+                            {{ t('dashboard.daysPracticed') }}
+                        </p>
+                    </div>
+                    <div class="w-px bg-line" />
+                    <div>
+                        <p class="font-display text-h2 leading-none text-cream">
+                            {{ weekReviewed.toLocaleString() }}
+                        </p>
+                        <p class="mt-1 text-small text-brand-muted">
+                            {{ t('dashboard.cardsReviewed') }}
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 </template>
 
 <script setup lang="ts">
-import { Flame } from 'lucide-vue-next';
+import { ArrowRight, Settings } from 'lucide-vue-next';
 import { useAuthStore, useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
-import { useMimi } from '@/composables/useMimi';
 import { useAppLocale } from '@/composables/useAppLocale';
 import { useSessionsStore } from '@/stores/sessions';
+import { useSrsStore } from '@/stores/srs';
+import { usePreferencesStore } from '@/stores/preferences';
 import * as aiApi from '@/api/ai';
 import * as statsApi from '@/api/stats';
 import { deckToCardVm } from '@/utils/deckVm';
-import { swatchFor } from '@/utils/coverSwatches';
-import type { DeckCardVM } from '@/types/deck';
-import type { DeckPerformance } from '@/types/stats';
 
 definePageMeta({ layout: 'default' });
 
 const auth = useAuthStore();
 const { store, fetchList } = useDecks();
 const stats = useStats();
-const mimi = useMimi();
 const sessions = useSessionsStore();
+const srs = useSrsStore();
+const prefs = usePreferencesStore();
 const { t } = useT();
 const { current: locale } = useAppLocale();
 
 useSeo({ title: t('seo.dashboardTitle'), description: t('seo.appDesc'), noindex: true });
 
 const name = computed(() => auth.currentUser?.displayName ?? auth.currentUser?.username ?? '');
-const dueToday = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
+const dueCount = computed(() => srs.dueCount);
 const suggestAction = ref<{ label: string; href: string } | null>(null);
 
 const greeting = computed(() => {
@@ -193,17 +237,29 @@ const todayLabel = computed(() =>
     }),
 );
 
-const toVm = (deckId: string) => {
-    const d = store.summaries.find((s) => s.id === deckId);
-    if (!d) return null;
-    return deckToCardVm(d);
-};
+// Hero derived values — ~35 sec per card average
+const reviewMins = computed(() => Math.max(1, Math.ceil((dueCount.value * 35) / 60)));
+const topDueDeck = computed(
+    () =>
+        store.summaries
+            .filter((d) => d.stats.due > 0)
+            .sort((a, b) => b.stats.due - a.stats.due)[0] ?? null,
+);
+const heroSubtitle = computed(() => {
+    if (!topDueDeck.value) return '';
+    return t('dashboard.mostlyFrom').replace('{deck}', topDueDeck.value.title);
+});
 
-const featured = computed(() => (store.summaries[0] ? toVm(store.summaries[0].id) : null));
-const recentVms = computed(() => store.summaries.slice(0, 8).map((d) => deckToCardVm(d)));
+// Up next: decks with due cards, sorted by due desc, max 5
+const upNextDecks = computed(() =>
+    store.summaries
+        .filter((d) => d.stats.due > 0)
+        .sort((a, b) => b.stats.due - a.stats.due)
+        .slice(0, 5)
+        .map((d) => deckToCardVm(d)),
+);
 
-// Quick continue — resume the last practiced deck (the active session, or the most
-// recent one left unfinished).
+// Continue studying
 const resumeSession = computed(() => sessions.active ?? sessions.latestIncomplete);
 const resumeDeckTitle = computed(
     () => store.summaries.find((d) => d.id === resumeSession.value?.deckId)?.title ?? null,
@@ -211,9 +267,7 @@ const resumeDeckTitle = computed(
 
 const onResume = () => {
     const s = resumeSession.value;
-    if (!s) {
-        return;
-    }
+    if (!s) return;
     if (s.mode === 'srs') {
         navigateTo('/review');
         return;
@@ -221,55 +275,42 @@ const onResume = () => {
     navigateTo(`/study/${s.deckId}/${s.mode}`);
 };
 
-// Most practiced — top decks by total reviews, with quick-start practice.
-const deckPerf = ref<DeckPerformance[]>([]);
-const topDecks = computed<DeckCardVM[]>(() =>
-    [...deckPerf.value]
-        .filter((p) => p.reviewed > 0)
-        .sort((a, b) => b.reviewed - a.reviewed)
-        .slice(0, 4)
-        .map((p) => {
-            const summary = store.summaries.find((s) => s.id === p.deckId);
-            if (summary) {
-                return { ...deckToCardVm(summary), reviewed: p.reviewed };
-            }
-            return {
-                id: p.deckId,
-                title: p.title,
-                total: p.cardCount,
-                masteredPct: p.masteryPct,
-                due: 0,
-                swatch: swatchFor(p.deckId),
-                reviewed: p.reviewed,
-            };
-        }),
+// This week — last 7 points of series, with 2-char day labels derived client-side
+const DAY_ABBR = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
+const weekSeries = computed(() => {
+    const pts = stats.series.value.slice(-7);
+    const today = new Date();
+    return pts.map((pt, i) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() - (pts.length - 1 - i));
+        return { value: pt.value, label: DAY_ABBR[d.getDay()] as string };
+    });
+});
+const weekReviewed = computed(() => weekSeries.value.reduce((sum, p) => sum + p.value, 0));
+const daysPracticed = computed(() => weekSeries.value.filter((p) => p.value > 0).length);
+// Highlight today's pip (last point in the 7-day series is today)
+const isToday = (i: number) => i === weekSeries.value.length - 1;
+
+const goalMap: Record<string, number> = { casual: 50, steady: 100, serious: 250 };
+const weekGoal = computed(() => goalMap[prefs.goal ?? 'steady'] ?? 100);
+const weekGoalPct = computed(() =>
+    Math.min(100, Math.round((weekReviewed.value / weekGoal.value) * 100)),
 );
 
-const weeks = computed(() => stats.monthWeeks.value);
-const monthLabel = computed(() => stats.monthLabel.value);
-
 onMounted(async () => {
-    mimi.message.value = mimi.suggestion();
     await Promise.all([
         fetchList.execute({ cursor: null, append: false }),
         stats.load(),
+        stats.loadSeries('7'),
         sessions.hydrate().catch(() => {}),
-        statsApi
-            .getDeckPerformance()
-            .then((res) => {
-                deckPerf.value = res.items;
-            })
-            .catch(() => {}),
+        srs.fetchAll().catch(() => {}),
+        prefs.hydrate().catch(() => {}),
     ]);
     try {
         const s = await aiApi.suggest('dashboard');
-        // The backend suggestion text is English-only — keep our localized Mimi line
-        // for non-English locales instead of leaking English copy into the banner.
         if (locale.value === 'en') {
             mimi.message.value = s.suggestion;
         }
-        // FE-controlled route by kind — the backend's action.href (e.g. /decks/new)
-        // doesn't match our routing.
         const href = s.kind === 'deck' ? '/decks/create' : '/review';
         const label =
             locale.value === 'en'
@@ -279,7 +320,8 @@ onMounted(async () => {
                   : t('dashboard.startReview');
         suggestAction.value = { label, href };
     } catch {
-        // keep the scripted fallback line already set above
+        // keep scripted fallback
     }
+    statsApi.getDeckPerformance().catch(() => {});
 });
 </script>

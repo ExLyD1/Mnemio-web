@@ -158,7 +158,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useBilling } from '@/composables/useBilling';
 import { useT } from '@/composables/useT';
 
-definePageMeta({ layout: 'marketing' });
+definePageMeta({ layout: 'default' });
 
 const { t } = useT();
 const auth = useAuthStore();

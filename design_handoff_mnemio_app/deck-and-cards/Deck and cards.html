@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mnemio Desktop — Deck &amp; cards (authoring flow)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0E0B10; --surface:#1A1520; --surface2:#221C2A;
+    --line:rgba(227,210,200,0.10); --line-strong:rgba(227,210,200,0.18);
+    --cream:#E3D2C8; --cream-dim:rgba(227,210,200,0.62); --cream-faint:rgba(227,210,200,0.42);
+    --purple:#A98EE3; --purple-soft:rgba(169,142,227,0.18);
+    --plum:#572F54; --plum2:#482B5C; --plum-deep:#2C1A2A; --pink:#F2BCFF; --ok:#A6C261;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a070d;font-family:'Nunito Sans',system-ui,sans-serif;color:var(--cream);
+    display:flex;flex-direction:column;align-items:center;gap:40px;padding:40px}
+  .label{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--cream-faint);font-weight:700;align-self:flex-start;margin:8px 0 -22px 4px}
+  .serif{font-family:'Fraunces',serif;font-weight:400;letter-spacing:-0.02em}
+  .mono{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cream-faint);font-weight:600}
+  .flabel{font-size:11px;color:var(--cream-faint);letter-spacing:.12em;text-transform:uppercase;font-weight:600;margin-bottom:8px}
+  .screen{width:1440px;height:900px;border-radius:14px;overflow:hidden;position:relative;display:flex;
+    background:radial-gradient(900px 500px at 80% -10%, rgba(169,142,227,0.10), transparent 60%),radial-gradient(700px 400px at -10% 30%, rgba(87,47,84,0.22), transparent 65%),var(--bg)}
+  /* sidebar 240 */
+  .side{width:240px;flex-shrink:0;height:100%;background:rgba(8,6,10,0.6);border-right:1px solid var(--line);padding:24px 18px;display:flex;flex-direction:column;gap:8px}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo .mk{width:26px;height:26px;border-radius:8px;background:radial-gradient(circle at 30% 30%, var(--pink), transparent 60%),linear-gradient(135deg,var(--purple),var(--plum));box-shadow:inset 0 1px 0 rgba(255,255,255,0.3)}
+  .logo .nm{font-family:'Fraunces',serif;font-size:22px;color:var(--cream)}
+  .logo-row{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 18px;color:var(--cream-faint)}
+  .nav{display:flex;flex-direction:column;gap:4px}
+  .nav .it{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:var(--cream-dim);cursor:pointer;border:1px solid transparent;font-size:14px;font-weight:600}
+  .nav .it .ic{color:var(--cream-faint);display:flex}
+  .nav .it.on{background:var(--plum);color:var(--cream);border-color:rgba(242,188,255,0.2)}
+  .nav .it.on .ic{color:var(--pink)}
+  .nav .it .due{margin-left:auto;font-size:10px;color:rgba(242,188,255,0.6);letter-spacing:.12em}
+  .sdiv{height:1px;background:var(--line);margin:14px 0}
+  .lib{display:flex;flex-direction:column;gap:4px}
+  .lib .r{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;color:var(--cream-dim);font-size:13px}
+  .lib .r .dot{width:6px;height:6px;border-radius:999px;background:var(--purple)}
+  .lib .r .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lib .r .pct{font-size:11px;color:var(--cream-faint)}
+  .companion{background:var(--purple-soft);border:1px solid rgba(169,142,227,0.25);border-radius:14px;padding:14px;display:flex;gap:10px;align-items:center}
+  .companion img{width:44px;height:44px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 4px 8px rgba(169,142,227,0.4))}
+  /* main */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:20px 32px;border-bottom:1px solid var(--line);background:rgba(14,11,16,0.6);backdrop-filter:blur(10px)}
+  .crumbs{display:flex;align-items:center;gap:10px;color:var(--cream-dim);font-size:13px}
+  .crumbs .cur{color:var(--cream);font-weight:600}
+  .crumbs .sep{color:var(--cream-faint)}
+  .search{flex:1;max-width:380px;margin:0 24px;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:999px;padding:9px 14px;color:var(--cream-faint);font-size:13px}
+  .tb-right{display:flex;align-items:center;gap:14px}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--plum);color:var(--pink);display:flex;align-items:center;justify-content:center;font-weight:700;border:1px solid rgba(242,188,255,0.3)}
+  .content{flex:1;padding:32px;overflow:auto}
+  /* buttons */
+  .btn{border-radius:12px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:14px}
+  .primary{background:var(--purple);color:#1A0F22;border:1px solid rgba(255,255,255,0.18);padding:12px 22px;font-weight:700;box-shadow:0 10px 30px -10px rgba(169,142,227,0.5), inset 0 1px 0 rgba(255,255,255,0.25)}
+  .ghost{background:transparent;color:var(--cream);border:1px solid var(--line-strong);padding:12px 18px;font-weight:600}
+  .input{width:100%;background:rgba(255,255,255,0.03);border:1px solid var(--line-strong);border-radius:12px;padding:13px 14px;color:var(--cream);font-family:inherit;font-size:14px;outline:none}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px}
+  svg{display:block}
+</style>
+</head>
+<body>
+
+<div id="mount"></div>
+
+<script>
+const I = {
+  home:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>',
+  layers:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5M3 18l9 5 9-5"/></svg>',
+  compass:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 1 2-5 4-1Z"/></svg>',
+  chart:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  sparkle:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8z"/></svg>',
+  burger:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+  plus:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  close:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  arrow:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  search:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  layersSm:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>',
+  audio:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4h4l5 4V6L7 10z"/><path d="M16 8a5 5 0 0 1 0 8"/></svg>',
+  image:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-9 9"/></svg>'
+};
+
+const NAV = [['home','Home',I.home],['decks','All decks',I.layers],['discover','Discover',I.compass],['stats','Statistics',I.chart],['ai','AI Assistant',I.sparkle]];
+const LIB = [['Japanese Core 1k',62],['French verbs',84],['Anatomy: thorax',41],['SAT vocab',67]];
+
+function sidebar(active){
+  return `<aside class="side">
+    <div class="logo-row"><span class="logo"><span class="mk"></span><span class="nm">Mnemio</span></span><span>${I.burger}</span></div>
+    <div class="nav">${NAV.map(([k,l,ic])=>`<div class="it ${k===active?'on':''}"><span class="ic">${ic}</span><span>${l}</span>${k==='home'&&k===active?'<span class="due">12 DUE</span>':''}</div>`).join('')}</div>
+    <div class="sdiv"></div>
+    <div class="mono" style="padding:0 12px 8px">Library</div>
+    <div class="lib">${LIB.map(([n,p])=>`<div class="r"><span class="dot" style="opacity:${0.4+p/100*0.6}"></span><span class="nm">${n}</span><span class="pct">${p}%</span></div>`).join('')}</div>
+    <div style="flex:1"></div>
+    <div class="companion"><img src="assets/mimi.png" alt="Mimi"/><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">AI Companion</div><div style="font-size:11px;color:var(--cream-dim)">1 suggestion ready</div></div></div>
+  </aside>`;
+}
+function topbar(crumbs, action){
+  const cr = crumbs.map((c,i)=>`<span class="${i===crumbs.length-1?'cur':''}">${c}</span>${i<crumbs.length-1?'<span class="sep">/</span>':''}`).join('');
+  return `<div class="topbar"><div class="crumbs">${cr}</div>
+    <div class="search">${I.search}<span>Search decks, cards, tags…</span></div>
+    <div class="tb-right">${action}<div class="avatar">A</div></div></div>`;
+}
+function shell(active, crumbs, action, body){
+  return `<div class="screen">${sidebar(active)}<div class="main">${topbar(crumbs,action)}<div class="content">${body}</div></div></div>`;
+}
+
+/* ───────── 1. CREATE DECK ───────── */
+const cardTypes=[['Basic','Front &amp; back',1],['Cloze','Fill the blank',0],['Image','Pick the answer',0]];
+const swatches=['#572F54','#3A2654','#542E40','#3F2D54','#2E2E54','#54322E','#2E5454','#54462E'];
+const privacy=[['Private','Only you can see',1],['Shared','Anyone with the link',0],['Public','In the community',0]];
+const createDeck = shell('decks',['Home','All decks','Create'],
+  `<button class="btn ghost">${I.close} Cancel</button>`,
+  `<div style="max-width:920px;margin:0 auto">
+    <div class="mono">New deck</div>
+    <h1 class="serif" style="font-size:44px;margin:6px 0 8px;line-height:1.05">Create a <em style="color:var(--purple)">new deck.</em></h1>
+    <p style="color:var(--cream-dim);font-size:15px;margin:0 0 32px">Set up the shell now — add cards in a minute.</p>
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:28px">
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div><div class="flabel">Deck name</div><input class="input" value="Japanese Core 1k"/></div>
+        <div><div class="flabel">Subject / category</div><input class="input" value="Languages"/></div>
+        <div><div class="flabel">Description</div><textarea class="input" style="height:84px;resize:none">Most-frequent 1,000 Japanese words for N5–N3, sorted by frequency and grouped by part of speech.</textarea></div>
+        <div><div class="flabel">Card type</div><div style="display:flex;gap:10px">${cardTypes.map(([t,s,on])=>`<div style="flex:1;padding:16px;border-radius:14px;border:1px solid ${on?'rgba(242,188,255,0.3)':'var(--line)'};background:${on?'var(--plum)':'var(--surface)'};cursor:pointer"><div style="font-weight:700;font-size:14px">${t}</div><div style="font-size:12px;color:var(--cream-dim);margin-top:2px">${s}</div></div>`).join('')}</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div><div class="flabel">Cover</div><div style="display:flex;gap:10px;flex-wrap:wrap">${swatches.map((c,i)=>`<span style="width:50px;height:64px;border-radius:10px;background:${c};border:2px solid ${i===0?'var(--pink)':'transparent'};display:flex;align-items:flex-end;padding:6px;cursor:pointer;color:rgba(242,188,255,0.5)">${I.layersSm}</span>`).join('')}</div></div>
+        <div class="card" style="padding:18px;background:var(--purple-soft);border:1px solid rgba(169,142,227,0.3)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="color:var(--purple)">${I.sparkle}</span><span style="font-weight:700;font-size:14px">Generate with AI</span></div>
+          <p style="font-size:13px;color:var(--cream-dim);margin:0 0 12px;line-height:1.5">Paste a chapter, list of terms, or transcript. We'll draft cards you can edit before they enter rotation.</p>
+          <button class="btn ghost" style="width:100%;justify-content:center;border-color:var(--purple);color:var(--purple)">Open generator</button>
+        </div>
+        <div class="card"><div class="mono">Privacy</div><div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">${privacy.map(([t,s,on])=>`<label style="display:flex;gap:10px;align-items:center;cursor:pointer"><span style="width:18px;height:18px;border-radius:50%;border:2px solid ${on?'var(--pink)':'var(--line-strong)'};display:inline-flex;align-items:center;justify-content:center">${on?'<span style="width:8px;height:8px;border-radius:50%;background:var(--pink)"></span>':''}</span><span style="font-size:13px;color:${on?'var(--cream)':'var(--cream-dim)'};font-weight:${on?600:400}">${t} <span style="color:var(--cream-faint);font-weight:400">· ${s}</span></span></label>`).join('')}</div></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:32px"><button class="btn ghost">Create empty deck</button><button class="btn primary">Create &amp; add cards ${I.arrow}</button></div>
+  </div>`);
+
+/* ───────── ADD CARD (shared form + preview) ───────── */
+function addCardBody(mimi){
+  const fw='border:1px solid var(--line-strong);border-radius:14px;padding:12px 16px 14px;background:rgba(255,255,255,0.015)';
+  const diff=[['Easy',0],['Medium',1],['Hard',0]];
+  return `<div style="display:grid;grid-template-columns:${mimi?'1fr 340px':'1fr 400px'};gap:${mimi?'40px':'56px'};max-width:1100px;padding-right:${mimi?'360px':'0'}">
+    <div>
+      <h1 class="serif" style="font-size:52px;margin:0;line-height:1.05;color:var(--cream)">Add a card.</h1>
+      <p style="color:var(--cream-dim);font-size:16px;margin:10px 0 28px">Card 9 in 123123.</p>
+      <div style="${fw}"><div style="font-size:12px;color:var(--cream-dim);margin-bottom:6px">Front</div><div class="serif" style="font-size:28px;color:var(--cream-faint);font-style:italic;padding-bottom:18px">Type a word, phrase or prompt…</div></div>
+      <div style="display:flex;gap:10px;margin-top:12px"><button class="btn ghost" style="padding:8px 16px;font-size:13px">${I.audio} Add audio</button><button class="btn ghost" style="padding:8px 16px;font-size:13px">${I.image} Add image</button></div>
+      <div style="${fw};margin-top:18px"><div style="font-size:12px;color:var(--cream-dim);margin-bottom:6px">Meaning</div><div style="font-size:16px;color:var(--cream-faint);min-height:92px">The meaning, definition or answer learners should produce.</div><div style="text-align:right;font-size:12px;color:var(--cream-faint)">0/200</div></div>
+      <div style="margin-top:18px"><div style="font-size:13px;color:var(--cream-dim);margin-bottom:8px">Tags</div><div style="${fw};padding:13px 16px"><span style="font-size:15px;color:var(--cream-faint)">Add a tag…</span></div></div>
+      <div style="margin-top:18px"><div style="font-size:13px;color:var(--cream-dim);margin-bottom:8px">Difficulty</div><div style="display:flex;gap:12px">${diff.map(([t,on])=>`<div style="flex:1;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-radius:12px;cursor:pointer;background:${on?'rgba(87,47,84,0.5)':'rgba(255,255,255,0.03)'};border:1px solid ${on?'rgba(169,142,227,0.55)':'var(--line-strong)'}"><span style="font-size:15px;font-weight:600;color:var(--cream)">${t}</span><span style="width:16px;height:16px;border-radius:999px;border:1.5px solid ${on?'var(--purple)':'var(--cream-faint)'};display:grid;place-items:center">${on?'<span style="width:8px;height:8px;border-radius:999px;background:var(--purple);display:block"></span>':''}</span></div>`).join('')}</div></div>
+      <div style="display:flex;gap:12px;margin-top:26px"><button class="btn ghost" style="padding:12px 22px">Add &amp; next</button><button class="btn primary" style="padding:12px 26px">Done</button></div>
+    </div>
+    <div style="padding-top:24px"><div style="width:100%;height:480px;border-radius:22px;background:linear-gradient(160deg,#241420 0%,#160E1A 100%);border:1px solid var(--line-strong);box-shadow:0 30px 60px rgba(0,0,0,0.35);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:28px 24px">
+      <div class="mono" style="color:var(--cream-faint);letter-spacing:.22em">FRONT</div>
+      <div class="serif" style="font-size:36px;color:var(--cream-dim)">Your word…</div>
+      <div style="font-size:13px;color:var(--cream-faint)">Tap to flip</div>
+    </div></div>
+  </div>`;
+}
+const mimiBtn = `<button style="position:absolute;bottom:26px;right:28px;width:58px;height:58px;border-radius:999px;background:linear-gradient(150deg,var(--plum),var(--plum-deep));border:1px solid rgba(242,188,255,0.35);box-shadow:0 10px 28px -6px rgba(169,142,227,0.55);cursor:pointer;display:grid;place-items:center;padding:0">
+  <img src="assets/mimi.png" alt="Chat with Mimi" style="width:40px;height:40px;object-fit:contain"/>
+  <span style="position:absolute;top:-2px;right:-2px;width:14px;height:14px;border-radius:999px;background:#C2E083;border:2px solid var(--bg)"></span></button>`;
+const chatPanel = `<div style="position:absolute;top:64px;right:0;bottom:0;width:340px;background:rgba(13,10,18,0.97);border-left:1px solid var(--line-strong);display:flex;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)"><img src="assets/mimi.png" style="width:30px;height:30px;object-fit:contain"/><div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--cream)">Mimi</div><div style="font-size:11px;color:#C2E083">● online</div></div><span style="color:var(--cream-faint);cursor:pointer">${I.close}</span></div>
+  <div style="flex:1;padding:14px;display:flex;flex-direction:column;gap:10px;overflow:hidden">
+    <div style="align-self:flex-start;max-width:88%;background:var(--surface);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:10px 13px;font-size:13px;color:var(--cream);line-height:1.5">I see you're on card 9 of <b>123123</b>. Want me to draft the meaning for "Pt term 5"?</div>
+    <div style="align-self:flex-end;max-width:88%;background:var(--plum);border:1px solid rgba(242,188,255,0.25);border-radius:14px 4px 14px 14px;padding:10px 13px;font-size:13px;color:var(--cream);line-height:1.5">Yes, and add an example too.</div>
+    <div style="align-self:flex-start;max-width:88%;background:var(--surface);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:10px 13px;font-size:13px;color:var(--cream);line-height:1.5">Done — I filled in the meaning and a practice sentence. Review them on the left, or tap a quick action below.</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">${['Suggest tags','Harder example','Translate'].map(q=>`<span style="padding:6px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid var(--line-strong);color:var(--cream-dim)">${q}</span>`).join('')}</div>
+  </div>
+  <div style="padding:12px;border-top:1px solid var(--line)"><div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:9px 12px"><span style="flex:1;font-size:13px;color:var(--cream-faint)">Ask Mimi…</span><button class="btn primary" style="padding:6px 11px;font-size:12px;border-radius:8px">${I.arrow}</button></div></div>
+</div>`;
+
+const addCard = shell('decks',['Decks','123123','Add card'],`<button class="btn primary">${I.plus} New deck</button>`, addCardBody(false)) .replace('</div></div></div>', '</div></div>'+mimiBtn+'</div>');
+const addCardMimi = shell('decks',['Decks','123123','Add card'],`<button class="btn primary">${I.plus} New deck</button>`, addCardBody(true)) .replace('</div></div></div>', '</div></div>'+chatPanel+'</div>');
+
+document.getElementById('mount').innerHTML =
+  `<div class="label">Create deck</div>${createDeck}
+   <div class="label">Add card</div>${addCard}
+   <div class="label">Add card · Mimi chat</div>${addCardMimi}`;
+</script>
+</body>
+</html>

@@ -55,7 +55,7 @@ import { getPublicDeck } from '@/api/publicDiscover';
 import { copyDeck } from '@/api/discover';
 import { useAuthStore } from '@/stores/auth';
 
-definePageMeta({ layout: 'marketing' });
+definePageMeta({ layout: 'default' });
 
 const { t } = useT();
 const route = useRoute();
@@ -84,7 +84,7 @@ if (error.value || !deck.value) {
 }
 
 const authorName = computed(
-    () => deck.value?.author.username ?? deck.value?.author.fullName ?? 'someone',
+    () => deck.value?.author?.username ?? deck.value?.author?.fullName ?? 'someone',
 );
 
 useSeo({
