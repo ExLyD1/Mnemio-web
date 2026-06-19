@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mnemio — All decks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0E0B10; --bg2:#15111A; --surface:#1A1520; --surface2:#221C2A; --surface3:#08060A;
+    --line:rgba(227,210,200,0.10); --line-strong:rgba(227,210,200,0.18);
+    --cream:#E3D2C8; --cream-dim:rgba(227,210,200,0.62); --cream-faint:rgba(227,210,200,0.42);
+    --purple:#A98EE3; --purple-soft:rgba(169,142,227,0.18);
+    --plum:#572F54; --plum2:#482B5C; --plum-deep:#2C1A2A; --brand-bright:#7C4576;
+    --pink:#F2BCFF; --ok:#A6C261;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#000;display:flex;justify-content:center;padding:24px;font-family:'Nunito Sans',system-ui,sans-serif}
+  .serif{font-family:'Fraunces',serif;font-weight:400;letter-spacing:-0.02em}
+  .mono{font-family:'Nunito Sans',sans-serif;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--cream-faint);font-weight:600}
+  .screen{
+    width:1440px;height:900px;color:var(--cream);position:relative;overflow:hidden;border-radius:12px;
+    background:
+      radial-gradient(900px 500px at 80% -10%, rgba(169,142,227,0.10), transparent 60%),
+      radial-gradient(700px 400px at -10% 30%, rgba(87,47,84,0.22), transparent 65%),
+      var(--bg);
+    display:flex;
+  }
+  /* Sidebar */
+  .sidebar{width:240px;height:100%;background:rgba(8,6,10,0.6);border-right:1px solid var(--line);
+    padding:24px 18px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+  .logo{display:inline-flex;align-items:center;gap:10px}
+  .logo .mark{width:26px;height:26px;border-radius:8px;
+    background:radial-gradient(circle at 30% 30%, var(--pink), transparent 60%), linear-gradient(135deg, var(--purple), var(--plum));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.3)}
+  .logo .name{font-family:'Fraunces',serif;font-size:22px;color:var(--cream)}
+  .nav{display:flex;flex-direction:column;gap:4px}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:var(--cream-dim);cursor:pointer;border:1px solid transparent}
+  .nav-item .ic{color:var(--cream-faint);display:flex}
+  .nav-item span.label{font-size:14px;font-weight:600}
+  .nav-item.on{background:var(--plum);color:var(--cream);border-color:rgba(242,188,255,0.2)}
+  .nav-item.on .ic{color:var(--pink)}
+  .divider{height:1px;background:var(--line);margin:14px 0}
+  .lib-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;color:var(--cream-dim);font-size:13px}
+  .lib-row .dot{width:6px;height:6px;border-radius:999px;background:var(--purple)}
+  .lib-row .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lib-row .pct{font-size:11px;color:var(--cream-faint)}
+  .ai-card{background:var(--purple-soft);border:1px solid rgba(169,142,227,0.25);border-radius:14px;padding:14px;display:flex;gap:10px;align-items:center}
+  .ai-card img{width:44px;height:44px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 4px 8px rgba(169,142,227,0.4))}
+  .ai-card .t{font-size:13px;font-weight:700}
+  .ai-card .s{font-size:11px;color:var(--cream-dim)}
+  /* Main */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:20px 32px;border-bottom:1px solid var(--line);background:rgba(14,11,16,0.6)}
+  .crumbs{display:flex;align-items:center;gap:10px;color:var(--cream-dim);font-size:13px}
+  .crumbs .cur{color:var(--cream);font-weight:600}
+  .crumbs .sep{color:var(--cream-faint)}
+  .search{flex:1;max-width:520px;margin:0 32px;position:relative}
+  .search input{width:100%;background:rgba(255,255,255,0.03);border:1px solid var(--line-strong);border-radius:12px;
+    color:var(--cream);font-family:inherit;font-size:14px;padding:8px 14px 8px 40px;height:40px;outline:none}
+  .search .ic{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--cream-faint)}
+  .search .kbd{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--cream-faint);font-size:11px;padding:2px 6px;border:1px solid var(--line);border-radius:5px}
+  .tb-actions{display:flex;gap:10px;align-items:center}
+  .iconbtn{width:40px;height:40px;border-radius:10px;background:transparent;border:1px solid var(--line-strong);color:var(--cream-dim);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--plum);color:var(--pink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;border:1px solid rgba(242,188,255,0.3)}
+  .content{flex:1;padding:32px;overflow:auto}
+  .primary-btn{background:var(--purple);color:#1A0F22;border:1px solid rgba(255,255,255,0.18);border-radius:12px;padding:12px 22px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;
+    box-shadow:0 10px 30px -10px rgba(169,142,227,0.5), inset 0 1px 0 rgba(255,255,255,0.25);display:inline-flex;align-items:center;gap:8px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:20px}
+  /* All decks */
+  .head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px}
+  .head h1{font-size:40px;margin-top:4px;line-height:1.05}
+  .head h1 .count{color:var(--cream-faint);font-family:'Nunito Sans',sans-serif;font-size:22px;font-weight:400}
+  .filters{display:flex;gap:8px}
+  .chip{padding:8px 14px;border-radius:999px;font-size:13px;border:1px solid var(--line-strong);background:transparent;color:var(--cream-dim);cursor:pointer}
+  .chip.on{border-color:rgba(242,188,255,0.3);background:var(--plum);color:var(--cream)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .deck{padding:22px}
+  .deck .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+  .deck .cover{width:50px;height:64px;border-radius:12px;display:flex;align-items:flex-end;padding:8px;position:relative}
+  .deck .cover .lay{color:rgba(242,188,255,0.6)}
+  .deck .cover .fav{position:absolute;top:-4px;right:-4px;color:var(--pink)}
+  .deck .nm{font-size:16px;font-weight:700;margin-bottom:2px}
+  .deck .sub{font-size:12px;color:var(--cream-faint);margin-bottom:14px}
+  .deck .track{height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+  .deck .fill{height:100%;background:linear-gradient(90deg,var(--cream),var(--purple))}
+  .deck .meta{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--cream-faint)}
+</style>
+</head>
+<body>
+  <div class="screen">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 6px 18px">
+        <span class="logo"><span class="mark"></span><span class="name">Mnemio</span></span>
+        <span style="color:var(--cream-faint)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+      </div>
+      <div class="nav">
+        <div class="nav-item"><span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span><span class="label">Home</span></div>
+        <div class="nav-item on"><span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5M3 18l9 5 9-5"/></svg></span><span class="label">All decks</span></div>
+        <div class="nav-item"><span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 1 2-5 4-1Z"/></svg></span><span class="label">Discover</span></div>
+        <div class="nav-item"><span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span class="label">Statistics</span></div>
+        <div class="nav-item"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8z"/></svg></span><span class="label">AI Assistant</span></div>
+      </div>
+      <div class="divider"></div>
+      <div class="mono" style="padding:0 12px 8px">Library</div>
+      <div class="nav">
+        <div class="lib-row"><span class="dot" style="opacity:0.77"></span><span class="name">Japanese Core 1k</span><span class="pct">62%</span></div>
+        <div class="lib-row"><span class="dot" style="opacity:0.9"></span><span class="name">French verbs</span><span class="pct">84%</span></div>
+        <div class="lib-row"><span class="dot" style="opacity:0.65"></span><span class="name">Anatomy: thorax</span><span class="pct">41%</span></div>
+        <div class="lib-row"><span class="dot" style="opacity:0.8"></span><span class="name">SAT vocab</span><span class="pct">67%</span></div>
+      </div>
+      <div style="flex:1"></div>
+      <div class="ai-card">
+        <img src="assets/mimi.png" alt="Mimi" />
+        <div style="flex:1;min-width:0"><div class="t">AI Companion</div><div class="s">1 suggestion ready</div></div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs"><span>Home</span><span class="sep">/</span><span class="cur">All decks</span></div>
+        <div class="search">
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
+          <input placeholder="Search decks, cards, tags…" />
+          <span class="kbd">⌘K</span>
+        </div>
+        <div class="tb-actions">
+          <button class="primary-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New deck</button>
+          <button class="iconbtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4.8a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.4a7 7 0 0 0-2 1.2l-2.4-.8-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-.8c.6.5 1.3.9 2 1.2L10 21h4l.5-2.4c.7-.3 1.4-.7 2-1.2l2.4.8 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></svg></button>
+          <div class="avatar">A</div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="head">
+          <div>
+            <div class="mono">Library</div>
+            <h1 class="serif">All decks <span class="count">· 8</span></h1>
+          </div>
+          <div class="filters">
+            <span class="chip on">All</span>
+            <span class="chip">Languages</span>
+            <span class="chip">Medicine</span>
+            <span class="chip">Test prep</span>
+            <span class="chip">Law</span>
+            <span class="chip">Mine</span>
+          </div>
+        </div>
+
+        <div class="grid" id="grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LAYERS = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5M3 18l9 5 9-5"/></svg>';
+    const BOOKMARK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12v18l-6-4-6 4z"/></svg>';
+    const decks = [
+      { n:'Japanese Core 1k', sub:'Languages · 1,032 cards', p:62, fav:true,  col:'#572F54', due:12 },
+      { n:'French verbs',     sub:'Languages · 412 cards',   p:84, fav:false, col:'#3A2654', due:6 },
+      { n:'Anatomy: thorax',  sub:'Medicine · 256 cards',    p:41, fav:true,  col:'#542E40', due:4 },
+      { n:'SAT vocab',        sub:'Test prep · 980 cards',   p:67, fav:false, col:'#3F2D54', due:21 },
+      { n:'Music theory',     sub:'Concepts · 188 cards',    p:22, fav:false, col:'#2E2E54', due:0 },
+      { n:'Constitutional law', sub:'Law · 340 cards',       p:55, fav:true,  col:'#54322E', due:8 },
+      { n:'Italian conjugation', sub:'Languages · 220 cards', p:71, fav:false, col:'#2E5454', due:3 },
+      { n:'World capitals',   sub:'Geography · 195 cards',   p:92, fav:false, col:'#54462E', due:0 },
+    ];
+    document.getElementById('grid').innerHTML = decks.map(d => `
+      <div class="card deck">
+        <div class="top">
+          <div class="cover" style="background:${d.col}">
+            <span class="lay">${LAYERS}</span>
+            ${d.fav ? `<span class="fav">${BOOKMARK}</span>` : ''}
+          </div>
+        </div>
+        <div class="nm">${d.n}</div>
+        <div class="sub">${d.sub}</div>
+        <div class="track"><div class="fill" style="width:${d.p}%"></div></div>
+        <div class="meta"><span>Mastered ${d.p}%</span><span>${d.due} due</span></div>
+      </div>
+    `).join('');
+  </script>
+</body>
+</html>
