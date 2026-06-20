@@ -42,9 +42,11 @@ export default defineNuxtConfig({
     },
 
     // Static public pages are auto-discovered; this source adds the dynamic
-    // public-deck and topic URLs (fetched from the backend at request time).
+    // public-deck and topic URLs plus the blog articles.
     sitemap: {
-        sources: ['/api/__sitemap__/urls'],
+        // Source path is outside `/api/**` on purpose — the API proxy route rule would
+        // otherwise shadow it and forward to the backend. See server/routes/__sitemap__.
+        sources: ['/__sitemap__/urls'],
     },
 
     app: {
