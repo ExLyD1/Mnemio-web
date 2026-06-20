@@ -825,7 +825,10 @@
     "blog": {
         "eyebrow": "Journal",
         "title": "The Mnemio blog",
-        "subtitle": "Notes on memory, language learning, and building Mnemio.",
+        "subtitle": "Evidence-based notes on memory, spaced repetition, and studying smarter.",
+        "readMinutes": "{n} min read",
+        "ctaTitle": "Put this into practice",
+        "ctaBody": "Build a deck and let Mnemio schedule your reviews with spaced repetition.",
         "draftBadge": "Draft in progress",
         "emptyTitle": "Nothing published yet",
         "emptyBody": "Mimi is busy writing the first post. Check back soon — or start learning in the meantime.",
