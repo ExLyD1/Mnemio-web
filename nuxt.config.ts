@@ -68,15 +68,25 @@ export default defineNuxtConfig({
                     content:
                         'Mnemio is a flashcard and spaced-repetition learning app. Create decks, study smarter with an SRS scheduler, discover public decks, and generate cards with AI.',
                 },
-                { name: 'theme-color', content: '#572E54' },
+                {
+                    name: 'theme-color',
+                    content: '#572E54',
+                    media: '(prefers-color-scheme: dark)',
+                },
+                {
+                    name: 'theme-color',
+                    content: '#FBF7F2',
+                    media: '(prefers-color-scheme: light)',
+                },
                 { name: 'twitter:card', content: 'summary_large_image' },
                 { property: 'og:site_name', content: 'Mnemio' },
                 { property: 'og:type', content: 'website' },
             ],
             link: [
                 { rel: 'icon', href: '/images/logoico.ico', sizes: 'any' },
-                { rel: 'icon', type: 'image/jpeg', href: '/images/logoico.jpg' },
-                { rel: 'apple-touch-icon', href: '/images/logoico.jpg' },
+                { rel: 'icon', type: 'image/png', href: '/images/icon-192.png', sizes: '192x192' },
+                { rel: 'apple-touch-icon', href: '/images/apple-touch-icon.png' },
+                { rel: 'manifest', href: '/manifest.webmanifest' },
                 // Fonts loaded here (not via CSS @import) so they don't block render.
                 // preconnect warms the TLS handshake; the stylesheet uses display=swap.
                 { rel: 'preconnect', href: 'https://fonts.googleapis.com' },

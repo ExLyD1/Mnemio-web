@@ -1,0 +1,32 @@
+{
+    "name": "Mnemio — Flashcards & Spaced Repetition",
+    "short_name": "Mnemio",
+    "description": "Build flashcard decks, study with a smart SRS scheduler, discover public decks, and generate cards with AI.",
+    "start_url": "/dashboard",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#241226",
+    "theme_color": "#572E54",
+    "lang": "en",
+    "categories": ["education", "productivity"],
+    "icons": [
+        {
+            "src": "/images/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/images/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/images/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
