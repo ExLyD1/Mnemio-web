@@ -77,6 +77,14 @@ export default defineNuxtConfig({
                 { rel: 'icon', href: '/images/logoico.ico', sizes: 'any' },
                 { rel: 'icon', type: 'image/jpeg', href: '/images/logoico.jpg' },
                 { rel: 'apple-touch-icon', href: '/images/logoico.jpg' },
+                // Fonts loaded here (not via CSS @import) so they don't block render.
+                // preconnect warms the TLS handshake; the stylesheet uses display=swap.
+                { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+                { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+                {
+                    rel: 'stylesheet',
+                    href: 'https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&display=swap',
+                },
             ],
         },
     },

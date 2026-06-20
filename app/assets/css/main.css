@@ -1,5 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&display=swap');
+/*
+ * Fonts (Nunito Sans + Fraunces) are loaded via <link rel="preconnect"> +
+ * <link rel="stylesheet"> in nuxt.config.ts head — NOT a CSS @import — so they
+ * don't block render. See the `app.head.link` block there.
+ */
 
 /*
  * Theme palette. Values are space-separated RGB channels so Tailwind's
