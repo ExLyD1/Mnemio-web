@@ -41,6 +41,7 @@
 
 <script setup lang="ts">
 import { useAuth, useAuthStore, useToast, useT } from '#imports';
+import { setRemember } from '@/utils/authToken';
 
 definePageMeta({ layout: 'auth' });
 
@@ -59,7 +60,7 @@ const data = reactive<{ email: string; password: string }>({
     email: '',
     password: '',
 });
-const initialTab = route.query.tab === 'login' ? 'login' : ('register' as const);
+const initialTab = route.query.tab === 'register' ? 'register' : ('login' as const);
 
 const showError = (msg: string) => toast.error(t(msg, msg));
 
@@ -71,11 +72,17 @@ const finishAuth = async () => {
     }
 };
 
-async function onAuthSubmit(payload: { email: string; password: string; activeTab: Tab }) {
+async function onAuthSubmit(payload: {
+    email: string;
+    password: string;
+    activeTab: Tab;
+    rememberMe: boolean;
+}) {
     data.email = payload.email;
     data.password = payload.password;
 
     if (payload.activeTab === 'login') {
+        setRemember(payload.rememberMe);
         const result = await login.execute(payload.email, payload.password);
         if (result) {
             await finishAuth();

@@ -1,7 +1,7 @@
 <template>
     <button
         type="button"
-        class="group flex flex-col items-start gap-3 rounded-2xl border border-line bg-bg-surface p-6 text-left transition-all hover:-translate-y-0.5 hover:border-line-strong"
+        class="group flex flex-col items-start gap-3 rounded-2xl border border-line bg-bg-surface p-6 text-left transition-all hover:border-line-strong hover:shadow-lg hover:shadow-brand/10"
         @click="$emit('select')"
     >
         <div class="grid size-10 place-items-center rounded-xl bg-lavender-soft text-lavender">
@@ -9,7 +9,8 @@
         </div>
         <h3 class="text-h3 font-semibold text-cream">{{ title }}</h3>
         <p class="text-small text-cream-dim">{{ description }}</p>
-        <span class="mt-2 text-eyebrow uppercase text-lavender">{{ t('study.start') }} →</span>
+        <p v-if="meta" class="text-small text-brand-muted">{{ meta }}</p>
+        <span class="mt-auto text-eyebrow uppercase text-lavender">{{ t('study.start') }} →</span>
     </button>
 </template>
 
@@ -21,6 +22,7 @@ defineProps<{
     icon: Component;
     title: string;
     description: string;
+    meta?: string;
 }>();
 defineEmits<{ select: [] }>();
 

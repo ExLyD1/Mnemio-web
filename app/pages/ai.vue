@@ -52,13 +52,25 @@
                     <!-- Empty / greeting -->
                     <div
                         v-if="!chat.messages.value.length && !chat.loadingThread.value"
-                        class="flex flex-col items-center gap-3 py-12 text-center"
+                        class="flex flex-col items-center gap-4 py-12 text-center"
                     >
-                        <SharedMimi :size="72" />
+                        <SharedMimi :size="80" />
                         <h2 class="font-display text-h2 text-cream">{{ t('chat.emptyTitle') }}</h2>
                         <p class="max-w-[42ch] text-body text-cream-dim">
                             {{ t('chat.emptyHint') }}
                         </p>
+                        <!-- Quick-action pills -->
+                        <div class="mt-2 flex flex-wrap justify-center gap-2">
+                            <button
+                                v-for="q in quickActions"
+                                :key="q"
+                                type="button"
+                                class="rounded-full border border-line bg-bg-surface px-4 py-2 text-small text-cream-dim transition-colors hover:border-brand-bright/50 hover:text-cream"
+                                @click="sendQuick(q)"
+                            >
+                                {{ q }}
+                            </button>
+                        </div>
                     </div>
 
                     <div v-if="chat.loadingThread.value" class="flex justify-center py-8">
@@ -98,7 +110,7 @@
                                 class="max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-body"
                                 :class="
                                     m.role === 'user'
-                                        ? 'bg-brand text-on-color'
+                                        ? 'bg-brand/90 text-on-color shadow-sm'
                                         : 'border border-line bg-bg-surface text-cream'
                                 "
                             >
@@ -173,12 +185,16 @@
 <script setup lang="ts">
 import { Send, Menu } from 'lucide-vue-next';
 import { useChat, useToast, useT } from '#imports';
+import { useAuthStore } from '@/stores/auth';
+import { usePremiumGateStore } from '@/stores/premiumGate';
 
 definePageMeta({ layout: 'default' });
 
 const chat = useChat();
 const toast = useToast();
 const { t } = useT();
+const auth = useAuthStore();
+const premiumGate = usePremiumGateStore();
 
 useSeo({ title: t('seo.aiTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -190,6 +206,18 @@ const inputEl = ref<HTMLTextAreaElement | null>(null);
 const activeTitle = computed(
     () => chat.conversations.value.find((c) => c.id === chat.activeId.value)?.title ?? '',
 );
+
+const quickActions = computed(() => [
+    t('chat.quickDeck'),
+    t('chat.quickVocab'),
+    t('chat.quickTips'),
+    t('chat.quickExplain'),
+]);
+
+const sendQuick = async (text: string) => {
+    draft.value = text;
+    await onSend();
+};
 
 // Streaming cursor only on the last assistant message while a reply is in flight.
 const isStreaming = (i: number) =>
@@ -250,7 +278,11 @@ const errText = (code: string) => t(`chat.err.${code}`, t('chat.err.generic'));
 watch(
     () => chat.streamError.value,
     (e) => {
-        if (e) {
+        if (!e) return;
+        if (e.code === 'AI_BUDGET_EXCEEDED' && !auth.isPremium) {
+            const cap = (e as { capPerDay?: number }).capPerDay;
+            premiumGate.show('ai_budget', cap !== undefined ? { capPerDay: cap } : undefined);
+        } else {
             toast.error(errText(e.code));
         }
     },

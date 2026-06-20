@@ -5,7 +5,7 @@
             <div
                 v-if="isOpen"
                 :class="[
-                    'absolute z-30 mt-2 min-w-[12rem] rounded-2xl border border-line-strong bg-bg-surface p-1.5 shadow-soft-elevation',
+                    'absolute z-[55] mt-2 min-w-[12rem] rounded-2xl border border-line-strong bg-bg-surface p-1.5 shadow-soft-elevation',
                     align === 'right' ? 'right-0' : 'left-0',
                 ]"
                 role="menu"

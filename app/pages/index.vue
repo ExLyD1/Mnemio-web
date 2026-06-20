@@ -54,7 +54,7 @@
                 <div
                     v-for="f in features"
                     :key="f.title"
-                    class="rounded-[20px] border border-line bg-bg-surface p-6 transition-transform hover:-translate-y-0.5"
+                    class="rounded-[20px] border border-line bg-bg-surface p-6 transition-all hover:shadow-lg hover:shadow-brand/10"
                 >
                     <span
                         class="grid size-11 place-items-center rounded-xl bg-brand/30 text-lavender"
@@ -148,6 +148,22 @@
             </div>
         </section>
 
+        <!-- FAQ -->
+        <section id="faq" class="mx-auto max-w-[760px] px-6 py-16">
+            <p class="text-eyebrow uppercase text-brand-muted">{{ t('landing.faqEyebrow') }}</p>
+            <h2 class="mt-2 font-display text-h1 text-cream">{{ t('landing.faqTitle') }}</h2>
+            <div class="mt-8 flex flex-col gap-4">
+                <div
+                    v-for="item in faqs"
+                    :key="item.q"
+                    class="rounded-[20px] border border-line bg-bg-surface p-6"
+                >
+                    <h3 class="font-display text-h3 text-cream">{{ t(item.q) }}</h3>
+                    <p class="mt-2 text-body text-cream-dim">{{ t(item.a) }}</p>
+                </div>
+            </div>
+        </section>
+
         <!-- Final CTA -->
         <section class="mx-auto max-w-[1080px] px-6 pb-24 pt-10">
             <div class="rounded-[28px] bg-mimi-ambient p-12 text-center">
@@ -182,8 +198,15 @@ const { t } = useT();
 
 useSeo({ title: t('seo.homeTitle'), description: t('seo.homeDesc') });
 
-// Landing-page software schema, in addition to the Organization/WebSite graph
-// emitted by the marketing layout.
+const faqs = [
+    { q: 'landing.faq1Q', a: 'landing.faq1A' },
+    { q: 'landing.faq2Q', a: 'landing.faq2A' },
+    { q: 'landing.faq3Q', a: 'landing.faq3A' },
+    { q: 'landing.faq4Q', a: 'landing.faq4A' },
+];
+
+// Landing-page software + FAQ schema, in addition to the Organization/WebSite graph
+// emitted by the marketing layout. The FAQ entries mirror the visible #faq section.
 useHead({
     script: [
         {
@@ -196,6 +219,18 @@ useHead({
                 operatingSystem: 'Web',
                 description: t('seo.homeDesc'),
                 offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            }),
+        },
+        {
+            type: 'application/ld+json',
+            innerHTML: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: faqs.map((f) => ({
+                    '@type': 'Question',
+                    name: t(f.q),
+                    acceptedAnswer: { '@type': 'Answer', text: t(f.a) },
+                })),
             }),
         },
     ],

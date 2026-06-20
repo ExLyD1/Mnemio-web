@@ -82,12 +82,14 @@
                     </div>
                 </template>
 
-                <StudyMultipleChoiceCard
-                    v-else-if="currentQuestion"
-                    :question="currentQuestion"
-                    @answer="onMcAnswer"
-                    @next="() => {}"
-                />
+                <Transition v-else-if="currentQuestion" name="card" mode="out-in">
+                    <StudyMultipleChoiceCard
+                        :key="practice.study.currentCard.value?.id"
+                        :question="currentQuestion"
+                        @answer="onMcPick"
+                        @next="onMcNext"
+                    />
+                </Transition>
             </template>
 
             <UiEmptyState
@@ -169,10 +171,17 @@ const onGrade = (rating: SrsRating) => {
     }
 };
 
-const onMcAnswer = (correct: boolean) => {
+const mcPendingCorrect = ref<boolean | null>(null);
+
+const onMcPick = (correct: boolean) => {
+    mcPendingCorrect.value = correct;
+};
+
+const onMcNext = () => {
     const card = practice.study.currentCard.value;
-    if (card) {
-        practice.recordSimple(correct, card);
+    if (card && mcPendingCorrect.value !== null) {
+        practice.recordSimple(mcPendingCorrect.value, card);
+        mcPendingCorrect.value = null;
     }
 };
 

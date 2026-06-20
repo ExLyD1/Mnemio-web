@@ -7,6 +7,10 @@ export interface SeoOptions {
     description: string;
     /** Absolute or root-relative OG/Twitter image. Defaults to the brand OG image. */
     image?: string;
+    /** Alt text for the OG/Twitter image. Defaults to the title. */
+    imageAlt?: string;
+    /** OG type — `website` (default) or `article` for blog posts. */
+    type?: 'website' | 'article';
     /** When true, emit `noindex, nofollow` (app/auth pages). */
     noindex?: boolean;
 }
@@ -30,13 +34,16 @@ export const useSeo = (opts: SeoOptions) => {
     useSeoMeta({
         title: opts.title,
         description: opts.description,
+        ogType: opts.type ?? 'website',
         ogTitle: opts.title,
         ogDescription: opts.description,
         ogImage: image,
+        ogImageAlt: opts.imageAlt ?? opts.title,
         ogUrl: canonical,
         twitterTitle: opts.title,
         twitterDescription: opts.description,
         twitterImage: image,
+        twitterImageAlt: opts.imageAlt ?? opts.title,
         robots: opts.noindex ? 'noindex, nofollow' : 'index, follow',
     });
 

@@ -1,39 +1,38 @@
 <template>
-    <section class="mx-auto flex max-w-6xl flex-col gap-6 p-8">
+    <section class="mx-auto flex max-w-6xl flex-col gap-6 p-6 lg:p-8">
+        <!-- Header: eyebrow + "All decks · N" (left) | filter chips (right) -->
         <header class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <h1 class="font-display text-display-sm text-cream">{{ t('deck.myDecks') }}</h1>
-                <p class="mt-1 text-body text-cream-dim">
-                    {{
-                        t('deck.listSummary')
-                            .replace('{decks}', String(store.summaries.length))
-                            .replace('{cards}', String(totalCards))
-                            .replace('{due}', String(totalDue))
-                    }}
+                <p class="text-eyebrow uppercase text-brand-muted">
+                    {{ t('deck.libraryEyebrow') }}
                 </p>
+                <h1 class="mt-1 font-display text-[40px] leading-[1.05] text-cream">
+                    {{ t('deck.allDecks') }}
+                    <span class="font-sans text-[22px] font-normal text-cream-faint">
+                        · {{ store.summaries.length }}
+                    </span>
+                </h1>
             </div>
-            <div class="flex gap-2">
-                <UiButton variant="ghost" @click="aiOpen = true">
-                    <Sparkles class="size-4" />
-                    {{ t('ai.launchNew') }}
-                </UiButton>
-                <UiButton variant="primary" @click="navigateTo('/decks/create')">
-                    <Plus class="size-4" />
-                    {{ t('topbar.newDeck') }}
-                </UiButton>
-            </div>
+            <SharedFilterChips
+                v-if="store.summaries.length"
+                v-model="filter"
+                :options="filterOptions"
+            />
         </header>
 
+        <!-- Skeleton -->
         <div
-            v-if="store.summaries.length"
-            class="flex flex-wrap items-center justify-between gap-3"
+            v-if="loading && !store.summaries.length"
+            class="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4"
         >
-            <SharedFilterChips v-model="filter" :options="filterOptions" />
-            <SharedSortMenu v-model="sort" :options="sortOptions" />
+            <div
+                v-for="i in 8"
+                :key="i"
+                class="h-[240px] animate-pulse rounded-[20px] bg-bg-surface"
+            />
         </div>
 
-        <SharedPageLoader v-if="loading && !store.summaries.length" />
-
+        <!-- Empty state -->
         <UiEmptyState
             v-else-if="!store.summaries.length"
             :icon="Library"
@@ -47,7 +46,8 @@
             </template>
         </UiEmptyState>
 
-        <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- 4-column deck grid -->
+        <div v-else class="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
             <SharedDeckCard
                 v-for="vm in deckVms"
                 :key="vm.id"
@@ -73,10 +73,9 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, Library, Sparkles } from 'lucide-vue-next';
+import { Plus, Library } from 'lucide-vue-next';
 import { useDecks, usePreferencesStore, useT } from '#imports';
 import { deckToCardVm } from '@/utils/deckVm';
-import { LANGUAGES } from '@/schemas/deck';
 
 definePageMeta({ layout: 'default' });
 
@@ -89,58 +88,40 @@ useSeo({ title: t('seo.decksTitle'), description: t('seo.appDesc'), noindex: tru
 const loading = ref(true);
 const aiOpen = ref(false);
 const filter = ref('all');
-const sort = ref('recent');
-
-const sortOptions = computed(() => [
-    { key: 'recent', label: t('deck.sortRecent') },
-    { key: 'name', label: t('deck.sortName') },
-    { key: 'due', label: t('deck.sortDue') },
-    { key: 'mastery', label: t('deck.sortMastery') },
-]);
-
-const totalCards = computed(() => store.summaries.reduce((sum, d) => sum + d.cardCount, 0));
-const totalDue = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
 
 const favCount = computed(() => store.summaries.filter((d) => prefs.isFavorite(d.id)).length);
 
 const filterOptions = computed(() => {
     const counts = new Map<string, number>();
     for (const d of store.summaries) {
-        counts.set(d.targetLanguage, (counts.get(d.targetLanguage) ?? 0) + 1);
+        if (d.subject) {
+            counts.set(d.subject, (counts.get(d.subject) ?? 0) + 1);
+        }
     }
-    const langs = [...counts.entries()].map(([code, count]) => ({
-        key: code,
-        label: LANGUAGES.find((l) => l.code === code)?.label ?? code.toUpperCase(),
+    const subjects = [...counts.entries()].map(([subject, count]) => ({
+        key: `subject:${subject}`,
+        label: subject,
         count,
     }));
     const base = [{ key: 'all', label: t('deck.filterAll'), count: store.summaries.length }];
     if (favCount.value > 0) {
-        base.push({ key: 'favorites', label: t('deck.filterFavorites'), count: favCount.value });
+        base.push({ key: 'mine', label: t('deck.filterMine'), count: favCount.value });
     }
-    return [...base, ...langs];
+    return [...base, ...subjects];
 });
 
 const deckVms = computed(() => {
     const list = store.summaries.filter((d) => {
-        if (filter.value === 'all') {
-            return true;
+        if (filter.value === 'all') return true;
+        if (filter.value === 'mine') return prefs.isFavorite(d.id);
+        if (filter.value.startsWith('subject:')) {
+            return d.subject === filter.value.slice('subject:'.length);
         }
-        if (filter.value === 'favorites') {
-            return prefs.isFavorite(d.id);
-        }
-        return d.targetLanguage === filter.value;
+        return true;
     });
-    const rows = list.map((d) => ({
-        vm: deckToCardVm(d, prefs.isFavorite(d.id)),
-        updatedAt: d.updatedAt,
-    }));
-    rows.sort((a, b) => {
-        if (sort.value === 'name') return a.vm.title.localeCompare(b.vm.title);
-        if (sort.value === 'due') return b.vm.due - a.vm.due;
-        if (sort.value === 'mastery') return b.vm.masteredPct - a.vm.masteredPct;
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    });
-    return rows.map((r) => r.vm);
+    return list
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .map((d) => deckToCardVm(d, prefs.isFavorite(d.id)));
 });
 
 onMounted(async () => {

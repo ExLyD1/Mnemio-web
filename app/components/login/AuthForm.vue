@@ -79,6 +79,14 @@
                 <UiSpinner v-if="loading" size="sm" class="mr-2" />
                 {{ t(activeTab === 'login' ? 'auth.tabLogin' : 'auth.createAccount') }}
             </UiButton>
+
+            <label
+                v-if="activeTab === 'login'"
+                class="mt-4 flex cursor-pointer items-center gap-2 text-small text-brand-muted"
+            >
+                <input v-model="rememberMe" type="checkbox" class="accent-brand" />
+                {{ t('auth.stayLoggedIn') }}
+            </label>
         </div>
     </form>
 </template>
@@ -98,10 +106,13 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-    submit: [{ email: string; password: string; activeTab: 'register' | 'login' }];
+    submit: [
+        { email: string; password: string; activeTab: 'register' | 'login'; rememberMe: boolean },
+    ];
 }>();
 
 const activeTab = ref<'register' | 'login'>(props.initialTab ?? 'register');
+const rememberMe = ref(true);
 
 const schema = computed(() =>
     toFormValidator(activeTab.value === 'login' ? loginSchema : registerSchema),
@@ -121,7 +132,12 @@ const isPasswordValid = computed(() => (password.value?.length ?? 0) >= 8);
 watch(activeTab, () => resetForm());
 
 const onSubmit = handleSubmit((values) => {
-    emit('submit', { email: values.email, password: values.password, activeTab: activeTab.value });
+    emit('submit', {
+        email: values.email,
+        password: values.password,
+        activeTab: activeTab.value,
+        rememberMe: rememberMe.value,
+    });
 });
 
 const tabs = computed(() => [

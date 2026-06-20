@@ -1,5 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&display=swap');
+/*
+ * Fonts (Nunito Sans + Fraunces) are loaded via <link rel="preconnect"> +
+ * <link rel="stylesheet"> in nuxt.config.ts head — NOT a CSS @import — so they
+ * don't block render. See the `app.head.link` block there.
+ */
 
 /*
  * Theme palette. Values are space-separated RGB channels so Tailwind's
@@ -40,12 +43,12 @@
 .light {
     color-scheme: light;
 
-    --c-bg-base: 205 193 228; /* page — medium lavender */
-    --c-bg-deep: 190 178 214; /* sunken pockets */
-    --c-bg-surface: 252 247 242; /* cards, rail — near-white cream */
-    --c-bg-surface-2: 244 237 228; /* second-level surfaces */
-    --c-bg-well: 255 253 250; /* input wells */
-    --c-bg-muted: 186 177 202;
+    --c-bg-base: 248 245 252; /* page — near-white lavender tint */
+    --c-bg-deep: 238 232 248; /* sunken pockets */
+    --c-bg-surface: 255 252 248; /* cards, rail — warm near-white */
+    --c-bg-surface-2: 246 239 230; /* second-level surfaces */
+    --c-bg-well: 255 254 252; /* input wells */
+    --c-bg-muted: 220 212 232;
 
     --c-cream: 58 39 56; /* primary text — deep plum */
     --c-brand-muted: 120 96 122; /* secondary text */
@@ -67,7 +70,27 @@
     );
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     background-color: rgb(var(--c-bg-base));
     color: rgb(var(--c-cream));
+}
+
+.page-enter-active {
+    transition:
+        opacity 0.18s ease,
+        transform 0.18s ease;
+}
+.page-leave-active {
+    transition: opacity 0.12s ease;
+}
+.page-enter-from {
+    opacity: 0;
+    transform: translateY(6px);
+}
+.page-leave-to {
+    opacity: 0;
 }

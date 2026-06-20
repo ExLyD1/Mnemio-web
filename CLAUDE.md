@@ -111,6 +111,16 @@ must be running on `:3001`** or every call 502s. In prod set `NUXT_PUBLIC_API_BA
 - **Errors:** surface `ApiError.code`/`message`; never let raw `$fetch` errors escape `http`.
 - **TypeScript:** strict — no implicit `any`, handle `null`.
 
+## Key component patterns (non-obvious)
+
+**`SharedDeckCard`** — has a `variant` prop: `'library'` (default, book-cover layout used in the deck grid), `'recent'` (horizontal strip with action buttons), `'discover'` (public deck browsing). Always pass `variant="library"` in the main deck grid.
+
+**`DeckCardVM` / `deckToCardVm`** — deck cards everywhere take `DeckCardVM` from `app/types/deck.ts`. Build one from a `DeckSummary` via `deckToCardVm(summary, isFavorite?)` from `@/utils/deckVm`. The `swatch` field can be either a hex color or a CSS gradient string (from `coverGradientFor()` / `swatchFor()` in `app/utils/coverSwatches.ts`). **Always bind as `:style="{ background: deck.swatch }"`**, never `backgroundImage:` — the shorthand handles both.
+
+**`AppRail`** — expands 76 px → 240 px on `mouseenter` of the outer `<aside>`. The outer `<aside>` is always 76 px in the flex layout (no reflow); the inner panel is `position: absolute` and overlays page content when expanded. `dueCount` badge from `useSrsStore()`. Library rows from `useDecksStore().summaries` (top 3 by `updatedAt`).
+
+**i18n interpolation** — the custom `useT()` catalog does not support named placeholders natively. Interpolate manually: `t('key').replace('{n}', String(value))`.
+
 ## i18n
 
 Two mechanisms coexist:
@@ -123,8 +133,8 @@ UI strings, add the key to **both** `en.json` and `uk.json`.
 
 ## Styling
 
-- Tailwind with a custom design system in `tailwind.config.ts`: color tokens (`cream`, `plum`, `pink`, `brand`, `bg-surface`, `line`), display font + custom `fontSize` scale (`text-display-sm`, `text-h2`, `text-body`, `text-eyebrow`, `text-small`), and gradient utilities.
-- **`new_design/`** holds the static HTML/CSS redesign reference (the "Mnemio \*.html" mockups + screenshots). Use it as the visual source of truth when building/adjusting screens.
+- Tailwind with a custom design system in `tailwind.config.ts`: color tokens (`cream`, `plum`, `pink`, `brand`, `bg-surface`, `line`), display font (`Fraunces` → `font-display`) + custom `fontSize` scale (`text-display-sm`, `text-h2`, `text-body`, `text-eyebrow`, `text-small`), and gradient utilities.
+- **`design_handoff_mnemio_app/`** is the visual source of truth. Top-level files: `HANDOFF.md` (design language overview), `screens.md` (per-screen specs), `tokens.md` (color/gradient token additions). Each screen also has its own subfolder (e.g. `sidebar/SIDEBAR-SPEC.md` + `Sidebar states.html`, `decks/ALL-DECKS-SPEC.md` + `All decks.html`). The HTML files open at 1440×900 and are pixel-accurate references — read both the spec MD and the HTML before implementing a screen. This directory is in `.prettierignore`.
 - Prettier: **4-space tabs**, single quotes, semicolons, trailing commas (`all`), `printWidth 100`. ESLint flat config (`eslint.config.js`) integrates Prettier + Vue + TS + Tailwind plugins.
 
 ## Docs
@@ -140,6 +150,5 @@ so you can skip the OTP flow during integration testing.
 
 ## Git
 
-- Current working branch: `development`. PR target: `main`.
-- Conventional commits in history: `feat(i18n): …`, `fix(auth): …`.
+- PR target: `main`. Conventional commits: `feat(scope): …`, `fix(scope): …`, `chore(scope): …`.
 - Commit/push only when asked. End commit messages with the required co-author trailer.

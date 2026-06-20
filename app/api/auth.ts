@@ -25,6 +25,7 @@ interface AuthTokenResponse {
     accessToken: string;
     user: BackendUser;
     needsProfile: boolean;
+    plan: 'free' | 'premium';
 }
 
 interface RegisterResponse {
@@ -73,6 +74,7 @@ export interface VerifyEmailResult {
     user: User;
     accessToken: string;
     needsProfile: boolean;
+    plan: 'free' | 'premium';
 }
 
 export const verifyEmail = async (userId: string, code: string): Promise<VerifyEmailResult> => {
@@ -86,6 +88,7 @@ export const verifyEmail = async (userId: string, code: string): Promise<VerifyE
         user: toUser(res.user),
         accessToken: res.accessToken,
         needsProfile: res.needsProfile,
+        plan: res.plan,
     };
 };
 
@@ -116,6 +119,7 @@ export const oauthExchange = async (code: string): Promise<OauthExchangeResult> 
         user: toUser(res.user),
         accessToken: res.accessToken,
         needsProfile: res.needsProfile,
+        plan: res.plan,
     };
 };
 
@@ -130,6 +134,7 @@ export const login = async (email: string, password: string): Promise<LoginResul
         user: toUser(res.user),
         accessToken: res.accessToken,
         needsProfile: res.needsProfile,
+        plan: res.plan,
     };
 };
 
@@ -146,11 +151,14 @@ export const logout = async (): Promise<void> => {
 export interface MeResult {
     user: User;
     needsProfile: boolean;
+    plan: 'free' | 'premium';
 }
 
 export const me = async (): Promise<MeResult> => {
-    const res = await http<{ user: BackendUser; needsProfile: boolean }>('/auth/me');
-    return { user: toUser(res.user), needsProfile: res.needsProfile };
+    const res = await http<{ user: BackendUser; needsProfile: boolean; plan: 'free' | 'premium' }>(
+        '/auth/me',
+    );
+    return { user: toUser(res.user), needsProfile: res.needsProfile, plan: res.plan };
 };
 
 export const updateProfile = async (details: ProfileUpdate): Promise<MeResult> => {

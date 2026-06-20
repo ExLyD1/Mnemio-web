@@ -42,9 +42,6 @@
                         l
                     }}</SharedPill>
                 </div>
-                <UiButton variant="ghost" class="mt-5 w-full" @click="tab = 'edit'">{{
-                    t('profile.editProfile')
-                }}</UiButton>
             </div>
 
             <div class="rounded-[20px] border border-line bg-bg-surface p-5">
@@ -67,39 +64,8 @@
         <div class="flex flex-col gap-5">
             <UiSegmentedControl v-model="tab" :options="tabs" />
 
-            <!-- Overview -->
-            <template v-if="tab === 'overview'">
-                <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-                    <p class="mb-3 text-eyebrow uppercase text-brand-muted">
-                        {{ t('profile.activity') }}
-                    </p>
-                    <SharedActivityHeatmap :weeks="heat" />
-                </div>
-                <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-                    <p class="mb-3 text-eyebrow uppercase text-brand-muted">
-                        {{ t('profile.yourDecks') }}
-                    </p>
-                    <div v-if="store.summaries.length" class="flex flex-col gap-1">
-                        <NuxtLink
-                            v-for="d in store.summaries"
-                            :key="d.id"
-                            :to="`/decks/${d.id}`"
-                            class="flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors hover:bg-brand/10"
-                        >
-                            <span class="truncate font-display text-base text-cream">{{
-                                d.title
-                            }}</span>
-                            <span class="w-28 shrink-0">
-                                <SharedProgressBar :value="d.stats.masteredPct" />
-                            </span>
-                        </NuxtLink>
-                    </div>
-                    <p v-else class="text-body text-brand-muted">{{ t('profile.noDecks') }}</p>
-                </div>
-            </template>
-
             <!-- Edit -->
-            <template v-else-if="tab === 'edit'">
+            <template v-if="tab === 'edit'">
                 <div
                     class="flex flex-col gap-4 rounded-[20px] border border-line bg-bg-surface p-6"
                 >
@@ -130,10 +96,24 @@
                         <span class="mb-1.5 block text-small text-brand-muted">{{
                             t('profile.learning')
                         }}</span>
-                        <UiChipInput
-                            v-model="draft.learning"
+                        <UiSelect
+                            :model-value="''"
+                            :options="learningAddOptions"
                             :placeholder="t('profile.learningPlaceholder')"
+                            @update:model-value="addLearning"
                         />
+                        <div v-if="draft.learning.length" class="mt-2 flex flex-wrap gap-1.5">
+                            <button
+                                v-for="code in draft.learning"
+                                :key="code"
+                                type="button"
+                                class="inline-flex items-center gap-1 rounded-full border border-line-strong px-2.5 py-1 text-small text-cream-dim transition-colors hover:border-brand-muted hover:text-cream"
+                                @click="removeLearning(code)"
+                            >
+                                {{ LANGUAGES.find((l) => l.code === code)?.label ?? code }}
+                                <X class="size-3" />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -167,7 +147,7 @@
             </template>
 
             <!-- Achievements -->
-            <template v-else>
+            <template v-else-if="tab === 'achievements'">
                 <div class="rounded-[20px] border border-line bg-bg-surface p-5">
                     <div class="mb-4 flex items-center justify-between">
                         <p class="text-eyebrow uppercase text-brand-muted">
@@ -205,13 +185,142 @@
                     </div>
                 </div>
             </template>
+
+            <!-- Billing -->
+            <template v-else-if="tab === 'billing'">
+                <div class="rounded-[20px] border border-line bg-bg-surface p-6">
+                    <div v-if="billingStore.loading" class="flex justify-center py-8">
+                        <UiSpinner />
+                    </div>
+
+                    <template v-else-if="!billingStore.subscription">
+                        <p class="text-eyebrow uppercase text-brand-muted">
+                            {{ t('billing.settings.freePlan') }}
+                        </p>
+                        <p class="mt-2 text-body text-cream-dim">
+                            {{ t('billing.settings.freeBody') }}
+                        </p>
+                        <div class="mt-6">
+                            <NuxtLink to="/pricing">
+                                <UiButton variant="primary">{{
+                                    t('billing.settings.upgradeCta')
+                                }}</UiButton>
+                            </NuxtLink>
+                        </div>
+                    </template>
+
+                    <template v-else>
+                        <div class="flex items-center gap-3">
+                            <span
+                                :class="[
+                                    'rounded-full px-3 py-1 text-small font-semibold',
+                                    subStatusClass,
+                                ]"
+                            >
+                                {{
+                                    t(`billing.settings.status.${billingStore.subscription.status}`)
+                                }}
+                            </span>
+                            <span class="text-body text-cream-dim">
+                                {{ t(`billing.settings.plan.${billingStore.subscription.plan}`) }}
+                            </span>
+                        </div>
+
+                        <div
+                            v-if="billingStore.subscription.status === 'past_due'"
+                            class="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-small text-red-300"
+                        >
+                            {{ t('billing.settings.pastDueWarning') }}
+                        </div>
+
+                        <div class="mt-4 space-y-1 text-body text-cream-dim">
+                            <p
+                                v-if="
+                                    billingStore.subscription.status === 'trialing' &&
+                                    billingStore.subscription.trialEnd
+                                "
+                            >
+                                {{
+                                    t('billing.settings.trialEnds').replace(
+                                        '{date}',
+                                        fmtDate(billingStore.subscription.trialEnd),
+                                    )
+                                }}
+                            </p>
+                            <p
+                                v-if="
+                                    billingStore.subscription.status === 'active' ||
+                                    billingStore.subscription.status === 'trialing'
+                                "
+                            >
+                                {{
+                                    t('billing.settings.renewsOn').replace(
+                                        '{date}',
+                                        fmtDate(billingStore.subscription.currentPeriodEnd),
+                                    )
+                                }}
+                            </p>
+                            <p
+                                v-if="
+                                    billingStore.subscription.status === 'canceled' ||
+                                    billingStore.subscription.status === 'expired'
+                                "
+                            >
+                                {{
+                                    t('billing.settings.expiresOn').replace(
+                                        '{date}',
+                                        fmtDate(billingStore.subscription.currentPeriodEnd),
+                                    )
+                                }}
+                            </p>
+                            <p
+                                v-if="billingStore.subscription.cancelAtPeriodEnd"
+                                class="text-amber-400"
+                            >
+                                {{ t('billing.settings.cancelNote') }}
+                            </p>
+                        </div>
+
+                        <div class="mt-6 flex flex-wrap gap-3">
+                            <NuxtLink
+                                v-if="
+                                    billingStore.subscription.status === 'canceled' ||
+                                    billingStore.subscription.status === 'expired'
+                                "
+                                to="/pricing"
+                            >
+                                <UiButton variant="primary">{{
+                                    t('billing.settings.upgradeCta')
+                                }}</UiButton>
+                            </NuxtLink>
+                            <template v-if="billingStore.notConfigured">
+                                <p class="text-small text-cream-dim">
+                                    {{ t('billing.settings.notConfigured') }}
+                                </p>
+                            </template>
+                            <template v-else>
+                                <UiButton
+                                    variant="ghost"
+                                    :disabled="billing.portal.loading.value"
+                                    @click="billing.portal.execute()"
+                                >
+                                    <UiSpinner v-if="billing.portal.loading.value" size="sm" />
+                                    {{ t('billing.settings.manageBilling') }}
+                                </UiButton>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
         </div>
     </section>
 </template>
 
 <script setup lang="ts">
-import { Trophy, Lock, Camera } from 'lucide-vue-next';
+import { Trophy, Lock, Camera, X } from 'lucide-vue-next';
 import { useAuthStore, useAuth, useDecks, useToast, useT } from '#imports';
+import { useBillingStore } from '@/stores/billing';
+import { useBilling } from '@/composables/useBilling';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
@@ -229,6 +338,8 @@ const { store, fetchList } = useDecks();
 const prefs = usePreferencesStore();
 const stats = useStats();
 const achievements = useAchievements();
+const billingStore = useBillingStore();
+const billing = useBilling();
 const toast = useToast();
 const { t } = useT();
 
@@ -249,14 +360,25 @@ const onAvatar = async (e: Event) => {
     }
 };
 
-const tab = ref('overview');
+const tab = ref('edit');
 const tabs = computed(() => [
-    { value: 'overview', label: t('profile.overview') },
     { value: 'edit', label: t('profile.editProfile') },
     { value: 'achievements', label: t('profile.achievements') },
+    { value: 'billing', label: t('billing.settings.tabLabel') },
 ]);
 
 const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
+const learningAddOptions = computed(() =>
+    languageOptions.filter((o) => !draft.learning.includes(o.value)),
+);
+const addLearning = (code: string) => {
+    if (!code || draft.learning.includes(code)) return;
+    draft.learning.push(code);
+};
+const removeLearning = (code: string) => {
+    const i = draft.learning.indexOf(code);
+    if (i !== -1) draft.learning.splice(i, 1);
+};
 const goalOptions = computed(() => [
     { value: 'casual', label: t('profile.goalCasual'), note: t('profile.goalCasualNote') },
     { value: 'steady', label: t('profile.goalSteady'), note: t('profile.goalSteadyNote') },
@@ -279,8 +401,10 @@ const earnedCount = computed(() => achievements.items.value.filter((a) => a.earn
 const achName = (a: Achievement) => t(`achievements.${a.key}.name`, a.name);
 const achDesc = (a: Achievement) => t(`achievements.${a.key}.description`, a.description);
 
+const daysPracticed = computed(() => stats.series.value.filter((p) => p.value > 0).length);
+
 const quickStats = computed(() => [
-    { label: t('profile.statStreak'), value: `${stats.streak.value}d` },
+    { label: t('profile.statDaysPracticed'), value: daysPracticed.value },
     { label: t('profile.statReviewed'), value: stats.reviewed.value },
     { label: t('profile.statDecks'), value: store.summaries.length },
     { label: t('profile.statRetention'), value: `${stats.retention.value}%` },
@@ -346,14 +470,32 @@ const onSave = async () => {
     syncDraft();
 };
 
+const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    });
+
+const subStatusClass = computed(() => {
+    const s = billingStore.subscription?.status;
+    if (s === 'active') return 'bg-green-500/15 text-green-400';
+    if (s === 'trialing') return 'bg-brand/15 text-brand';
+    if (s === 'past_due') return 'bg-red-500/15 text-red-400';
+    if (s === 'canceled') return 'bg-amber-500/15 text-amber-400';
+    return 'bg-bg-muted text-cream-dim';
+});
+
 watch(() => auth.currentUser, syncDraft, { immediate: true });
 
 onMounted(async () => {
     await Promise.all([
         fetchList.execute({ cursor: null, append: false }),
         stats.load(),
+        stats.loadSeries('7'),
         achievements.load(),
         prefs.hydrate().catch(() => {}),
+        billingStore.load(),
     ]);
     syncDraft();
 });
