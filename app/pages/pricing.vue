@@ -153,6 +153,7 @@
 
 <script setup lang="ts">
 import { Check, X } from 'lucide-vue-next';
+import { useHead, useSiteConfig } from '#imports';
 import { useBillingStore } from '@/stores/billing';
 import { useAuthStore } from '@/stores/auth';
 import { useBilling } from '@/composables/useBilling';
@@ -164,8 +165,55 @@ const { t } = useT();
 const auth = useAuthStore();
 const billingStore = useBillingStore();
 const billing = useBilling();
+const site = useSiteConfig();
 
 useSeo({ title: t('pricing.seoTitle'), description: t('pricing.seoDesc') });
+
+// Machine-readable pricing so rich results and AI engines can answer "how much is
+// Mnemio." Annual premium is $8/mo billed yearly → $96/yr. Prices mirror the cards above.
+const base = (site.url || 'https://mnemio.xyz').replace(/\/$/, '');
+useHead({
+    script: [
+        {
+            type: 'application/ld+json',
+            key: 'ld-pricing',
+            innerHTML: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'Product',
+                name: 'Mnemio Premium',
+                description: t('pricing.seoDesc'),
+                brand: { '@type': 'Brand', name: 'Mnemio' },
+                url: `${base}/pricing`,
+                offers: [
+                    {
+                        '@type': 'Offer',
+                        name: 'Free',
+                        price: '0',
+                        priceCurrency: 'USD',
+                        availability: 'https://schema.org/InStock',
+                        url: `${base}/pricing`,
+                    },
+                    {
+                        '@type': 'Offer',
+                        name: 'Premium (monthly)',
+                        price: '10',
+                        priceCurrency: 'USD',
+                        availability: 'https://schema.org/InStock',
+                        url: `${base}/pricing`,
+                    },
+                    {
+                        '@type': 'Offer',
+                        name: 'Premium (annual)',
+                        price: '96',
+                        priceCurrency: 'USD',
+                        availability: 'https://schema.org/InStock',
+                        url: `${base}/pricing`,
+                    },
+                ],
+            }),
+        },
+    ],
+});
 
 const billingCycle = ref<'monthly' | 'annual'>('monthly');
 const priceError = ref(false);
