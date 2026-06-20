@@ -50,7 +50,8 @@ export default defineNuxtConfig({
     app: {
         pageTransition: { name: 'page', mode: 'out-in' },
         head: {
-            htmlAttrs: { lang: 'en' },
+            // `<html lang>` is set reactively from the active i18n locale in
+            // app/plugins/02.schema.ts (so it switches to `uk`); no static lang here.
             // `%s` is the per-page title set via useSeo; the default title below fills
             // it on pages that don't set one (so the brand name never doubles up).
             titleTemplate: '%s · Mnemio',
