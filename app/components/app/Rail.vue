@@ -129,7 +129,7 @@
                         <span class="grid w-11 shrink-0 place-items-center">
                             <img
                                 src="/images/mimi/axolotl.png"
-                                alt="Mimi"
+                                alt=""
                                 class="size-10 object-contain"
                                 style="filter: drop-shadow(0 4px 8px rgba(169, 142, 227, 0.4))"
                             />
