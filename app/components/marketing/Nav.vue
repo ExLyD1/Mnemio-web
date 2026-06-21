@@ -3,7 +3,7 @@
         <div class="mx-auto flex max-w-[1080px] items-center justify-between px-6 py-4">
             <NuxtLink to="/"><SharedBrandMark /></NuxtLink>
 
-            <div class="hidden gap-7 text-small md:flex">
+            <div v-if="!auth.isAuthenticated" class="hidden gap-7 text-small md:flex">
                 <NuxtLink
                     v-for="l in links"
                     :key="l.key"

@@ -17,15 +17,19 @@
 </template>
 
 <script setup lang="ts">
+import { useAuthStore } from '@/stores/auth';
 import { useBillingStore } from '@/stores/billing';
 
 const billingStore = useBillingStore();
 onMounted(() => billingStore.load());
 
-// Public, indexable routes that render in this app-shell layout. They need the
-// marketing footer for crawler-facing internal links + crawl equity.
+// Public, indexable routes that render in this app-shell layout get the marketing
+// footer for crawler-facing internal links — but only for logged-out visitors.
+// Authed users keep the clean app shell with no links back to marketing/blog/landing.
 const route = useRoute();
+const auth = useAuthStore();
 const showSeoFooter = computed(
-    () => route.path === '/pricing' || route.path.startsWith('/discover'),
+    () =>
+        !auth.isAuthenticated && (route.path === '/pricing' || route.path.startsWith('/discover')),
 );
 </script>
