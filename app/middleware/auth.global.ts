@@ -1,42 +1,44 @@
 import { useAuthStore } from '@/stores/auth';
 
-const PUBLIC_ROUTES = new Set([
-    '/',
-    '/login',
-    '/about',
-    '/blog',
-    '/privacy',
-    '/terms',
-    '/pricing',
-    '/billing/success',
-    '/billing/cancel',
-    '/auth/oauth/callback',
-    '/auth/oauth/error',
-]);
+// Routes that require a logged-in user. Everything NOT matched here is public and
+// open to anyone (landing, blog, discover, about, pricing, legal, OAuth + billing
+// callbacks) — so crawlers and logged-out visitors can read all content.
+const APP_PREFIXES = [
+    '/dashboard',
+    '/decks',
+    '/study',
+    '/review',
+    '/statistics',
+    '/profile',
+    '/onboarding',
+    '/ai',
+    '/settings',
+];
 
-// Public, crawler-facing learning content: the discover catalog, topic landing
-// pages, and individual public-deck pages. Server-rendered and indexable, so no
-// auth gate. (The private `/decks/**` owner app is unaffected.)
-const PUBLIC_PREFIXES = ['/discover'];
-
-const isPublic = (path: string): boolean =>
-    PUBLIC_ROUTES.has(path) || PUBLIC_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
+const requiresAuth = (path: string): boolean =>
+    APP_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
 
 export default defineNuxtRouteMiddleware((to) => {
+    // Client-side only: public pages still SSR for crawlers; the redirects below
+    // only steer the in-browser session.
     if (import.meta.server) {
         return;
     }
 
     const auth = useAuthStore();
 
-    if (isPublic(to.path)) {
-        if (auth.isAuthenticated && to.path === '/login') {
+    if (auth.isAuthenticated) {
+        // Convenience redirects for the two app-entry routes only. Content pages
+        // (blog, discover, about, pricing, …) stay open — we just don't link to
+        // them from the authed UI.
+        if (to.path === '/' || to.path === '/login') {
             return navigateTo('/dashboard');
         }
         return;
     }
 
-    if (!auth.isAuthenticated) {
+    // Logged out: the app requires sign-in; all public content is open.
+    if (requiresAuth(to.path)) {
         return navigateTo('/login');
     }
 });
