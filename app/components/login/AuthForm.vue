@@ -97,8 +97,14 @@ import { useForm, useField } from 'vee-validate';
 import { loginSchema, registerSchema } from '@/schemas/auth';
 import { toFormValidator } from '@/utils/zodValidator';
 import { useT } from '@/composables/useT';
+import { useAnalytics } from '@/composables/useAnalytics';
 
 const { t } = useT();
+const route = useRoute();
+const analytics = useAnalytics();
+
+// Where the registration intent came from (e.g. a discover deck copy redirect).
+const entryPoint = () => String(route.query.from ?? route.query.intent ?? 'login_page');
 
 const props = withDefaults(
     defineProps<{ initialTab?: 'register' | 'login'; loading?: boolean }>(),
@@ -132,6 +138,9 @@ const isPasswordValid = computed(() => (password.value?.length ?? 0) >= 8);
 watch(activeTab, () => resetForm());
 
 const onSubmit = handleSubmit((values) => {
+    if (activeTab.value === 'register') {
+        analytics.track('signup_started', { method: 'email', entry_point: entryPoint() });
+    }
     emit('submit', {
         email: values.email,
         password: values.password,
@@ -183,6 +192,9 @@ const oauthBase = computed(() => String(config.public.oauthBase || config.public
 const onSocial = async (social: Social) => {
     if (!social.enabled || social.provider !== 'google' || googleBusy.value) {
         return;
+    }
+    if (activeTab.value === 'register') {
+        analytics.track('signup_started', { method: 'google', entry_point: entryPoint() });
     }
     const base = oauthBase.value;
     const url = `${base}/api/v1/auth/oauth/google`;
