@@ -271,6 +271,7 @@
 import { Volume2, Image as ImageIcon, Check, X, ArrowRight } from 'lucide-vue-next';
 import { useDecks, useCards, useToast, useT } from '#imports';
 import { uploadMedia } from '@/api/media';
+import { useAnalytics } from '@/composables/useAnalytics';
 import * as aiApi from '@/api/ai';
 import type { MediaKind } from '@/api/media';
 import type { CardDifficulty } from '@/types/deck';
@@ -284,6 +285,10 @@ const { store, fetchOne } = useDecks();
 const { addCard } = useCards();
 const toast = useToast();
 const { t } = useT();
+const analytics = useAnalytics();
+
+// Whether AI enrichment touched the current card (drives card_added.method).
+const usedEnrich = ref(false);
 
 useSeo({ title: t('seo.cardAddTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -357,6 +362,8 @@ const callEnrich = async (fields: aiApi.EnrichField[]) => {
     }
     chatLoading.value = true;
     scrollChat();
+    const startedAt = Date.now();
+    analytics.track('ai_feature_started', { ai_feature: 'enrich_words', context: 'card_add' });
     try {
         const res = await aiApi.enrichWords({
             words: [front.value.trim()],
@@ -366,6 +373,13 @@ const callEnrich = async (fields: aiApi.EnrichField[]) => {
         });
         const card = res.cards[0];
         if (!card) return;
+        usedEnrich.value = true;
+        analytics.track('ai_feature_completed', {
+            ai_feature: 'enrich_words',
+            context: 'card_add',
+            result_size: res.cards.length,
+            duration_ms: Date.now() - startedAt,
+        });
 
         if (fields.includes('tags') && card.tags?.length) {
             tags.value = [...new Set([...tags.value, ...(card.tags ?? [])])];
@@ -464,6 +478,7 @@ const reset = () => {
     audioUrl.value = null;
     imageUrl.value = null;
     chatMessages.value = [];
+    usedEnrich.value = false;
 };
 
 const save = async (): Promise<boolean> => {
@@ -480,6 +495,11 @@ const save = async (): Promise<boolean> => {
         toast.error(addCard.error.value.message);
         return false;
     }
+    analytics.track('card_added', {
+        deck_id: id.value,
+        method: usedEnrich.value ? 'ai_enriched' : 'manual',
+        count: 1,
+    });
     return true;
 };
 
