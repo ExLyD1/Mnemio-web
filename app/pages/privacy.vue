@@ -23,8 +23,12 @@
             </section>
             <section>
                 <h2 class="mb-3 font-display text-h3 text-cream">{{ t('privacy.s4Title') }}</h2>
+                <p>{{ t('privacy.s4Body') }}</p>
+            </section>
+            <section>
+                <h2 class="mb-3 font-display text-h3 text-cream">{{ t('privacy.s5Title') }}</h2>
                 <p>
-                    {{ t('privacy.s4Body') }}
+                    {{ t('privacy.s5Body') }}
                     <a href="mailto:privacy@mnemio.app" class="text-accent hover:underline"
                         >privacy@mnemio.app</a
                     >.

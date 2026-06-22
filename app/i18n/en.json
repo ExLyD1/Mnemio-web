@@ -872,8 +872,10 @@
         "s2Body": "Your data is used solely to operate the service — to authenticate you, sync your study progress, and improve the app experience.",
         "s3Title": "3. Data retention",
         "s3Body": "You can delete your account at any time from the Profile page. Upon deletion, all associated data is permanently removed within 30 days.",
-        "s4Title": "4. Contact",
-        "s4Body": "For privacy-related questions contact us at"
+        "s4Title": "4. Analytics & cookies",
+        "s4Body": "With your consent, we use Mixpanel and Google Analytics to understand how the app is used and improve it. These set cookies and collect anonymous usage events (for example, decks created, study sessions completed, and pages viewed). We never send your email, name, or the content of your cards. You can accept or decline analytics from the cookie banner, and change your mind anytime by clearing the consent cookie.",
+        "s5Title": "5. Contact",
+        "s5Body": "For privacy-related questions contact us at"
     },
     "terms": {
         "backToLogin": "Back to login",
