@@ -34,7 +34,9 @@ export const analyticsState = state;
  * dynamic import so the SDK stays out of the bundle when analytics is disabled.
  */
 export const loadMixpanel = async (token: string, debug: boolean): Promise<void> => {
-    if (state.mp) return;
+    if (state.mp) {
+        return;
+    }
     const { default: mixpanel } = await import('mixpanel-browser');
     mixpanel.init(token, {
         debug,

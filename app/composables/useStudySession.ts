@@ -42,9 +42,6 @@ export const useStudySession = () => {
     // without re-reading the (possibly mutated) session object.
     const modeProp = ref<StudyModeProp>('flashcard');
     const deckId = ref<string>('');
-    const durationSec = () => Math.round(elapsedMs.value / 1000);
-    const accuracy = () =>
-        totalCount.value ? Math.round((correctCount.value / totalCount.value) * 100) : 0;
 
     const { pause: pauseTimer, resume: resumeTimer } = useIntervalFn(
         () => {
@@ -62,6 +59,11 @@ export const useStudySession = () => {
     const progress = computed(() =>
         totalCount.value ? Math.round((currentIndex.value / totalCount.value) * 100) : 0,
     );
+
+    // Analytics helpers (defined after the computeds they read).
+    const durationSec = () => Math.round(elapsedMs.value / 1000);
+    const accuracy = () =>
+        totalCount.value ? Math.round((correctCount.value / totalCount.value) * 100) : 0;
 
     const start = async (deck: Deck, mode: StudyMode) => {
         if (deck.cards.length === 0) {
@@ -173,7 +175,9 @@ export const useStudySession = () => {
     // the analytics batch before the page goes away (exit() covers in-app leaves).
     if (import.meta.client) {
         const onLeave = () => {
-            if (state.value !== 'active') return;
+            if (state.value !== 'active') {
+                return;
+            }
             analytics.track('study_session_abandoned', {
                 study_mode: modeProp.value,
                 deck_id: deckId.value,
@@ -184,7 +188,9 @@ export const useStudySession = () => {
         };
         useEventListener(window, 'pagehide', onLeave);
         useEventListener(document, 'visibilitychange', () => {
-            if (document.visibilityState === 'hidden') onLeave();
+            if (document.visibilityState === 'hidden') {
+                onLeave();
+            }
         });
     }
 

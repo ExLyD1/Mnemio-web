@@ -6,6 +6,7 @@
  * a token is present, AND the user granted consent. All SDK calls are wrapped
  * so analytics can never throw into product code.
  */
+import type { OverridedMixpanel } from 'mixpanel-browser';
 import { useConsentStore } from '@/stores/consent';
 import { analyticsState } from '@/analytics/client';
 import {
@@ -20,60 +21,76 @@ export const useAnalytics = () => {
     const consent = useConsentStore();
 
     // Live gate: config/token resolved once at plugin init; consent can flip
-    // at runtime when the user clicks Accept, so read it on every call.
-    const ready = () => analyticsState.enabled && consent.isGranted && !!analyticsState.mp;
+    // at runtime when the user clicks Accept, so read it on every call. Returns
+    // the SDK instance (narrowed non-null) only when everything is ready.
+    const instance = (): OverridedMixpanel | null => {
+        if (!analyticsState.enabled || !consent.isGranted) {
+            return null;
+        }
+        return analyticsState.mp;
+    };
 
-    const safe = (fn: () => void) => {
-        if (!ready()) return;
+    // Run fn with the live SDK instance; swallow everything so analytics can
+    // never break product code.
+    const withMp = (fn: (mp: OverridedMixpanel) => void) => {
+        const mp = instance();
+        if (!mp) {
+            return;
+        }
         try {
-            fn();
+            fn(mp);
         } catch {
-            // Analytics must never break product code.
+            /* analytics is best-effort */
         }
     };
 
     const track = <N extends EventName>(name: N, props: PropsFor<N>) => {
-        safe(() => analyticsState.mp!.track(name, props as Record<string, unknown>));
+        withMp((mp) => mp.track(name, props));
         // Mirror the small conversion set to GA4 (acquisition only).
         if (analyticsState.gtag && GA4_CONVERSION_EVENTS.has(name)) {
             try {
-                analyticsState.gtag('event', name, props as Record<string, unknown>);
+                analyticsState.gtag('event', name, props);
             } catch {
-                /* noop */
+                /* GA4 is best-effort */
             }
         }
     };
 
     const identify = (userId: string) => {
-        safe(() => analyticsState.mp!.identify(userId));
+        withMp((mp) => {
+            mp.identify(userId);
+        });
     };
 
     const setUserProps = (p: Partial<UserProps>) => {
         if (import.meta.dev) {
             for (const key of Object.keys(p)) {
                 if (!USER_PROP_KEYS.includes(key as keyof UserProps)) {
-                    // eslint-disable-next-line no-console
                     console.warn(`[analytics] unknown user prop "${key}" — not in allowlist`);
                 }
             }
         }
-        safe(() => analyticsState.mp!.people.set(p));
+        withMp((mp) => {
+            mp.people.set(p);
+        });
     };
 
     const registerSuper = (p: Record<string, unknown>) => {
-        safe(() => analyticsState.mp!.register(p));
+        withMp((mp) => mp.register(p));
     };
 
     const reset = () => {
-        safe(() => analyticsState.mp!.reset());
+        withMp((mp) => mp.reset());
     };
 
     const flush = () => {
-        // mixpanel-browser flushes its batch queue via the (undocumented but
-        // stable) internal request batchers; guard defensively.
-        safe(() => {
-            const mp = analyticsState.mp as unknown as { _flush?: () => void };
-            mp._flush?.();
+        // mixpanel-browser has no public flush in batch mode; nudge the internal
+        // batcher if present, otherwise this is a no-op.
+        withMp((mp) => {
+            const batcher = (mp as { _flush?: () => void })._flush;
+            if (typeof batcher === 'function') {
+                batcher.call(mp);
+            }
         });
     };
 
