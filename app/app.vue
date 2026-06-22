@@ -4,4 +4,5 @@
         <NuxtPage :key="$i18n.locale" />
     </NuxtLayout>
     <UiToastContainer />
+    <SharedConsentBanner />
 </template>

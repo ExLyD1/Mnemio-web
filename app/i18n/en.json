@@ -977,5 +977,12 @@
         "pastDueCta": "Update billing",
         "canceled": "Your premium plan ends on {date}. Resubscribe to keep access.",
         "canceledCta": "Renew"
+    },
+    "consent": {
+        "title": "Cookie consent",
+        "message": "We use analytics cookies to understand how Mnemio is used and improve it. No personal study content is collected.",
+        "accept": "Accept",
+        "decline": "Decline",
+        "learnMore": "Learn more"
     }
 }
