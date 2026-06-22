@@ -1,5 +1,5 @@
 import { ref, computed, onBeforeUnmount } from 'vue';
-import { useIntervalFn } from '@vueuse/core';
+import { useIntervalFn, useEventListener } from '@vueuse/core';
 import type { Card, Deck } from '@/types/deck';
 import type { StudyMode, StudySession } from '@/types/session';
 import { useSessionsStore } from '@/stores/sessions';
@@ -168,6 +168,25 @@ export const useStudySession = () => {
         error.value = null;
         pauseTimer();
     };
+
+    // Tab close / app backgrounded mid-session → record the drop-off and flush
+    // the analytics batch before the page goes away (exit() covers in-app leaves).
+    if (import.meta.client) {
+        const onLeave = () => {
+            if (state.value !== 'active') return;
+            analytics.track('study_session_abandoned', {
+                study_mode: modeProp.value,
+                deck_id: deckId.value,
+                cards_reviewed: currentIndex.value,
+                duration_sec: durationSec(),
+            });
+            analytics.flush();
+        };
+        useEventListener(window, 'pagehide', onLeave);
+        useEventListener(document, 'visibilitychange', () => {
+            if (document.visibilityState === 'hidden') onLeave();
+        });
+    }
 
     onBeforeUnmount(() => {
         pauseTimer();
