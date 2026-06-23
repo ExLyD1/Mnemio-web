@@ -51,9 +51,10 @@ export const loadMixpanel = async (token: string, debug: boolean): Promise<void>
         opt_out_tracking_by_default: true,
         // We send attribution as super-props; let Mixpanel keep its own too.
         ignore_dnt: false,
-        // Auto-track pageviews, including SPA route changes (history-based) — the
-        // 'full-url' mode re-fires on Vue Router navigations, not just first load.
-        track_pageview: 'full-url',
+        // Pageviews are tracked manually via the router in 03.analytics.client.ts
+        // (so SPA navigations are consent-gated and logged) — disable auto-track
+        // here to avoid double-counting.
+        track_pageview: false,
     });
     state.mp = mixpanel;
 };

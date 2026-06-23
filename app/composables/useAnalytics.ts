@@ -30,6 +30,14 @@ export const useAnalytics = () => {
         return analyticsState.mp;
     };
 
+    // Dev-visible breadcrumb whenever something is actually sent (no-op calls
+    // stay silent so the log reflects reality). Mirrors the "[Meta Pixel] …" style.
+    const log = (message: string, payload?: unknown) => {
+        if (import.meta.dev) {
+            console.info(`[Mixpanel] ${message}`, payload ?? '');
+        }
+    };
+
     // Run fn with the live SDK instance; swallow everything so analytics can
     // never break product code.
     const withMp = (fn: (mp: OverridedMixpanel) => void) => {
@@ -45,7 +53,10 @@ export const useAnalytics = () => {
     };
 
     const track = <N extends EventName>(name: N, props: PropsFor<N>) => {
-        withMp((mp) => mp.track(name, props));
+        withMp((mp) => {
+            mp.track(name, props);
+            log(`Tracked ${name}`, props);
+        });
         // Mirror the small conversion set to GA4 (acquisition only).
         if (analyticsState.gtag && GA4_CONVERSION_EVENTS.has(name)) {
             try {
@@ -56,9 +67,19 @@ export const useAnalytics = () => {
         }
     };
 
+    // Pageview, routed through our pipeline so it's consent-gated and logged
+    // (replaces mixpanel's auto track_pageview so SPA navigations also log).
+    const trackPageview = (path?: string) => {
+        withMp((mp) => {
+            mp.track_pageview(path ? { path } : undefined);
+            log('Tracked PageView', path ?? '');
+        });
+    };
+
     const identify = (userId: string) => {
         withMp((mp) => {
             mp.identify(userId);
+            log(`Identified ${userId}`);
         });
     };
 
@@ -94,5 +115,5 @@ export const useAnalytics = () => {
         });
     };
 
-    return { track, identify, setUserProps, registerSuper, reset, flush };
+    return { track, trackPageview, identify, setUserProps, registerSuper, reset, flush };
 };

@@ -122,7 +122,16 @@ export default defineNuxtPlugin(async (nuxtApp) => {
             is_authenticated: auth.isAuthenticated,
             entry_path: attribution.landing_path ?? route.path,
         });
+
+        // Initial pageview; subsequent SPA navigations are tracked by the
+        // router hook registered below.
+        analytics.trackPageview(route.path);
     };
+
+    // Track every SPA route change as a pageview (no-op until consent + ready).
+    useRouter().afterEach((to) => {
+        analytics.trackPageview(to.path);
+    });
 
     if (consent.isGranted) {
         await bootstrap();
