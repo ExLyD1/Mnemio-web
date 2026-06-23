@@ -40,12 +40,20 @@ export const loadMixpanel = async (token: string, debug: boolean): Promise<void>
     const { default: mixpanel } = await import('mixpanel-browser');
     mixpanel.init(token, {
         debug,
-        batch_requests: true,
         persistence: 'localStorage',
+        // Batched delivery (Mixpanel-recommended defaults) — fewer requests,
+        // flushed on a short interval and on page unload.
+        batch_requests: true,
+        batch_size: 50,
+        batch_flush_interval_ms: 30000,
+        api_host: 'https://api.mixpanel.com',
         // Opted out until the user grants consent; the plugin opts in on accept.
         opt_out_tracking_by_default: true,
         // We send attribution as super-props; let Mixpanel keep its own too.
         ignore_dnt: false,
+        // Pageviews are owned by GA4 (acquisition); Mixpanel stays product-event
+        // focused, so we don't auto-track pageviews here.
+        track_pageview: false,
     });
     state.mp = mixpanel;
 };
