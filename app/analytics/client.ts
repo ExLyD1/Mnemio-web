@@ -51,9 +51,9 @@ export const loadMixpanel = async (token: string, debug: boolean): Promise<void>
         opt_out_tracking_by_default: true,
         // We send attribution as super-props; let Mixpanel keep its own too.
         ignore_dnt: false,
-        // Pageviews are owned by GA4 (acquisition); Mixpanel stays product-event
-        // focused, so we don't auto-track pageviews here.
-        track_pageview: false,
+        // Auto-track pageviews, including SPA route changes (history-based) — the
+        // 'full-url' mode re-fires on Vue Router navigations, not just first load.
+        track_pageview: 'full-url',
     });
     state.mp = mixpanel;
 };
