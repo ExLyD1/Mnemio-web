@@ -36,7 +36,11 @@ export const analyticsState = state;
  * Lazily load + init the mixpanel-browser singleton. Idempotent. Kept as a
  * dynamic import so the SDK stays out of the bundle when analytics is disabled.
  */
-export const loadMixpanel = async (token: string, debug: boolean): Promise<void> => {
+export const loadMixpanel = async (
+    token: string,
+    debug: boolean,
+    apiHost: string,
+): Promise<void> => {
     if (state.mp) {
         return;
     }
@@ -49,7 +53,9 @@ export const loadMixpanel = async (token: string, debug: boolean): Promise<void>
         batch_requests: true,
         batch_size: 50,
         batch_flush_interval_ms: 30000,
-        api_host: 'https://api.mixpanel.com',
+        // Must match the project's data residency — EU projects (eu.mixpanel.com)
+        // only ingest at api-eu.mixpanel.com; sending to the US host silently drops.
+        api_host: apiHost,
         // Track from the first pageview — no consent gate.
         opt_out_tracking_by_default: false,
         // We send attribution as super-props; let Mixpanel keep its own too.
