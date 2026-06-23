@@ -8,7 +8,6 @@
  * No product events are fired here except `app_opened`. Everything else lives at
  * its call-site via useAnalytics(). See docs/analytics-implementation-plan.md.
  */
-import { useGtag } from '#imports';
 import { useAuthStore } from '@/stores/auth';
 import { analyticsState, loadMixpanel } from '@/analytics/client';
 import { useAnalytics } from '@/composables/useAnalytics';
@@ -76,15 +75,13 @@ export default defineNuxtPlugin((nuxtApp) => {
     const analytics = useAnalytics();
     const route = useRoute();
 
-    // GA4 forwarder (acquisition only). The tag loads on every page via nuxt-gtag
-    // (enabled in nuxt.config); we just keep a reference for the conversion mirror.
-    // nuxt-gtag's composable types aren't resolved by the linter (auto-import),
-    // so pin the shape we use.
-    const useGtagTyped = useGtag as () => {
-        gtag: (command: string, ...args: unknown[]) => void;
+    // GA4 forwarder (acquisition only). The gtag.js tag is server-rendered in
+    // <head> (nuxt.config), which defines the global `gtag`/`dataLayer`; mirror
+    // the conversion events to it.
+    analyticsState.gtag = (command: string, ...args: unknown[]) => {
+        const w = window as unknown as { gtag?: (...a: unknown[]) => void };
+        w.gtag?.(command, ...args);
     };
-    const { gtag } = useGtagTyped();
-    analyticsState.gtag = gtag;
 
     // Track every SPA route change (no-op until the SDK has loaded below).
     useRouter().afterEach((to) => {
