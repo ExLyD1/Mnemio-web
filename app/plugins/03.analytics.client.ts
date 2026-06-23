@@ -104,6 +104,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
         analytics.registerSuper({
             platform: 'web',
+            // Tag every event so dev/local traffic can be excluded from reports
+            // even if analytics is left on in development.
+            environment: import.meta.dev ? 'development' : 'production',
             plan: auth.plan,
             app_locale: locale ?? 'en',
             acquisition_source: attribution.referrer ?? attribution.utm_source ?? 'direct',
