@@ -55,19 +55,13 @@ const resolveAttribution = (query: Record<string, unknown>): Attribution => {
 
 export default defineNuxtPlugin((nuxtApp) => {
     const config = useRuntimeConfig();
-    const {
-        analyticsEnabled,
-        analyticsDebug,
-        mixpanelToken,
-        mixpanelApiHost,
-        analyticsCardSampling,
-    } = config.public as {
-        analyticsEnabled: boolean;
-        analyticsDebug: boolean;
-        mixpanelToken: string;
-        mixpanelApiHost: string;
-        analyticsCardSampling: number;
-    };
+    const { analyticsEnabled, analyticsDebug, mixpanelToken, analyticsCardSampling } =
+        config.public as {
+            analyticsEnabled: boolean;
+            analyticsDebug: boolean;
+            mixpanelToken: string;
+            analyticsCardSampling: number;
+        };
 
     analyticsState.enabled = Boolean(analyticsEnabled) && Boolean(mixpanelToken);
     analyticsState.cardSampling = Number(analyticsCardSampling) || 0;
@@ -102,7 +96,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         const locale = (nuxtApp.$i18n as { locale?: { value?: string } } | undefined)?.locale
             ?.value;
 
-        await loadMixpanel(mixpanelToken, analyticsState.debug, mixpanelApiHost);
+        await loadMixpanel(mixpanelToken, analyticsState.debug);
 
         analytics.registerSuper({
             platform: 'web',

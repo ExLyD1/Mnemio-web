@@ -170,11 +170,6 @@ export default defineNuxtConfig({
             // always logs). Turn on for a deployed env to verify, off for real prod.
             analyticsDebug: false,
             mixpanelToken: process.env.NUXT_PUBLIC_MIXPANEL_TOKEN ?? '',
-            // Mixpanel ingestion host — MUST match the project's data residency.
-            // The Mnemio projects are EU (eu.mixpanel.com), so default to the EU
-            // endpoint; override with NUXT_PUBLIC_MIXPANEL_API_HOST for a US project.
-            mixpanelApiHost:
-                process.env.NUXT_PUBLIC_MIXPANEL_API_HOST ?? 'https://api-eu.mixpanel.com',
             ga4Id: process.env.NUXT_PUBLIC_GA4_ID ?? '',
             // 0..1 sampling for the high-volume per-card event (off by default;
             // study_card_answered is otherwise aggregated into the session event).

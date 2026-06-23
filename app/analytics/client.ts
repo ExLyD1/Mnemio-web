@@ -36,11 +36,7 @@ export const analyticsState = state;
  * Lazily load + init the mixpanel-browser singleton. Idempotent. Kept as a
  * dynamic import so the SDK stays out of the bundle when analytics is disabled.
  */
-export const loadMixpanel = async (
-    token: string,
-    debug: boolean,
-    apiHost: string,
-): Promise<void> => {
+export const loadMixpanel = async (token: string, debug: boolean): Promise<void> => {
     if (state.mp) {
         return;
     }
@@ -48,14 +44,15 @@ export const loadMixpanel = async (
     mixpanel.init(token, {
         debug,
         persistence: 'localStorage',
-        // Batched delivery (Mixpanel-recommended defaults) — fewer requests,
-        // flushed on a short interval and on page unload.
-        batch_requests: true,
+        // Batch in production for fewer requests; in debug send each event
+        // immediately so the per-event send callback (and our console log) fires
+        // right away and reflects the real, server-acknowledged result.
+        batch_requests: !debug,
         batch_size: 50,
         batch_flush_interval_ms: 30000,
-        // Must match the project's data residency — EU projects (eu.mixpanel.com)
-        // only ingest at api-eu.mixpanel.com; sending to the US host silently drops.
-        api_host: apiHost,
+        // The Mnemio projects are EU data residency (eu.mixpanel.com) — they only
+        // ingest at api-eu.mixpanel.com; the US host silently drops every event.
+        api_host: 'https://api-eu.mixpanel.com',
         // Track from the first pageview — no consent gate.
         opt_out_tracking_by_default: false,
         // We send attribution as super-props; let Mixpanel keep its own too.

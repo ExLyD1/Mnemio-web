@@ -2,11 +2,11 @@
  * useAnalytics — the ONLY analytics surface components/stores/composables touch.
  * Typed against app/analytics/events.ts so event names and props can't drift.
  *
- * Every method is a hard no-op unless analytics is enabled (runtime config),
- * a token is present, AND the user granted consent. All SDK calls are wrapped
- * so analytics can never throw into product code.
+ * Every method is a hard no-op unless analytics is enabled (runtime config) and
+ * a token is present. All SDK calls are wrapped so analytics can never throw into
+ * product code.
  */
-import type { OverridedMixpanel } from 'mixpanel-browser';
+import type { OverridedMixpanel, Response as MixpanelResponse } from 'mixpanel-browser';
 import { analyticsState } from '@/analytics/client';
 import {
     GA4_CONVERSION_EVENTS,
@@ -26,14 +26,32 @@ export const useAnalytics = () => {
         return analyticsState.mp;
     };
 
-    // Breadcrumb whenever something is actually sent (no-op calls stay silent so
-    // the log reflects reality). Mirrors the "[Meta Pixel] …" style. Shows on the
-    // dev server always, and on deployed builds when NUXT_PUBLIC_ANALYTICS_DEBUG=true.
+    // Logging is enabled on the dev server, or on a deployed build with
+    // NUXT_PUBLIC_ANALYTICS_DEBUG=true.
+    const logging = import.meta.dev || analyticsState.debug;
+
     const log = (message: string, payload?: unknown) => {
-        if (import.meta.dev || analyticsState.debug) {
+        if (logging) {
             console.info(`[Mixpanel] ${message}`, payload ?? '');
         }
     };
+
+    // Did Mixpanel actually ingest the event? Truthy = sent + acknowledged by the
+    // server; 0 / {status:0} = dropped (opt-out, ad-blocker, network). In debug we
+    // disable batching so this callback fires per request, making the log honest.
+    const wasSent = (response: MixpanelResponse): boolean =>
+        response === 1 || (typeof response === 'object' && response.status === 1);
+
+    // Builds the send callback that logs the *real* outcome (only when logging).
+    const onResult =
+        (label: string, payload?: unknown) =>
+        (response: MixpanelResponse): void => {
+            if (wasSent(response)) {
+                log(`Tracked ${label}`, payload);
+            } else {
+                log(`NOT tracked (dropped — opt-out / blocker / network): ${label}`, payload);
+            }
+        };
 
     // Run fn with the live SDK instance; swallow everything so analytics can
     // never break product code.
@@ -51,8 +69,13 @@ export const useAnalytics = () => {
 
     const track = <N extends EventName>(name: N, props: PropsFor<N>) => {
         withMp((mp) => {
-            mp.track(name, props);
-            log(`Tracked ${name}`, props);
+            // Attach the send callback only when logging so production keeps its
+            // normal batched delivery untouched.
+            if (logging) {
+                mp.track(name, props, onResult(name, props));
+            } else {
+                mp.track(name, props);
+            }
         });
         // Mirror the small conversion set to GA4 (acquisition only).
         if (analyticsState.gtag && GA4_CONVERSION_EVENTS.has(name)) {
@@ -64,12 +87,26 @@ export const useAnalytics = () => {
         }
     };
 
-    // Pageview, routed through our pipeline so it's consent-gated and logged
-    // (replaces mixpanel's auto track_pageview so SPA navigations also log).
+    // Pageview as Mixpanel's own web-pageview event, tracked through track() so we
+    // get the same send-callback confirmation (the SDK's track_pageview has no
+    // callback). Fired on initial load + every SPA route change.
     const trackPageview = (path?: string) => {
         withMp((mp) => {
-            mp.track_pageview(path ? { path } : undefined);
-            log('Tracked PageView', path ?? '');
+            const props = {
+                current_url_path: window.location.pathname,
+                current_url_search: window.location.search,
+                current_page_title: document.title,
+                ...(path ? { path } : {}),
+            };
+            if (logging) {
+                mp.track(
+                    '$mp_web_page_view',
+                    props,
+                    onResult('PageView', path ?? props.current_url_path),
+                );
+            } else {
+                mp.track('$mp_web_page_view', props);
+            }
         });
     };
 
