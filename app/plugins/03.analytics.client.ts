@@ -8,7 +8,6 @@
  */
 import { useGtag } from '#imports';
 import { useAuthStore } from '@/stores/auth';
-import { useConsentStore } from '@/stores/consent';
 import { analyticsState, loadMixpanel } from '@/analytics/client';
 import { useAnalytics } from '@/composables/useAnalytics';
 
@@ -69,82 +68,49 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     }
 
     const auth = useAuthStore();
-    const consent = useConsentStore();
     const analytics = useAnalytics();
     const route = useRoute();
 
-    // GA4 forwarder (acquisition only) — wired even before consent; we only
-    // enable the GA4 tag once consent is granted. nuxt-gtag's composable types
-    // aren't resolved by the linter (auto-import), so pin the shape we use.
+    // GA4 forwarder (acquisition only). The tag loads on every page via nuxt-gtag
+    // (enabled in nuxt.config); we just keep a reference for the conversion mirror.
+    // nuxt-gtag's composable types aren't resolved by the linter (auto-import),
+    // so pin the shape we use.
     const useGtagTyped = useGtag as () => {
         gtag: (command: string, ...args: unknown[]) => void;
-        enableAnalytics: () => void;
     };
-    const { gtag, enableAnalytics } = useGtagTyped();
+    const { gtag } = useGtagTyped();
     analyticsState.gtag = gtag;
 
     const attribution = resolveAttribution(route.query);
     const locale = (nuxtApp.$i18n as { locale?: { value?: string } } | undefined)?.locale?.value;
 
-    let bootstrapped = false;
+    // No consent gate — initialise immediately and track from the first pageview.
+    await loadMixpanel(mixpanelToken, import.meta.dev);
 
-    const bootstrap = async () => {
-        if (bootstrapped || !consent.isGranted) {
-            return;
-        }
-        bootstrapped = true;
+    analytics.registerSuper({
+        platform: 'web',
+        // Tag every event so dev/local traffic can be excluded from reports
+        // even if analytics is left on in development.
+        environment: import.meta.dev ? 'development' : 'production',
+        plan: auth.plan,
+        app_locale: locale ?? 'en',
+        acquisition_source: attribution.referrer ?? attribution.utm_source ?? 'direct',
+        ...attribution,
+    });
 
-        await loadMixpanel(mixpanelToken, import.meta.dev);
-        analyticsState.mp?.opt_in_tracking();
-        try {
-            enableAnalytics();
-        } catch {
-            /* GA4 optional */
-        }
+    if (auth.isAuthenticated && auth.currentUser) {
+        analytics.identify(auth.currentUser.id);
+        analytics.setUserProps({ plan: auth.plan, app_locale: locale ?? 'en' });
+    }
 
-        analytics.registerSuper({
-            platform: 'web',
-            // Tag every event so dev/local traffic can be excluded from reports
-            // even if analytics is left on in development.
-            environment: import.meta.dev ? 'development' : 'production',
-            plan: auth.plan,
-            app_locale: locale ?? 'en',
-            acquisition_source: attribution.referrer ?? attribution.utm_source ?? 'direct',
-            ...attribution,
-        });
+    analytics.track('app_opened', {
+        is_authenticated: auth.isAuthenticated,
+        entry_path: attribution.landing_path ?? route.path,
+    });
 
-        if (auth.isAuthenticated && auth.currentUser) {
-            analytics.identify(auth.currentUser.id);
-            analytics.setUserProps({ plan: auth.plan, app_locale: locale ?? 'en' });
-        }
-
-        analytics.track('app_opened', {
-            is_authenticated: auth.isAuthenticated,
-            entry_path: attribution.landing_path ?? route.path,
-        });
-
-        // Initial pageview; subsequent SPA navigations are tracked by the
-        // router hook registered below.
-        analytics.trackPageview(route.path);
-    };
-
-    // Track every SPA route change as a pageview (no-op until consent + ready).
+    // Initial pageview, then every SPA route change.
+    analytics.trackPageview(route.path);
     useRouter().afterEach((to) => {
         analytics.trackPageview(to.path);
     });
-
-    if (consent.isGranted) {
-        await bootstrap();
-    } else {
-        // Bootstrap the moment the user accepts the consent banner.
-        const stop = watch(
-            () => consent.isGranted,
-            (granted) => {
-                if (granted) {
-                    stop();
-                    void bootstrap();
-                }
-            },
-        );
-    }
 });

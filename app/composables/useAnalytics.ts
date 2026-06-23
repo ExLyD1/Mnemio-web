@@ -7,7 +7,6 @@
  * so analytics can never throw into product code.
  */
 import type { OverridedMixpanel } from 'mixpanel-browser';
-import { useConsentStore } from '@/stores/consent';
 import { analyticsState } from '@/analytics/client';
 import {
     GA4_CONVERSION_EVENTS,
@@ -18,13 +17,10 @@ import {
 } from '@/analytics/events';
 
 export const useAnalytics = () => {
-    const consent = useConsentStore();
-
-    // Live gate: config/token resolved once at plugin init; consent can flip
-    // at runtime when the user clicks Accept, so read it on every call. Returns
-    // the SDK instance (narrowed non-null) only when everything is ready.
+    // Returns the SDK instance (narrowed non-null) only when analytics is enabled
+    // and the SDK has been initialised by the bootstrap plugin.
     const instance = (): OverridedMixpanel | null => {
-        if (!analyticsState.enabled || !consent.isGranted) {
+        if (!analyticsState.enabled) {
             return null;
         }
         return analyticsState.mp;

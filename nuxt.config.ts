@@ -14,12 +14,12 @@ export default defineNuxtConfig({
         'nuxt-gtag',
     ],
 
-    // GA4 (acquisition only). Disabled at boot; the analytics plugin calls
-    // useGtag().enableAnalytics() once consent is granted. Mixpanel stays the
-    // product source of truth. Set NUXT_PUBLIC_GA4_ID in prod.
+    // GA4 (acquisition only). Loads on every page so the tag is detectable and
+    // tracking starts immediately (no consent gate). Mixpanel stays the product
+    // source of truth. Set NUXT_PUBLIC_GA4_ID in prod.
     gtag: {
         id: process.env.NUXT_PUBLIC_GA4_ID ?? '',
-        enabled: false,
+        enabled: true,
     },
 
     // Canonical site identity. Used by @nuxtjs/sitemap + @nuxtjs/robots and as the

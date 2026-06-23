@@ -47,8 +47,8 @@ export const loadMixpanel = async (token: string, debug: boolean): Promise<void>
         batch_size: 50,
         batch_flush_interval_ms: 30000,
         api_host: 'https://api.mixpanel.com',
-        // Opted out until the user grants consent; the plugin opts in on accept.
-        opt_out_tracking_by_default: true,
+        // Track from the first pageview — no consent gate.
+        opt_out_tracking_by_default: false,
         // We send attribution as super-props; let Mixpanel keep its own too.
         ignore_dnt: false,
         // Pageviews are tracked manually via the router in 03.analytics.client.ts
