@@ -18,7 +18,7 @@ interface AnalyticsState {
     cardSampling: number;
     /** Console-log every tracked event (dev server, or NUXT_PUBLIC_ANALYTICS_DEBUG). */
     debug: boolean;
-    /** GA4 event forwarder (set by the plugin from useGtag), if available. */
+    /** GA4 event forwarder (set by the plugin → global gtag), if available. */
     gtag: ((command: string, ...args: unknown[]) => void) | null;
 }
 
