@@ -1,8 +1,3 @@
-// GA4 measurement id, inlined at build time so the tag can be SERVER-rendered in
-// <head> (below) — that's what makes Google's installation checker detect it and
-// what guarantees it loads without waiting on client JS. Empty ⇒ snippet omitted.
-const GA4_ID = process.env.NUXT_PUBLIC_GA4_ID ?? '';
-
 export default defineNuxtConfig({
     compatibilityDate: '2025-07-15',
     devtools: { enabled: false },
@@ -103,20 +98,6 @@ export default defineNuxtConfig({
                     href: 'https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&display=swap',
                 },
             ],
-            // Google tag (gtag.js), server-rendered so it's present in the raw HTML
-            // — detectable by Google's checker and not dependent on client JS. GA4
-            // enhanced measurement tracks SPA pageviews on history changes.
-            script: GA4_ID
-                ? [
-                      {
-                          src: `https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`,
-                          async: true,
-                      },
-                      {
-                          innerHTML: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA4_ID}');`,
-                      },
-                  ]
-                : [],
         },
     },
 
