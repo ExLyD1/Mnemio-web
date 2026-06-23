@@ -16,6 +16,8 @@ interface AnalyticsState {
     enabled: boolean;
     /** 0..1 sampling rate for the high-volume per-card event. */
     cardSampling: number;
+    /** Console-log every tracked event (dev server, or NUXT_PUBLIC_ANALYTICS_DEBUG). */
+    debug: boolean;
     /** GA4 event forwarder (set by the plugin from useGtag), if available. */
     gtag: ((command: string, ...args: unknown[]) => void) | null;
 }
@@ -24,6 +26,7 @@ const state: AnalyticsState = {
     mp: null,
     enabled: false,
     cardSampling: 0,
+    debug: false,
     gtag: null,
 };
 

@@ -26,10 +26,11 @@ export const useAnalytics = () => {
         return analyticsState.mp;
     };
 
-    // Dev-visible breadcrumb whenever something is actually sent (no-op calls
-    // stay silent so the log reflects reality). Mirrors the "[Meta Pixel] …" style.
+    // Breadcrumb whenever something is actually sent (no-op calls stay silent so
+    // the log reflects reality). Mirrors the "[Meta Pixel] …" style. Shows on the
+    // dev server always, and on deployed builds when NUXT_PUBLIC_ANALYTICS_DEBUG=true.
     const log = (message: string, payload?: unknown) => {
-        if (import.meta.dev) {
+        if (import.meta.dev || analyticsState.debug) {
             console.info(`[Mixpanel] ${message}`, payload ?? '');
         }
     };
