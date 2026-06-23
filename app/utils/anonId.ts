@@ -9,6 +9,11 @@ const ANON_ID_KEY = 'mnemio:anon_id';
  * Returns '' when storage/crypto is unavailable (SSR, privacy mode) — callers skip
  * registering it in that case.
  */
+const newId = (): string =>
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `anon-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+
 export const getAnonId = (): string => {
     if (typeof window === 'undefined') {
         return '';
@@ -16,12 +21,26 @@ export const getAnonId = (): string => {
     try {
         let id = window.localStorage.getItem(ANON_ID_KEY);
         if (!id) {
-            id =
-                typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-                    ? crypto.randomUUID()
-                    : `anon-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+            id = newId();
             window.localStorage.setItem(ANON_ID_KEY, id);
         }
+        return id;
+    } catch {
+        return '';
+    }
+};
+
+/**
+ * Mint a fresh anonymous id (used on logout) so the next anonymous session on a
+ * shared browser isn't tied to the previous account. Returns the new id.
+ */
+export const rotateAnonId = (): string => {
+    if (typeof window === 'undefined') {
+        return '';
+    }
+    try {
+        const id = newId();
+        window.localStorage.setItem(ANON_ID_KEY, id);
         return id;
     } catch {
         return '';
