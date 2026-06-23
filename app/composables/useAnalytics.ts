@@ -7,7 +7,6 @@
  * so analytics can never throw into product code.
  */
 import type { OverridedMixpanel } from 'mixpanel-browser';
-import { useConsentStore } from '@/stores/consent';
 import { analyticsState } from '@/analytics/client';
 import {
     GA4_CONVERSION_EVENTS,
@@ -18,16 +17,21 @@ import {
 } from '@/analytics/events';
 
 export const useAnalytics = () => {
-    const consent = useConsentStore();
-
-    // Live gate: config/token resolved once at plugin init; consent can flip
-    // at runtime when the user clicks Accept, so read it on every call. Returns
-    // the SDK instance (narrowed non-null) only when everything is ready.
+    // Returns the SDK instance (narrowed non-null) only when analytics is enabled
+    // and the SDK has been initialised by the bootstrap plugin.
     const instance = (): OverridedMixpanel | null => {
-        if (!analyticsState.enabled || !consent.isGranted) {
+        if (!analyticsState.enabled) {
             return null;
         }
         return analyticsState.mp;
+    };
+
+    // Dev-visible breadcrumb whenever something is actually sent (no-op calls
+    // stay silent so the log reflects reality). Mirrors the "[Meta Pixel] …" style.
+    const log = (message: string, payload?: unknown) => {
+        if (import.meta.dev) {
+            console.info(`[Mixpanel] ${message}`, payload ?? '');
+        }
     };
 
     // Run fn with the live SDK instance; swallow everything so analytics can
@@ -45,7 +49,10 @@ export const useAnalytics = () => {
     };
 
     const track = <N extends EventName>(name: N, props: PropsFor<N>) => {
-        withMp((mp) => mp.track(name, props));
+        withMp((mp) => {
+            mp.track(name, props);
+            log(`Tracked ${name}`, props);
+        });
         // Mirror the small conversion set to GA4 (acquisition only).
         if (analyticsState.gtag && GA4_CONVERSION_EVENTS.has(name)) {
             try {
@@ -56,9 +63,19 @@ export const useAnalytics = () => {
         }
     };
 
+    // Pageview, routed through our pipeline so it's consent-gated and logged
+    // (replaces mixpanel's auto track_pageview so SPA navigations also log).
+    const trackPageview = (path?: string) => {
+        withMp((mp) => {
+            mp.track_pageview(path ? { path } : undefined);
+            log('Tracked PageView', path ?? '');
+        });
+    };
+
     const identify = (userId: string) => {
         withMp((mp) => {
             mp.identify(userId);
+            log(`Identified ${userId}`);
         });
     };
 
@@ -94,5 +111,5 @@ export const useAnalytics = () => {
         });
     };
 
-    return { track, identify, setUserProps, registerSuper, reset, flush };
+    return { track, trackPageview, identify, setUserProps, registerSuper, reset, flush };
 };
