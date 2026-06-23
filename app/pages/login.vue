@@ -42,6 +42,7 @@
 <script setup lang="ts">
 import { useAuth, useAuthStore, useToast, useT } from '#imports';
 import { setRemember } from '@/utils/authToken';
+import { useAnalytics } from '@/composables/useAnalytics';
 
 definePageMeta({ layout: 'auth' });
 
@@ -50,6 +51,7 @@ const authStore = useAuthStore();
 const { login, register, verifyEmail, resendOtp, updateProfile } = useAuth();
 const toast = useToast();
 const { t } = useT();
+const analytics = useAnalytics();
 
 useSeo({ title: t('seo.loginTitle'), description: t('seo.loginDesc'), noindex: true });
 
@@ -115,6 +117,9 @@ async function onOtpSubmit(payload: { code: string }) {
     if (result) {
         await finishAuth();
     } else if (verifyEmail.error.value) {
+        analytics.track('email_verification_failed', {
+            error_code: verifyEmail.error.value.code ?? 'unknown',
+        });
         showError(verifyEmail.error.value.message);
     }
 }

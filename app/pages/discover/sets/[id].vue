@@ -54,6 +54,7 @@ import { createError, useHead, useRoute, useSiteConfig, useToast, useT } from '#
 import { getPublicDeck } from '@/api/publicDiscover';
 import { copyDeck } from '@/api/discover';
 import { useAuthStore } from '@/stores/auth';
+import { useAnalytics } from '@/composables/useAnalytics';
 
 definePageMeta({ layout: 'default' });
 
@@ -61,6 +62,7 @@ const { t } = useT();
 const route = useRoute();
 const toast = useToast();
 const auth = useAuthStore();
+const analytics = useAnalytics();
 const site = useSiteConfig();
 
 const id = computed(() => String(route.params.id ?? ''));
@@ -96,11 +98,25 @@ useSeo({
 
 const onCopy = async () => {
     if (!auth.isAuthenticated) {
-        await navigateTo('/login?tab=register');
+        analytics.track('deck_copied_from_discover', {
+            deck_id: id.value,
+            viewer_authenticated: false,
+            entry_point: 'discover_set_detail',
+        });
+        analytics.registerSuper({
+            registration_intent: 'discover_copy',
+            intent_deck_id: id.value,
+        });
+        await navigateTo('/login?tab=register&from=discover_copy');
         return;
     }
     try {
         const copy = await copyDeck(id.value);
+        analytics.track('deck_copied_from_discover', {
+            deck_id: id.value,
+            viewer_authenticated: true,
+            entry_point: 'discover_set_detail',
+        });
         toast.success(t('discover.copied'));
         await navigateTo(`/decks/${copy.id}`);
     } catch {

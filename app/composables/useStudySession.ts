@@ -1,13 +1,19 @@
 import { ref, computed, onBeforeUnmount } from 'vue';
-import { useIntervalFn } from '@vueuse/core';
+import { useIntervalFn, useEventListener } from '@vueuse/core';
 import type { Card, Deck } from '@/types/deck';
 import type { StudyMode, StudySession } from '@/types/session';
 import { useSessionsStore } from '@/stores/sessions';
+import { useAnalytics } from '@/composables/useAnalytics';
+import type { StudyModeProp } from '@/analytics/events';
 
 export type StudyState = 'idle' | 'loading' | 'active' | 'paused' | 'results';
 
 export const computeXp = (correct: number, completed: boolean): number =>
     correct * 10 + (completed ? 25 : 0);
+
+// Wire mode → analytics prop (snake_case, fixed in the event contract).
+const toModeProp = (mode: StudyMode): StudyModeProp =>
+    mode === 'multiple-choice' ? 'multiple_choice' : mode;
 
 const shuffle = <T>(arr: T[]): T[] => {
     const a = [...arr];
@@ -22,6 +28,7 @@ const shuffle = <T>(arr: T[]): T[] => {
 
 export const useStudySession = () => {
     const sessions = useSessionsStore();
+    const analytics = useAnalytics();
 
     const state = ref<StudyState>('idle');
     const session = ref<StudySession | null>(null);
@@ -30,6 +37,11 @@ export const useStudySession = () => {
     const error = ref<string | null>(null);
 
     const startedAt = ref<number>(0);
+
+    // Captured at start() so completion/abandonment events can report mode + deck
+    // without re-reading the (possibly mutated) session object.
+    const modeProp = ref<StudyModeProp>('flashcard');
+    const deckId = ref<string>('');
 
     const { pause: pauseTimer, resume: resumeTimer } = useIntervalFn(
         () => {
@@ -47,6 +59,11 @@ export const useStudySession = () => {
     const progress = computed(() =>
         totalCount.value ? Math.round((currentIndex.value / totalCount.value) * 100) : 0,
     );
+
+    // Analytics helpers (defined after the computeds they read).
+    const durationSec = () => Math.round(elapsedMs.value / 1000);
+    const accuracy = () =>
+        totalCount.value ? Math.round((correctCount.value / totalCount.value) * 100) : 0;
 
     const start = async (deck: Deck, mode: StudyMode) => {
         if (deck.cards.length === 0) {
@@ -68,7 +85,14 @@ export const useStudySession = () => {
             elapsedMs.value = 0;
             startedAt.value = Date.now();
             state.value = 'active';
+            modeProp.value = toModeProp(mode);
+            deckId.value = deck.id;
             resumeTimer();
+            analytics.track('study_session_started', {
+                study_mode: modeProp.value,
+                deck_id: deck.id,
+                card_count: shuffled.length,
+            });
             return created;
         } catch (e) {
             error.value = (e as { message?: string }).message ?? 'Could not start session.';
@@ -86,6 +110,14 @@ export const useStudySession = () => {
         const ended = await sessions.complete(xp);
         session.value = ended;
         state.value = 'results';
+        analytics.track('study_session_completed', {
+            study_mode: modeProp.value,
+            deck_id: deckId.value,
+            cards_reviewed: totalCount.value,
+            accuracy: accuracy(),
+            duration_sec: durationSec(),
+            xp_earned: xp,
+        });
     };
 
     const answer = async (correct: boolean) => {
@@ -122,6 +154,12 @@ export const useStudySession = () => {
         pauseTimer();
         await sessions.exit();
         state.value = 'paused';
+        analytics.track('study_session_abandoned', {
+            study_mode: modeProp.value,
+            deck_id: deckId.value,
+            cards_reviewed: currentIndex.value,
+            duration_sec: durationSec(),
+        });
     };
 
     const reset = () => {
@@ -132,6 +170,29 @@ export const useStudySession = () => {
         error.value = null;
         pauseTimer();
     };
+
+    // Tab close / app backgrounded mid-session → record the drop-off and flush
+    // the analytics batch before the page goes away (exit() covers in-app leaves).
+    if (import.meta.client) {
+        const onLeave = () => {
+            if (state.value !== 'active') {
+                return;
+            }
+            analytics.track('study_session_abandoned', {
+                study_mode: modeProp.value,
+                deck_id: deckId.value,
+                cards_reviewed: currentIndex.value,
+                duration_sec: durationSec(),
+            });
+            analytics.flush();
+        };
+        useEventListener(window, 'pagehide', onLeave);
+        useEventListener(document, 'visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                onLeave();
+            }
+        });
+    }
 
     onBeforeUnmount(() => {
         pauseTimer();

@@ -370,6 +370,8 @@ import { useDecks, useToast, useT } from '#imports';
 import * as aiApi from '@/api/ai';
 import type { AiDeckDraft } from '@/api/ai';
 import { bulkAddCards } from '@/api/cards';
+import { useAnalytics } from '@/composables/useAnalytics';
+import { useDecksStore } from '@/stores/decks';
 import type { DeckInput } from '@/types/deck';
 
 definePageMeta({ layout: 'default' });
@@ -393,6 +395,11 @@ const COVER_SWATCHES = [
 const { create } = useDecks();
 const toast = useToast();
 const { t } = useT();
+const analytics = useAnalytics();
+const decksStore = useDecksStore();
+
+// Best-effort: true when the library has no decks yet at create time.
+const isFirstDeck = () => decksStore.summaries.length === 0;
 
 useSeo({ title: t('seo.deckCreateTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -462,10 +469,22 @@ const validate = (): boolean => {
     return true;
 };
 
+const trackDeckCreated = (deckId: string, source: 'manual' | 'ai_generated', cards: number) =>
+    analytics.track('deck_created', {
+        deck_id: deckId,
+        creation_source: source,
+        card_count: cards,
+        source_language: sourceLanguage.value,
+        target_language: targetLanguage.value,
+        is_first_deck: isFirstDeck(),
+        is_public: privacy.value === 'public',
+    });
+
 const onCreateEmpty = async () => {
     if (!validate()) return;
     const deck = await create.execute(buildInput());
     if (deck) {
+        trackDeckCreated(deck.id, 'manual', 0);
         toast.success(t('deck.created'));
         await navigateTo(`/decks/${deck.id}`);
     }
@@ -475,6 +494,7 @@ const onCreateAndAdd = async () => {
     if (!validate()) return;
     const deck = await create.execute(buildInput());
     if (deck) {
+        trackDeckCreated(deck.id, 'manual', 0);
         toast.success(t('deck.created'));
         await navigateTo(`/decks/${deck.id}/cards/add`);
     }
@@ -484,6 +504,8 @@ const generate = async (topic: string) => {
     lastTopic.value = topic;
     generating.value = true;
     scrollToBottom();
+    const startedAt = Date.now();
+    analytics.track('ai_feature_started', { ai_feature: 'generate_deck', context: 'create_deck' });
     try {
         const res = await aiApi.generateDeck({
             topic,
@@ -492,6 +514,12 @@ const generate = async (topic: string) => {
             count: aiCount.value,
         });
         messages.value.push({ role: 'draft', data: res.draft });
+        analytics.track('ai_feature_completed', {
+            ai_feature: 'generate_deck',
+            context: 'create_deck',
+            result_size: res.draft.cards.length,
+            duration_ms: Date.now() - startedAt,
+        });
     } catch {
         messages.value.push({ role: 'mimi', text: t('deck.aiGenerateError') });
     } finally {
@@ -554,6 +582,15 @@ const onAccept = async (d: AiDeckDraft) => {
                 difficulty: c.difficulty,
             })),
         );
+        analytics.track('deck_created', {
+            deck_id: deck.id,
+            creation_source: 'ai_generated',
+            card_count: d.cards.length,
+            source_language: d.sourceLanguage,
+            target_language: d.targetLanguage,
+            is_first_deck: isFirstDeck(),
+            is_public: false,
+        });
         toast.success(t('deck.aiCreated'));
         await navigateTo(`/decks/${deck.id}`);
     } catch {

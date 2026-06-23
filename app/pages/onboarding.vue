@@ -143,6 +143,7 @@
 import { useAuth, useToast, useT } from '#imports';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useMimi } from '@/composables/useMimi';
+import { useAnalytics } from '@/composables/useAnalytics';
 
 definePageMeta({ layout: 'auth' });
 
@@ -151,6 +152,7 @@ const prefs = usePreferencesStore();
 const mimi = useMimi();
 const toast = useToast();
 const { t } = useT();
+const analytics = useAnalytics();
 
 useSeo({ title: t('seo.onboardingTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -214,6 +216,7 @@ const goStep2 = () => {
     }
     mimi.clear();
     step.value = 1;
+    analytics.track('onboarding_step_completed', { step: 1, step_name: 'profile' });
 };
 
 const finish = async () => {
@@ -239,6 +242,12 @@ const finish = async () => {
             goal: goal.value,
         })
         .catch(() => {});
+    analytics.track('onboarding_step_completed', { step: 2, step_name: 'learn' });
+    analytics.track('onboarding_completed', {
+        interests_count: selectedInterests.value.length,
+        goal: goal.value,
+    });
+    analytics.setUserProps({ daily_goal_tier: goal.value });
     toast.success(t('onboarding.welcome'));
     await navigateTo('/dashboard');
 };

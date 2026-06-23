@@ -11,7 +11,16 @@ export default defineNuxtConfig({
         '@nuxtjs/tailwindcss',
         '@nuxtjs/sitemap',
         '@nuxtjs/robots',
+        'nuxt-gtag',
     ],
+
+    // GA4 (acquisition only). Disabled at boot; the analytics plugin calls
+    // useGtag().enableAnalytics() once consent is granted. Mixpanel stays the
+    // product source of truth. Set NUXT_PUBLIC_GA4_ID in prod.
+    gtag: {
+        id: process.env.NUXT_PUBLIC_GA4_ID ?? '',
+        enabled: false,
+    },
 
     // Canonical site identity. Used by @nuxtjs/sitemap + @nuxtjs/robots and as the
     // base for canonical/OG absolute URLs (see app/composables/useSeo.ts).
@@ -141,6 +150,17 @@ export default defineNuxtConfig({
             // our origin (CSP/CORS break). Set NUXT_PUBLIC_OAUTH_BASE wherever Google is
             // configured; the callback still returns to this app via the backend's WEB_URL.
             oauthBase: '',
+
+            // ── Analytics (Mixpanel + GA4) ──────────────────────────────────
+            // Hard no-op unless analyticsEnabled && consent granted && a token is
+            // present. Keep disabled in dev/preview; set the NUXT_PUBLIC_* env
+            // vars in prod. See docs/analytics-implementation-plan.md.
+            analyticsEnabled: false,
+            mixpanelToken: process.env.NUXT_PUBLIC_MIXPANEL_TOKEN ?? '',
+            ga4Id: process.env.NUXT_PUBLIC_GA4_ID ?? '',
+            // 0..1 sampling for the high-volume per-card event (off by default;
+            // study_card_answered is otherwise aggregated into the session event).
+            analyticsCardSampling: 0,
         },
     },
 

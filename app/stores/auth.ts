@@ -10,6 +10,7 @@ import {
     oauthExchange as apiOauthExchange,
 } from '@/api/auth';
 import { readAccessToken, writeAccessToken } from '@/utils/authToken';
+import { useAnalytics } from '@/composables/useAnalytics';
 import type { User, ProfileUpdate } from '@/types/user';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -29,6 +30,13 @@ export const useAuthStore = defineStore('auth', () => {
         writeAccessToken(token);
         pendingUserId.value = null;
         plan.value = p;
+
+        // Identity stitching: merge the anon $device_id history into this user so
+        // pre-signup events (homepage, discover, blog) connect to the account.
+        const analytics = useAnalytics();
+        analytics.identify(u.id);
+        analytics.registerSuper({ plan: p });
+        analytics.setUserProps({ plan: p });
     };
 
     const clearSession = () => {
@@ -36,6 +44,7 @@ export const useAuthStore = defineStore('auth', () => {
         accessToken.value = null;
         writeAccessToken(null);
         plan.value = 'free';
+        useAnalytics().reset();
     };
 
     const hydrate = async () => {
