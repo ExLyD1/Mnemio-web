@@ -137,13 +137,12 @@ export const useAnalytics = () => {
 
     const reset = () => {
         withMp((mp) => {
+            // reset() gives Mixpanel a fresh anonymous $device_id (the right way to
+            // dissociate on logout). Mint a matching new anonymous_id and re-attach
+            // it as a super-prop, since reset() cleared registered props.
             mp.reset();
-            // Mint a fresh anonymous identity for the post-logout session (a shared
-            // browser shouldn't inherit the previous account), make it the
-            // distinct_id, and re-attach it as a super-prop (reset() cleared them).
             const anonId = rotateAnonId();
             if (anonId) {
-                mp.identify(anonId);
                 mp.register({ anonymous_id: anonId });
             }
         });
