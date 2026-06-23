@@ -156,6 +156,9 @@ export default defineNuxtConfig({
             // present. Keep disabled in dev/preview; set the NUXT_PUBLIC_* env
             // vars in prod. See docs/analytics-implementation-plan.md.
             analyticsEnabled: false,
+            // Console-log every tracked event in any environment (the dev server
+            // always logs). Turn on for a deployed env to verify, off for real prod.
+            analyticsDebug: false,
             mixpanelToken: process.env.NUXT_PUBLIC_MIXPANEL_TOKEN ?? '',
             ga4Id: process.env.NUXT_PUBLIC_GA4_ID ?? '',
             // 0..1 sampling for the high-volume per-card event (off by default;
