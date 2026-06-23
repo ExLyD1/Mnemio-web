@@ -1,7 +1,9 @@
 /**
  * Analytics bootstrap (client-only). Runs after 01.auth.client so auth state is
- * hydrated. Resolves the runtime gate, captures first-touch attribution, wires
- * consent → opt-in, and identifies an already-authed user on boot.
+ * hydrated. Resolves the runtime gate and registers the router pageview hook
+ * synchronously, then loads the SDK + fires boot events via onNuxtReady so the
+ * dynamic import never blocks hydration (an awaited import here breaks the first
+ * client-side navigation and leaves pages blank until reload).
  *
  * No product events are fired here except `app_opened`. Everything else lives at
  * its call-site via useAnalytics(). See docs/analytics-implementation-plan.md.
@@ -52,7 +54,7 @@ const resolveAttribution = (query: Record<string, unknown>): Attribution => {
     return attribution;
 };
 
-export default defineNuxtPlugin(async (nuxtApp) => {
+export default defineNuxtPlugin((nuxtApp) => {
     const config = useRuntimeConfig();
     const { analyticsEnabled, mixpanelToken, analyticsCardSampling } = config.public as {
         analyticsEnabled: boolean;
@@ -81,36 +83,43 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     const { gtag } = useGtagTyped();
     analyticsState.gtag = gtag;
 
-    const attribution = resolveAttribution(route.query);
-    const locale = (nuxtApp.$i18n as { locale?: { value?: string } } | undefined)?.locale?.value;
-
-    // No consent gate — initialise immediately and track from the first pageview.
-    await loadMixpanel(mixpanelToken, import.meta.dev);
-
-    analytics.registerSuper({
-        platform: 'web',
-        // Tag every event so dev/local traffic can be excluded from reports
-        // even if analytics is left on in development.
-        environment: import.meta.dev ? 'development' : 'production',
-        plan: auth.plan,
-        app_locale: locale ?? 'en',
-        acquisition_source: attribution.referrer ?? attribution.utm_source ?? 'direct',
-        ...attribution,
-    });
-
-    if (auth.isAuthenticated && auth.currentUser) {
-        analytics.identify(auth.currentUser.id);
-        analytics.setUserProps({ plan: auth.plan, app_locale: locale ?? 'en' });
-    }
-
-    analytics.track('app_opened', {
-        is_authenticated: auth.isAuthenticated,
-        entry_path: attribution.landing_path ?? route.path,
-    });
-
-    // Initial pageview, then every SPA route change.
-    analytics.trackPageview(route.path);
+    // Track every SPA route change (no-op until the SDK has loaded below).
     useRouter().afterEach((to) => {
         analytics.trackPageview(to.path);
+    });
+
+    // Load the SDK and fire boot events AFTER hydration — never block the plugin
+    // chain (an awaited dynamic import here delays mount and breaks the first
+    // client-side navigation/redirect, leaving pages blank until a full reload).
+    onNuxtReady(async () => {
+        const attribution = resolveAttribution(route.query);
+        const locale = (nuxtApp.$i18n as { locale?: { value?: string } } | undefined)?.locale
+            ?.value;
+
+        await loadMixpanel(mixpanelToken, import.meta.dev);
+
+        analytics.registerSuper({
+            platform: 'web',
+            // Tag every event so dev/local traffic can be excluded from reports
+            // even if analytics is left on in development.
+            environment: import.meta.dev ? 'development' : 'production',
+            plan: auth.plan,
+            app_locale: locale ?? 'en',
+            acquisition_source: attribution.referrer ?? attribution.utm_source ?? 'direct',
+            ...attribution,
+        });
+
+        if (auth.isAuthenticated && auth.currentUser) {
+            analytics.identify(auth.currentUser.id);
+            analytics.setUserProps({ plan: auth.plan, app_locale: locale ?? 'en' });
+        }
+
+        analytics.track('app_opened', {
+            is_authenticated: auth.isAuthenticated,
+            entry_path: attribution.landing_path ?? route.path,
+        });
+
+        // Initial pageview; subsequent navigations are handled by the router hook.
+        analytics.trackPageview(route.path);
     });
 });
