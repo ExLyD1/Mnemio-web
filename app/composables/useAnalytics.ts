@@ -8,6 +8,7 @@
  */
 import type { OverridedMixpanel, Response as MixpanelResponse } from 'mixpanel-browser';
 import { analyticsState } from '@/analytics/client';
+import { getAnonId } from '@/utils/anonId';
 import {
     GA4_CONVERSION_EVENTS,
     USER_PROP_KEYS,
@@ -135,7 +136,15 @@ export const useAnalytics = () => {
     };
 
     const reset = () => {
-        withMp((mp) => mp.reset());
+        withMp((mp) => {
+            mp.reset();
+            // reset() wipes registered super-props — re-attach the stable anon id
+            // so post-logout events stay tied to the same browser identity.
+            const anonId = getAnonId();
+            if (anonId) {
+                mp.register({ anonymous_id: anonId });
+            }
+        });
     };
 
     const flush = () => {

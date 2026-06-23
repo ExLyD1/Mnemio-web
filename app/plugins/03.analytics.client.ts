@@ -11,6 +11,7 @@
 import { useAuthStore } from '@/stores/auth';
 import { analyticsState, loadMixpanel } from '@/analytics/client';
 import { useAnalytics } from '@/composables/useAnalytics';
+import { getAnonId } from '@/utils/anonId';
 
 const ATTRIBUTION_KEY = 'mnemio:attribution';
 const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const;
@@ -98,8 +99,13 @@ export default defineNuxtPlugin((nuxtApp) => {
 
         await loadMixpanel(mixpanelToken, analyticsState.debug);
 
+        const anonId = getAnonId();
+
         analytics.registerSuper({
             platform: 'web',
+            // Stable per-browser id (localStorage) on every event — keeps a visitor
+            // tied to one identity across days, before and after they sign in.
+            ...(anonId ? { anonymous_id: anonId } : {}),
             // Tag every event so dev/local traffic can be excluded from reports
             // even if analytics is left on in development.
             environment: import.meta.dev ? 'development' : 'production',
