@@ -115,14 +115,12 @@ export default defineNuxtPlugin((nuxtApp) => {
             ...attribution,
         });
 
+        // Best practice: only identify a KNOWN user. Anonymous visitors keep
+        // Mixpanel's auto $device_id (localStorage-persisted, stable across days);
+        // our `anonymous_id` super-prop above is the controlled handle on each event.
         if (auth.isAuthenticated && auth.currentUser) {
             analytics.identify(auth.currentUser.id);
             analytics.setUserProps({ plan: auth.plan, app_locale: locale ?? 'en' });
-        } else if (anonId) {
-            // Anonymous: make our stable localStorage id the Mixpanel distinct_id,
-            // so the same browser is ONE user across days. On sign-in, identify(userId)
-            // merges this id into the account (relies on Simplified ID merge).
-            analytics.identify(anonId);
         }
 
         analytics.track('app_opened', {
