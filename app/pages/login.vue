@@ -42,6 +42,7 @@
 <script setup lang="ts">
 import { useAuth, useAuthStore, useToast, useT } from '#imports';
 import { setRemember } from '@/utils/authToken';
+import { rememberReturnTo, takeReturnTo } from '@/utils/returnTo';
 import { useAnalytics } from '@/composables/useAnalytics';
 
 definePageMeta({ layout: 'auth' });
@@ -64,13 +65,17 @@ const data = reactive<{ email: string; password: string }>({
 });
 const initialTab = route.query.tab === 'register' ? 'register' : ('login' as const);
 
+// Remember where the user was headed (set by the auth middleware) so OAuth and
+// the multi-step email flow can return them there after sign-in.
+onMounted(() => rememberReturnTo(route.query.next));
+
 const showError = (msg: string) => toast.error(t(msg, msg));
 
 const finishAuth = async () => {
     if (authStore.needsProfile) {
         step.value = 'details';
     } else {
-        await navigateTo('/dashboard');
+        await navigateTo(takeReturnTo());
     }
 };
 
@@ -136,7 +141,7 @@ async function onResend() {
 async function onDetailsSubmit(payload: { fullName: string; username: string; birthday: string }) {
     const result = await updateProfile.execute(payload);
     if (result) {
-        await navigateTo('/dashboard');
+        await navigateTo(takeReturnTo());
     } else if (updateProfile.error.value) {
         showError(updateProfile.error.value.message);
     }
