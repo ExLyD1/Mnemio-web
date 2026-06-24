@@ -47,6 +47,9 @@
                                 >
                                     {{ t('deck.practiceAll') }}
                                 </UiButton>
+                                <UiButton variant="ghost" :title="t('deck.share')" @click="onShare">
+                                    <Share2 class="size-4" /> {{ t('deck.share') }}
+                                </UiButton>
                             </div>
                         </div>
                     </SharedCoverArt>
@@ -273,7 +276,7 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft, MoreVertical, Pencil, Trash2, Sparkles } from 'lucide-vue-next';
+import { ArrowLeft, MoreVertical, Pencil, Trash2, Sparkles, Share2 } from 'lucide-vue-next';
 import { useDecks, useCards, useSrsStore, useToast, useT } from '#imports';
 import { isAuthExpiry } from '@/composables/useToast';
 import { swatchFor } from '@/utils/coverSwatches';
@@ -429,6 +432,30 @@ const menuItems = computed(() => [
     { key: 'edit', label: t('deck.edit'), icon: Pencil },
     { key: 'delete', label: t('deck.delete'), icon: Trash2, danger: true },
 ]);
+
+const onShare = async () => {
+    const url = `${window.location.origin}/decks/${id.value}`;
+    try {
+        await navigator.clipboard.writeText(url);
+        toast.success(t('deck.linkCopied'));
+        return;
+    } catch {
+        // Clipboard API unavailable (older browser / insecure context) — fall back.
+    }
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast.success(t('deck.linkCopied'));
+    } catch {
+        toast.error(t('deck.linkCopyError'));
+    }
+};
 
 const cardState = (card: Card): 'mastered' | 'learning' | 'new' => {
     const p = srs.progress[card.id];
