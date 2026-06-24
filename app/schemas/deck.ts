@@ -10,7 +10,9 @@ export const LANGUAGES = [
     { code: 'uk', label: 'Ukrainian' },
     { code: 'pl', label: 'Polish' },
     { code: 'ja', label: 'Japanese' },
+    { code: 'ko', label: 'Korean' },
     { code: 'zh', label: 'Chinese' },
+    { code: 'ru', label: 'Russian' },
 ] as const;
 
 const languageCodes = LANGUAGES.map((l) => l.code) as readonly string[];

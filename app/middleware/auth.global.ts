@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/auth';
+import { sanitizeNext } from '@/utils/returnTo';
 
 // Routes that require a logged-in user. Everything NOT matched here is public and
 // open to anyone (landing, blog, discover, about, pricing, legal, OAuth + billing
@@ -31,14 +32,18 @@ export default defineNuxtRouteMiddleware((to) => {
         // Convenience redirects for the two app-entry routes only. Content pages
         // (blog, discover, about, pricing, …) stay open — we just don't link to
         // them from the authed UI.
-        if (to.path === '/' || to.path === '/login') {
+        if (to.path === '/login') {
+            return navigateTo(sanitizeNext(to.query.next) || '/dashboard');
+        }
+        if (to.path === '/') {
             return navigateTo('/dashboard');
         }
         return;
     }
 
-    // Logged out: the app requires sign-in; all public content is open.
+    // Logged out: the app requires sign-in; all public content is open. Remember
+    // where they were headed so we can return them there after login.
     if (requiresAuth(to.path)) {
-        return navigateTo('/login');
+        return navigateTo(`/login?next=${encodeURIComponent(to.fullPath)}`);
     }
 });

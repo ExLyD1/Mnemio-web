@@ -21,7 +21,6 @@
                     description: store.deck.description,
                     sourceLanguage: store.deck.sourceLanguage,
                     targetLanguage: store.deck.targetLanguage,
-                    isPublic: store.deck.isPublic,
                 }"
                 :loading="update.loading.value"
                 :submit-label="t('common.save')"

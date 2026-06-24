@@ -7,14 +7,14 @@
         <p class="text-[12px] font-semibold uppercase tracking-[.18em] text-cream-faint">
             {{ t('topbar.newDeck') }}
         </p>
-        <h1 class="mb-2 mt-1.5 font-display text-[44px] leading-[1.05] text-cream">
+        <h1 class="mb-2 mt-1.5 font-display text-[30px] leading-[1.05] text-cream sm:text-[44px]">
             {{ t('deck.createHeadingPrefix')
             }}<em class="not-italic text-lavender">{{ t('deck.createHeadingAccent') }}</em>
         </h1>
         <p class="mb-8 text-[15px] text-cream-dim">{{ t('deck.createSubtitle') }}</p>
 
-        <!-- Two-column grid -->
-        <div class="grid gap-7" style="grid-template-columns: 1.4fr 1fr">
+        <!-- Two-column grid (stacks on mobile) -->
+        <div class="grid grid-cols-1 gap-7 lg:grid-cols-[1.4fr_1fr]">
             <!-- LEFT -->
             <div class="flex flex-col gap-[18px]">
                 <!-- Deck name -->
@@ -71,17 +71,27 @@
                 </div>
 
                 <!-- Language selects (required for API) -->
-                <div class="grid grid-cols-2 gap-3">
-                    <UiSelect
-                        v-model="targetLanguage"
-                        :label="t('deck.frontLang')"
-                        :options="languageOptions"
-                    />
-                    <UiSelect
-                        v-model="sourceLanguage"
-                        :label="t('deck.backLang')"
-                        :options="languageOptions"
-                    />
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                        <UiSelect
+                            v-model="targetLanguage"
+                            :label="t('deck.frontLang')"
+                            :options="languageOptions"
+                        />
+                        <p class="mt-1 text-small text-brand-muted">
+                            {{ t('deck.frontLangHint') }}
+                        </p>
+                    </div>
+                    <div>
+                        <UiSelect
+                            v-model="sourceLanguage"
+                            :label="t('deck.backLang')"
+                            :options="languageOptions"
+                        />
+                        <p class="mt-1 text-small text-brand-muted">
+                            {{ t('deck.backLangHint') }}
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -127,48 +137,6 @@
                         {{ t('deck.aiOpenGenerator') }}
                     </button>
                 </div>
-
-                <!-- Privacy card -->
-                <div class="rounded-[20px] border border-line bg-bg-surface p-6">
-                    <p
-                        class="text-[12px] font-semibold uppercase tracking-[.18em] text-cream-faint"
-                    >
-                        {{ t('deck.privacy') }}
-                    </p>
-                    <div class="mt-3 flex flex-col gap-2.5">
-                        <label
-                            v-for="opt in privacyOptions"
-                            :key="opt.value"
-                            class="flex cursor-pointer items-center gap-2.5"
-                            @click="privacy = opt.value"
-                        >
-                            <span
-                                class="grid size-[18px] shrink-0 place-items-center rounded-full border-2 transition-colors"
-                                :class="
-                                    privacy === opt.value
-                                        ? 'border-pink-soft'
-                                        : 'border-line-strong'
-                                "
-                            >
-                                <span
-                                    v-if="privacy === opt.value"
-                                    class="size-2 rounded-full bg-pink-soft"
-                                />
-                            </span>
-                            <span
-                                class="text-[13px]"
-                                :class="
-                                    privacy === opt.value
-                                        ? 'font-semibold text-cream'
-                                        : 'text-cream-dim'
-                                "
-                            >
-                                {{ opt.label }}
-                                <span class="font-normal text-cream-faint"> · {{ opt.hint }}</span>
-                            </span>
-                        </label>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -184,11 +152,13 @@
         </div>
     </section>
 
-    <!-- Docked Mimi chat panel (AI deck generator) -->
+    <!-- Docked Mimi chat panel (AI deck generator).
+         Mobile: full-screen overlay above the bottom tab bar so the input is reachable.
+         Desktop: side panel. -->
     <Transition name="panel-slide">
         <div
             v-if="mimiOpen"
-            class="fixed inset-y-0 right-0 z-20 flex w-80 flex-col border-l border-line-strong bg-[rgba(13,10,18,.97)]"
+            class="fixed inset-0 z-50 flex w-full flex-col border-line-strong bg-[rgba(13,10,18,.97)] md:inset-y-0 md:left-auto md:right-0 md:z-30 md:w-80 md:border-l"
         >
             <!-- Header -->
             <div class="flex items-center justify-between border-b border-line px-5 py-4">
@@ -372,6 +342,7 @@ import type { AiDeckDraft } from '@/api/ai';
 import { bulkAddCards } from '@/api/cards';
 import { useAnalytics } from '@/composables/useAnalytics';
 import { useDecksStore } from '@/stores/decks';
+import { LANGUAGES } from '@/schemas/deck';
 import type { DeckInput } from '@/types/deck';
 
 definePageMeta({ layout: 'default' });
@@ -411,22 +382,13 @@ const sourceLanguage = ref('en');
 const targetLanguage = ref('es');
 const cardType = ref<'basic' | 'cloze' | 'image'>('basic');
 const coverColor = ref(COVER_SWATCHES[0]);
-const privacy = ref<'private' | 'shared' | 'public'>('private');
+
+const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
 
 const cardTypes = computed(() => [
     { value: 'basic', label: t('deck.cardTypeBasic'), hint: t('deck.cardTypeBasicHint') },
     { value: 'cloze', label: t('deck.cardTypeCloze'), hint: t('deck.cardTypeClozeHint') },
     { value: 'image', label: t('deck.cardTypeImage'), hint: t('deck.cardTypeImageHint') },
-]);
-
-const privacyOptions = computed(() => [
-    {
-        value: 'private',
-        label: t('deck.privacyPrivate'),
-        hint: t('deck.privacyPrivateHint'),
-    },
-    { value: 'shared', label: t('deck.privacyShared'), hint: t('deck.privacySharedHint') },
-    { value: 'public', label: t('deck.privacyPublic'), hint: t('deck.privacyPublicHint') },
 ]);
 
 // Chat / panel state
@@ -452,7 +414,8 @@ const buildInput = (): DeckInput => ({
     description: description.value.trim() || null,
     sourceLanguage: sourceLanguage.value,
     targetLanguage: targetLanguage.value,
-    isPublic: privacy.value === 'public',
+    // All decks are public — anyone can discover and copy them.
+    isPublic: true,
     coverColor: coverColor.value,
     subject: subject.value.trim() || null,
 });
@@ -477,7 +440,7 @@ const trackDeckCreated = (deckId: string, source: 'manual' | 'ai_generated', car
         source_language: sourceLanguage.value,
         target_language: targetLanguage.value,
         is_first_deck: isFirstDeck(),
-        is_public: privacy.value === 'public',
+        is_public: true,
     });
 
 const onCreateEmpty = async () => {

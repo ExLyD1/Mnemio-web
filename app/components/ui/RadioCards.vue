@@ -1,5 +1,5 @@
 <template>
-    <div class="grid gap-2.5" :style="{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }">
+    <div class="radio-cards grid gap-2.5" :style="{ '--cols': cols }">
         <button
             v-for="opt in options"
             :key="opt.value"
@@ -59,3 +59,15 @@ defineEmits<{ 'update:modelValue': [value: string] }>();
 
 const cols = computed(() => props.columns || props.options.length || 1);
 </script>
+
+<style scoped>
+/* One column on phones; the requested column count from `sm` up. */
+.radio-cards {
+    grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+    .radio-cards {
+        grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    }
+}
+</style>

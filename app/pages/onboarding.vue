@@ -69,6 +69,7 @@
                     <input
                         v-model="birthday"
                         type="date"
+                        :min="minBirthday"
                         :max="maxBirthday"
                         class="w-full rounded-xl border border-brand-muted bg-transparent px-4 py-2.5 text-body text-brand-pale outline-none focus:border-brand-bright"
                     />
@@ -184,6 +185,7 @@ const birthday = ref('');
 const selectedInterests = ref<string[]>([...prefs.interests]);
 const goal = ref(prefs.goal ?? 'steady');
 
+const minBirthday = '1900-01-01';
 const maxBirthday = computed(() => {
     const d = new Date();
     d.setFullYear(d.getFullYear() - 13);

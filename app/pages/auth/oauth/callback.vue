@@ -12,6 +12,7 @@
 
 <script setup lang="ts">
 import { useAuth, useT } from '#imports';
+import { takeReturnTo } from '@/utils/returnTo';
 
 definePageMeta({ layout: 'auth' });
 
@@ -29,7 +30,7 @@ onMounted(async () => {
     }
     const result = await oauthExchange.execute(code);
     if (result) {
-        await navigateTo(store.needsProfile ? '/onboarding' : '/dashboard');
+        await navigateTo(store.needsProfile ? '/onboarding' : takeReturnTo());
         return;
     }
     const reason = oauthExchange.error.value?.code ?? 'exchange_failed';

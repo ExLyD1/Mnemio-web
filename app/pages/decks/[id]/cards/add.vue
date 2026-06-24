@@ -192,12 +192,13 @@
         <SharedMimi :size="40" :bob="false" class="pointer-events-none" />
     </button>
 
-    <!-- Docked Mimi chat panel -->
+    <!-- Docked Mimi chat panel.
+         Mobile: full-screen overlay above the bottom tab bar (reachable input).
+         Desktop: docked side panel below the topbar. -->
     <Transition name="panel-slide">
         <div
             v-if="mimiOpen"
-            class="fixed bottom-0 right-0 z-20 flex w-[340px] flex-col border-l border-line-strong bg-bg-well"
-            style="top: 64px"
+            class="fixed inset-0 z-50 flex w-full flex-col border-line-strong bg-bg-well md:left-auto md:top-16 md:z-30 md:w-[340px] md:border-l"
         >
             <!-- Header -->
             <div class="flex items-center gap-2.5 border-b border-line px-4 py-3.5">
