@@ -78,10 +78,7 @@ import type { Deck } from '@/types/deck';
 
 const props = withDefaults(
     defineProps<{
-        initial?: Pick<
-            Deck,
-            'title' | 'description' | 'sourceLanguage' | 'targetLanguage'
-        > | null;
+        initial?: Pick<Deck, 'title' | 'description' | 'sourceLanguage' | 'targetLanguage'> | null;
         loading?: boolean;
         submitLabel?: string;
     }>(),

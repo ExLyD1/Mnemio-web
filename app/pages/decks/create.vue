@@ -137,7 +137,6 @@
                         {{ t('deck.aiOpenGenerator') }}
                     </button>
                 </div>
-
             </div>
         </div>
 
