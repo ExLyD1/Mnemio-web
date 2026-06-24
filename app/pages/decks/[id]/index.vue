@@ -16,15 +16,15 @@
                         <div class="relative flex flex-col gap-[18px]">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
-                                    <p class="text-eyebrow uppercase text-cream/70">
+                                    <p class="text-eyebrow uppercase text-on-color/70">
                                         {{ eyebrow }}
                                     </p>
                                     <h1
-                                        class="mt-1 break-words font-display text-h1 leading-[1.1] text-cream"
+                                        class="mt-1 break-words font-display text-h1 leading-[1.1] text-on-color"
                                     >
                                         {{ store.deck.title }}
                                     </h1>
-                                    <p class="mt-1 text-small text-cream/80">
+                                    <p class="mt-1 text-small text-on-color/80">
                                         {{ store.deck.sourceLanguage.toUpperCase() }} →
                                         {{ store.deck.targetLanguage.toUpperCase() }}
                                     </p>
@@ -58,7 +58,7 @@
                             <template #trigger="{ toggle }">
                                 <button
                                     type="button"
-                                    class="grid size-9 place-items-center rounded-full bg-black/20 text-cream backdrop-blur transition-colors hover:bg-black/35"
+                                    class="grid size-9 place-items-center rounded-full bg-black/20 text-on-color backdrop-blur transition-colors hover:bg-black/35"
                                     :aria-label="t('deck.menuAria')"
                                     @click="toggle"
                                 >
@@ -72,44 +72,89 @@
                 <div
                     class="flex flex-wrap gap-x-7 gap-y-1.5 rounded-2xl border border-line bg-bg-surface px-[22px] py-3.5"
                 >
-                    <span class="flex items-baseline gap-1.5">
+                    <button
+                        type="button"
+                        class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
+                        @click="filter = 'all'"
+                    >
                         <span class="font-display text-h2 leading-none text-cream">{{
                             store.deck.cards.length
                         }}</span>
-                        <span class="text-small text-brand-muted">{{ t('deck.statTotal') }}</span>
-                    </span>
-                    <span class="flex items-baseline gap-1.5">
+                        <span
+                            class="text-small transition-colors"
+                            :class="
+                                filter === 'all'
+                                    ? 'text-brand underline underline-offset-2'
+                                    : 'text-brand-muted'
+                            "
+                            >{{ t('deck.statTotal') }}</span
+                        >
+                    </button>
+                    <button
+                        type="button"
+                        class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
+                        @click="filter = 'practiced'"
+                    >
                         <span class="font-display text-h2 leading-none text-cream">{{
                             deckStat.mastered
                         }}</span>
-                        <span class="text-small text-brand-muted">{{
-                            t('deck.statMastered')
-                        }}</span>
-                    </span>
-                    <span class="flex items-baseline gap-1.5">
+                        <span
+                            class="text-small transition-colors"
+                            :class="
+                                filter === 'practiced'
+                                    ? 'text-brand underline underline-offset-2'
+                                    : 'text-brand-muted'
+                            "
+                            >{{ t('deck.statPracticed') }}</span
+                        >
+                    </button>
+                    <button
+                        type="button"
+                        class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
+                        @click="filter = 'due'"
+                    >
                         <span class="font-display text-h2 leading-none text-lavender">{{
                             deckStat.due
                         }}</span>
-                        <span class="text-small text-brand-muted">{{ t('deck.statDue') }}</span>
-                    </span>
-                    <span class="flex items-baseline gap-1.5">
+                        <span
+                            class="text-small transition-colors"
+                            :class="
+                                filter === 'due'
+                                    ? 'text-brand underline underline-offset-2'
+                                    : 'text-brand-muted'
+                            "
+                            >{{ t('deck.statDue') }}</span
+                        >
+                    </button>
+                    <button
+                        type="button"
+                        class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
+                        @click="filter = 'new'"
+                    >
                         <span class="font-display text-h2 leading-none text-cream">{{
                             deckStat.new
                         }}</span>
-                        <span class="text-small text-brand-muted">{{ t('deck.statNew') }}</span>
-                    </span>
+                        <span
+                            class="text-small transition-colors"
+                            :class="
+                                filter === 'new'
+                                    ? 'text-brand underline underline-offset-2'
+                                    : 'text-brand-muted'
+                            "
+                            >{{ t('deck.statNew') }}</span
+                        >
+                    </button>
                 </div>
 
                 <div class="rounded-[20px] border border-line bg-bg-surface p-2">
                     <template v-if="store.deck.cards.length">
-                        <div class="flex flex-wrap items-center gap-2 p-2">
+                        <div class="p-2">
                             <UiInputSearch
                                 v-model="search"
                                 variant="dark"
                                 :placeholder="t('deck.cardSearchPlaceholder')"
-                                class="min-w-[180px] flex-1 border border-line"
+                                class="border border-line"
                             />
-                            <UiSegmentedControl v-model="filter" :options="filterOptions" />
                         </div>
 
                         <div class="max-h-[420px] overflow-y-auto">
@@ -135,7 +180,7 @@
                         >
                             <span class="flex items-center gap-1.5">
                                 <span class="size-2.5 rounded-full bg-lavender" />
-                                {{ t('deck.statMastered') }}
+                                {{ t('deck.statPracticed') }}
                             </span>
                             <span class="flex items-center gap-1.5">
                                 <span class="size-2.5 rounded-full bg-brand" />
@@ -394,14 +439,6 @@ const breakdownSegments = computed(() => [
 
 const search = ref('');
 const filter = ref('all');
-const filterOptions = computed(() => [
-    { value: 'all', label: t('deck.filterAll') },
-    { value: 'new', label: t('deck.statNew') },
-    { value: 'learning', label: t('deck.statLearning') },
-    { value: 'mastered', label: t('deck.statMastered') },
-    { value: 'due', label: t('deck.statDue') },
-]);
-
 const isDue = (card: Card): boolean => {
     const p = srs.progress[card.id];
     return !!p && new Date(p.nextReviewAt).getTime() <= Date.now();
@@ -417,9 +454,9 @@ const filteredCards = computed(() => {
         }
         switch (filter.value) {
             case 'new':
-            case 'learning':
-            case 'mastered':
-                return cardState(card) === filter.value;
+                return cardState(card) === 'new';
+            case 'practiced':
+                return cardState(card) === 'mastered';
             case 'due':
                 return isDue(card);
             default:

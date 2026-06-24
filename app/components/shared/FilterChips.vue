@@ -7,7 +7,7 @@
             :class="[
                 'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-small font-semibold transition-colors',
                 modelValue === opt.key
-                    ? 'border-pink-soft/30 bg-brand text-cream'
+                    ? 'border-pink-soft/30 bg-brand text-on-color'
                     : 'border-line-strong text-cream-faint hover:text-cream',
             ]"
             @click="$emit('update:modelValue', opt.key)"

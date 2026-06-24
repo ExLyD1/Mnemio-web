@@ -13,7 +13,7 @@
                 class="rounded-md px-2 py-0.5 text-small font-semibold transition-colors"
                 :class="
                     current === opt.code
-                        ? 'bg-brand text-cream'
+                        ? 'bg-brand text-on-color'
                         : 'text-brand-muted hover:text-cream'
                 "
                 @click="set(opt.code)"

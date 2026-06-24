@@ -37,7 +37,7 @@
                 <template v-if="deck.tag">{{ deck.tag }} · </template>{{ cardCountLabel }}
             </p>
 
-            <div class="h-[5px] overflow-hidden rounded-sm bg-white/5">
+            <div class="h-[5px] overflow-hidden rounded-sm dark:bg-white/5 bg-brand/10">
                 <div
                     class="h-full rounded-sm"
                     :style="{
@@ -62,7 +62,7 @@
                 <button
                     v-if="favoritable"
                     type="button"
-                    class="absolute right-2.5 top-2.5 grid size-8 place-items-center rounded-full bg-black/30 text-cream backdrop-blur transition-colors hover:bg-black/50"
+                    class="absolute right-2.5 top-2.5 grid size-8 place-items-center rounded-full bg-black/30 text-on-color backdrop-blur transition-colors hover:bg-black/50"
                     :aria-label="deck.favorite ? t('deck.removeFavorite') : t('deck.addFavorite')"
                     @click.prevent.stop="$emit('toggleFav', deck.id)"
                 >

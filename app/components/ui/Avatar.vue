@@ -1,6 +1,6 @@
 <template>
     <span
-        class="inline-grid place-items-center overflow-hidden rounded-full font-semibold text-cream shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+        class="inline-grid place-items-center overflow-hidden rounded-full font-semibold text-on-color shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
         :style="style"
     >
         <img v-if="src" :src="src" :alt="name" class="size-full object-cover" />

@@ -14,10 +14,10 @@
             @resume="onResume"
         />
 
-        <!-- Hero: today's review — dark plum gradient -->
+        <!-- Hero: today's review -->
         <div
             class="rounded-[24px] border border-[rgba(242,188,255,0.18)] px-9 py-8"
-            style="background: linear-gradient(160deg, #572f54 0%, #2c1a2a 100%)"
+            :style="{ background: heroGradient }"
         >
             <!-- Content -->
             <div class="flex items-start justify-between gap-4">
@@ -59,7 +59,7 @@
                     <div
                         v-for="deck in upNextDecks"
                         :key="deck.id"
-                        class="flex items-center gap-3 border-b border-line px-5 py-3 transition-colors last:border-b-0 hover:bg-white/[0.02]"
+                        class="flex items-center gap-3 border-b border-line px-5 py-3 transition-colors last:border-b-0 dark:hover:bg-white/[0.02] hover:bg-brand/5"
                     >
                         <div
                             class="h-9 w-2.5 shrink-0 rounded-full"
@@ -126,7 +126,7 @@
                                     ? isToday(i)
                                         ? 'border border-pink/40 bg-gradient-to-b from-brand-bright to-plum text-cream shadow-md'
                                         : 'border border-pink/30 bg-gradient-to-b from-brand-bright to-plum text-cream'
-                                    : 'border border-line bg-white/[0.03] text-cream-faint'
+                                    : 'border border-line dark:bg-white/[0.03] bg-brand/5 text-cream-faint'
                             "
                         >
                             {{ pt.value > 0 ? pt.value : '' }}
@@ -206,6 +206,13 @@ import * as statsApi from '@/api/stats';
 import { deckToCardVm } from '@/utils/deckVm';
 
 definePageMeta({ layout: 'default' });
+
+const colorMode = useColorMode();
+const heroGradient = computed(() =>
+    colorMode.value === 'dark'
+        ? 'linear-gradient(160deg, #572f54 0%, #2c1a2a 100%)'
+        : 'linear-gradient(160deg, #ede4f8 0%, #d4b8f0 100%)',
+);
 
 const auth = useAuthStore();
 const { store, fetchList } = useDecks();

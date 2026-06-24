@@ -158,11 +158,11 @@
             <div class="pt-6">
                 <div
                     class="flex w-full flex-col items-center justify-between rounded-[22px] border border-line-strong px-6 py-7"
-                    style="
-                        height: 480px;
-                        background: linear-gradient(160deg, #241420 0%, #160e1a 100%);
-                        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
-                    "
+                    :style="{
+                        height: '480px',
+                        background: 'var(--c-fc-front)',
+                        boxShadow: '0 30px 60px rgba(0, 0, 0, 0.35)',
+                    }"
                 >
                     <span
                         class="text-[11px] font-semibold uppercase tracking-[.22em] text-cream-faint"
@@ -225,7 +225,7 @@
                     />
                     <div
                         v-else-if="msg.role === 'user'"
-                        class="max-w-[88%] self-end rounded-[14px_4px_14px_14px] border border-[rgba(242,188,255,.25)] bg-brand px-3 py-2.5 text-[13px] leading-[1.5] text-cream"
+                        class="max-w-[88%] self-end rounded-[14px_4px_14px_14px] border border-[rgba(242,188,255,.25)] bg-brand px-3 py-2.5 text-[13px] leading-[1.5] text-on-color"
                     >
                         {{ msg.text }}
                     </div>
@@ -256,7 +256,7 @@
                     />
                     <button
                         type="button"
-                        class="grid size-7 shrink-0 place-items-center rounded-lg bg-brand text-cream disabled:opacity-40"
+                        class="grid size-7 shrink-0 place-items-center rounded-lg bg-brand text-on-color disabled:opacity-40"
                         :disabled="!chatInput.trim() || chatLoading"
                         @click="onChatSend"
                     >
@@ -528,10 +528,10 @@ onMounted(() => {
 
 <style scoped>
 .card-field {
-    border: 1px solid rgba(227, 210, 200, 0.18);
+    border: 1px solid rgb(var(--c-line) / 0.18);
     border-radius: 14px;
     padding: 12px 16px 14px;
-    background: rgba(255, 255, 255, 0.015);
+    background: rgb(var(--c-bg-surface));
 }
 
 .panel-slide-enter-active,

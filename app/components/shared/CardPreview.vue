@@ -53,11 +53,11 @@ const flipped = ref(false);
     backface-visibility: hidden;
 }
 .front {
-    background: #1a1520;
+    background: var(--c-fc-front);
     border: 1.5px solid rgba(124, 69, 118, 0.45);
 }
 .back {
-    background: linear-gradient(165deg, #20182a, #1a1520);
+    background: var(--c-fc-back);
     border: 1.5px solid #7c4576;
     transform: rotateY(180deg);
 }
