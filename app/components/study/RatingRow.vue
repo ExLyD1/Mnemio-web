@@ -11,7 +11,7 @@
             @click="$emit('grade', g.key)"
         >
             <StudyKeycap :label="g.hint" class="absolute right-2 top-2" />
-            <span class="text-body font-semibold">{{ g.label }}</span>
+            <span class="text-body font-semibold">{{ t(g.i18nKey) }}</span>
             <span class="text-small opacity-70">{{ g.interval }}</span>
         </button>
     </div>
@@ -19,7 +19,10 @@
 
 <script setup lang="ts">
 import { GRADES } from '@/utils/grades';
+import { useT } from '@/composables/useT';
 import type { SrsRating } from '@/types/srs';
+
+const { t } = useT();
 
 defineEmits<{ grade: [rating: SrsRating] }>();
 
