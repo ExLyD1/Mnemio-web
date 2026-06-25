@@ -189,6 +189,7 @@
         "linkCopyError": "Couldn't copy the link",
         "statTotal": "Total",
         "statMastered": "Mastered",
+        "statPracticed": "Practiced",
         "statLearning": "Learning",
         "statDue": "Due",
         "statNew": "New",

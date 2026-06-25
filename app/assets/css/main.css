@@ -43,31 +43,42 @@
 .light {
     color-scheme: light;
 
-    --c-bg-base: 248 245 252; /* page — near-white lavender tint */
-    --c-bg-deep: 238 232 248; /* sunken pockets */
-    --c-bg-surface: 255 252 248; /* cards, rail — warm near-white */
-    --c-bg-surface-2: 246 239 230; /* second-level surfaces */
-    --c-bg-well: 255 254 252; /* input wells */
-    --c-bg-muted: 220 212 232;
+    --c-bg-base: 245 242 250;
+    --c-bg-deep: 235 230 244;
+    --c-bg-surface: 255 255 255;
+    --c-bg-surface-2: 248 245 252;
+    --c-bg-well: 252 250 254;
+    --c-bg-muted: 224 217 238;
 
-    --c-cream: 58 39 56; /* primary text — deep plum */
-    --c-brand-muted: 120 96 122; /* secondary text */
-    --c-brand-pale: 79 50 77; /* tertiary text / chips */
+    --c-cream: 45 28 43;
+    --c-brand-muted: 106 80 110;
+    --c-brand-pale: 90 63 88;
     --c-brand-light: 87 46 84;
 
-    --c-on-color: 244 238 248; /* light text on colored fills */
-    --c-line: 87 47 84; /* borders — plum (alpha applied) */
+    --c-on-color: 248 244 252;
+    --c-line: 75 45 73;
 
-    --c-fc-front: linear-gradient(160deg, #faf5ef 0%, #f2eae0 100%);
-    --c-fc-back: linear-gradient(160deg, #f0e8de 0%, #e8ddd0 100%);
+    --c-fc-front: linear-gradient(160deg, #ffffff 0%, #f6f1fa 100%);
+    --c-fc-back: linear-gradient(160deg, #f1e9fb 0%, #e7daf6 100%);
 
-    /* Mimi coach panel wash — soft lavender on cream for the light theme so the
-       panel no longer reads as a dark block against the lavender page. */
     --c-mimi-ambient: radial-gradient(
         130% 120% at 50% 0%,
-        rgba(169, 142, 227, 0.2),
+        rgba(169, 142, 227, 0.22),
         rgba(252, 247, 242, 0.55)
     );
+}
+
+/* Plum-tinted shadow overrides for Bright mode — prevents grey halos on white. */
+.light .shadow-flash-card {
+    box-shadow: 0 24px 50px -28px rgba(60, 30, 58, 0.35);
+}
+.light .shadow-soft-elevation {
+    box-shadow:
+        0 18px 44px -26px rgba(60, 30, 58, 0.28),
+        0 2px 8px -4px rgba(60, 30, 58, 0.12);
+}
+.light .shadow-card-preview {
+    box-shadow: 0 24px 50px -28px rgba(60, 30, 58, 0.3);
 }
 
 html {

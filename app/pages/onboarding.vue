@@ -98,7 +98,7 @@
                             :class="[
                                 'rounded-full border px-3.5 py-1.5 text-small font-semibold transition-colors',
                                 selectedInterests.includes(topic)
-                                    ? 'border-brand-bright bg-brand text-cream'
+                                    ? 'border-brand-bright bg-brand text-on-color'
                                     : 'border-line-strong text-brand-muted hover:text-brand-pale',
                             ]"
                             @click="toggleInterest(topic)"

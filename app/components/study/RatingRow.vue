@@ -24,9 +24,9 @@ import type { SrsRating } from '@/types/srs';
 defineEmits<{ grade: [rating: SrsRating] }>();
 
 const toneClass = {
-    ghost: 'border-error bg-error/16 text-[#F26D6D] hover:bg-error/24',
-    dark: 'border-vib-amber bg-vib-amber/18 text-[oklch(.82_.14_75)] hover:bg-vib-amber/28',
-    good: 'border-lavender bg-lavender/24 text-[#D9C7F5] hover:bg-lavender/32',
+    ghost: 'border-error bg-error/16 dark:text-[#F26D6D] text-[#B3261E] hover:bg-error/24',
+    dark: 'border-vib-amber bg-vib-amber/18 dark:text-[oklch(.82_.14_75)] text-[#8A5A12] hover:bg-vib-amber/28',
+    good: 'border-lavender bg-lavender/24 dark:text-[#D9C7F5] text-[#5B3FA0] hover:bg-lavender/32',
     easy: 'border-success bg-success text-[#2E3613] hover:brightness-110',
 } as const;
 </script>
