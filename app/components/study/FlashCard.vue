@@ -1,7 +1,7 @@
 <template>
     <div class="w-full max-w-3xl">
         <div
-            class="fc relative mx-auto min-h-[380px] w-full cursor-pointer outline-none"
+            class="fc relative mx-auto min-h-[300px] w-full cursor-pointer outline-none sm:min-h-[380px]"
             :class="{ flipped: revealed }"
             role="button"
             tabindex="0"
@@ -9,7 +9,7 @@
             @click="$emit('flip')"
         >
             <div
-                class="face front rounded-[24px] border border-line-strong p-10 shadow-flash-card"
+                class="face front rounded-[24px] border border-line-strong p-6 shadow-flash-card sm:p-10"
                 :style="{ background: 'var(--c-fc-front)' }"
             >
                 <StudyLangPill :lang="card.lang" :region="card.region" />
@@ -20,7 +20,7 @@
             </div>
 
             <div
-                class="face back rounded-[24px] border border-brand-bright p-8 shadow-flash-card"
+                class="face back rounded-[24px] border border-brand-bright p-5 shadow-flash-card sm:p-8"
                 :style="{ background: 'var(--c-fc-back)' }"
             >
                 <div class="grid h-full gap-6 sm:grid-cols-[42%_1fr]">
