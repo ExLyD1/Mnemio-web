@@ -79,7 +79,8 @@
                             :options="languageOptions"
                         />
                         <p class="mt-1 text-small text-brand-muted">
-                            {{ t('deck.frontLangHint') }}
+                            {{ t('deck.frontLangHint') }} —
+                            {{ t('deck.frontLangExample').replace('{lang}', frontLangLabel) }}
                         </p>
                     </div>
                     <div>
@@ -89,8 +90,35 @@
                             :options="languageOptions"
                         />
                         <p class="mt-1 text-small text-brand-muted">
-                            {{ t('deck.backLangHint') }}
+                            {{ t('deck.backLangHint') }} —
+                            {{ t('deck.backLangExample').replace('{lang}', backLangLabel) }}
                         </p>
+                    </div>
+                </div>
+
+                <!-- Live preview of which language lands on which side of the card -->
+                <div class="mt-3 rounded-2xl border border-line bg-bg-surface p-3">
+                    <p class="mb-2 text-eyebrow uppercase text-brand-muted">
+                        {{ t('deck.langPreviewTitle') }}
+                    </p>
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1 rounded-xl border border-line-strong bg-bg-well p-2.5">
+                            <p class="text-[11px] uppercase text-brand-muted">
+                                {{ t('deck.langPreviewFront') }}
+                            </p>
+                            <p class="mt-0.5 font-display text-sm text-cream">
+                                {{ frontLangLabel }}
+                            </p>
+                        </div>
+                        <ArrowRight class="size-4 shrink-0 text-brand-muted" />
+                        <div class="flex-1 rounded-xl border border-line-strong bg-bg-well p-2.5">
+                            <p class="text-[11px] uppercase text-brand-muted">
+                                {{ t('deck.langPreviewBack') }}
+                            </p>
+                            <p class="mt-0.5 font-display text-sm text-cream">
+                                {{ backLangLabel }}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -335,7 +363,7 @@
 </template>
 
 <script setup lang="ts">
-import { Sparkles, Layers, X, ArrowUp } from 'lucide-vue-next';
+import { Sparkles, Layers, X, ArrowUp, ArrowRight } from 'lucide-vue-next';
 import { useDecks, useToast, useT } from '#imports';
 import * as aiApi from '@/api/ai';
 import type { AiDeckDraft } from '@/api/ai';
@@ -384,6 +412,11 @@ const cardType = ref<'basic' | 'cloze' | 'image'>('basic');
 const coverColor = ref(COVER_SWATCHES[0]);
 
 const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
+
+const labelForLang = (code: string) =>
+    LANGUAGES.find((l) => l.code === code)?.label ?? code.toUpperCase();
+const frontLangLabel = computed(() => labelForLang(targetLanguage.value));
+const backLangLabel = computed(() => labelForLang(sourceLanguage.value));
 
 const cardTypes = computed(() => [
     { value: 'basic', label: t('deck.cardTypeBasic'), hint: t('deck.cardTypeBasicHint') },
