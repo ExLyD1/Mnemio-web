@@ -25,8 +25,8 @@
                                         {{ store.deck.title }}
                                     </h1>
                                     <p class="mt-1 text-small text-on-color/80">
-                                        {{ store.deck.sourceLanguage.toUpperCase() }} →
-                                        {{ store.deck.targetLanguage.toUpperCase() }}
+                                        {{ store.deck.targetLanguage.toUpperCase() }} →
+                                        {{ store.deck.sourceLanguage.toUpperCase() }}
                                     </p>
                                 </div>
                             </div>
