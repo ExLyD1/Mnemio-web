@@ -107,10 +107,14 @@ export default defineNuxtConfig({
             style: [
                 {
                     innerHTML:
-                        '.app-shell{display:flex;height:100vh;overflow:hidden}' +
+                        '.app-shell{display:flex;flex-direction:row;flex-wrap:nowrap;height:100vh;overflow:hidden}' +
                         '.app-main{display:flex;flex:1 1 0%;flex-direction:column;min-width:0;overflow:hidden}' +
-                        '.app-rail{display:none;position:relative}' +
-                        '@media(min-width:768px){.app-rail{display:flex;flex:0 0 76px;height:100vh}}',
+                        '.app-rail{display:none;position:relative;flex-shrink:0;width:76px}' +
+                        // The rail's inner panel uses Tailwind `absolute/w-[76px]/overflow-hidden`,
+                        // none of which exist before Tailwind loads — pin it so the unstyled panel
+                        // can't fall into flow and shove the layout on a cold first paint.
+                        '.app-rail-inner{position:absolute;top:0;bottom:0;left:0;width:76px;overflow:hidden}' +
+                        '@media(min-width:768px){.app-rail{display:flex;height:100vh}}',
                 },
             ],
         },
