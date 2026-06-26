@@ -37,12 +37,15 @@
                 <div>
                     <UiInputField
                         v-model="email"
-                        label="Email address"
+                        :label="t('auth.emailLabel')"
                         type="email"
-                        placeholder="example@mail.com"
+                        :placeholder="t('auth.emailPlaceholder')"
                     >
                         <template #suffix>
-                            <Check v-if="isEmailValid" class="size-4" />
+                            <Check
+                                class="size-4 transition-opacity"
+                                :class="isEmailValid ? 'opacity-100' : 'opacity-0'"
+                            />
                         </template>
                     </UiInputField>
                     <p v-if="emailError" class="mt-1.5 text-small text-error" aria-live="polite">
@@ -53,12 +56,15 @@
                 <div>
                     <UiInputField
                         v-model="password"
-                        label="Password"
+                        :label="t('auth.passwordLabel')"
                         type="password"
                         placeholder="••••••••"
                     >
                         <template #suffix>
-                            <Check v-if="isPasswordValid" class="size-4" />
+                            <Check
+                                class="size-4 transition-opacity"
+                                :class="isPasswordValid ? 'opacity-100' : 'opacity-0'"
+                            />
                         </template>
                     </UiInputField>
                     <p class="mt-1.5 min-h-[20px] text-small" aria-live="polite">
@@ -79,6 +85,14 @@
                 <UiSpinner v-if="loading" size="sm" class="mr-2" />
                 {{ t(activeTab === 'login' ? 'auth.tabLogin' : 'auth.createAccount') }}
             </UiButton>
+
+            <label
+                v-if="activeTab === 'login'"
+                class="mt-4 flex cursor-pointer items-center gap-2 text-small text-brand-muted"
+            >
+                <input v-model="rememberMe" type="checkbox" class="accent-brand" />
+                {{ t('auth.stayLoggedIn') }}
+            </label>
         </div>
     </form>
 </template>
@@ -89,8 +103,14 @@ import { useForm, useField } from 'vee-validate';
 import { loginSchema, registerSchema } from '@/schemas/auth';
 import { toFormValidator } from '@/utils/zodValidator';
 import { useT } from '@/composables/useT';
+import { useAnalytics } from '@/composables/useAnalytics';
 
 const { t } = useT();
+const route = useRoute();
+const analytics = useAnalytics();
+
+// Where the registration intent came from (e.g. a discover deck copy redirect).
+const entryPoint = () => String(route.query.from ?? route.query.intent ?? 'login_page');
 
 const props = withDefaults(
     defineProps<{ initialTab?: 'register' | 'login'; loading?: boolean }>(),
@@ -98,10 +118,13 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-    submit: [{ email: string; password: string; activeTab: 'register' | 'login' }];
+    submit: [
+        { email: string; password: string; activeTab: 'register' | 'login'; rememberMe: boolean },
+    ];
 }>();
 
 const activeTab = ref<'register' | 'login'>(props.initialTab ?? 'register');
+const rememberMe = ref(true);
 
 const schema = computed(() =>
     toFormValidator(activeTab.value === 'login' ? loginSchema : registerSchema),
@@ -121,7 +144,15 @@ const isPasswordValid = computed(() => (password.value?.length ?? 0) >= 8);
 watch(activeTab, () => resetForm());
 
 const onSubmit = handleSubmit((values) => {
-    emit('submit', { email: values.email, password: values.password, activeTab: activeTab.value });
+    if (activeTab.value === 'register') {
+        analytics.track('signup_started', { method: 'email', entry_point: entryPoint() });
+    }
+    emit('submit', {
+        email: values.email,
+        password: values.password,
+        activeTab: activeTab.value,
+        rememberMe: rememberMe.value,
+    });
 });
 
 const tabs = computed(() => [
@@ -167,6 +198,9 @@ const oauthBase = computed(() => String(config.public.oauthBase || config.public
 const onSocial = async (social: Social) => {
     if (!social.enabled || social.provider !== 'google' || googleBusy.value) {
         return;
+    }
+    if (activeTab.value === 'register') {
+        analytics.track('signup_started', { method: 'google', entry_point: entryPoint() });
     }
     const base = oauthBase.value;
     const url = `${base}/api/v1/auth/oauth/google`;

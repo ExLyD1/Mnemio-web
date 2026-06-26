@@ -23,11 +23,23 @@
             <SharedPageLoader v-if="srs.loading && !srs.dueCards.length" />
 
             <template v-else-if="active && studyCard">
-                <StudyFlashCard
-                    :card="studyCard"
-                    :revealed="revealed"
-                    @flip="revealed = !revealed"
-                />
+                <div class="relative w-full max-w-3xl">
+                    <StudyFlashCard
+                        :card="studyCard"
+                        :revealed="revealed"
+                        @flip="revealed = !revealed"
+                    />
+                    <!-- Tip button — visible only when revealed -->
+                    <button
+                        v-if="revealed"
+                        type="button"
+                        class="absolute right-3 top-3 flex items-center gap-1.5 rounded-full border border-line-strong bg-bg-surface/80 px-3 py-1.5 text-small text-brand-muted backdrop-blur transition-colors hover:bg-bg-surface hover:text-cream"
+                        @click="tipOpen = !tipOpen"
+                    >
+                        <Lightbulb class="size-3.5" />
+                        {{ t('review.tip') }}
+                    </button>
+                </div>
                 <StudyRatingRow v-if="revealed" @grade="onRate" />
                 <p v-else class="text-small text-brand-muted">
                     {{ t('review.flipHint') }}
@@ -102,20 +114,58 @@
         </main>
 
         <SharedMimi
-            v-if="active && mimi.message.value"
+            v-if="active && mimi.message.value && !tipOpen"
             :message="mimi.message.value"
             :mood="mimi.mood.value"
             placement="right"
             :size="92"
-            class="fixed bottom-6 right-6"
+            class="fixed bottom-6 right-6 hidden md:flex"
+        />
+
+        <!-- Docked tip panel: right drawer on desktop, bottom sheet on mobile -->
+        <Transition name="tip-slide">
+            <div
+                v-if="tipOpen"
+                class="fixed inset-x-0 bottom-0 z-30 flex max-h-[60vh] flex-col rounded-t-[24px] border-t border-line bg-bg-surface shadow-soft-elevation md:inset-x-auto md:inset-y-0 md:right-0 md:top-[68px] md:w-80 md:max-h-none md:rounded-none md:rounded-l-[24px] md:border-l md:border-t-0"
+            >
+                <div class="flex items-center justify-between border-b border-line px-5 py-4">
+                    <div>
+                        <p class="font-display text-base text-cream">{{ t('review.tipTitle') }}</p>
+                        <p class="text-small text-brand-muted">{{ t('review.tipDisclaimer') }}</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="grid size-8 place-items-center rounded-full text-brand-muted hover:text-cream"
+                        @click="tipOpen = false"
+                    >
+                        <X class="size-4" />
+                    </button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-5">
+                    <div v-if="tipLoading" class="flex justify-center py-8">
+                        <UiSpinner />
+                    </div>
+                    <p v-else-if="tipText" class="whitespace-pre-wrap text-body text-cream">
+                        {{ tipText }}
+                    </p>
+                    <p v-else class="text-body text-brand-muted">{{ t('review.tipEmpty') }}</p>
+                </div>
+            </div>
+        </Transition>
+        <div
+            v-if="tipOpen"
+            class="fixed inset-0 z-20 bg-black/40 md:hidden"
+            @click="tipOpen = false"
         />
     </section>
 </template>
 
 <script setup lang="ts">
-import { CheckCheck } from 'lucide-vue-next';
+import { CheckCheck, Lightbulb, X } from 'lucide-vue-next';
 import { useSrsStore, useToast, useT } from '#imports';
 import { useMimi } from '@/composables/useMimi';
+import { useAnalytics } from '@/composables/useAnalytics';
+import * as aiApi from '@/api/ai';
 import type { SrsRating } from '@/types/srs';
 import type { StudyCard } from '@/utils/studyCard';
 
@@ -125,11 +175,15 @@ const srs = useSrsStore();
 const toast = useToast();
 const { t } = useT();
 const mimi = useMimi();
+const analytics = useAnalytics();
 
 useSeo({ title: t('seo.reviewTitle'), description: t('seo.appDesc'), noindex: true });
 
 const active = ref(false);
 const revealed = ref(false);
+const tipOpen = ref(false);
+const tipLoading = ref(false);
+const tipText = ref('');
 const completedCount = ref(0);
 const totalQueue = ref(0);
 const finished = ref(false);
@@ -195,6 +249,7 @@ const onRate = async (rating: SrsRating) => {
             active.value = false;
             finished.value = true;
             mimi.say('done');
+            analytics.track('review_due_cleared', { cards_reviewed: completedCount.value });
         }
     } catch (e) {
         const err = e as { message?: string };
@@ -209,6 +264,26 @@ const formatNext = (iso: string) => {
         ? t('review.inHours').replace('{h}', String(hours))
         : t('review.inDays').replace('{d}', String(Math.round(hours / 24)));
 };
+
+watch(tipOpen, async (open) => {
+    if (!open) return;
+    if (tipText.value) return;
+    tipLoading.value = true;
+    tipText.value = '';
+    try {
+        const s = await aiApi.suggest('review', studyCard.value?.deckId);
+        tipText.value = s.suggestion;
+    } catch {
+        tipText.value = '';
+    } finally {
+        tipLoading.value = false;
+    }
+});
+
+watch(studyCard, () => {
+    tipOpen.value = false;
+    tipText.value = '';
+});
 
 const onKey = (e: KeyboardEvent) => {
     if (!active.value) {
@@ -243,3 +318,22 @@ onBeforeUnmount(() => {
     window.removeEventListener('keydown', onKey);
 });
 </script>
+
+<style scoped>
+/* Mobile: slide up from bottom */
+.tip-slide-enter-active,
+.tip-slide-leave-active {
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.tip-slide-enter-from,
+.tip-slide-leave-to {
+    transform: translateY(100%);
+}
+@media (min-width: 768px) {
+    /* Desktop: slide in from right */
+    .tip-slide-enter-from,
+    .tip-slide-leave-to {
+        transform: translateX(100%);
+    }
+}
+</style>

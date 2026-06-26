@@ -1,4 +1,5 @@
 import { http } from '@/utils/http';
+import { normLang } from '@/api/decks';
 import type { CardDifficulty } from '@/types/deck';
 
 export interface AiDraftCard {
@@ -29,10 +30,24 @@ export interface GenerateDeckInput {
     count?: number;
 }
 
-export const generateDeck = (
+export const generateDeck = async (
     input: GenerateDeckInput,
-): Promise<{ provider: string; draft: AiDeckDraft }> =>
-    http('/ai/generate-deck', { method: 'POST', body: input });
+): Promise<{ provider: string; draft: AiDeckDraft }> => {
+    const res = await http<{ provider: string; draft: AiDeckDraft }>('/ai/generate-deck', {
+        method: 'POST',
+        body: input,
+    });
+    // The model often returns full language names ("English") rather than ISO codes;
+    // normalize so the preview + committed deck match the FE's code-keyed selects.
+    return {
+        ...res,
+        draft: {
+            ...res.draft,
+            sourceLanguage: normLang(res.draft.sourceLanguage),
+            targetLanguage: normLang(res.draft.targetLanguage),
+        },
+    };
+};
 
 export type EnrichField =
     | 'phonetic'

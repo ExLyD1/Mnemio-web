@@ -1,5 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&display=swap');
+/*
+ * Fonts (Nunito Sans + Fraunces) are loaded via <link rel="preconnect"> +
+ * <link rel="stylesheet"> in nuxt.config.ts head — NOT a CSS @import — so they
+ * don't block render. See the `app.head.link` block there.
+ */
 
 /*
  * Theme palette. Values are space-separated RGB channels so Tailwind's
@@ -11,14 +14,14 @@
 .dark {
     color-scheme: dark;
 
-    --c-bg-base: 20 17 28; /* page — dark plum */
-    --c-bg-deep: 12 10 18; /* sunken pockets */
-    --c-bg-surface: 36 31 52; /* cards, rail — clearly elevated */
-    --c-bg-surface-2: 50 43 70; /* second-level surfaces */
-    --c-bg-well: 15 13 22; /* input wells */
-    --c-bg-muted: 72 67 88;
+    --c-bg-base: 18 15 26; /* page — dark plum (cooler, less warm) */
+    --c-bg-deep: 10 8 16; /* sunken pockets */
+    --c-bg-surface: 32 28 48; /* cards, rail — clearly elevated */
+    --c-bg-surface-2: 44 40 64; /* second-level surfaces */
+    --c-bg-well: 13 11 20; /* input wells */
+    --c-bg-muted: 66 62 82;
 
-    --c-cream: 233 224 216; /* primary text */
+    --c-cream: 218 210 202; /* primary text — softer warm cream, ~13:1 on dark base */
     --c-brand-muted: 142 118 146; /* secondary text */
     --c-brand-pale: 206 178 189; /* tertiary text / chips */
     --c-brand-light: 226 210 200;
@@ -26,48 +29,85 @@
     --c-on-color: 244 238 248; /* light text on colored fills */
     --c-line: 227 210 200; /* borders (alpha applied) */
 
-    --c-fc-front: linear-gradient(160deg, #2c1a2a 0%, #1a1020 100%);
-    --c-fc-back: linear-gradient(160deg, #572f54 0%, #482b5c 100%);
+    /* cooler grape-purple gradient — no reddish warmth */
+    --c-fc-front: linear-gradient(160deg, #221c30 0%, #15112a 100%);
+    --c-fc-back: linear-gradient(160deg, #4a2c54 0%, #3d2758 100%);
 
-    /* Mimi coach panel wash — dark plum in the default/dark theme. */
+    /* Dashboard hero wash — cooled to match the palette shift away from warm wine. */
+    --c-hero: linear-gradient(160deg, #4a2c58 0%, #221c30 100%);
+
+    /* Mimi coach panel wash — cool blue-purple so it reads calm, not warm wine. */
     --c-mimi-ambient: radial-gradient(
         130% 120% at 50% 0%,
-        rgba(87, 47, 84, 0.55),
-        rgba(14, 11, 18, 0.4)
+        rgba(72, 47, 100, 0.48),
+        rgba(12, 9, 18, 0.4)
     );
 }
 
 .light {
     color-scheme: light;
 
-    --c-bg-base: 205 193 228; /* page — medium lavender */
-    --c-bg-deep: 190 178 214; /* sunken pockets */
-    --c-bg-surface: 252 247 242; /* cards, rail — near-white cream */
-    --c-bg-surface-2: 244 237 228; /* second-level surfaces */
-    --c-bg-well: 255 253 250; /* input wells */
-    --c-bg-muted: 186 177 202;
+    --c-bg-base: 251 249 253; /* near-white with barely-perceptible lavender whisper */
+    --c-bg-deep: 244 242 250; /* slightly recessed — lighter than before */
+    --c-bg-surface: 255 255 255;
+    --c-bg-surface-2: 250 248 253;
+    --c-bg-well: 253 252 254;
+    --c-bg-muted: 228 222 240;
 
-    --c-cream: 58 39 56; /* primary text — deep plum */
-    --c-brand-muted: 120 96 122; /* secondary text */
-    --c-brand-pale: 79 50 77; /* tertiary text / chips */
+    --c-cream: 45 28 43;
+    --c-brand-muted: 106 80 110;
+    --c-brand-pale: 90 63 88;
     --c-brand-light: 87 46 84;
 
-    --c-on-color: 244 238 248; /* light text on colored fills */
-    --c-line: 87 47 84; /* borders — plum (alpha applied) */
+    --c-on-color: 248 244 252;
+    --c-line: 75 45 73;
 
-    --c-fc-front: linear-gradient(160deg, #faf5ef 0%, #f2eae0 100%);
-    --c-fc-back: linear-gradient(160deg, #f0e8de 0%, #e8ddd0 100%);
+    --c-fc-front: linear-gradient(160deg, #ffffff 0%, #f6f1fa 100%);
+    --c-fc-back: linear-gradient(160deg, #f1e9fb 0%, #e7daf6 100%);
 
-    /* Mimi coach panel wash — soft lavender on cream for the light theme so the
-       panel no longer reads as a dark block against the lavender page. */
+    --c-hero: linear-gradient(160deg, #ede4f8 0%, #d4b8f0 100%);
+
     --c-mimi-ambient: radial-gradient(
         130% 120% at 50% 0%,
-        rgba(169, 142, 227, 0.2),
+        rgba(169, 142, 227, 0.22),
         rgba(252, 247, 242, 0.55)
     );
+}
+
+/* Plum-tinted shadow overrides for Bright mode — prevents grey halos on white. */
+.light .shadow-flash-card {
+    box-shadow: 0 24px 50px -28px rgba(60, 30, 58, 0.35);
+}
+.light .shadow-soft-elevation {
+    box-shadow:
+        0 18px 44px -26px rgba(60, 30, 58, 0.28),
+        0 2px 8px -4px rgba(60, 30, 58, 0.12);
+}
+.light .shadow-card-preview {
+    box-shadow: 0 24px 50px -28px rgba(60, 30, 58, 0.3);
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
     background-color: rgb(var(--c-bg-base));
     color: rgb(var(--c-cream));
+}
+
+.page-enter-active {
+    transition:
+        opacity 0.18s ease,
+        transform 0.18s ease;
+}
+.page-leave-active {
+    transition: opacity 0.12s ease;
+}
+.page-enter-from {
+    opacity: 0;
+    transform: translateY(6px);
+}
+.page-leave-to {
+    opacity: 0;
 }

@@ -23,7 +23,7 @@
                             <input
                                 ref="editInput"
                                 v-model="editTitle"
-                                class="min-w-0 flex-1 rounded-lg bg-transparent px-2 py-2 text-body text-cream outline-none"
+                                class="min-w-0 flex-1 rounded-lg border border-brand-pale/40 bg-bg-well px-2 py-1.5 text-sm text-cream outline-none focus:border-brand-bright"
                                 @keydown.enter="commitRename"
                                 @keydown.esc="cancelRename"
                                 @blur="commitRename"

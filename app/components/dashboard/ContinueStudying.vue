@@ -3,7 +3,7 @@
         class="flex flex-col gap-3 rounded-2xl border border-lavender/40 bg-lavender-soft p-5 sm:flex-row sm:items-center sm:justify-between"
     >
         <div class="flex items-center gap-3">
-            <div class="grid size-10 place-items-center rounded-xl bg-lavender text-plum-deep">
+            <div class="grid size-10 place-items-center rounded-xl bg-brand text-on-color">
                 <Play class="size-5" />
             </div>
             <div>

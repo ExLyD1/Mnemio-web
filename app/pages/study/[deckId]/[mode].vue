@@ -1,9 +1,14 @@
 <template>
     <section class="flex h-screen flex-col">
-        <header class="flex h-[68px] shrink-0 items-center gap-4 border-b border-line px-6">
-            <div class="flex items-center gap-3">
+        <header
+            class="flex h-14 shrink-0 items-center gap-3 border-b border-line px-4 sm:h-[68px] sm:gap-4 sm:px-6"
+        >
+            <div class="flex min-w-0 items-center gap-3">
                 <SharedBrandMark :with-word="false" size="sm" />
-                <p v-if="store.deck" class="font-display text-base leading-none text-cream">
+                <p
+                    v-if="store.deck"
+                    class="truncate font-display text-base leading-none text-cream"
+                >
                     {{ store.deck.title }}
                 </p>
             </div>
@@ -32,7 +37,7 @@
             </div>
         </header>
 
-        <main class="flex flex-1 flex-col items-center justify-center gap-8 p-6">
+        <main class="flex flex-1 flex-col items-center justify-center gap-5 p-4 sm:gap-8 sm:p-6">
             <SharedPageLoader v-if="loading" />
 
             <template
@@ -41,10 +46,10 @@
                 "
             >
                 <template v-if="mode !== 'multiple-choice' && studyCard">
-                    <div class="flex w-full items-center justify-center gap-3">
+                    <div class="flex w-full items-center justify-center gap-2 sm:gap-3">
                         <button
                             type="button"
-                            class="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
+                            class="grid size-9 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30 sm:size-11"
                             :aria-label="t('study.prevCard')"
                             :disabled="practice.study.currentIndex.value === 0"
                             @click="practice.goPrev"
@@ -61,7 +66,7 @@
                         </Transition>
                         <button
                             type="button"
-                            class="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
+                            class="grid size-9 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30 sm:size-11"
                             :aria-label="t('study.nextCard')"
                             :disabled="
                                 practice.study.currentIndex.value >=
@@ -82,12 +87,14 @@
                     </div>
                 </template>
 
-                <StudyMultipleChoiceCard
-                    v-else-if="currentQuestion"
-                    :question="currentQuestion"
-                    @answer="onMcAnswer"
-                    @next="() => {}"
-                />
+                <Transition v-else-if="currentQuestion" name="card" mode="out-in">
+                    <StudyMultipleChoiceCard
+                        :key="practice.study.currentCard.value?.id"
+                        :question="currentQuestion"
+                        @answer="onMcPick"
+                        @next="onMcNext"
+                    />
+                </Transition>
             </template>
 
             <UiEmptyState
@@ -169,10 +176,17 @@ const onGrade = (rating: SrsRating) => {
     }
 };
 
-const onMcAnswer = (correct: boolean) => {
+const mcPendingCorrect = ref<boolean | null>(null);
+
+const onMcPick = (correct: boolean) => {
+    mcPendingCorrect.value = correct;
+};
+
+const onMcNext = () => {
     const card = practice.study.currentCard.value;
-    if (card) {
-        practice.recordSimple(correct, card);
+    if (card && mcPendingCorrect.value !== null) {
+        practice.recordSimple(mcPendingCorrect.value, card);
+        mcPendingCorrect.value = null;
     }
 };
 

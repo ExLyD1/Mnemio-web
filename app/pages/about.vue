@@ -26,7 +26,7 @@
                 <div
                     v-for="v in values"
                     :key="v.title"
-                    class="rounded-[20px] border border-line border-l-2 border-l-brand-bright bg-bg-surface p-6 transition-transform hover:-translate-y-0.5"
+                    class="rounded-[20px] border border-line border-l-2 border-l-brand-bright bg-bg-surface p-6 transition-all hover:shadow-lg hover:shadow-brand/10"
                 >
                     <h3 class="font-display text-h3 text-cream">{{ t(v.title) }}</h3>
                     <p class="mt-2 text-small text-cream-dim">{{ t(v.body) }}</p>
@@ -61,13 +61,34 @@
 </template>
 
 <script setup lang="ts">
-import { useT } from '#imports';
+import { useHead, useSiteConfig, useT } from '#imports';
 
 definePageMeta({ layout: 'marketing' });
 
 const { t } = useT();
 
 useSeo({ title: t('seo.aboutTitle'), description: t('seo.aboutDesc') });
+
+// AboutPage that names Mnemio as its main entity, binding this page to the
+// site-wide Organization (defined in app/plugins/02.schema.ts) for E-E-A-T.
+const site = useSiteConfig();
+const base = (site.url || 'https://mnemio.xyz').replace(/\/$/, '');
+useHead({
+    script: [
+        {
+            type: 'application/ld+json',
+            key: 'ld-about',
+            innerHTML: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'AboutPage',
+                url: `${base}/about`,
+                name: t('seo.aboutTitle'),
+                description: t('seo.aboutDesc'),
+                mainEntity: { '@id': `${base}/#organization` },
+            }),
+        },
+    ],
+});
 
 const values = [
     { title: 'about.value1Title', body: 'about.value1Body' },

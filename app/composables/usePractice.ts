@@ -4,19 +4,6 @@ import { useSrsStore } from '@/stores/srs';
 import { useMimi } from '@/composables/useMimi';
 import type { Card } from '@/types/deck';
 import type { SrsRating } from '@/types/srs';
-import type { MimiMood } from '@/types/mimi';
-
-const STREAK_CHEER = 3;
-
-const moodForRating = (rating: SrsRating, correct: boolean, streak: number): MimiMood => {
-    if (correct && streak >= STREAK_CHEER) {
-        return 'streak';
-    }
-    if (rating === 'again') {
-        return 'forgot';
-    }
-    return rating;
-};
 
 /**
  * Wraps useStudySession with 4-grade SRS rating, Mimi moods, grade counts and a
@@ -63,7 +50,6 @@ export const usePractice = () => {
                 meaning: card.definition,
             });
         }
-        mimi.say(moodForRating(rating, correct, streak.value));
         try {
             await srs.rate(card.id, card.deckId, rating);
         } catch {

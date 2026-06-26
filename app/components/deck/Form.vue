@@ -24,47 +24,6 @@
             </p>
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-2">
-            <div>
-                <UiSelect
-                    v-model="targetLanguage"
-                    :label="t('deck.frontLang')"
-                    :options="languageOptions"
-                />
-                <p class="mt-1 text-small text-brand-muted">{{ t('deck.frontLangHint') }}</p>
-                <p
-                    v-if="targetLanguageError"
-                    class="mt-1.5 text-small text-error"
-                    aria-live="polite"
-                >
-                    {{ t(targetLanguageError) }}
-                </p>
-            </div>
-            <div>
-                <UiSelect
-                    v-model="sourceLanguage"
-                    :label="t('deck.backLang')"
-                    :options="languageOptions"
-                />
-                <p class="mt-1 text-small text-brand-muted">{{ t('deck.backLangHint') }}</p>
-                <p
-                    v-if="sourceLanguageError"
-                    class="mt-1.5 text-small text-error"
-                    aria-live="polite"
-                >
-                    {{ t(sourceLanguageError) }}
-                </p>
-            </div>
-        </div>
-
-        <div class="flex items-start justify-between gap-4 rounded-xl border border-line p-3">
-            <div>
-                <p class="text-body text-cream">{{ t('deck.public') }}</p>
-                <p class="text-small text-brand-muted">{{ t('deck.publicHint') }}</p>
-            </div>
-            <UiToggle v-model="isPublic" :aria-label="t('deck.public')" class="mt-0.5 shrink-0" />
-        </div>
-
         <div class="mt-2 flex justify-end gap-2">
             <UiButton type="button" variant="ghost" :disabled="loading" @click="$emit('cancel')">
                 {{ t('common.cancel') }}
@@ -79,17 +38,14 @@
 
 <script setup lang="ts">
 import { useForm, useField } from 'vee-validate';
-import { deckSchema, LANGUAGES } from '@/schemas/deck';
+import { deckSchema } from '@/schemas/deck';
 import { toFormValidator } from '@/utils/zodValidator';
 import { useT } from '@/composables/useT';
 import type { Deck } from '@/types/deck';
 
 const props = withDefaults(
     defineProps<{
-        initial?: Pick<
-            Deck,
-            'title' | 'description' | 'sourceLanguage' | 'targetLanguage' | 'isPublic'
-        > | null;
+        initial?: Pick<Deck, 'title' | 'description' | 'sourceLanguage' | 'targetLanguage'> | null;
         loading?: boolean;
         submitLabel?: string;
     }>(),
@@ -111,26 +67,22 @@ const emit = defineEmits<{
 
 const { t } = useT();
 
-const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
-
 const { handleSubmit } = useForm({
     validationSchema: toFormValidator(deckSchema),
     initialValues: {
         title: props.initial?.title ?? '',
         description: props.initial?.description ?? '',
+        // Language is chosen at creation and is immutable afterward — not editable
+        // here, but preserved unchanged in the payload so the deck keeps its pair.
         sourceLanguage: props.initial?.sourceLanguage ?? 'en',
         targetLanguage: props.initial?.targetLanguage ?? 'es',
-        isPublic: props.initial?.isPublic ?? true,
+        // Every deck is public; kept in the schema/payload but no longer user-editable.
+        isPublic: true,
     },
 });
 
 const { value: title, errorMessage: titleError } = useField<string>('title');
 const { value: description, errorMessage: descriptionError } = useField<string>('description');
-const { value: sourceLanguage, errorMessage: sourceLanguageError } =
-    useField<string>('sourceLanguage');
-const { value: targetLanguage, errorMessage: targetLanguageError } =
-    useField<string>('targetLanguage');
-const { value: isPublic } = useField<boolean>('isPublic');
 
 const onSubmit = handleSubmit((values) => {
     emit('submit', {
@@ -138,7 +90,7 @@ const onSubmit = handleSubmit((values) => {
         description: values.description?.trim() ? values.description : null,
         sourceLanguage: values.sourceLanguage,
         targetLanguage: values.targetLanguage,
-        isPublic: values.isPublic ?? true,
+        isPublic: true,
     });
 });
 </script>

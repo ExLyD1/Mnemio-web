@@ -30,7 +30,10 @@
         "@pinia/nuxt": "^0.11.3",
         "@vueuse/motion": "^3.0.3",
         "@vueuse/nuxt": "^14.2.1",
+        "dompurify": "^3.4.11",
         "lucide-vue-next": "^1.0.0",
+        "marked": "^18.0.5",
+        "mixpanel-browser": "^2.80.0",
         "nuxt": "^4.4.2",
         "vee-validate": "^4.15.1",
         "vue": "^3.5.30",
@@ -38,6 +41,8 @@
         "zod": "^4.3.6"
     },
     "devDependencies": {
+        "@types/dompurify": "^3.0.5",
+        "@types/mixpanel-browser": "^2.60.0",
         "@typescript-eslint/eslint-plugin": "^8.58.0",
         "@typescript-eslint/parser": "^8.58.0",
         "eslint": "^10.2.0",

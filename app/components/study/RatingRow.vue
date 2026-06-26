@@ -5,13 +5,13 @@
             :key="g.key"
             type="button"
             :class="[
-                'relative flex flex-col items-center gap-1 rounded-2xl border px-4 py-3 transition-all hover:-translate-y-0.5',
+                'relative flex min-h-[44px] flex-col items-center gap-1 rounded-2xl border px-4 py-3 transition-all hover:shadow-md hover:shadow-brand/15',
                 toneClass[g.tone],
             ]"
             @click="$emit('grade', g.key)"
         >
             <StudyKeycap :label="g.hint" class="absolute right-2 top-2" />
-            <span class="text-body font-semibold">{{ g.label }}</span>
+            <span class="text-body font-semibold">{{ t(g.i18nKey) }}</span>
             <span class="text-small opacity-70">{{ g.interval }}</span>
         </button>
     </div>
@@ -19,14 +19,17 @@
 
 <script setup lang="ts">
 import { GRADES } from '@/utils/grades';
+import { useT } from '@/composables/useT';
 import type { SrsRating } from '@/types/srs';
+
+const { t } = useT();
 
 defineEmits<{ grade: [rating: SrsRating] }>();
 
 const toneClass = {
-    ghost: 'border-error/50 bg-error/10 text-error hover:bg-error/18',
-    dark: 'border-line-strong bg-bg-surface text-brand-pale hover:bg-bg-surface-2',
-    good: 'border-brand-bright bg-brand/35 text-on-color hover:bg-brand/45',
-    easy: 'border-success/80 bg-success/40 text-[#5d9e0a] hover:bg-success/50',
+    ghost: 'border-error bg-error/16 dark:text-[#F26D6D] text-[#B3261E] hover:bg-error/24',
+    dark: 'border-vib-amber bg-vib-amber/18 dark:text-[oklch(.82_.14_75)] text-[#8A5A12] hover:bg-vib-amber/28',
+    good: 'border-lavender bg-lavender/24 dark:text-[#D9C7F5] text-[#5B3FA0] hover:bg-lavender/32',
+    easy: 'border-success bg-success text-[#2E3613] hover:brightness-110',
 } as const;
 </script>

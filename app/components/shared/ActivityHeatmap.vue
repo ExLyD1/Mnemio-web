@@ -1,8 +1,8 @@
 <template>
     <div>
         <div class="overflow-x-auto pb-1">
-            <div class="flex gap-1">
-                <div v-for="(week, wi) in weeks" :key="wi" class="flex flex-col gap-1">
+            <div class="flex w-full justify-between">
+                <div v-for="(week, wi) in weeks" :key="wi" class="flex flex-col gap-[3px]">
                     <span
                         v-for="(lvl, di) in week"
                         :key="di"

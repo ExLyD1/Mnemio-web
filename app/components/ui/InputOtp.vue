@@ -1,5 +1,5 @@
 <template>
-    <div class="flex gap-2">
+    <div class="flex w-full gap-1.5 sm:gap-2">
         <input
             v-for="(_, i) in length"
             :key="i"
@@ -13,7 +13,7 @@
             inputmode="numeric"
             maxlength="1"
             :class="[
-                'size-14 rounded-xl border bg-transparent text-center text-h3 font-semibold text-neutral-0 outline-none transition-colors',
+                'aspect-square min-w-0 max-w-14 flex-1 rounded-xl border bg-transparent text-center text-h3 font-semibold text-neutral-0 outline-none transition-colors',
                 digits[i] ? 'border-brand-pale' : 'border-brand-muted',
                 'focus:border-brand-pale',
             ]"

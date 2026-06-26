@@ -27,26 +27,12 @@
                 class="mt-12 flex flex-col gap-3 border-t border-line pt-6 text-small text-cream-faint sm:flex-row sm:items-center sm:justify-between"
             >
                 <span>{{ t('footer.rights').replace('{year}', String(year)) }}</span>
-                <div class="flex gap-3">
-                    <a
-                        v-for="s in socials"
-                        :key="s.label"
-                        :href="s.href"
-                        target="_blank"
-                        rel="noopener"
-                        :aria-label="s.label"
-                        class="grid size-9 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:text-cream"
-                    >
-                        <component :is="s.icon" class="size-4" />
-                    </a>
-                </div>
             </div>
         </div>
     </footer>
 </template>
 
 <script setup lang="ts">
-import { Twitter, Github, Instagram } from 'lucide-vue-next';
 import { useT } from '#imports';
 
 const { t } = useT();
@@ -78,11 +64,5 @@ const columns = [
             { label: 'footer.linkHelp', to: '/about' },
         ],
     },
-];
-
-const socials = [
-    { label: 'Twitter', href: 'https://twitter.com/mnemio', icon: Twitter },
-    { label: 'GitHub', href: 'https://github.com/mnemio', icon: Github },
-    { label: 'Instagram', href: 'https://instagram.com/mnemio', icon: Instagram },
 ];
 </script>

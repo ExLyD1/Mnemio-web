@@ -69,6 +69,7 @@
                     <input
                         v-model="birthday"
                         type="date"
+                        :min="minBirthday"
                         :max="maxBirthday"
                         class="w-full rounded-xl border border-brand-muted bg-transparent px-4 py-2.5 text-body text-brand-pale outline-none focus:border-brand-bright"
                     />
@@ -97,7 +98,7 @@
                             :class="[
                                 'rounded-full border px-3.5 py-1.5 text-small font-semibold transition-colors',
                                 selectedInterests.includes(topic)
-                                    ? 'border-brand-bright bg-brand text-cream'
+                                    ? 'border-brand-bright bg-brand text-on-color'
                                     : 'border-line-strong text-brand-muted hover:text-brand-pale',
                             ]"
                             @click="toggleInterest(topic)"
@@ -143,6 +144,7 @@
 import { useAuth, useToast, useT } from '#imports';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useMimi } from '@/composables/useMimi';
+import { useAnalytics } from '@/composables/useAnalytics';
 
 definePageMeta({ layout: 'auth' });
 
@@ -151,6 +153,7 @@ const prefs = usePreferencesStore();
 const mimi = useMimi();
 const toast = useToast();
 const { t } = useT();
+const analytics = useAnalytics();
 
 useSeo({ title: t('seo.onboardingTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -182,6 +185,7 @@ const birthday = ref('');
 const selectedInterests = ref<string[]>([...prefs.interests]);
 const goal = ref(prefs.goal ?? 'steady');
 
+const minBirthday = '1900-01-01';
 const maxBirthday = computed(() => {
     const d = new Date();
     d.setFullYear(d.getFullYear() - 13);
@@ -214,6 +218,7 @@ const goStep2 = () => {
     }
     mimi.clear();
     step.value = 1;
+    analytics.track('onboarding_step_completed', { step: 1, step_name: 'profile' });
 };
 
 const finish = async () => {
@@ -239,6 +244,12 @@ const finish = async () => {
             goal: goal.value,
         })
         .catch(() => {});
+    analytics.track('onboarding_step_completed', { step: 2, step_name: 'learn' });
+    analytics.track('onboarding_completed', {
+        interests_count: selectedInterests.value.length,
+        goal: goal.value,
+    });
+    analytics.setUserProps({ daily_goal_tier: goal.value });
     toast.success(t('onboarding.welcome'));
     await navigateTo('/dashboard');
 };

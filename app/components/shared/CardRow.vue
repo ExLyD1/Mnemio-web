@@ -23,22 +23,24 @@
             >
                 <Volume2 class="size-4" />
             </button>
-            <button
-                type="button"
-                class="grid size-8 place-items-center rounded-full text-brand-muted transition hover:text-cream sm:opacity-0 sm:group-hover:opacity-100"
-                :aria-label="t('card.edit')"
-                @click="$emit('edit', card.id)"
-            >
-                <Pencil class="size-4" />
-            </button>
-            <button
-                type="button"
-                class="grid size-8 place-items-center rounded-full text-brand-muted transition hover:text-error sm:opacity-0 sm:group-hover:opacity-100"
-                :aria-label="t('card.delete')"
-                @click="$emit('delete', card.id)"
-            >
-                <Trash2 class="size-4" />
-            </button>
+            <template v-if="!readonly">
+                <button
+                    type="button"
+                    class="grid size-8 place-items-center rounded-full text-brand-muted transition hover:text-cream sm:opacity-0 sm:group-hover:opacity-100"
+                    :aria-label="t('card.edit')"
+                    @click="$emit('edit', card.id)"
+                >
+                    <Pencil class="size-4" />
+                </button>
+                <button
+                    type="button"
+                    class="grid size-8 place-items-center rounded-full text-brand-muted transition hover:text-error sm:opacity-0 sm:group-hover:opacity-100"
+                    :aria-label="t('card.delete')"
+                    @click="$emit('delete', card.id)"
+                >
+                    <Trash2 class="size-4" />
+                </button>
+            </template>
             <span
                 :class="['inline-block size-2.5 rounded-full', dotClass]"
                 role="img"
@@ -61,6 +63,8 @@ const props = defineProps<{
     index: number;
     card: Card;
     state: 'mastered' | 'learning' | 'new';
+    /** Hide edit/delete actions when viewing a deck you don't own. */
+    readonly?: boolean;
 }>();
 
 defineEmits<{ edit: [id: string]; delete: [id: string] }>();

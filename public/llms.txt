@@ -1,0 +1,33 @@
+# Mnemio
+
+> Mnemio is a flashcard and spaced-repetition (SRS) learning web app. Users build decks
+> of cards, study them with an SRS scheduler that times reviews for long-term retention,
+> discover and copy public decks, track learning stats, and generate cards with AI.
+
+Mnemio is built for learners who want to remember what they study — languages, science,
+history, exam prep, and more — using active recall and spaced repetition rather than
+passive re-reading or cramming.
+
+## Key pages
+
+- [Home](https://mnemio.xyz/): product overview, features, and FAQ.
+- [Discover decks](https://mnemio.xyz/discover): browse and search thousands of free,
+  public flashcard decks and study sets across many subjects and languages.
+- [About](https://mnemio.xyz/about): the product's mission and how it works.
+- [Pricing](https://mnemio.xyz/pricing): Free plan and Mnemio Premium ($10/month, or
+  $8/month billed annually).
+- [Blog](https://mnemio.xyz/blog): articles on spaced repetition, active recall, and
+  effective study technique.
+
+## Concepts
+
+- Spaced repetition: reviewing material at increasing intervals so it transfers to
+  long-term memory with minimal total study time.
+- Active recall: retrieving an answer from memory (the core of a flashcard) is far more
+  effective for retention than re-reading.
+- SRS scheduler: Mnemio rates each review and schedules the next one based on how well
+  the card was recalled.
+
+## Sitemaps
+
+- https://mnemio.xyz/sitemap.xml

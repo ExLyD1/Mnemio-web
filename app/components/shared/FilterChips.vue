@@ -7,15 +7,15 @@
             :class="[
                 'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-small font-semibold transition-colors',
                 modelValue === opt.key
-                    ? 'border-brand-bright bg-brand text-cream'
-                    : 'border-line-strong text-brand-muted hover:text-brand-pale',
+                    ? 'border-pink-soft/30 bg-brand text-on-color'
+                    : 'border-line-strong text-cream-faint hover:text-cream',
             ]"
             @click="$emit('update:modelValue', opt.key)"
         >
             {{ opt.label }}
             <span
                 v-if="opt.count !== undefined"
-                :class="modelValue === opt.key ? 'text-cream/70' : 'text-brand-muted/70'"
+                :class="modelValue === opt.key ? 'text-cream/70' : 'text-cream-faint/70'"
             >
                 {{ opt.count }}
             </span>

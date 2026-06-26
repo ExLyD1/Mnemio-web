@@ -1,7 +1,7 @@
 <template>
     <div class="w-full max-w-3xl">
         <div
-            class="fc relative mx-auto min-h-[380px] w-full cursor-pointer outline-none"
+            class="fc relative mx-auto w-full cursor-pointer outline-none"
             :class="{ flipped: revealed }"
             role="button"
             tabindex="0"
@@ -9,8 +9,8 @@
             @click="$emit('flip')"
         >
             <div
-                class="face front rounded-[24px] border border-line-strong p-10 shadow-flash-card"
-                :style="{ backgroundImage: frontGradient }"
+                class="face front absolute inset-0 rounded-[24px] border border-line-strong p-6 shadow-flash-card sm:p-10"
+                :style="{ background: 'var(--c-fc-front)' }"
             >
                 <StudyLangPill :lang="card.lang" :region="card.region" />
                 <p class="fc-word break-words font-display text-cream">{{ card.word }}</p>
@@ -20,13 +20,15 @@
             </div>
 
             <div
-                class="face back rounded-[24px] border border-brand-bright p-8 shadow-flash-card"
-                :style="{ backgroundImage: backGradient }"
+                class="face back relative min-h-[260px] rounded-[24px] border border-brand-bright p-5 shadow-flash-card sm:min-h-[340px] sm:p-8"
+                :style="{ background: 'var(--c-fc-back)' }"
             >
-                <div class="grid h-full gap-6 sm:grid-cols-[42%_1fr]">
+                <div class="grid h-full gap-4 sm:gap-6 sm:grid-cols-[42%_1fr]">
                     <div class="flex flex-col gap-3 text-left sm:border-r sm:border-line sm:pr-6">
                         <StudyLangPill :lang="card.lang" :region="card.region" />
-                        <p class="break-words font-display text-4xl text-cream">{{ card.word }}</p>
+                        <p class="break-words font-display text-2xl text-cream sm:text-4xl">
+                            {{ card.word }}
+                        </p>
                         <p v-if="card.reading" class="break-words text-body text-brand-pale">
                             {{ card.reading }}
                         </p>
@@ -48,7 +50,9 @@
                             <p class="text-eyebrow uppercase text-brand-muted">
                                 {{ t('study.meaning') }}
                             </p>
-                            <p class="mt-1 break-words text-xl text-cream">{{ card.meaning }}</p>
+                            <p class="mt-1 break-words text-lg text-cream sm:text-xl">
+                                {{ card.meaning }}
+                            </p>
                         </div>
                         <div v-if="card.example">
                             <p class="text-eyebrow uppercase text-brand-muted">
@@ -75,47 +79,21 @@ defineProps<{ card: StudyCard; revealed: boolean }>();
 defineEmits<{ flip: [] }>();
 
 const { t } = useT();
-
-const isDark = ref(true);
-let themeObserver: MutationObserver | null = null;
-
-onMounted(() => {
-    const update = () => {
-        isDark.value = document.documentElement.classList.contains('dark');
-    };
-    update();
-    themeObserver = new MutationObserver(update);
-    themeObserver.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class'],
-    });
-});
-
-onUnmounted(() => {
-    themeObserver?.disconnect();
-});
-
-const frontGradient = computed(() =>
-    isDark.value
-        ? 'linear-gradient(160deg, #2c1a2a 0%, #1a1020 100%)'
-        : 'linear-gradient(160deg, #faf5ef 0%, #f2eae0 100%)',
-);
-
-const backGradient = computed(() =>
-    isDark.value
-        ? 'linear-gradient(160deg, #572f54 0%, #482b5c 100%)'
-        : 'linear-gradient(160deg, #f0e8de 0%, #e8ddd0 100%)',
-);
 </script>
 
 <style scoped>
 .face {
-    position: absolute;
-    inset: 0;
     display: flex;
     flex-direction: column;
 }
+/*
+ * The back is the in-flow height driver (position: relative) so the card grows
+ * to fit its content and never clips on small screens. The front is the absolute
+ * overlay that fades out as the back's gradient mask sweeps in.
+ */
 .front {
+    position: absolute;
+    inset: 0;
     align-items: center;
     justify-content: center;
     gap: 18px;
@@ -150,9 +128,10 @@ const backGradient = computed(() =>
     mask-position: 0 0;
 }
 .fc-word {
-    font-size: clamp(40px, 7vw, 88px);
-    line-height: 1.02;
+    font-size: clamp(26px, 6vw, 64px);
+    line-height: 1.05;
     overflow-wrap: anywhere;
+    hyphens: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

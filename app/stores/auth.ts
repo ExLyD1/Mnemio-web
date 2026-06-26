@@ -10,28 +10,41 @@ import {
     oauthExchange as apiOauthExchange,
 } from '@/api/auth';
 import { readAccessToken, writeAccessToken } from '@/utils/authToken';
+import { useAnalytics } from '@/composables/useAnalytics';
 import type { User, ProfileUpdate } from '@/types/user';
 
 export const useAuthStore = defineStore('auth', () => {
     const user = ref<User | null>(null);
     const accessToken = ref<string | null>(null);
     const pendingUserId = ref<string | null>(null);
+    const plan = ref<'free' | 'premium'>('free');
 
     const isAuthenticated = computed(() => !!accessToken.value && !!user.value);
     const currentUser = computed(() => user.value);
     const needsProfile = computed(() => !!user.value && !user.value.username);
+    const isPremium = computed(() => plan.value === 'premium');
 
-    const setSession = (u: User, token: string) => {
+    const setSession = (u: User, token: string, p: 'free' | 'premium' = 'free') => {
         user.value = u;
         accessToken.value = token;
         writeAccessToken(token);
         pendingUserId.value = null;
+        plan.value = p;
+
+        // Identity stitching: merge the anon $device_id history into this user so
+        // pre-signup events (homepage, discover, blog) connect to the account.
+        const analytics = useAnalytics();
+        analytics.identify(u.id);
+        analytics.registerSuper({ plan: p });
+        analytics.setUserProps({ plan: p });
     };
 
     const clearSession = () => {
         user.value = null;
         accessToken.value = null;
         writeAccessToken(null);
+        plan.value = 'free';
+        useAnalytics().reset();
     };
 
     const hydrate = async () => {
@@ -45,6 +58,7 @@ export const useAuthStore = defineStore('auth', () => {
             // retries, so an expired access token alone does not end the session.
             const result = await apiMe();
             user.value = result.user;
+            plan.value = result.plan;
             accessToken.value = readAccessToken();
         } catch (e) {
             // Only a revoked/stolen refresh token is a real logout. Network errors or a
@@ -69,7 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
             });
         }
         const result = await apiVerifyEmail(pendingUserId.value, code);
-        setSession(result.user, result.accessToken);
+        setSession(result.user, result.accessToken, result.plan);
         return result;
     };
 
@@ -84,13 +98,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     const login = async (email: string, password: string) => {
         const result = await apiLogin(email, password);
-        setSession(result.user, result.accessToken);
+        setSession(result.user, result.accessToken, result.plan);
         return result;
     };
 
     const oauthExchange = async (code: string) => {
         const result = await apiOauthExchange(code);
-        setSession(result.user, result.accessToken);
+        setSession(result.user, result.accessToken, result.plan);
         return result;
     };
 
@@ -109,9 +123,11 @@ export const useAuthStore = defineStore('auth', () => {
         user,
         accessToken,
         pendingUserId,
+        plan,
         isAuthenticated,
         currentUser,
         needsProfile,
+        isPremium,
         hydrate,
         register,
         verifyEmail,

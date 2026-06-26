@@ -52,13 +52,25 @@
                     <!-- Empty / greeting -->
                     <div
                         v-if="!chat.messages.value.length && !chat.loadingThread.value"
-                        class="flex flex-col items-center gap-3 py-12 text-center"
+                        class="flex flex-col items-center gap-4 py-12 text-center"
                     >
-                        <SharedMimi :size="72" />
+                        <SharedMimi :size="80" />
                         <h2 class="font-display text-h2 text-cream">{{ t('chat.emptyTitle') }}</h2>
                         <p class="max-w-[42ch] text-body text-cream-dim">
                             {{ t('chat.emptyHint') }}
                         </p>
+                        <!-- Quick-action pills -->
+                        <div class="mt-2 flex flex-wrap justify-center gap-2">
+                            <button
+                                v-for="q in quickActions"
+                                :key="q"
+                                type="button"
+                                class="rounded-full border border-line bg-bg-surface px-4 py-2 text-small text-cream-dim transition-colors hover:border-brand-bright/50 hover:text-cream"
+                                @click="sendQuick(q)"
+                            >
+                                {{ q }}
+                            </button>
+                        </div>
                     </div>
 
                     <div v-if="chat.loadingThread.value" class="flex justify-center py-8">
@@ -95,15 +107,20 @@
 
                             <div
                                 v-else-if="m.content"
-                                class="max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-body"
+                                class="max-w-[80%] break-words rounded-2xl px-4 py-2.5 text-body"
                                 :class="
                                     m.role === 'user'
-                                        ? 'bg-brand text-on-color'
+                                        ? 'whitespace-pre-wrap bg-brand/90 text-on-color shadow-sm'
                                         : 'border border-line bg-bg-surface text-cream'
                                 "
                             >
-                                {{ m.content
-                                }}<span
+                                <template v-if="m.role === 'user'">{{ m.content }}</template>
+                                <span
+                                    v-else
+                                    class="chat-prose"
+                                    v-html="renderMarkdown(m.content)"
+                                />
+                                <span
                                     v-if="isStreaming(i)"
                                     class="ml-0.5 inline-block w-1.5 animate-pulse"
                                     >▍</span
@@ -152,7 +169,7 @@
                         :placeholder="t('chat.placeholder')"
                         class="max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-body text-cream outline-none placeholder:text-brand-muted"
                         @input="autoGrow"
-                        @keydown.enter.exact.prevent="onSend"
+                        @keydown.enter="onEnterKey"
                     />
                     <UiButton
                         variant="primary"
@@ -173,12 +190,17 @@
 <script setup lang="ts">
 import { Send, Menu } from 'lucide-vue-next';
 import { useChat, useToast, useT } from '#imports';
+import { useAuthStore } from '@/stores/auth';
+import { usePremiumGateStore } from '@/stores/premiumGate';
+import { renderMarkdown } from '@/utils/markdown';
 
 definePageMeta({ layout: 'default' });
 
 const chat = useChat();
 const toast = useToast();
 const { t } = useT();
+const auth = useAuthStore();
+const premiumGate = usePremiumGateStore();
 
 useSeo({ title: t('seo.aiTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -190,6 +212,18 @@ const inputEl = ref<HTMLTextAreaElement | null>(null);
 const activeTitle = computed(
     () => chat.conversations.value.find((c) => c.id === chat.activeId.value)?.title ?? '',
 );
+
+const quickActions = computed(() => [
+    t('chat.quickDeck'),
+    t('chat.quickVocab'),
+    t('chat.quickTips'),
+    t('chat.quickExplain'),
+]);
+
+const sendQuick = async (text: string) => {
+    draft.value = text;
+    await onSend();
+};
 
 // Streaming cursor only on the last assistant message while a reply is in flight.
 const isStreaming = (i: number) =>
@@ -225,6 +259,12 @@ const resetInput = () => {
     });
 };
 
+const onEnterKey = (e: KeyboardEvent) => {
+    if (e.shiftKey) return;
+    e.preventDefault();
+    onSend();
+};
+
 const onSend = async () => {
     const text = draft.value.trim();
     if (!text || chat.streaming.value) {
@@ -250,7 +290,11 @@ const errText = (code: string) => t(`chat.err.${code}`, t('chat.err.generic'));
 watch(
     () => chat.streamError.value,
     (e) => {
-        if (e) {
+        if (!e) return;
+        if (e.code === 'AI_BUDGET_EXCEEDED' && !auth.isPremium) {
+            const cap = (e as { capPerDay?: number }).capPerDay;
+            premiumGate.show('ai_budget', cap !== undefined ? { capPerDay: cap } : undefined);
+        } else {
             toast.error(errText(e.code));
         }
     },
@@ -270,3 +314,60 @@ onMounted(async () => {
     }
 });
 </script>
+
+<style scoped>
+/* Markdown rendered from assistant replies (v-html). Kept minimal and inline-ish
+   so a chat bubble reads naturally without a heavy prose framework. */
+.chat-prose :deep(p) {
+    margin: 0;
+}
+.chat-prose :deep(p + p) {
+    margin-top: 0.5rem;
+}
+.chat-prose :deep(strong) {
+    font-weight: 700;
+}
+.chat-prose :deep(em) {
+    font-style: italic;
+}
+.chat-prose :deep(ul),
+.chat-prose :deep(ol) {
+    margin: 0.4rem 0;
+    padding-left: 1.2rem;
+}
+.chat-prose :deep(ul) {
+    list-style: disc;
+}
+.chat-prose :deep(ol) {
+    list-style: decimal;
+}
+.chat-prose :deep(li) {
+    margin: 0.15rem 0;
+}
+.chat-prose :deep(a) {
+    color: rgb(var(--c-brand-pale));
+    text-decoration: underline;
+}
+.chat-prose :deep(code) {
+    border-radius: 0.3rem;
+    background: rgb(var(--c-bg-well));
+    padding: 0.1rem 0.35rem;
+    font-size: 0.9em;
+}
+.chat-prose :deep(pre) {
+    overflow-x: auto;
+    border-radius: 0.6rem;
+    background: rgb(var(--c-bg-well));
+    padding: 0.6rem 0.8rem;
+}
+.chat-prose :deep(pre code) {
+    background: transparent;
+    padding: 0;
+}
+.chat-prose :deep(h1),
+.chat-prose :deep(h2),
+.chat-prose :deep(h3) {
+    margin: 0.4rem 0 0.2rem;
+    font-weight: 700;
+}
+</style>

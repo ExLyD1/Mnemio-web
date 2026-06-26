@@ -1,12 +1,12 @@
 <template>
     <div class="flex flex-col items-center gap-6">
         <div
-            class="w-full max-w-2xl rounded-3xl border border-line bg-plum-card p-10 text-center shadow-flash-card"
+            class="flex min-h-[220px] w-full max-w-2xl flex-col items-center justify-center gap-3 rounded-3xl border border-line bg-plum-card p-6 text-center shadow-flash-card sm:min-h-[280px] sm:p-10"
         >
             <div class="text-eyebrow uppercase text-cream-faint">{{ t('study.front') }}</div>
             <div
-                class="mt-4 font-display text-cream"
-                style="font-size: clamp(36px, 5.5vw, 64px); line-height: 1.1"
+                class="font-display text-cream"
+                style="font-size: clamp(28px, 5vw, 56px); line-height: 1.1; overflow-wrap: anywhere"
             >
                 {{ question.prompt }}
             </div>
@@ -41,16 +41,17 @@
         <button
             v-if="picked !== null"
             type="button"
-            class="rounded-full border border-line-strong bg-bg-surface px-5 py-2.5 text-small font-semibold text-cream transition-colors hover:bg-bg-surface-2"
+            class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-brand px-6 py-3 text-body font-semibold text-on-color shadow-lavender-cta transition-transform hover:brightness-110 active:scale-95 sm:w-auto"
             @click="$emit('next')"
         >
-            {{ t('study.continue') }} →
+            {{ t('study.continue') }}
+            <ArrowRight class="size-4" />
         </button>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Check, X } from 'lucide-vue-next';
+import { Check, X, ArrowRight } from 'lucide-vue-next';
 import type { MultipleChoiceQuestion } from '@/composables/useMultipleChoice';
 import { useT } from '@/composables/useT';
 

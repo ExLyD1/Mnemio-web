@@ -40,7 +40,8 @@
                         :label="t('auth.birthday')"
                         type="date"
                         :placeholder="t('auth.birthdayPlaceholder')"
-                        :max="todayIso"
+                        :min="minBirthday"
+                        :max="maxBirthday"
                     />
                     <p v-if="birthdayError" class="mt-1.5 text-small text-error" aria-live="polite">
                         {{ t(birthdayError) }}
@@ -83,7 +84,14 @@ const { value: fullName, errorMessage: fullNameError } = useField<string>('fullN
 const { value: username, errorMessage: usernameError } = useField<string>('username');
 const { value: birthday, errorMessage: birthdayError } = useField<string>('birthday');
 
-const todayIso = new Date().toISOString().slice(0, 10);
+// Bound the native date picker to realistic birth years: from 1900 up to 13 years
+// ago (matches the schema's age requirement and blocks impossible years).
+const minBirthday = '1900-01-01';
+const maxBirthday = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 13);
+    return d.toISOString().slice(0, 10);
+})();
 
 const onSubmit = handleSubmit((values) => emit('submit', values));
 </script>

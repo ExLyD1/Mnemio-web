@@ -12,7 +12,7 @@
                     }}<span class="italic">{{ t('landing.heroTitleEm') }}</span
                     >{{ t('landing.heroTitle2') }}
                 </h1>
-                <p class="mt-5 max-w-[46ch] text-body text-cream-dim">
+                <p class="mt-5 max-w-[46ch] text-body font-medium text-cream">
                     {{ t('landing.heroBody') }}
                 </p>
                 <div class="mt-7 flex flex-wrap gap-3">
@@ -54,7 +54,7 @@
                 <div
                     v-for="f in features"
                     :key="f.title"
-                    class="rounded-[20px] border border-line bg-bg-surface p-6 transition-transform hover:-translate-y-0.5"
+                    class="rounded-[20px] border border-line bg-bg-surface p-6 transition-all hover:shadow-lg hover:shadow-brand/10"
                 >
                     <span
                         class="grid size-11 place-items-center rounded-xl bg-brand/30 text-lavender"
@@ -62,7 +62,7 @@
                         <component :is="f.icon" class="size-5" />
                     </span>
                     <h3 class="mt-4 font-display text-h3 text-cream">{{ t(f.title) }}</h3>
-                    <p class="mt-2 text-small text-cream-dim">{{ t(f.body) }}</p>
+                    <p class="mt-2 text-small text-cream">{{ t(f.body) }}</p>
                 </div>
             </div>
         </section>
@@ -79,7 +79,7 @@
                 >
                     <span class="font-display text-4xl text-brand-bright">{{ i + 1 }}</span>
                     <h3 class="mt-3 font-display text-h3 text-cream">{{ t(s.title) }}</h3>
-                    <p class="mt-2 text-small text-cream-dim">{{ t(s.body) }}</p>
+                    <p class="mt-2 text-small text-cream">{{ t(s.body) }}</p>
                 </div>
             </div>
         </section>
@@ -109,7 +109,7 @@
                 <h2 class="mt-2 font-display text-h1 text-cream">
                     {{ t('landing.aiTitle') }}
                 </h2>
-                <p class="mt-4 max-w-[44ch] text-body text-cream-dim">
+                <p class="mt-4 max-w-[44ch] text-body text-cream">
                     {{ t('landing.aiBody') }}
                 </p>
             </div>
@@ -120,7 +120,7 @@
                     {{ t('landing.aiBubble1') }}
                 </div>
                 <div
-                    class="max-w-[80%] self-end rounded-2xl rounded-br-sm bg-brand px-4 py-3 text-body text-cream"
+                    class="max-w-[80%] self-end rounded-2xl rounded-br-sm bg-brand px-4 py-3 text-body text-on-color"
                 >
                     {{ t('landing.aiBubble2') }}
                 </div>
@@ -148,6 +148,22 @@
             </div>
         </section>
 
+        <!-- FAQ -->
+        <section id="faq" class="mx-auto max-w-[760px] px-6 py-16">
+            <p class="text-eyebrow uppercase text-brand-muted">{{ t('landing.faqEyebrow') }}</p>
+            <h2 class="mt-2 font-display text-h1 text-cream">{{ t('landing.faqTitle') }}</h2>
+            <div class="mt-8 flex flex-col gap-4">
+                <div
+                    v-for="item in faqs"
+                    :key="item.q"
+                    class="rounded-[20px] border border-line bg-bg-surface p-6"
+                >
+                    <h3 class="font-display text-h3 text-cream">{{ t(item.q) }}</h3>
+                    <p class="mt-2 text-body text-cream">{{ t(item.a) }}</p>
+                </div>
+            </div>
+        </section>
+
         <!-- Final CTA -->
         <section class="mx-auto max-w-[1080px] px-6 pb-24 pt-10">
             <div class="rounded-[28px] bg-mimi-ambient p-12 text-center">
@@ -155,7 +171,7 @@
                     {{ t('landing.finalCtaTitle1')
                     }}<span class="italic">{{ t('landing.finalCtaTitleEm') }}</span>
                 </h2>
-                <p class="mx-auto mt-3 max-w-[44ch] text-body text-cream-dim">
+                <p class="mx-auto mt-3 max-w-[44ch] text-body text-cream">
                     {{ t('landing.finalCtaBody') }}
                 </p>
                 <div class="mt-6 flex justify-center gap-3">
@@ -182,8 +198,15 @@ const { t } = useT();
 
 useSeo({ title: t('seo.homeTitle'), description: t('seo.homeDesc') });
 
-// Landing-page software schema, in addition to the Organization/WebSite graph
-// emitted by the marketing layout.
+const faqs = [
+    { q: 'landing.faq1Q', a: 'landing.faq1A' },
+    { q: 'landing.faq2Q', a: 'landing.faq2A' },
+    { q: 'landing.faq3Q', a: 'landing.faq3A' },
+    { q: 'landing.faq4Q', a: 'landing.faq4A' },
+];
+
+// Landing-page software + FAQ schema, in addition to the Organization/WebSite graph
+// emitted by the marketing layout. The FAQ entries mirror the visible #faq section.
 useHead({
     script: [
         {
@@ -196,6 +219,18 @@ useHead({
                 operatingSystem: 'Web',
                 description: t('seo.homeDesc'),
                 offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            }),
+        },
+        {
+            type: 'application/ld+json',
+            innerHTML: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: faqs.map((f) => ({
+                    '@type': 'Question',
+                    name: t(f.q),
+                    acceptedAnswer: { '@type': 'Answer', text: t(f.a) },
+                })),
             }),
         },
     ],

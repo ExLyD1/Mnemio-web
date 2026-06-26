@@ -8,11 +8,12 @@
 
 **Contract is complete.** P0 + P1 + P2 from `backend-plan.md` are all shipped,
 plus the post-MVP additions (Google OAuth, account deletion, welcome flags,
-Quizlet/text imports, deck import/export, real-time AI chat). **57 endpoints
-under `/api/v1`** + `GET /health` + `GET /ready` + static `/media/*`. Nothing
-in this document is "coming later" unless it says so explicitly.
+Quizlet/text imports, deck import/export, real-time AI chat, and paid
+subscriptions via Stripe). **65 endpoints under `/api/v1`** + `GET /health` +
+`GET /ready` + static `/media/*`. Nothing in this document is "coming later"
+unless it says so explicitly.
 
-### Endpoint inventory (57 under `/api/v1`)
+### Endpoint inventory (65 under `/api/v1`)
 
 | Domain       | Endpoints                                                                                                                                                                                             |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -29,26 +30,29 @@ in this document is "coming later" unless it says so explicitly.
 | AI           | `POST /ai/enrich-words` · `POST /ai/generate-deck` · `POST /ai/suggest`                                                                                                                               |
 | Imports      | `POST /imports/quizlet` · `POST /imports/text`                                                                                                                                                        |
 | Chat         | `GET /chat/conversations` · `POST /chat/conversations` · `GET /chat/conversations/:id` · `PATCH /chat/conversations/:id` · `DELETE /chat/conversations/:id` · `POST /chat/conversations/:id/messages` |
+| Public (SEO) | `GET /public/discover/decks` · `GET /public/discover/categories` · `GET /public/decks/:id` · `GET /public/sitemap/decks`                                                                              |
 | Media        | `POST /media/uploads` (+ static serve at `GET /media/<userId>/<file>`)                                                                                                                                |
+| Billing      | `POST /billing/checkout` · `GET /billing/subscription` · `POST /billing/portal` · `POST /billing/webhook`                                                                                             |
 | Ops          | `GET /health` · `GET /ready` (both un-prefixed)                                                                                                                                                       |
 
 ### Invariants the FE must respect
 
-| #   | Rule                                                                                                                                                                                                                                                                               |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Refresh token is an **HttpOnly cookie** `mnemio_refresh` on path `/api/v1/auth`. **Never in any body.** Send `credentials: 'include'` on every call.                                                                                                                               |
-| 2   | Access token in `localStorage`, sent as `Authorization: Bearer …`.                                                                                                                                                                                                                 |
-| 3   | On `{ code: 'AUTH_INVALID_TOKEN' }` → `POST /auth/refresh` (no body), retry once; on `{ code: 'AUTH_INVALID_REFRESH' }` → hard logout, never retry.                                                                                                                                |
-| 4   | `POST /srs/rate` body is `{ cardId, rating }` — `'again'\|'hard'\|'good'\|'easy'`. Server derives `deckId`.                                                                                                                                                                        |
-| 5   | Session XP is **server-computed** `correct*10 + 25`. Never send `xp`. The user's total `xp` changes server-side — refresh via `/auth/me` or `/dashboard.stats.xp`.                                                                                                                 |
-| 6   | `User.fullName` (was `displayName`); `User.streak` is exposed but always `0` — use `/stats/overview.streak` instead.                                                                                                                                                               |
-| 7   | Username-taken error code is `AUTH_USERNAME_TAKEN`.                                                                                                                                                                                                                                |
-| 8   | Every list response is `{ items, nextCursor }`; one variant (`GET /decks`) adds `total`. Cursor is opaque.                                                                                                                                                                         |
-| 9   | Ownership is checked at the repo layer — listing/getting/modifying someone else's deck/card/session always returns `404 *_NOT_FOUND` or `403 *_FORBIDDEN`.                                                                                                                         |
-| 10  | Only one `active` session per user. Both `POST /sessions` and `POST /sessions/:id/resume` flip a pre-existing active session to `incomplete` atomically.                                                                                                                           |
-| 11  | Every auth response (`login`, `verify-email`, `refresh`, `me`) now carries `welcome: { hasDeck, hasSession, hasReviewed }` — use it for dashboard variant selection instead of fanning out three count probes from the FE.                                                         |
-| 12  | `/imports/*` and `/ai/*` share a per-user daily-cap rollup in `ai_usage`. A user can hit the import cap without affecting AI calls and vice versa — distinct error codes (`IMPORT_BUDGET_EXCEEDED` vs `AI_BUDGET_EXCEEDED`).                                                       |
-| 13  | `/chat/conversations/:id/messages` is the only endpoint where partial-success matters: a streamed assistant reply that gets cut mid-flight is persisted with `status: 'partial'` and the user is NOT charged a daily-cap unit. The FE can render the half-reply and offer "retry." |
+| #   | Rule                                                                                                                                                                                                                                                                                                                                                                                               |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Refresh token is an **HttpOnly cookie** `mnemio_refresh` on path `/api/v1/auth`. **Never in any body.** Send `credentials: 'include'` on every call.                                                                                                                                                                                                                                               |
+| 2   | Access token in `localStorage`, sent as `Authorization: Bearer …`.                                                                                                                                                                                                                                                                                                                                 |
+| 3   | On `{ code: 'AUTH_INVALID_TOKEN' }` → `POST /auth/refresh` (no body), retry once; on `{ code: 'AUTH_INVALID_REFRESH' }` → hard logout, never retry.                                                                                                                                                                                                                                                |
+| 4   | `POST /srs/rate` body is `{ cardId, rating }` — `'again'\|'hard'\|'good'\|'easy'`. Server derives `deckId`.                                                                                                                                                                                                                                                                                        |
+| 5   | Session XP is **server-computed** `correct*10 + 25`. Never send `xp`. The user's total `xp` changes server-side — refresh via `/auth/me` or `/dashboard.stats.xp`.                                                                                                                                                                                                                                 |
+| 6   | `User.fullName` (was `displayName`); `User.streak` is exposed but always `0` — use `/stats/overview.streak` instead.                                                                                                                                                                                                                                                                               |
+| 7   | Username-taken error code is `AUTH_USERNAME_TAKEN`.                                                                                                                                                                                                                                                                                                                                                |
+| 8   | Every list response is `{ items, nextCursor }`; one variant (`GET /decks`) adds `total`. Cursor is opaque.                                                                                                                                                                                                                                                                                         |
+| 9   | Ownership is checked at the repo layer — listing/getting/modifying someone else's deck/card/session always returns `404 *_NOT_FOUND` or `403 *_FORBIDDEN`.                                                                                                                                                                                                                                         |
+| 10  | Only one `active` session per user. Both `POST /sessions` and `POST /sessions/:id/resume` flip a pre-existing active session to `incomplete` atomically.                                                                                                                                                                                                                                           |
+| 11  | Every auth response (`login`, `verify-email`, `refresh`, `me`) now carries `welcome: { hasDeck, hasSession, hasReviewed }` — use it for dashboard variant selection instead of fanning out three count probes from the FE.                                                                                                                                                                         |
+| 12  | `/imports/*` and `/ai/*` share a per-user daily-cap rollup in `ai_usage`. A user can hit the import cap without affecting AI calls and vice versa — distinct error codes (`IMPORT_BUDGET_EXCEEDED` vs `AI_BUDGET_EXCEEDED`).                                                                                                                                                                       |
+| 13  | `/chat/conversations/:id/messages` is the only endpoint where partial-success matters: a streamed assistant reply that gets cut mid-flight is persisted with `status: 'partial'` and the user is NOT charged a daily-cap unit. The FE can render the half-reply and offer "retry."                                                                                                                 |
+| 14  | `GET /auth/me` (and every token-issuing auth response) now returns `plan: 'free' \| 'premium'` at the top level. Store it in auth state alongside `user` — the FE uses it to show/hide premium UI and to optimistically gate features before the server enforces them. On `403 PREMIUM_REQUIRED` from any endpoint, show the paywall modal (the server enforces even if the FE shows the feature). |
 
 ### Demo data
 
@@ -152,6 +156,10 @@ type ApiError = {
 | `AUTH_EMAIL_UNVERIFIED_LINK` | `/auth/oauth/google/callback` | The user already has an unverified password account with that email; tell them to verify it first or use a different Google account. |
 | `NOT_READY` | `GET /ready` | 503 — DB ping failed. Ops-only; FE doesn't call `/ready`. |
 | `CHAT_NOT_FOUND` | any `/chat/conversations/:id*` | 404 — conversation missing or owned by someone else. |
+| `PREMIUM_REQUIRED` | any gated endpoint | 403 — feature requires an active subscription. Show paywall/upgrade modal. |
+| `BILLING_NOT_CONFIGURED` | any `/billing/*` | 400 — Stripe keys absent on this deployment. Hide billing UI entirely. |
+| `BILLING_NO_SUBSCRIPTION` | `GET /billing/subscription` · `POST /billing/portal` | 404 — user has no subscription row. Treat the same as `plan: 'free'`. |
+| `BILLING_PRICE_NOT_CONFIGURED` | `POST /billing/checkout` | 400 — specific plan price ID missing in env. Fall back to the other plan or show "unavailable". |
 
 **429 envelope:** `@fastify/rate-limit` is now configured with our standard
 envelope, so a rate-limited request returns
@@ -199,6 +207,22 @@ type User = {
     streak: number; // ALWAYS 0 — use /stats/overview.streak instead
     createdAt: string;
     updatedAt: string;
+};
+
+// Returned at the top level of GET /auth/me and every token-issuing response
+// alongside `user`. Distinct from User so auth state can hold both without nesting.
+type Plan = 'free' | 'premium';
+
+// Current subscription details. Returned by GET /billing/subscription.
+// Null / 404 means no subscription row exists — treat as plan: 'free'.
+type Subscription = {
+    id: string;
+    status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
+    plan: 'monthly' | 'annual';
+    currentPeriodStart: string; // ISO 8601 UTC
+    currentPeriodEnd: string; // ISO 8601 UTC — access until this date on 'canceled'
+    cancelAtPeriodEnd: boolean; // true when user canceled but period hasn't ended
+    trialEnd: string | null; // ISO 8601 UTC, non-null only during 'trialing'
 };
 
 type DeckStats = {
@@ -363,7 +387,19 @@ type ChatMessage = {
     status: ChatMessageStatus;
     tokensInput: number | null; // assistant rows only
     tokensOutput: number | null; // assistant rows only
+    attachments?: ChatAttachment[]; // present when the assistant ran a tool
     createdAt: string;
+};
+
+// Structured side-effect produced when the chat model called a tool. Today
+// the only kind is 'deck' (the create_deck tool). Future tools (audio,
+// image, study session…) extend this discriminated union without breaking
+// the FE contract.
+type ChatAttachment = {
+    type: 'deck';
+    deckId: string;
+    title: string;
+    cardCount: number;
 };
 ```
 
@@ -503,9 +539,14 @@ FE should also delete `accessToken` from `localStorage` after this call.
 #### `GET /auth/me` _(auth)_
 
 ```ts
-// 200 Response: { user: User; needsProfile: boolean; welcome: WelcomeState }
+// 200 Response: { user: User; needsProfile: boolean; welcome: WelcomeState; plan: Plan }
 // Errors: 401 AUTH_INVALID_TOKEN → try /auth/refresh
 ```
+
+`plan` is the fast entitlement check — `'premium'` when the user has an active
+subscription (`status ∈ {trialing, active, past_due, canceled}` and
+`currentPeriodEnd > now`). Use it to show/hide UI. The server enforces gating
+independently; the FE never fully trusts it for hard access control.
 
 #### Google OAuth flow (3 endpoints)
 
@@ -1288,15 +1329,20 @@ Always single-response (small payload, no streaming needed).
 
 #### Common — rate limits + budget
 
-| Limit                       | Value                                  | Throws                   |
-| --------------------------- | -------------------------------------- | ------------------------ |
-| Request rate                | 30/min/user across all three endpoints | `429 RATE_LIMITED`       |
-| Daily `enrich` cap          | 5/day/user (default)                   | `429 AI_BUDGET_EXCEEDED` |
-| Daily `generate` cap        | 20/day/user (default)                  | `429 AI_BUDGET_EXCEEDED` |
-| Daily `suggest` cap         | 60/day/user (default)                  | `429 AI_BUDGET_EXCEEDED` |
-| Max words per `enrich` call | 100 (default)                          | `400 AI_TOO_MANY_WORDS`  |
+| Limit                       | Free tier   | Premium tier  | Throws                       |
+| --------------------------- | ----------- | ------------- | ---------------------------- |
+| Request rate                | 30/min/user | 30/min/user   | `429 RATE_LIMITED`           |
+| Daily `enrich` cap          | 5/day       | 50/day (env)  | `429 AI_BUDGET_EXCEEDED`     |
+| Daily `generate` cap        | 20/day      | 200/day (env) | `429 AI_BUDGET_EXCEEDED`     |
+| Daily `suggest` cap         | 60/day      | 600/day (env) | `429 AI_BUDGET_EXCEEDED`     |
+| Daily `chat` cap            | 50/day      | 500/day (env) | `429 AI_BUDGET_EXCEEDED`     |
+| Daily `import` cap          | 20/day      | 200/day (env) | `429 IMPORT_BUDGET_EXCEEDED` |
+| Max words per `enrich` call | 100         | 100           | `400 AI_TOO_MANY_WORDS`      |
 
-Caps are configurable via env (`AI_DAILY_*_CAP_PER_USER`, `AI_MAX_WORDS_PER_ENRICH`).
+Free and premium caps are independently configurable via env
+(`AI_DAILY_*_CAP_PER_USER` for free, `AI_DAILY_*_CAP_PREMIUM_PER_USER` for
+premium). The cap used is determined server-side from the caller's active
+subscription — the FE never sends plan information in the request body.
 
 ### Imports _(Quizlet + paste-text)_
 
@@ -1448,17 +1494,47 @@ data: {
 event: token
 data: { delta: string }             // one event per provider chunk
 
+# Optional pair — emitted only when the model calls a tool (today: create_deck).
+event: tool_use
+data: { name: 'create_deck', input: { topic?, words?, sourceLanguage?, ... } }
+
+event: tool_result
+data: {
+  name: 'create_deck',
+  ok: boolean,                       // true on success
+  data: ChatAttachment | { reason: string }  // attachment on ok:true, reason on ok:false
+}
+
+# More `event: token` frames may follow as the model writes its follow-up
+# text after the tool runs.
+
 event: done
 data: {
-  assistantMessage: ChatMessage,    // status: 'complete', tokens populated
+  assistantMessage: ChatMessage,    // status: 'complete', tokens populated, attachments populated when a tool fired
   conversationTitle: string,        // may have been auto-set on the first turn
-  tokensInput: number,
+  tokensInput: number,              // sum of round-1 + round-2 when a tool fired
   tokensOutput: number
 }
 
 event: error                         // mid-stream failure
 data: { code: string, message: string, details?: object }
 ```
+
+**Tool semantics:** when the model decides the user wants a deck
+(explicit words, topic request, "make me a deck"…), it calls
+`create_deck`. The backend runs it via the existing `enrich-words` or
+`generate-deck` pipeline and persists a real `Deck` + `Card[]` owned by
+the caller. The SSE stream emits `tool_use` → `tool_result`, then more
+`token` frames as the model writes its confirmation. The final
+`assistantMessage.attachments` contains
+`[{ type: 'deck', deckId, title, cardCount }]` — the FE already renders
+this as a clickable link card.
+
+If the tool fails (`ok: false`), no attachment is persisted, the model
+writes a text apology, and `assistantMessage.attachments` is omitted.
+The user is still charged one `chat` budget unit. The underlying error
+code lives in `tool_result.data.reason` (`AI_BUDGET_EXCEEDED`,
+`AI_PROVIDER_ERROR`, `INTERNAL`, etc.).
 
 After an `event: error` the assistant message stays in the database with
 `status: 'partial'` and whatever text we got before the failure. The user
@@ -1493,6 +1569,57 @@ LLM, oldest first. Older messages remain in the DB and are returned by
 **Auto-title rule:** on the user's first message in a conversation, the
 title flips from `"New chat"` to the trimmed message (up to 60 chars, ellipsis
 suffix when truncated). Subsequent turns leave the title alone.
+
+### Public (SEO)
+
+Unauthenticated, read-only mirror of the discover surface for marketing
+pages, server-rendered deck previews, and `sitemap.xml` generation. All
+filters match the authed `/discover/*` endpoints — when a deck flips
+`isPublic` to false, it disappears from both sides in lock-step.
+
+Per-route throttle: 60 req/min/IP on the browsing endpoints, 10 req/min/IP
+on the sitemap.
+
+#### `GET /public/discover/decks` _(public)_
+
+```ts
+// Same query string as authed GET /discover/decks:
+//   ?cursor?=string&limit?=number(<=50)&q?=string&lang?=string
+//   &subject?=string&sort?=popular|recent   (default 'recent')
+// 200 Response: PageWithTotal<DeckWithAuthor>
+```
+
+Per-user mastery is omitted (no viewer concept). `stats.mastered`,
+`stats.learning`, `stats.due` are all `0` — `stats.total`, `stats.new`,
+`stats.masteredPct` still come from the deck's own `cardCount`.
+
+#### `GET /public/discover/categories` _(public)_
+
+```ts
+// 200 Response: { items: { subject: string; count: number }[] }
+```
+
+Identical body to the authed variant.
+
+#### `GET /public/decks/:id` _(public)_
+
+```ts
+// 200 Response: { deck: DeckWithAuthor; cards: Card[] }
+// Errors: 404 DECK_NOT_FOUND   (deck is private, missing, or has isPublic=false)
+```
+
+Cards inlined the same way as the authed `GET /decks/:id`. SEO renderer
+can build the page without a second request.
+
+#### `GET /public/sitemap/decks` _(public)_
+
+Minimal projection — id + ISO `updatedAt` — for the FE's `sitemap.xml`
+generator. Hard cap of 50 000 rows per the sitemap protocol; split into
+shards before then.
+
+```ts
+// 200 Response: { items: { id: string; updatedAt: string }[] }
+```
 
 ### Media _(P2)_
 
@@ -1540,6 +1667,101 @@ Multipart form: one field named `file`.
 After upload, the URL is served at `GET <url>` (no auth needed; treat as a
 public link). For card uploads, `PATCH /cards/:id { audioUrl | imageUrl }` to
 attach. For avatars, the response already updated the user row.
+
+### Billing
+
+Stripe-powered subscription management. Requires `STRIPE_SECRET_KEY`,
+`STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, and `STRIPE_PRICE_ANNUAL` to
+be set in the backend env. When any of these are absent, every `/billing/*`
+call returns `400 BILLING_NOT_CONFIGURED` — the FE should hide billing UI
+entirely in that case (useful for local dev without a Stripe account).
+
+#### `POST /billing/checkout` _(auth)_
+
+Create a Stripe Checkout session and return the hosted-page URL. The FE
+redirects the user to that URL; Stripe handles card collection, then redirects
+back.
+
+```ts
+// Request
+{
+    plan: 'monthly' | 'annual';
+}
+
+// 201 Response
+{
+    url: string;
+} // redirect the user here (window.location = url)
+
+// Errors:
+// 400 BILLING_NOT_CONFIGURED     — Stripe keys missing
+// 400 BILLING_PRICE_NOT_CONFIGURED — env missing STRIPE_PRICE_MONTHLY/ANNUAL
+```
+
+Stripe redirects back to:
+
+- Success: `${WEB_URL}/billing/success?session_id=<id>`
+- Cancel: `${WEB_URL}/billing/cancel`
+
+On the success page, poll `GET /billing/subscription` until `status` becomes
+`active` or `trialing` (webhook fires within ~1 s in practice; 3 s poll is
+fine).
+
+#### `GET /billing/subscription` _(auth)_
+
+Current subscription details.
+
+```ts
+// 200 Response: Subscription
+// 404 BILLING_NO_SUBSCRIPTION — user has no subscription row (plan: 'free')
+```
+
+#### `POST /billing/portal` _(auth)_
+
+Create a Stripe Customer Portal session and return the URL. The portal lets
+the user cancel, change payment method, or download invoices — all without
+any custom UI.
+
+```ts
+// Request: (empty body)
+
+// 201 Response
+{
+    url: string;
+} // redirect the user here
+
+// Errors:
+// 400 BILLING_NOT_CONFIGURED
+// 404 BILLING_NO_SUBSCRIPTION — user has never subscribed
+```
+
+#### `POST /billing/webhook` _(public — Stripe-signed, **no** JWT)_
+
+Stripe event receiver. The FE **never calls this directly** — it is only for
+Stripe's servers. Listed here for completeness.
+
+The backend processes:
+| Stripe event | Effect |
+|---|---|
+| `customer.subscription.created` | Upsert subscription row (→ `trialing`/`active`) |
+| `customer.subscription.updated` | Update status, plan, period, `cancelAtPeriodEnd` |
+| `customer.subscription.deleted` | Set status → `expired` |
+| `invoice.payment_succeeded` | Set status → `active`, advance period dates |
+| `invoice.payment_failed` | Set status → `past_due` |
+
+All events are idempotent (duplicate delivery is a no-op). Unhandled event
+types return 200 silently.
+
+#### Subscription lifecycle UX
+
+| `status` from `GET /billing/subscription` | What the FE should show                                                   |
+| ----------------------------------------- | ------------------------------------------------------------------------- |
+| No subscription (404)                     | "Upgrade to Premium" CTAs; AI quota 429 → paywall modal                   |
+| `trialing`                                | "Trial ends on {trialEnd}" banner                                         |
+| `active`                                  | Normal premium experience                                                 |
+| `past_due`                                | "Payment failed — update card" banner (link to `POST /billing/portal`)    |
+| `canceled`                                | "Plan ends on {currentPeriodEnd}" banner + resubscribe CTA; access intact |
+| `expired`                                 | Reverts to free-tier; premium features gate with paywall                  |
 
 ### Health (ops)
 
@@ -1710,8 +1932,19 @@ for (;;) {
                 assistantContent += data.delta;
                 // append delta to the placeholder in the FE store
                 break;
+            case 'tool_use':
+                // OPTIONAL: render a "Creating deck…" indicator next to
+                // the assistant placeholder. data = { name, input }.
+                break;
+            case 'tool_result':
+                // OPTIONAL: swap the indicator for a preview chip. The
+                // canonical attachment also arrives on `done` so the
+                // simplest FE just waits for that.
+                break;
             case 'done':
-                // replace the placeholder with data.assistantMessage; update title.
+                // replace the placeholder with data.assistantMessage;
+                // attachments[] is on the assistantMessage when a tool
+                // fired. update conversation title.
                 break;
             case 'error':
                 // surface a toast; the partial reply is preserved server-side
@@ -1734,6 +1967,42 @@ Important edge cases:
 - **JSON fallback:** if SSE is awkward (proxy, library, test rig), omit
   the `Accept: text/event-stream` header and the endpoint returns the
   same final payload as a single JSON body.
+
+### Billing / subscription flow
+
+```
+// Subscribe (pricing page CTA)
+POST /billing/checkout { plan: 'monthly' | 'annual' }
+  → { url }
+  → window.location = url                // Stripe-hosted Checkout
+     └─ success → ${WEB_URL}/billing/success?session_id=...
+          // poll GET /billing/subscription every ~3s until status ∈ {active, trialing}
+          // then refresh auth state (GET /auth/me) so plan flips to 'premium'
+     └─ cancel → ${WEB_URL}/billing/cancel
+          // no subscription was created; user stays free
+
+// Manage / cancel (billing settings page)
+POST /billing/portal
+  → { url }
+  → window.location = url                // Stripe Customer Portal (cancel, card, invoices)
+
+// Read current state (billing settings page)
+GET /billing/subscription
+  → Subscription or 404 (= free)
+
+// Hard gate: server returns 403 PREMIUM_REQUIRED
+// → show paywall / upgrade modal regardless of FE plan state
+```
+
+**Auth state:** store `plan` from every auth response alongside `user`. Update
+it on every `GET /auth/me` call. The FE uses `plan === 'premium'` to show or
+hide UI elements, but always handles `403 PREMIUM_REQUIRED` from the server as
+the authoritative gate.
+
+**`BILLING_NOT_CONFIGURED`:** when the backend is running without Stripe keys
+(local dev, staging without billing), every `/billing/*` call returns this
+code. Guard: before rendering any billing UI, check that a prior call didn't
+return this error; if it did, hide all upgrade/subscription UI silently.
 
 ### Session flow
 
