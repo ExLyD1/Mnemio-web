@@ -11,7 +11,7 @@
             {{ chip }}
             <button
                 type="button"
-                class="grid size-4 place-items-center rounded-full text-brand-muted transition-colors hover:bg-white/10 hover:text-cream"
+                class="grid size-4 place-items-center rounded-full text-brand-muted transition-colors dark:hover:bg-white/10 hover:bg-brand/15 hover:text-cream"
                 :aria-label="`Remove ${chip}`"
                 @click.stop="removeAt(i)"
             >

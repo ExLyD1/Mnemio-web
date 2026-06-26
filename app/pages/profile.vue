@@ -18,7 +18,7 @@
                     />
                     <button
                         type="button"
-                        class="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-brand text-cream shadow-soft-elevation transition-transform hover:scale-105"
+                        class="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-brand text-on-color shadow-soft-elevation transition-transform hover:scale-105"
                         :aria-label="t('profile.changePhoto')"
                         @click="avatarInput?.click()"
                     >

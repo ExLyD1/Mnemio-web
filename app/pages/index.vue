@@ -120,7 +120,7 @@
                     {{ t('landing.aiBubble1') }}
                 </div>
                 <div
-                    class="max-w-[80%] self-end rounded-2xl rounded-br-sm bg-brand px-4 py-3 text-body text-cream"
+                    class="max-w-[80%] self-end rounded-2xl rounded-br-sm bg-brand px-4 py-3 text-body text-on-color"
                 >
                     {{ t('landing.aiBubble2') }}
                 </div>

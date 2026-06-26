@@ -22,7 +22,7 @@
                     <p class="flabel">{{ t('deck.title') }}</p>
                     <input
                         v-model="title"
-                        class="w-full rounded-xl border border-line-strong bg-[rgba(255,255,255,.03)] px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
+                        class="w-full rounded-xl border border-line-strong dark:bg-[rgba(255,255,255,.03)] bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
                         :placeholder="t('deck.titlePlaceholder')"
                     />
                 </div>
@@ -32,7 +32,7 @@
                     <p class="flabel">{{ t('deck.subjectCategory') }}</p>
                     <input
                         v-model="subject"
-                        class="w-full rounded-xl border border-line-strong bg-[rgba(255,255,255,.03)] px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
+                        class="w-full rounded-xl border border-line-strong dark:bg-[rgba(255,255,255,.03)] bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
                         :placeholder="t('deck.subjectPlaceholder')"
                     />
                 </div>
@@ -42,7 +42,7 @@
                     <p class="flabel">{{ t('deck.description') }}</p>
                     <textarea
                         v-model="description"
-                        class="w-full resize-none rounded-xl border border-line-strong bg-[rgba(255,255,255,.03)] px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
+                        class="w-full resize-none rounded-xl border border-line-strong dark:bg-[rgba(255,255,255,.03)] bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
                         style="height: 84px"
                         :placeholder="t('deck.descriptionPlaceholder')"
                     />
@@ -79,7 +79,8 @@
                             :options="languageOptions"
                         />
                         <p class="mt-1 text-small text-brand-muted">
-                            {{ t('deck.frontLangHint') }}
+                            {{ t('deck.frontLangHint') }} —
+                            {{ t('deck.frontLangExample').replace('{lang}', frontLangLabel) }}
                         </p>
                     </div>
                     <div>
@@ -89,8 +90,35 @@
                             :options="languageOptions"
                         />
                         <p class="mt-1 text-small text-brand-muted">
-                            {{ t('deck.backLangHint') }}
+                            {{ t('deck.backLangHint') }} —
+                            {{ t('deck.backLangExample').replace('{lang}', backLangLabel) }}
                         </p>
+                    </div>
+                </div>
+
+                <!-- Live preview of which language lands on which side of the card -->
+                <div class="mt-3 rounded-2xl border border-line bg-bg-surface p-3">
+                    <p class="mb-2 text-eyebrow uppercase text-brand-muted">
+                        {{ t('deck.langPreviewTitle') }}
+                    </p>
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1 rounded-xl border border-line-strong bg-bg-well p-2.5">
+                            <p class="text-[11px] uppercase text-brand-muted">
+                                {{ t('deck.langPreviewFront') }}
+                            </p>
+                            <p class="mt-0.5 font-display text-sm text-cream">
+                                {{ frontLangLabel }}
+                            </p>
+                        </div>
+                        <ArrowRight class="size-4 shrink-0 text-brand-muted" />
+                        <div class="flex-1 rounded-xl border border-line-strong bg-bg-well p-2.5">
+                            <p class="text-[11px] uppercase text-brand-muted">
+                                {{ t('deck.langPreviewBack') }}
+                            </p>
+                            <p class="mt-0.5 font-display text-sm text-cream">
+                                {{ backLangLabel }}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -158,7 +186,7 @@
     <Transition name="panel-slide">
         <div
             v-if="mimiOpen"
-            class="fixed inset-0 z-50 flex w-full flex-col border-line-strong bg-[rgba(13,10,18,.97)] md:inset-y-0 md:left-auto md:right-0 md:z-30 md:w-80 md:border-l"
+            class="fixed inset-0 z-50 flex w-full flex-col border-line-strong dark:bg-[rgba(13,10,18,.97)] bg-bg-surface md:inset-y-0 md:left-auto md:right-0 md:z-30 md:w-80 md:border-l"
         >
             <!-- Header -->
             <div class="flex items-center justify-between border-b border-line px-5 py-4">
@@ -189,7 +217,7 @@
                     <template v-for="(msg, i) in messages" :key="i">
                         <div v-if="msg.role === 'user'" class="flex justify-end">
                             <div
-                                class="max-w-[85%] rounded-2xl rounded-tr-sm bg-brand px-3 py-2 text-small text-cream"
+                                class="max-w-[85%] rounded-2xl rounded-tr-sm bg-brand px-3 py-2 text-small text-on-color"
                             >
                                 {{ msg.text }}
                             </div>
@@ -319,7 +347,7 @@
                     />
                     <button
                         type="button"
-                        class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand text-cream transition-opacity disabled:opacity-40"
+                        class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand text-on-color transition-opacity disabled:opacity-40"
                         :disabled="!chatInput.trim() || generating"
                         @click="onSend"
                     >
@@ -335,7 +363,7 @@
 </template>
 
 <script setup lang="ts">
-import { Sparkles, Layers, X, ArrowUp } from 'lucide-vue-next';
+import { Sparkles, Layers, X, ArrowUp, ArrowRight } from 'lucide-vue-next';
 import { useDecks, useToast, useT } from '#imports';
 import * as aiApi from '@/api/ai';
 import type { AiDeckDraft } from '@/api/ai';
@@ -384,6 +412,11 @@ const cardType = ref<'basic' | 'cloze' | 'image'>('basic');
 const coverColor = ref(COVER_SWATCHES[0]);
 
 const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
+
+const labelForLang = (code: string) =>
+    LANGUAGES.find((l) => l.code === code)?.label ?? code.toUpperCase();
+const frontLangLabel = computed(() => labelForLang(targetLanguage.value));
+const backLangLabel = computed(() => labelForLang(sourceLanguage.value));
 
 const cardTypes = computed(() => [
     { value: 'basic', label: t('deck.cardTypeBasic'), hint: t('deck.cardTypeBasicHint') },
@@ -567,7 +600,7 @@ const onAccept = async (d: AiDeckDraft) => {
 <style scoped>
 .flabel {
     font-size: 11px;
-    color: rgba(227, 210, 200, 0.42);
+    color: rgb(var(--c-cream) / 0.42);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     font-weight: 600;

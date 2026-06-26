@@ -5,7 +5,7 @@
         />
         <span
             v-if="glyph"
-            class="absolute inset-0 grid select-none place-items-center font-display text-5xl text-cream/80"
+            class="absolute inset-0 grid select-none place-items-center font-display text-5xl text-on-color/80"
         >
             {{ glyph }}
         </span>

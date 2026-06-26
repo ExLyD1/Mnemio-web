@@ -1,7 +1,7 @@
 <template>
     <div class="w-full max-w-3xl">
         <div
-            class="fc relative mx-auto min-h-[380px] w-full cursor-pointer outline-none"
+            class="fc relative mx-auto min-h-[300px] w-full cursor-pointer outline-none sm:min-h-[380px]"
             :class="{ flipped: revealed }"
             role="button"
             tabindex="0"
@@ -9,8 +9,8 @@
             @click="$emit('flip')"
         >
             <div
-                class="face front rounded-[24px] border border-line-strong p-10 shadow-flash-card"
-                :style="{ backgroundImage: frontGradient }"
+                class="face front rounded-[24px] border border-line-strong p-6 shadow-flash-card sm:p-10"
+                :style="{ background: 'var(--c-fc-front)' }"
             >
                 <StudyLangPill :lang="card.lang" :region="card.region" />
                 <p class="fc-word break-words font-display text-cream">{{ card.word }}</p>
@@ -20,8 +20,8 @@
             </div>
 
             <div
-                class="face back rounded-[24px] border border-brand-bright p-8 shadow-flash-card"
-                :style="{ backgroundImage: backGradient }"
+                class="face back rounded-[24px] border border-brand-bright p-5 shadow-flash-card sm:p-8"
+                :style="{ background: 'var(--c-fc-back)' }"
             >
                 <div class="grid h-full gap-6 sm:grid-cols-[42%_1fr]">
                     <div class="flex flex-col gap-3 text-left sm:border-r sm:border-line sm:pr-6">
@@ -75,37 +75,6 @@ defineProps<{ card: StudyCard; revealed: boolean }>();
 defineEmits<{ flip: [] }>();
 
 const { t } = useT();
-
-const isDark = ref(true);
-let themeObserver: MutationObserver | null = null;
-
-onMounted(() => {
-    const update = () => {
-        isDark.value = document.documentElement.classList.contains('dark');
-    };
-    update();
-    themeObserver = new MutationObserver(update);
-    themeObserver.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class'],
-    });
-});
-
-onUnmounted(() => {
-    themeObserver?.disconnect();
-});
-
-const frontGradient = computed(() =>
-    isDark.value
-        ? 'linear-gradient(160deg, #2c1a2a 0%, #1a1020 100%)'
-        : 'linear-gradient(160deg, #faf5ef 0%, #f2eae0 100%)',
-);
-
-const backGradient = computed(() =>
-    isDark.value
-        ? 'linear-gradient(160deg, #572f54 0%, #482b5c 100%)'
-        : 'linear-gradient(160deg, #f0e8de 0%, #e8ddd0 100%)',
-);
 </script>
 
 <style scoped>

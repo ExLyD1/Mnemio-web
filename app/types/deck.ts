@@ -48,6 +48,10 @@ export interface Deck {
     cards: Card[];
     createdAt: string;
     updatedAt: string;
+    // Present on GET /decks/:id: the deck may be a public deck owned by someone
+    // else. `isOwner` gates the authoring UI; `stats` above are viewer-scoped.
+    role?: 'owner' | 'viewer';
+    isOwner?: boolean;
 }
 
 export interface DeckInput {

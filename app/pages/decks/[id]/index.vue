@@ -7,7 +7,7 @@
             <ArrowLeft class="size-4" /> {{ t('deck.backToDecks') }}
         </NuxtLink>
 
-        <SharedPageLoader v-if="store.loadingDeck && !ready" />
+        <SharedPageLoader v-if="loading && !ready" />
 
         <div v-else-if="ready" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
             <div class="min-w-0 flex flex-col gap-5">
@@ -16,15 +16,15 @@
                         <div class="relative flex flex-col gap-[18px]">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
-                                    <p class="text-eyebrow uppercase text-cream/70">
+                                    <p class="text-eyebrow uppercase text-on-color/70">
                                         {{ eyebrow }}
                                     </p>
                                     <h1
-                                        class="mt-1 break-words font-display text-h1 leading-[1.1] text-cream"
+                                        class="mt-1 break-words font-display text-h1 leading-[1.1] text-on-color"
                                     >
                                         {{ store.deck.title }}
                                     </h1>
-                                    <p class="mt-1 text-small text-cream/80">
+                                    <p class="mt-1 text-small text-on-color/80">
                                         {{ store.deck.sourceLanguage.toUpperCase() }} →
                                         {{ store.deck.targetLanguage.toUpperCase() }}
                                     </p>
@@ -47,18 +47,26 @@
                                 >
                                     {{ t('deck.practiceAll') }}
                                 </UiButton>
+                                <UiButton
+                                    v-if="!isOwner"
+                                    variant="ghost"
+                                    :title="t('deck.copyToLibrary')"
+                                    @click="onCopy"
+                                >
+                                    <BookCopy class="size-4" /> {{ t('deck.copyToLibrary') }}
+                                </UiButton>
                                 <UiButton variant="ghost" :title="t('deck.share')" @click="onShare">
                                     <Share2 class="size-4" /> {{ t('deck.share') }}
                                 </UiButton>
                             </div>
                         </div>
                     </SharedCoverArt>
-                    <div class="absolute right-4 top-4">
+                    <div v-if="isOwner" class="absolute right-4 top-4">
                         <UiDropdownMenu :items="menuItems" align="right" @select="onMenuSelect">
                             <template #trigger="{ toggle }">
                                 <button
                                     type="button"
-                                    class="grid size-9 place-items-center rounded-full bg-black/20 text-cream backdrop-blur transition-colors hover:bg-black/35"
+                                    class="grid size-9 place-items-center rounded-full bg-black/20 text-on-color backdrop-blur transition-colors hover:bg-black/35"
                                     :aria-label="t('deck.menuAria')"
                                     @click="toggle"
                                 >
@@ -72,44 +80,89 @@
                 <div
                     class="flex flex-wrap gap-x-7 gap-y-1.5 rounded-2xl border border-line bg-bg-surface px-[22px] py-3.5"
                 >
-                    <span class="flex items-baseline gap-1.5">
+                    <button
+                        type="button"
+                        class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
+                        @click="filter = 'all'"
+                    >
                         <span class="font-display text-h2 leading-none text-cream">{{
                             store.deck.cards.length
                         }}</span>
-                        <span class="text-small text-brand-muted">{{ t('deck.statTotal') }}</span>
-                    </span>
-                    <span class="flex items-baseline gap-1.5">
+                        <span
+                            class="text-small transition-colors"
+                            :class="
+                                filter === 'all'
+                                    ? 'text-brand underline underline-offset-2'
+                                    : 'text-brand-muted'
+                            "
+                            >{{ t('deck.statTotal') }}</span
+                        >
+                    </button>
+                    <button
+                        type="button"
+                        class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
+                        @click="filter = 'practiced'"
+                    >
                         <span class="font-display text-h2 leading-none text-cream">{{
                             deckStat.mastered
                         }}</span>
-                        <span class="text-small text-brand-muted">{{
-                            t('deck.statMastered')
-                        }}</span>
-                    </span>
-                    <span class="flex items-baseline gap-1.5">
+                        <span
+                            class="text-small transition-colors"
+                            :class="
+                                filter === 'practiced'
+                                    ? 'text-brand underline underline-offset-2'
+                                    : 'text-brand-muted'
+                            "
+                            >{{ t('deck.statPracticed') }}</span
+                        >
+                    </button>
+                    <button
+                        type="button"
+                        class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
+                        @click="filter = 'due'"
+                    >
                         <span class="font-display text-h2 leading-none text-lavender">{{
                             deckStat.due
                         }}</span>
-                        <span class="text-small text-brand-muted">{{ t('deck.statDue') }}</span>
-                    </span>
-                    <span class="flex items-baseline gap-1.5">
+                        <span
+                            class="text-small transition-colors"
+                            :class="
+                                filter === 'due'
+                                    ? 'text-brand underline underline-offset-2'
+                                    : 'text-brand-muted'
+                            "
+                            >{{ t('deck.statDue') }}</span
+                        >
+                    </button>
+                    <button
+                        type="button"
+                        class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
+                        @click="filter = 'new'"
+                    >
                         <span class="font-display text-h2 leading-none text-cream">{{
                             deckStat.new
                         }}</span>
-                        <span class="text-small text-brand-muted">{{ t('deck.statNew') }}</span>
-                    </span>
+                        <span
+                            class="text-small transition-colors"
+                            :class="
+                                filter === 'new'
+                                    ? 'text-brand underline underline-offset-2'
+                                    : 'text-brand-muted'
+                            "
+                            >{{ t('deck.statNew') }}</span
+                        >
+                    </button>
                 </div>
 
                 <div class="rounded-[20px] border border-line bg-bg-surface p-2">
                     <template v-if="store.deck.cards.length">
-                        <div class="flex flex-wrap items-center gap-2 p-2">
+                        <div class="p-2">
                             <UiInputSearch
                                 v-model="search"
                                 variant="dark"
                                 :placeholder="t('deck.cardSearchPlaceholder')"
-                                class="min-w-[180px] flex-1 border border-line"
+                                class="border border-line"
                             />
-                            <UiSegmentedControl v-model="filter" :options="filterOptions" />
                         </div>
 
                         <div class="max-h-[420px] overflow-y-auto">
@@ -119,6 +172,7 @@
                                 :index="i + 1"
                                 :card="card"
                                 :state="cardState(card)"
+                                :readonly="!isOwner"
                                 @edit="openEdit"
                                 @delete="askDeleteCard"
                             />
@@ -135,7 +189,7 @@
                         >
                             <span class="flex items-center gap-1.5">
                                 <span class="size-2.5 rounded-full bg-lavender" />
-                                {{ t('deck.statMastered') }}
+                                {{ t('deck.statPracticed') }}
                             </span>
                             <span class="flex items-center gap-1.5">
                                 <span class="size-2.5 rounded-full bg-brand" />
@@ -151,6 +205,7 @@
                     <div v-else class="px-4 py-10 text-center text-body text-brand-muted">
                         {{ t('card.emptyTitle') }}.
                         <NuxtLink
+                            v-if="isOwner"
                             :to="`/decks/${id}/cards/add`"
                             class="text-lavender hover:underline"
                         >
@@ -190,7 +245,8 @@
                     </UiButton>
                 </div>
 
-                <div class="flex flex-col gap-2">
+                <!-- Owner: authoring controls. Non-owner viewing a public deck: copy CTA. -->
+                <div v-if="isOwner" class="flex flex-col gap-2">
                     <UiButton variant="ghost" @click="navigateTo(`/decks/${id}/edit`)">
                         {{ t('deck.edit') }}
                     </UiButton>
@@ -199,6 +255,19 @@
                     </UiButton>
                     <UiButton variant="primary" @click="navigateTo(`/decks/${id}/cards/add`)">
                         {{ t('card.addCards') }}
+                    </UiButton>
+                </div>
+
+                <div
+                    v-else
+                    class="flex flex-col gap-3 rounded-[20px] border border-line bg-bg-surface p-[18px]"
+                >
+                    <p class="text-eyebrow uppercase text-brand-muted">
+                        {{ t('deck.sharedDeck') }}
+                    </p>
+                    <p class="text-small text-cream-dim">{{ t('deck.sharedDeckNote') }}</p>
+                    <UiButton variant="primary" @click="onCopy">
+                        <BookCopy class="size-4" /> {{ t('deck.copyToLibrary') }}
                     </UiButton>
                 </div>
             </aside>
@@ -263,7 +332,7 @@
         />
 
         <AiImportDialog
-            v-if="ready && store.deck"
+            v-if="ready && store.deck && isOwner"
             v-model="aiOpen"
             :deck="{
                 id: store.deck.id,
@@ -276,10 +345,21 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft, MoreVertical, Pencil, Trash2, Sparkles, Share2 } from 'lucide-vue-next';
+import {
+    ArrowLeft,
+    MoreVertical,
+    Pencil,
+    Trash2,
+    Sparkles,
+    Share2,
+    BookCopy,
+} from 'lucide-vue-next';
 import { useDecks, useCards, useSrsStore, useToast, useT } from '#imports';
 import { isAuthExpiry } from '@/composables/useToast';
 import { swatchFor } from '@/utils/coverSwatches';
+import { copyDeck } from '@/api/discover';
+import { useAuthStore } from '@/stores/auth';
+import { useAnalytics } from '@/composables/useAnalytics';
 import type { Card, DeckStats } from '@/types/deck';
 
 definePageMeta({ layout: 'default' });
@@ -292,6 +372,20 @@ const { updateCard, deleteCard } = useCards();
 const srs = useSrsStore();
 const toast = useToast();
 const { t } = useT();
+const auth = useAuthStore();
+const analytics = useAnalytics();
+
+// The deck page serves two roles. When you own the deck you get the full
+// authoring UI (edit/add/delete). When you open a *public* deck owned by someone
+// else (e.g. via a shared link), `GET /decks/:id` still returns it with
+// `isOwner: false` and viewer-scoped stats, so we render a read-only view:
+// study/practice (in place) + copy-to-library, but no editing. The server's
+// `isOwner` is authoritative; fall back to an ownerId check for older responses.
+const isOwner = computed(
+    () =>
+        store.deck?.isOwner ??
+        (!!store.deck && !!auth.currentUser && store.deck.ownerId === auth.currentUser.id),
+);
 
 useSeo({ title: t('seo.deckDetailTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -394,14 +488,6 @@ const breakdownSegments = computed(() => [
 
 const search = ref('');
 const filter = ref('all');
-const filterOptions = computed(() => [
-    { value: 'all', label: t('deck.filterAll') },
-    { value: 'new', label: t('deck.statNew') },
-    { value: 'learning', label: t('deck.statLearning') },
-    { value: 'mastered', label: t('deck.statMastered') },
-    { value: 'due', label: t('deck.statDue') },
-]);
-
 const isDue = (card: Card): boolean => {
     const p = srs.progress[card.id];
     return !!p && new Date(p.nextReviewAt).getTime() <= Date.now();
@@ -417,9 +503,9 @@ const filteredCards = computed(() => {
         }
         switch (filter.value) {
             case 'new':
-            case 'learning':
-            case 'mastered':
-                return cardState(card) === filter.value;
+                return cardState(card) === 'new';
+            case 'practiced':
+                return cardState(card) === 'mastered';
             case 'due':
                 return isDue(card);
             default:
@@ -484,11 +570,36 @@ const onConfirmDelete = async () => {
     confirmOpen.value = false;
 };
 
+const loading = ref(true);
+
 const load = async () => {
-    // The empty state surfaces any load error (with a retry); no toast needed.
+    loading.value = true;
+    // `GET /decks/:id` returns the deck for any authed user when it's public
+    // (with `isOwner`), or 404s when it's private and not yours — the empty
+    // state surfaces that with a retry; no toast needed.
     await fetchOne.execute(id.value);
     // SRS enriches card state chips; it should not block first paint of the deck.
     srs.fetchAll().catch(() => {});
+    loading.value = false;
+};
+
+const onCopy = async () => {
+    if (!auth.isAuthenticated) {
+        await navigateTo(`/login?next=${encodeURIComponent(`/decks/${id.value}`)}`);
+        return;
+    }
+    try {
+        const copy = await copyDeck(id.value);
+        analytics.track('deck_copied_from_discover', {
+            deck_id: id.value,
+            viewer_authenticated: true,
+            entry_point: 'deck_detail',
+        });
+        toast.success(t('discover.copied'));
+        await navigateTo(`/decks/${copy.id}`);
+    } catch {
+        toast.error(t('discover.copyError'));
+    }
 };
 
 watch(id, load, { immediate: true });
