@@ -98,6 +98,21 @@ export default defineNuxtConfig({
                     href: 'https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&display=swap',
                 },
             ],
+            // Critical app-shell layout, inlined so the flex row holds before the
+            // main stylesheet finishes loading. Without it, a cold first paint (esp.
+            // dev, where Tailwind ships unpurged across many requests) briefly drops
+            // the flex rules and the full-height rail stacks above the content. These
+            // marker classes (.app-shell/.app-main/.app-rail) live on the layout and
+            // mirror the Tailwind utilities they sit beside, so prod is unaffected.
+            style: [
+                {
+                    innerHTML:
+                        '.app-shell{display:flex;height:100vh;overflow:hidden}' +
+                        '.app-main{display:flex;flex:1 1 0%;flex-direction:column;min-width:0;overflow:hidden}' +
+                        '.app-rail{display:none;position:relative}' +
+                        '@media(min-width:768px){.app-rail{display:flex;flex:0 0 76px;height:100vh}}',
+                },
+            ],
         },
     },
 
