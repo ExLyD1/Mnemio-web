@@ -106,6 +106,9 @@
         "otpResent": "New code sent.",
         "socialComingSoon": "Coming soon",
         "stayLoggedIn": "Stay logged in",
+        "emailLabel": "Email address",
+        "emailPlaceholder": "example@mail.com",
+        "passwordLabel": "Password",
         "errors": {
             "email_invalid": "Please enter a valid email address.",
             "password_too_short": "Password must be at least 8 characters.",
@@ -443,6 +446,8 @@
         "diffHard": "Hard",
         "addNext": "Add & next",
         "done": "Done",
+        "previewWordPlaceholder": "Your word…",
+        "tapToFlip": "Tap to flip",
         "frontPlaceholder": "Type a word, phrase or prompt…",
         "backPlaceholder": "The meaning, definition or answer learners should produce.",
         "tagsPlaceholder": "Add a tag…",

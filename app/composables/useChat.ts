@@ -1,4 +1,4 @@
-import { ref } from '#imports';
+import { ref, useI18n } from '#imports';
 import * as chatApi from '@/api/chat';
 import type { Conversation, ChatMessage, StreamError } from '@/api/chat';
 import type { ApiError } from '@/composables/useAsync';
@@ -11,6 +11,7 @@ const tempId = (p: string) => `tmp-${p}-${++tempSeq}`;
  * active thread, and an optimistic streaming `send`. One instance per page.
  */
 export const useChat = () => {
+    const { locale } = useI18n();
     const conversations = ref<Conversation[]>([]);
     const activeId = ref<string | null>(null);
     const messages = ref<ChatMessage[]>([]);
@@ -155,6 +156,7 @@ export const useChat = () => {
                 },
             },
             controller.signal,
+            locale.value,
         );
         streaming.value = false;
     };

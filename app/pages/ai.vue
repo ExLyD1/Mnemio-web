@@ -164,7 +164,7 @@
                         :placeholder="t('chat.placeholder')"
                         class="max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-body text-cream outline-none placeholder:text-brand-muted"
                         @input="autoGrow"
-                        @keydown.enter.exact.prevent="onSend"
+                        @keydown.enter="onEnterKey"
                     />
                     <UiButton
                         variant="primary"
@@ -251,6 +251,12 @@ const resetInput = () => {
         }
         inputEl.value?.focus();
     });
+};
+
+const onEnterKey = (e: KeyboardEvent) => {
+    if (e.shiftKey) return;
+    e.preventDefault();
+    onSend();
 };
 
 const onSend = async () => {

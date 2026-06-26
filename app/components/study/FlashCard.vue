@@ -1,7 +1,7 @@
 <template>
     <div class="w-full max-w-3xl">
         <div
-            class="fc relative mx-auto min-h-[300px] w-full cursor-pointer outline-none sm:min-h-[380px]"
+            class="fc relative mx-auto min-h-[280px] w-full cursor-pointer outline-none sm:min-h-[380px]"
             :class="{ flipped: revealed }"
             role="button"
             tabindex="0"
@@ -23,7 +23,7 @@
                 class="face back rounded-[24px] border border-brand-bright p-5 shadow-flash-card sm:p-8"
                 :style="{ background: 'var(--c-fc-back)' }"
             >
-                <div class="grid h-full gap-6 sm:grid-cols-[42%_1fr]">
+                <div class="grid h-full gap-4 sm:gap-6 sm:grid-cols-[42%_1fr]">
                     <div class="flex flex-col gap-3 text-left sm:border-r sm:border-line sm:pr-6">
                         <StudyLangPill :lang="card.lang" :region="card.region" />
                         <p class="break-words font-display text-4xl text-cream">{{ card.word }}</p>

@@ -331,6 +331,21 @@
             @confirm="confirmDeleteCard"
         />
 
+        <!-- Floating Mimi import button — bottom-right, hidden on mobile bottom-tab layouts -->
+        <button
+            v-if="ready"
+            type="button"
+            class="fixed bottom-[26px] right-[28px] z-30 hidden size-[58px] cursor-pointer place-items-center rounded-full border border-[rgba(242,188,255,.35)] p-0 md:grid"
+            style="
+                background: linear-gradient(150deg, #572f54, #2c1a2a);
+                box-shadow: 0 10px 28px -6px rgba(169, 142, 227, 0.3);
+            "
+            :aria-label="t('ai.launchAppend')"
+            @click="aiOpen = true"
+        >
+            <SharedMimi :size="40" :bob="false" class="pointer-events-none" />
+        </button>
+
         <AiImportDialog
             v-if="ready && store.deck && isOwner"
             v-model="aiOpen"
