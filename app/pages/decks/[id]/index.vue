@@ -7,7 +7,7 @@
             <ArrowLeft class="size-4" /> {{ t('deck.backToDecks') }}
         </NuxtLink>
 
-        <SharedPageLoader v-if="store.loadingDeck && !ready" />
+        <SharedPageLoader v-if="loading && !ready" />
 
         <div v-else-if="ready" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
             <div class="min-w-0 flex flex-col gap-5">
@@ -28,6 +28,12 @@
                                         {{ store.deck.sourceLanguage.toUpperCase() }} →
                                         {{ store.deck.targetLanguage.toUpperCase() }}
                                     </p>
+                                    <p
+                                        v-if="!isOwner && authorName"
+                                        class="mt-1 text-small text-on-color/70"
+                                    >
+                                        {{ t('discover.byAuthor').replace('{name}', authorName) }}
+                                    </p>
                                 </div>
                             </div>
                             <div class="flex flex-wrap gap-2.5">
@@ -47,13 +53,21 @@
                                 >
                                     {{ t('deck.practiceAll') }}
                                 </UiButton>
+                                <UiButton
+                                    v-if="!isOwner"
+                                    variant="ghost"
+                                    :title="t('deck.copyToLibrary')"
+                                    @click="onCopy"
+                                >
+                                    <BookCopy class="size-4" /> {{ t('deck.copyToLibrary') }}
+                                </UiButton>
                                 <UiButton variant="ghost" :title="t('deck.share')" @click="onShare">
                                     <Share2 class="size-4" /> {{ t('deck.share') }}
                                 </UiButton>
                             </div>
                         </div>
                     </SharedCoverArt>
-                    <div class="absolute right-4 top-4">
+                    <div v-if="isOwner" class="absolute right-4 top-4">
                         <UiDropdownMenu :items="menuItems" align="right" @select="onMenuSelect">
                             <template #trigger="{ toggle }">
                                 <button
@@ -70,6 +84,7 @@
                 </div>
 
                 <div
+                    v-if="isOwner"
                     class="flex flex-wrap gap-x-7 gap-y-1.5 rounded-2xl border border-line bg-bg-surface px-[22px] py-3.5"
                 >
                     <button
@@ -164,6 +179,7 @@
                                 :index="i + 1"
                                 :card="card"
                                 :state="cardState(card)"
+                                :readonly="!isOwner"
                                 @edit="openEdit"
                                 @delete="askDeleteCard"
                             />
@@ -196,6 +212,7 @@
                     <div v-else class="px-4 py-10 text-center text-body text-brand-muted">
                         {{ t('card.emptyTitle') }}.
                         <NuxtLink
+                            v-if="isOwner"
                             :to="`/decks/${id}/cards/add`"
                             class="text-lavender hover:underline"
                         >
@@ -205,7 +222,7 @@
                 </div>
             </div>
 
-            <aside class="flex flex-col gap-4 self-start lg:sticky lg:top-6">
+            <aside v-if="isOwner" class="flex flex-col gap-4 self-start lg:sticky lg:top-6">
                 <div class="rounded-[20px] border border-line bg-bg-surface-2 p-6">
                     <div class="grid place-items-center">
                         <SharedProgressRing :pct="deckStat.masteredPct" label="mastered" />
@@ -244,6 +261,20 @@
                     </UiButton>
                     <UiButton variant="primary" @click="navigateTo(`/decks/${id}/cards/add`)">
                         {{ t('card.addCards') }}
+                    </UiButton>
+                </div>
+            </aside>
+
+            <aside v-else class="flex flex-col gap-4 self-start lg:sticky lg:top-6">
+                <div
+                    class="flex flex-col gap-3 rounded-[20px] border border-line bg-bg-surface-2 p-6"
+                >
+                    <p class="text-eyebrow uppercase text-brand-muted">
+                        {{ t('deck.sharedDeck') }}
+                    </p>
+                    <p class="text-small text-cream-dim">{{ t('deck.sharedDeckNote') }}</p>
+                    <UiButton variant="primary" @click="onCopy">
+                        <BookCopy class="size-4" /> {{ t('deck.copyToLibrary') }}
                     </UiButton>
                 </div>
             </aside>
@@ -308,7 +339,7 @@
         />
 
         <AiImportDialog
-            v-if="ready && store.deck"
+            v-if="ready && store.deck && isOwner"
             v-model="aiOpen"
             :deck="{
                 id: store.deck.id,
@@ -321,11 +352,23 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft, MoreVertical, Pencil, Trash2, Sparkles, Share2 } from 'lucide-vue-next';
+import {
+    ArrowLeft,
+    MoreVertical,
+    Pencil,
+    Trash2,
+    Sparkles,
+    Share2,
+    BookCopy,
+} from 'lucide-vue-next';
 import { useDecks, useCards, useSrsStore, useToast, useT } from '#imports';
 import { isAuthExpiry } from '@/composables/useToast';
 import { swatchFor } from '@/utils/coverSwatches';
-import type { Card, DeckStats } from '@/types/deck';
+import { getPublicDeck } from '@/api/publicDiscover';
+import { copyDeck } from '@/api/discover';
+import { useAuthStore } from '@/stores/auth';
+import { useAnalytics } from '@/composables/useAnalytics';
+import type { Card, DeckStats, DeckAuthor } from '@/types/deck';
 
 definePageMeta({ layout: 'default' });
 
@@ -337,6 +380,19 @@ const { updateCard, deleteCard } = useCards();
 const srs = useSrsStore();
 const toast = useToast();
 const { t } = useT();
+const auth = useAuthStore();
+const analytics = useAnalytics();
+
+// The deck page serves two roles. When you own the deck you get the full
+// authoring UI (edit/add/delete, your SRS stats). When you open a *public* deck
+// owned by someone else (e.g. via a shared link), the authed `GET /decks/:id`
+// 404s, so we fall back to the no-auth `GET /public/decks/:id` and render a
+// read-only view: study/practice + copy-to-library, but no editing.
+const author = ref<DeckAuthor | null>(null);
+const isOwner = computed(
+    () => !!store.deck && !!auth.currentUser && store.deck.ownerId === auth.currentUser.id,
+);
+const authorName = computed(() => author.value?.username ?? author.value?.fullName ?? '');
 
 useSeo({ title: t('seo.deckDetailTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -521,11 +577,47 @@ const onConfirmDelete = async () => {
     confirmOpen.value = false;
 };
 
+const loading = ref(true);
+
 const load = async () => {
+    loading.value = true;
+    author.value = null;
     // The empty state surfaces any load error (with a retry); no toast needed.
     await fetchOne.execute(id.value);
+    // The owner endpoint 404s for decks you don't own. Fall back to the public
+    // read path so a shared link to a public deck still renders (read-only).
+    if (fetchOne.error.value && isNotFound.value) {
+        try {
+            const pub = await getPublicDeck(id.value);
+            const { cardCount: _cardCount, author: deckAuthor, ...rest } = pub;
+            author.value = deckAuthor;
+            store.deck = { ...rest, cards: pub.cards };
+        } catch {
+            // Genuinely missing or private — leave the error; empty state handles it.
+        }
+    }
     // SRS enriches card state chips; it should not block first paint of the deck.
     srs.fetchAll().catch(() => {});
+    loading.value = false;
+};
+
+const onCopy = async () => {
+    if (!auth.isAuthenticated) {
+        await navigateTo(`/login?next=${encodeURIComponent(`/decks/${id.value}`)}`);
+        return;
+    }
+    try {
+        const copy = await copyDeck(id.value);
+        analytics.track('deck_copied_from_discover', {
+            deck_id: id.value,
+            viewer_authenticated: true,
+            entry_point: 'deck_detail',
+        });
+        toast.success(t('discover.copied'));
+        await navigateTo(`/decks/${copy.id}`);
+    } catch {
+        toast.error(t('discover.copyError'));
+    }
 };
 
 watch(id, load, { immediate: true });
