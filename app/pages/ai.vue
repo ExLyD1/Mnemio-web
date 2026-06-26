@@ -107,15 +107,20 @@
 
                             <div
                                 v-else-if="m.content"
-                                class="max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-body"
+                                class="max-w-[80%] break-words rounded-2xl px-4 py-2.5 text-body"
                                 :class="
                                     m.role === 'user'
-                                        ? 'bg-brand/90 text-on-color shadow-sm'
+                                        ? 'whitespace-pre-wrap bg-brand/90 text-on-color shadow-sm'
                                         : 'border border-line bg-bg-surface text-cream'
                                 "
                             >
-                                {{ m.content
-                                }}<span
+                                <template v-if="m.role === 'user'">{{ m.content }}</template>
+                                <span
+                                    v-else
+                                    class="chat-prose"
+                                    v-html="renderMarkdown(m.content)"
+                                />
+                                <span
                                     v-if="isStreaming(i)"
                                     class="ml-0.5 inline-block w-1.5 animate-pulse"
                                     >▍</span
@@ -187,6 +192,7 @@ import { Send, Menu } from 'lucide-vue-next';
 import { useChat, useToast, useT } from '#imports';
 import { useAuthStore } from '@/stores/auth';
 import { usePremiumGateStore } from '@/stores/premiumGate';
+import { renderMarkdown } from '@/utils/markdown';
 
 definePageMeta({ layout: 'default' });
 
@@ -308,3 +314,60 @@ onMounted(async () => {
     }
 });
 </script>
+
+<style scoped>
+/* Markdown rendered from assistant replies (v-html). Kept minimal and inline-ish
+   so a chat bubble reads naturally without a heavy prose framework. */
+.chat-prose :deep(p) {
+    margin: 0;
+}
+.chat-prose :deep(p + p) {
+    margin-top: 0.5rem;
+}
+.chat-prose :deep(strong) {
+    font-weight: 700;
+}
+.chat-prose :deep(em) {
+    font-style: italic;
+}
+.chat-prose :deep(ul),
+.chat-prose :deep(ol) {
+    margin: 0.4rem 0;
+    padding-left: 1.2rem;
+}
+.chat-prose :deep(ul) {
+    list-style: disc;
+}
+.chat-prose :deep(ol) {
+    list-style: decimal;
+}
+.chat-prose :deep(li) {
+    margin: 0.15rem 0;
+}
+.chat-prose :deep(a) {
+    color: rgb(var(--c-brand-pale));
+    text-decoration: underline;
+}
+.chat-prose :deep(code) {
+    border-radius: 0.3rem;
+    background: rgb(var(--c-bg-well));
+    padding: 0.1rem 0.35rem;
+    font-size: 0.9em;
+}
+.chat-prose :deep(pre) {
+    overflow-x: auto;
+    border-radius: 0.6rem;
+    background: rgb(var(--c-bg-well));
+    padding: 0.6rem 0.8rem;
+}
+.chat-prose :deep(pre code) {
+    background: transparent;
+    padding: 0;
+}
+.chat-prose :deep(h1),
+.chat-prose :deep(h2),
+.chat-prose :deep(h3) {
+    margin: 0.4rem 0 0.2rem;
+    font-weight: 700;
+}
+</style>
