@@ -22,7 +22,7 @@
                     {{ result.deckTitle }} · {{ t('study.sessionComplete') }}
                 </p>
                 <h1 class="mt-2 font-display text-display-sm text-cream">
-                    {{ t('study.niceWork') }}<span v-if="name">, {{ name }}</span
+                    {{ resultHeading }}<span v-if="name">, {{ name }}</span
                     >.
                 </h1>
                 <p class="mt-2 text-body text-cream-dim">{{ summaryLine }}</p>
@@ -32,7 +32,7 @@
                 <SharedStatTile :label="t('study.reviewed')" :value="result.reviewed" />
                 <SharedStatTile
                     :label="t('study.recalled')"
-                    :value="`${accuracy}%`"
+                    :value="`${result.correct} / ${result.reviewed}`"
                     tone="accent"
                 />
                 <SharedStatTile :label="t('study.streak')" :value="`${result.streak}d`" />
@@ -111,13 +111,23 @@ const timeLabel = computed(() => {
     return `${m}:${String(s).padStart(2, '0')}`;
 });
 
+// Honest, varied heading based on how the session actually went — an all-"forgot"
+// run should never read "great work".
+const resultHeading = computed(() => {
+    const acc = accuracy.value;
+    if (acc >= 100) return t('study.resultPerfect');
+    if (acc >= 75) return t('study.resultHigh');
+    if (acc >= 40) return t('study.resultMid');
+    return t('study.resultLow');
+});
+
 const summaryLine = computed(() => {
     if (!result.value) {
         return '';
     }
     const slipped = result.value.revisit.length;
     const base = t('study.summaryRecalled')
-        .replace('{pct}', String(accuracy.value))
+        .replace('{correct}', String(result.value.correct))
         .replace('{total}', String(result.value.reviewed));
     return slipped > 0
         ? base + t('study.summaryRevisit').replace('{n}', String(slipped))

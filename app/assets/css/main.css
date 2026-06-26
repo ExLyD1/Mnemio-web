@@ -32,6 +32,10 @@
     --c-fc-front: linear-gradient(160deg, #2c1a2a 0%, #1a1020 100%);
     --c-fc-back: linear-gradient(160deg, #572f54 0%, #482b5c 100%);
 
+    /* Dashboard hero wash — theme-aware so it always agrees with the text color
+       (was previously picked in JS via colorMode, which could desync). */
+    --c-hero: linear-gradient(160deg, #572f54 0%, #2c1a2a 100%);
+
     /* Mimi coach panel wash — dark plum in the default/dark theme. */
     --c-mimi-ambient: radial-gradient(
         130% 120% at 50% 0%,
@@ -60,6 +64,8 @@
 
     --c-fc-front: linear-gradient(160deg, #ffffff 0%, #f6f1fa 100%);
     --c-fc-back: linear-gradient(160deg, #f1e9fb 0%, #e7daf6 100%);
+
+    --c-hero: linear-gradient(160deg, #ede4f8 0%, #d4b8f0 100%);
 
     --c-mimi-ambient: radial-gradient(
         130% 120% at 50% 0%,

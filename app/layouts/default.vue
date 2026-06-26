@@ -1,7 +1,7 @@
 <template>
-    <div class="flex h-screen overflow-hidden bg-bg-base bg-page-glow text-cream">
-        <AppRail class="hidden md:flex" />
-        <div class="flex flex-1 flex-col overflow-hidden">
+    <div class="app-shell flex h-screen overflow-hidden bg-bg-base bg-page-glow text-cream">
+        <AppRail class="app-rail hidden md:flex" />
+        <div class="app-main flex flex-1 flex-col overflow-hidden">
             <AppTopbar />
             <SharedSubscriptionBanner />
             <main class="flex-1 overflow-y-auto pb-16 md:pb-0">
