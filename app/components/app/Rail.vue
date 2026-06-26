@@ -11,7 +11,7 @@
           Text labels fade in/out with opacity so no layout changes during the width animation.
         -->
         <div
-            class="absolute inset-y-0 left-0 z-50 flex flex-col items-stretch overflow-hidden border-r border-line bg-bg-surface px-3.5 py-[18px] transition-[width,box-shadow] duration-[240ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+            class="app-rail-inner absolute inset-y-0 left-0 z-50 flex flex-col items-stretch overflow-hidden border-r border-line bg-bg-surface px-3.5 py-[18px] transition-[width,box-shadow] duration-[240ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
             :class="expanded ? 'w-[240px] shadow-[8px_0_40px_-8px_rgba(0,0,0,0.6)]' : 'w-[76px]'"
         >
             <!-- Brand -->

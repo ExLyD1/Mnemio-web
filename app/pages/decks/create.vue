@@ -1,366 +1,382 @@
 <template>
-    <section
-        class="mx-auto max-w-[920px] p-6 transition-[margin] lg:p-8"
-        :class="mimiOpen ? 'lg:mr-[340px]' : ''"
-    >
-        <!-- Heading -->
-        <p class="text-[12px] font-semibold uppercase tracking-[.18em] text-cream-faint">
-            {{ t('topbar.newDeck') }}
-        </p>
-        <h1 class="mb-2 mt-1.5 font-display text-[30px] leading-[1.05] text-cream sm:text-[44px]">
-            {{ t('deck.createHeadingPrefix')
-            }}<em class="not-italic text-lavender">{{ t('deck.createHeadingAccent') }}</em>
-        </h1>
-        <p class="mb-8 text-[15px] text-cream-dim">{{ t('deck.createSubtitle') }}</p>
+    <div>
+        <section
+            class="mx-auto max-w-[920px] p-6 transition-[margin] lg:p-8"
+            :class="mimiOpen ? 'lg:mr-[340px]' : ''"
+        >
+            <!-- Heading -->
+            <p class="text-[12px] font-semibold uppercase tracking-[.18em] text-cream-faint">
+                {{ t('topbar.newDeck') }}
+            </p>
+            <h1
+                class="mb-2 mt-1.5 font-display text-[30px] leading-[1.05] text-cream sm:text-[44px]"
+            >
+                {{ t('deck.createHeadingPrefix')
+                }}<em class="not-italic text-lavender">{{ t('deck.createHeadingAccent') }}</em>
+            </h1>
+            <p class="mb-8 text-[15px] text-cream-dim">{{ t('deck.createSubtitle') }}</p>
 
-        <!-- Two-column grid (stacks on mobile) -->
-        <div class="grid grid-cols-1 gap-7 lg:grid-cols-[1.4fr_1fr]">
-            <!-- LEFT -->
-            <div class="flex flex-col gap-[18px]">
-                <!-- Deck name -->
-                <div>
-                    <p class="flabel">{{ t('deck.title') }}</p>
-                    <input
-                        v-model="title"
-                        class="w-full rounded-xl border border-line-strong dark:bg-[rgba(255,255,255,.03)] bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
-                        :placeholder="t('deck.titlePlaceholder')"
-                    />
-                </div>
-
-                <!-- Subject / category -->
-                <div>
-                    <p class="flabel">{{ t('deck.subjectCategory') }}</p>
-                    <input
-                        v-model="subject"
-                        class="w-full rounded-xl border border-line-strong dark:bg-[rgba(255,255,255,.03)] bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
-                        :placeholder="t('deck.subjectPlaceholder')"
-                    />
-                </div>
-
-                <!-- Description -->
-                <div>
-                    <p class="flabel">{{ t('deck.description') }}</p>
-                    <textarea
-                        v-model="description"
-                        class="w-full resize-none rounded-xl border border-line-strong dark:bg-[rgba(255,255,255,.03)] bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
-                        style="height: 84px"
-                        :placeholder="t('deck.descriptionPlaceholder')"
-                    />
-                </div>
-
-                <!-- Card type tiles -->
-                <div>
-                    <p class="flabel">{{ t('deck.cardType') }}</p>
-                    <div class="flex gap-2.5">
-                        <button
-                            v-for="ct in cardTypes"
-                            :key="ct.value"
-                            type="button"
-                            class="flex-1 cursor-pointer rounded-[14px] border p-4 text-left transition-colors"
-                            :class="
-                                cardType === ct.value
-                                    ? 'border-[rgba(242,188,255,.3)] bg-brand'
-                                    : 'border-line bg-bg-surface hover:border-line-strong'
-                            "
-                            @click="cardType = ct.value"
-                        >
-                            <p class="text-[14px] font-bold text-cream">{{ ct.label }}</p>
-                            <p class="mt-0.5 text-[12px] text-cream-dim">{{ ct.hint }}</p>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Language selects (required for API) -->
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <!-- Two-column grid (stacks on mobile) -->
+            <div class="grid grid-cols-1 gap-7 lg:grid-cols-[1.4fr_1fr]">
+                <!-- LEFT -->
+                <div class="flex flex-col gap-[18px]">
+                    <!-- Deck name -->
                     <div>
-                        <UiSelect
-                            v-model="targetLanguage"
-                            :label="t('deck.frontLang')"
-                            :options="languageOptions"
+                        <p class="flabel">{{ t('deck.title') }}</p>
+                        <input
+                            v-model="title"
+                            class="w-full rounded-xl border border-line-strong dark:bg-[rgba(255,255,255,.03)] bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
+                            :placeholder="t('deck.titlePlaceholder')"
                         />
-                        <p class="mt-1 text-small text-brand-muted">
-                            {{ t('deck.frontLangHint') }} —
-                            {{ t('deck.frontLangExample').replace('{lang}', frontLangLabel) }}
-                        </p>
                     </div>
-                    <div>
-                        <UiSelect
-                            v-model="sourceLanguage"
-                            :label="t('deck.backLang')"
-                            :options="languageOptions"
-                        />
-                        <p class="mt-1 text-small text-brand-muted">
-                            {{ t('deck.backLangHint') }} —
-                            {{ t('deck.backLangExample').replace('{lang}', backLangLabel) }}
-                        </p>
-                    </div>
-                </div>
 
-                <!-- Live preview of which language lands on which side of the card -->
-                <div class="mt-3 rounded-2xl border border-line bg-bg-surface p-3">
-                    <p class="mb-2 text-eyebrow uppercase text-brand-muted">
-                        {{ t('deck.langPreviewTitle') }}
-                    </p>
-                    <div class="flex items-center gap-2">
-                        <div class="flex-1 rounded-xl border border-line-strong bg-bg-well p-2.5">
-                            <p class="text-[11px] uppercase text-brand-muted">
-                                {{ t('deck.langPreviewFront') }}
-                            </p>
-                            <p class="mt-0.5 font-display text-sm text-cream">
-                                {{ frontLangLabel }}
+                    <!-- Subject / category -->
+                    <div>
+                        <p class="flabel">{{ t('deck.subjectCategory') }}</p>
+                        <input
+                            v-model="subject"
+                            class="w-full rounded-xl border border-line-strong dark:bg-[rgba(255,255,255,.03)] bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
+                            :placeholder="t('deck.subjectPlaceholder')"
+                        />
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <p class="flabel">{{ t('deck.description') }}</p>
+                        <textarea
+                            v-model="description"
+                            class="w-full resize-none rounded-xl border border-line-strong dark:bg-[rgba(255,255,255,.03)] bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
+                            style="height: 84px"
+                            :placeholder="t('deck.descriptionPlaceholder')"
+                        />
+                    </div>
+
+                    <!-- Card type tiles -->
+                    <div>
+                        <p class="flabel">{{ t('deck.cardType') }}</p>
+                        <div class="flex gap-2.5">
+                            <button
+                                v-for="ct in cardTypes"
+                                :key="ct.value"
+                                type="button"
+                                class="flex-1 cursor-pointer rounded-[14px] border p-4 text-left transition-colors"
+                                :class="
+                                    cardType === ct.value
+                                        ? 'border-[rgba(242,188,255,.3)] bg-brand'
+                                        : 'border-line bg-bg-surface hover:border-line-strong'
+                                "
+                                @click="cardType = ct.value"
+                            >
+                                <p class="text-[14px] font-bold text-cream">{{ ct.label }}</p>
+                                <p class="mt-0.5 text-[12px] text-cream-dim">{{ ct.hint }}</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Language selects (required for API) -->
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                            <UiSelect
+                                v-model="targetLanguage"
+                                :label="t('deck.frontLang')"
+                                :options="languageOptions"
+                            />
+                            <p class="mt-1 text-small text-brand-muted">
+                                {{ t('deck.frontLangHint') }} —
+                                {{ t('deck.frontLangExample').replace('{lang}', frontLangLabel) }}
                             </p>
                         </div>
-                        <ArrowRight class="size-4 shrink-0 text-brand-muted" />
-                        <div class="flex-1 rounded-xl border border-line-strong bg-bg-well p-2.5">
-                            <p class="text-[11px] uppercase text-brand-muted">
-                                {{ t('deck.langPreviewBack') }}
-                            </p>
-                            <p class="mt-0.5 font-display text-sm text-cream">
-                                {{ backLangLabel }}
+                        <div>
+                            <UiSelect
+                                v-model="sourceLanguage"
+                                :label="t('deck.backLang')"
+                                :options="languageOptions"
+                            />
+                            <p class="mt-1 text-small text-brand-muted">
+                                {{ t('deck.backLangHint') }} —
+                                {{ t('deck.backLangExample').replace('{lang}', backLangLabel) }}
                             </p>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- RIGHT -->
-            <div class="flex flex-col gap-[18px]">
-                <!-- Cover swatches -->
-                <div>
-                    <p class="flabel">{{ t('deck.cover') }}</p>
-                    <div class="flex flex-wrap gap-2.5">
-                        <button
-                            v-for="(swatch, i) in COVER_SWATCHES"
-                            :key="i"
-                            type="button"
-                            class="flex items-end rounded-[10px] p-1.5 transition-[border-color]"
-                            style="width: 50px; height: 64px"
-                            :style="{
-                                background: swatch,
-                                border: `2px solid ${coverColor === swatch ? '#F2BCFF' : 'transparent'}`,
-                            }"
-                            @click="coverColor = swatch"
-                        >
-                            <Layers class="size-3.5 text-[rgba(242,188,255,.5)]" />
-                        </button>
+                    <!-- Live preview of which language lands on which side of the card -->
+                    <div class="mt-3 rounded-2xl border border-line bg-bg-surface p-3">
+                        <p class="mb-2 text-eyebrow uppercase text-brand-muted">
+                            {{ t('deck.langPreviewTitle') }}
+                        </p>
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="flex-1 rounded-xl border border-line-strong bg-bg-well p-2.5"
+                            >
+                                <p class="text-[11px] uppercase text-brand-muted">
+                                    {{ t('deck.langPreviewFront') }}
+                                </p>
+                                <p class="mt-0.5 font-display text-sm text-cream">
+                                    {{ frontLangLabel }}
+                                </p>
+                            </div>
+                            <ArrowRight class="size-4 shrink-0 text-brand-muted" />
+                            <div
+                                class="flex-1 rounded-xl border border-line-strong bg-bg-well p-2.5"
+                            >
+                                <p class="text-[11px] uppercase text-brand-muted">
+                                    {{ t('deck.langPreviewBack') }}
+                                </p>
+                                <p class="mt-0.5 font-display text-sm text-cream">
+                                    {{ backLangLabel }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Generate with AI card -->
-                <div
-                    class="rounded-[20px] border border-[rgba(169,142,227,.3)] bg-[rgba(169,142,227,.18)] p-[18px]"
-                >
-                    <div class="mb-2 flex items-center gap-2.5">
-                        <Sparkles class="size-4 text-lavender" />
-                        <p class="text-[14px] font-bold text-cream">{{ t('deck.aiTitle') }}</p>
+                <!-- RIGHT -->
+                <div class="flex flex-col gap-[18px]">
+                    <!-- Cover swatches -->
+                    <div>
+                        <p class="flabel">{{ t('deck.cover') }}</p>
+                        <div class="flex flex-wrap gap-2.5">
+                            <button
+                                v-for="(swatch, i) in COVER_SWATCHES"
+                                :key="i"
+                                type="button"
+                                class="flex items-end rounded-[10px] p-1.5 transition-[border-color]"
+                                style="width: 50px; height: 64px"
+                                :style="{
+                                    background: swatch,
+                                    border: `2px solid ${coverColor === swatch ? '#F2BCFF' : 'transparent'}`,
+                                }"
+                                @click="coverColor = swatch"
+                            >
+                                <Layers class="size-3.5 text-[rgba(242,188,255,.5)]" />
+                            </button>
+                        </div>
                     </div>
-                    <p class="mb-3 text-[13px] leading-[1.5] text-cream-dim">
-                        {{ t('deck.aiSubtitle') }}
-                    </p>
-                    <button
-                        type="button"
-                        class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-lavender px-[18px] py-3 text-[14px] font-semibold text-lavender transition-colors hover:bg-lavender/10"
-                        @click="mimiOpen = true"
+
+                    <!-- Generate with AI card -->
+                    <div
+                        class="rounded-[20px] border border-[rgba(169,142,227,.3)] bg-[rgba(169,142,227,.18)] p-[18px]"
                     >
-                        {{ t('deck.aiOpenGenerator') }}
-                    </button>
+                        <div class="mb-2 flex items-center gap-2.5">
+                            <Sparkles class="size-4 text-lavender" />
+                            <p class="text-[14px] font-bold text-cream">{{ t('deck.aiTitle') }}</p>
+                        </div>
+                        <p class="mb-3 text-[13px] leading-[1.5] text-cream-dim">
+                            {{ t('deck.aiSubtitle') }}
+                        </p>
+                        <button
+                            type="button"
+                            class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-lavender px-[18px] py-3 text-[14px] font-semibold text-lavender transition-colors hover:bg-lavender/10"
+                            @click="mimiOpen = true"
+                        >
+                            {{ t('deck.aiOpenGenerator') }}
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Footer -->
-        <div class="mt-8 flex justify-end gap-2.5">
-            <UiButton variant="ghost" :disabled="create.loading.value" @click="onCreateEmpty">
-                {{ t('deck.createEmpty') }}
-            </UiButton>
-            <UiButton variant="primary" :disabled="create.loading.value" @click="onCreateAndAdd">
-                <UiSpinner v-if="create.loading.value" size="sm" class="mr-1" />
-                {{ t('deck.createAndAdd') }} →
-            </UiButton>
-        </div>
-    </section>
+            <!-- Footer -->
+            <div class="mt-8 flex justify-end gap-2.5">
+                <UiButton variant="ghost" :disabled="create.loading.value" @click="onCreateEmpty">
+                    {{ t('deck.createEmpty') }}
+                </UiButton>
+                <UiButton
+                    variant="primary"
+                    :disabled="create.loading.value"
+                    @click="onCreateAndAdd"
+                >
+                    <UiSpinner v-if="create.loading.value" size="sm" class="mr-1" />
+                    {{ t('deck.createAndAdd') }} →
+                </UiButton>
+            </div>
+        </section>
 
-    <!-- Docked Mimi chat panel (AI deck generator).
+        <!-- Docked Mimi chat panel (AI deck generator).
          Mobile: full-screen overlay above the bottom tab bar so the input is reachable.
          Desktop: side panel. -->
-    <Transition name="panel-slide">
-        <div
-            v-if="mimiOpen"
-            class="fixed inset-0 z-50 flex w-full flex-col border-line-strong dark:bg-[rgba(13,10,18,.97)] bg-bg-surface md:inset-y-0 md:left-auto md:right-0 md:z-30 md:w-80 md:border-l"
-        >
-            <!-- Header -->
-            <div class="flex items-center justify-between border-b border-line px-5 py-4">
-                <div class="flex items-center gap-2">
-                    <SharedMimi :size="32" class="shrink-0" />
-                    <p class="font-display text-base text-cream">{{ t('deck.aiTitle') }}</p>
-                </div>
-                <button
-                    type="button"
-                    class="grid size-8 place-items-center rounded-full text-cream-faint hover:text-cream"
-                    @click="mimiOpen = false"
-                >
-                    <X class="size-4" />
-                </button>
-            </div>
-
-            <!-- Chat body -->
-            <div ref="chatBodyEl" class="flex-1 overflow-y-auto p-4">
-                <div
-                    v-if="!messages.length && !generating"
-                    class="flex flex-col items-center gap-3 py-8 text-center"
-                >
-                    <SharedMimi :size="56" />
-                    <p class="text-small text-cream-dim">{{ t('deck.aiGreeting') }}</p>
+        <Transition name="panel-slide">
+            <div
+                v-if="mimiOpen"
+                class="fixed inset-0 z-50 flex w-full flex-col border-line-strong dark:bg-[rgba(13,10,18,.97)] bg-bg-surface md:inset-y-0 md:left-auto md:right-0 md:z-30 md:w-80 md:border-l"
+            >
+                <!-- Header -->
+                <div class="flex items-center justify-between border-b border-line px-5 py-4">
+                    <div class="flex items-center gap-2">
+                        <SharedMimi :size="32" class="shrink-0" />
+                        <p class="font-display text-base text-cream">{{ t('deck.aiTitle') }}</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="grid size-8 place-items-center rounded-full text-cream-faint hover:text-cream"
+                        @click="mimiOpen = false"
+                    >
+                        <X class="size-4" />
+                    </button>
                 </div>
 
-                <div v-else class="flex flex-col gap-3">
-                    <template v-for="(msg, i) in messages" :key="i">
-                        <div v-if="msg.role === 'user'" class="flex justify-end">
-                            <div
-                                class="max-w-[85%] rounded-2xl rounded-tr-sm bg-brand px-3 py-2 text-small text-on-color"
-                            >
-                                {{ msg.text }}
+                <!-- Chat body -->
+                <div ref="chatBodyEl" class="flex-1 overflow-y-auto p-4">
+                    <div
+                        v-if="!messages.length && !generating"
+                        class="flex flex-col items-center gap-3 py-8 text-center"
+                    >
+                        <SharedMimi :size="56" />
+                        <p class="text-small text-cream-dim">{{ t('deck.aiGreeting') }}</p>
+                    </div>
+
+                    <div v-else class="flex flex-col gap-3">
+                        <template v-for="(msg, i) in messages" :key="i">
+                            <div v-if="msg.role === 'user'" class="flex justify-end">
+                                <div
+                                    class="max-w-[85%] rounded-2xl rounded-tr-sm bg-brand px-3 py-2 text-small text-on-color"
+                                >
+                                    {{ msg.text }}
+                                </div>
                             </div>
-                        </div>
 
-                        <div v-else-if="msg.role === 'mimi'" class="flex items-start gap-2">
+                            <div v-else-if="msg.role === 'mimi'" class="flex items-start gap-2">
+                                <SharedMimi :size="24" class="mt-0.5 shrink-0" />
+                                <div
+                                    class="max-w-[85%] rounded-2xl rounded-tl-sm bg-bg-surface-2 px-3 py-2 text-small text-cream-dim"
+                                >
+                                    {{ msg.text }}
+                                </div>
+                            </div>
+
+                            <div
+                                v-else-if="msg.role === 'draft'"
+                                class="rounded-2xl border border-line bg-bg-surface-2 p-4"
+                            >
+                                <div class="mb-1 flex items-start justify-between gap-2">
+                                    <p
+                                        class="font-display text-sm font-medium leading-snug text-cream"
+                                    >
+                                        {{ msg.data.title }}
+                                    </p>
+                                    <span
+                                        class="shrink-0 text-[11px] uppercase tracking-wide text-cream-faint"
+                                    >
+                                        {{ msg.data.targetLanguage }}→{{ msg.data.sourceLanguage }}
+                                    </span>
+                                </div>
+                                <p class="mb-3 text-[11px] text-cream-faint">
+                                    {{
+                                        t('deck.cardCount').replace(
+                                            '{n}',
+                                            String(msg.data.cards.length),
+                                        )
+                                    }}
+                                </p>
+                                <ul class="mb-3 flex flex-col gap-1">
+                                    <li
+                                        v-for="(c, ci) in msg.data.cards.slice(0, 4)"
+                                        :key="ci"
+                                        class="flex justify-between gap-2 text-small"
+                                    >
+                                        <span class="font-medium text-cream">{{ c.word }}</span>
+                                        <span class="truncate text-cream-dim">{{
+                                            c.definition
+                                        }}</span>
+                                    </li>
+                                </ul>
+                                <p
+                                    v-if="msg.data.cards.length > 4"
+                                    class="mb-3 text-[11px] text-cream-faint"
+                                >
+                                    {{
+                                        t('deck.aiMore').replace(
+                                            '{n}',
+                                            String(msg.data.cards.length - 4),
+                                        )
+                                    }}
+                                </p>
+                                <div class="flex gap-2">
+                                    <UiButton
+                                        variant="ghost"
+                                        class="flex-1 !py-1.5 !text-small"
+                                        :disabled="accepting"
+                                        @click="onDiscard(msg)"
+                                    >
+                                        {{ t('deck.aiDiscard') }}
+                                    </UiButton>
+                                    <UiButton
+                                        variant="primary"
+                                        class="flex-1 !py-1.5 !text-small"
+                                        :disabled="accepting"
+                                        @click="onAccept(msg.data)"
+                                    >
+                                        <UiSpinner v-if="accepting" size="sm" class="mr-1" />
+                                        {{ t('deck.aiCreate') }}
+                                    </UiButton>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div v-if="generating" class="flex items-center gap-2">
                             <SharedMimi :size="24" class="mt-0.5 shrink-0" />
                             <div
-                                class="max-w-[85%] rounded-2xl rounded-tl-sm bg-bg-surface-2 px-3 py-2 text-small text-cream-dim"
+                                class="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-bg-surface-2 px-3 py-3 text-cream-faint"
                             >
-                                {{ msg.text }}
+                                <span class="mimi-dot" />
+                                <span class="mimi-dot" />
+                                <span class="mimi-dot" />
                             </div>
-                        </div>
-
-                        <div
-                            v-else-if="msg.role === 'draft'"
-                            class="rounded-2xl border border-line bg-bg-surface-2 p-4"
-                        >
-                            <div class="mb-1 flex items-start justify-between gap-2">
-                                <p class="font-display text-sm font-medium leading-snug text-cream">
-                                    {{ msg.data.title }}
-                                </p>
-                                <span
-                                    class="shrink-0 text-[11px] uppercase tracking-wide text-cream-faint"
-                                >
-                                    {{ msg.data.targetLanguage }}→{{ msg.data.sourceLanguage }}
-                                </span>
-                            </div>
-                            <p class="mb-3 text-[11px] text-cream-faint">
-                                {{
-                                    t('deck.cardCount').replace(
-                                        '{n}',
-                                        String(msg.data.cards.length),
-                                    )
-                                }}
-                            </p>
-                            <ul class="mb-3 flex flex-col gap-1">
-                                <li
-                                    v-for="(c, ci) in msg.data.cards.slice(0, 4)"
-                                    :key="ci"
-                                    class="flex justify-between gap-2 text-small"
-                                >
-                                    <span class="font-medium text-cream">{{ c.word }}</span>
-                                    <span class="truncate text-cream-dim">{{ c.definition }}</span>
-                                </li>
-                            </ul>
-                            <p
-                                v-if="msg.data.cards.length > 4"
-                                class="mb-3 text-[11px] text-cream-faint"
-                            >
-                                {{
-                                    t('deck.aiMore').replace(
-                                        '{n}',
-                                        String(msg.data.cards.length - 4),
-                                    )
-                                }}
-                            </p>
-                            <div class="flex gap-2">
-                                <UiButton
-                                    variant="ghost"
-                                    class="flex-1 !py-1.5 !text-small"
-                                    :disabled="accepting"
-                                    @click="onDiscard(msg)"
-                                >
-                                    {{ t('deck.aiDiscard') }}
-                                </UiButton>
-                                <UiButton
-                                    variant="primary"
-                                    class="flex-1 !py-1.5 !text-small"
-                                    :disabled="accepting"
-                                    @click="onAccept(msg.data)"
-                                >
-                                    <UiSpinner v-if="accepting" size="sm" class="mr-1" />
-                                    {{ t('deck.aiCreate') }}
-                                </UiButton>
-                            </div>
-                        </div>
-                    </template>
-
-                    <div v-if="generating" class="flex items-center gap-2">
-                        <SharedMimi :size="24" class="mt-0.5 shrink-0" />
-                        <div
-                            class="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-bg-surface-2 px-3 py-3 text-cream-faint"
-                        >
-                            <span class="mimi-dot" />
-                            <span class="mimi-dot" />
-                            <span class="mimi-dot" />
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Quick pills (after first generation) -->
-            <div
-                v-if="lastTopic && !generating"
-                class="flex flex-wrap gap-1.5 border-t border-line px-4 py-2.5"
-            >
-                <button
-                    class="rounded-full border border-line px-2.5 py-1 text-[12px] text-cream-dim transition-colors hover:border-line-strong hover:text-cream"
-                    @click="onQuickPill('more')"
+                <!-- Quick pills (after first generation) -->
+                <div
+                    v-if="lastTopic && !generating"
+                    class="flex flex-wrap gap-1.5 border-t border-line px-4 py-2.5"
                 >
-                    {{ t('deck.aiPillMore') }}
-                </button>
-                <button
-                    class="rounded-full border border-line px-2.5 py-1 text-[12px] text-cream-dim transition-colors hover:border-line-strong hover:text-cream"
-                    @click="onQuickPill('harder')"
-                >
-                    {{ t('deck.aiPillHarder') }}
-                </button>
-                <button
-                    class="rounded-full border border-line px-2.5 py-1 text-[12px] text-cream-dim transition-colors hover:border-line-strong hover:text-cream"
-                    @click="onQuickPill('examples')"
-                >
-                    {{ t('deck.aiPillExamples') }}
-                </button>
-            </div>
-
-            <!-- Footer: input -->
-            <div class="border-t border-line p-3">
-                <div class="flex gap-2">
-                    <textarea
-                        v-model="chatInput"
-                        rows="1"
-                        class="max-h-32 min-h-[38px] min-w-0 flex-1 resize-none rounded-xl border border-line bg-bg-surface-2 px-3 py-2 text-small text-cream placeholder:text-cream-faint focus:outline-none focus:ring-1 focus:ring-lavender/40 disabled:opacity-50"
-                        :placeholder="t('deck.aiInputPlaceholder')"
-                        :disabled="generating"
-                        @keydown.enter="onEnterKey"
-                    />
                     <button
-                        type="button"
-                        class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand text-on-color transition-opacity disabled:opacity-40"
-                        :disabled="!chatInput.trim() || generating"
-                        @click="onSend"
+                        class="rounded-full border border-line px-2.5 py-1 text-[12px] text-cream-dim transition-colors hover:border-line-strong hover:text-cream"
+                        @click="onQuickPill('more')"
                     >
-                        <ArrowUp class="size-4" />
+                        {{ t('deck.aiPillMore') }}
+                    </button>
+                    <button
+                        class="rounded-full border border-line px-2.5 py-1 text-[12px] text-cream-dim transition-colors hover:border-line-strong hover:text-cream"
+                        @click="onQuickPill('harder')"
+                    >
+                        {{ t('deck.aiPillHarder') }}
+                    </button>
+                    <button
+                        class="rounded-full border border-line px-2.5 py-1 text-[12px] text-cream-dim transition-colors hover:border-line-strong hover:text-cream"
+                        @click="onQuickPill('examples')"
+                    >
+                        {{ t('deck.aiPillExamples') }}
                     </button>
                 </div>
-            </div>
-        </div>
-    </Transition>
 
-    <!-- Mobile backdrop -->
-    <div v-if="mimiOpen" class="fixed inset-0 z-10 lg:hidden" @click="mimiOpen = false" />
+                <!-- Footer: input -->
+                <div class="border-t border-line p-3">
+                    <div class="flex gap-2">
+                        <textarea
+                            v-model="chatInput"
+                            rows="1"
+                            class="max-h-32 min-h-[38px] min-w-0 flex-1 resize-none rounded-xl border border-line bg-bg-surface-2 px-3 py-2 text-small text-cream placeholder:text-cream-faint focus:outline-none focus:ring-1 focus:ring-lavender/40 disabled:opacity-50"
+                            :placeholder="t('deck.aiInputPlaceholder')"
+                            :disabled="generating"
+                            @keydown.enter="onEnterKey"
+                        />
+                        <button
+                            type="button"
+                            class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand text-on-color transition-opacity disabled:opacity-40"
+                            :disabled="!chatInput.trim() || generating"
+                            @click="onSend"
+                        >
+                            <ArrowUp class="size-4" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Transition>
+
+        <!-- Mobile backdrop -->
+        <div v-if="mimiOpen" class="fixed inset-0 z-10 lg:hidden" @click="mimiOpen = false" />
+    </div>
 </template>
 
 <script setup lang="ts">

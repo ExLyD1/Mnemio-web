@@ -107,10 +107,14 @@ export default defineNuxtConfig({
             style: [
                 {
                     innerHTML:
-                        '.app-shell{display:flex;height:100vh;overflow:hidden}' +
+                        '.app-shell{display:flex;flex-direction:row;flex-wrap:nowrap;height:100vh;overflow:hidden}' +
                         '.app-main{display:flex;flex:1 1 0%;flex-direction:column;min-width:0;overflow:hidden}' +
-                        '.app-rail{display:none;position:relative}' +
-                        '@media(min-width:768px){.app-rail{display:flex;flex:0 0 76px;height:100vh}}',
+                        '.app-rail{display:none;position:relative;flex-shrink:0;width:76px}' +
+                        // The rail's inner panel uses Tailwind `absolute/w-[76px]/overflow-hidden`,
+                        // none of which exist before Tailwind loads — pin it so the unstyled panel
+                        // can't fall into flow and shove the layout on a cold first paint.
+                        '.app-rail-inner{position:absolute;top:0;bottom:0;left:0;width:76px;overflow:hidden}' +
+                        '@media(min-width:768px){.app-rail{display:flex;height:100vh}}',
                 },
             ],
         },
@@ -188,6 +192,22 @@ export default defineNuxtConfig({
         '/media/**': {
             proxy: `${process.env.NUXT_API_PROXY_TARGET ?? 'http://127.0.0.1:3001'}/media/**`,
         },
+        // Auth-gated app routes are client-rendered (SPA). Auth lives in
+        // localStorage and is restored by a `.client` plugin, so the server can only
+        // ever render these pages logged-out — SSR'ing them produces a logged-out
+        // shell that mismatches the logged-in client on hydration (blank/partial
+        // content, layout flashes). These pages are `noindex` anyway, so there's no
+        // SEO cost. Public/marketing routes (/, /discover, /pricing, /blog, legal)
+        // keep SSR for crawlers. Mirrors the APP_PREFIXES in middleware/auth.global.ts.
+        '/dashboard': { ssr: false },
+        '/decks/**': { ssr: false },
+        '/study/**': { ssr: false },
+        '/review': { ssr: false },
+        '/statistics': { ssr: false },
+        '/profile': { ssr: false },
+        '/onboarding': { ssr: false },
+        '/ai': { ssr: false },
+        '/settings/**': { ssr: false },
     },
 
     css: ['~/assets/css/main.css'],

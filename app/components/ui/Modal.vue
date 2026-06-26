@@ -67,6 +67,13 @@ const props = withDefaults(
 
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>();
 
+// Max-width per size; the panel is always `w-full` and capped by these.
+const sizes: Record<'sm' | 'md' | 'lg', string> = {
+    sm: 'max-w-sm',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+};
+
 const titleId = useId();
 const panel = ref<HTMLElement | null>(null);
 let previouslyFocused: HTMLElement | null = null;
