@@ -192,6 +192,22 @@ export default defineNuxtConfig({
         '/media/**': {
             proxy: `${process.env.NUXT_API_PROXY_TARGET ?? 'http://127.0.0.1:3001'}/media/**`,
         },
+        // Auth-gated app routes are client-rendered (SPA). Auth lives in
+        // localStorage and is restored by a `.client` plugin, so the server can only
+        // ever render these pages logged-out — SSR'ing them produces a logged-out
+        // shell that mismatches the logged-in client on hydration (blank/partial
+        // content, layout flashes). These pages are `noindex` anyway, so there's no
+        // SEO cost. Public/marketing routes (/, /discover, /pricing, /blog, legal)
+        // keep SSR for crawlers. Mirrors the APP_PREFIXES in middleware/auth.global.ts.
+        '/dashboard': { ssr: false },
+        '/decks/**': { ssr: false },
+        '/study/**': { ssr: false },
+        '/review': { ssr: false },
+        '/statistics': { ssr: false },
+        '/profile': { ssr: false },
+        '/onboarding': { ssr: false },
+        '/ai': { ssr: false },
+        '/settings/**': { ssr: false },
     },
 
     css: ['~/assets/css/main.css'],
