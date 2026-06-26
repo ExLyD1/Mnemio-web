@@ -431,6 +431,8 @@
         "diffHard": "Hard",
         "addNext": "Add & next",
         "done": "Done",
+        "previewWordPlaceholder": "Your word…",
+        "tapToFlip": "Tap to flip",
         "frontPlaceholder": "Type a word, phrase or prompt…",
         "backPlaceholder": "The meaning, definition or answer learners should produce.",
         "tagsPlaceholder": "Add a tag…",

@@ -3,13 +3,7 @@
         class="mx-auto max-w-[1100px] p-6 transition-all lg:p-8"
         :class="mimiOpen ? 'lg:pr-[360px]' : ''"
     >
-        <div
-            class="grid items-start"
-            :style="{
-                gridTemplateColumns: mimiOpen ? '1fr 340px' : '1fr 400px',
-                gap: mimiOpen ? '40px' : '56px',
-            }"
-        >
+        <div class="grid items-start gap-10 lg:grid-cols-[1fr_400px] lg:gap-14">
             <!-- LEFT — form -->
             <div>
                 <h1 class="font-display text-[52px] leading-[1.05] text-cream">
@@ -114,7 +108,7 @@
                                 opt.label
                             }}</span>
                             <span
-                                class="grid size-4 place-items-center rounded-full border-[1.5px]"
+                                class="grid size-4 place-items-center rounded-full border-[1.5px] transition-colors"
                                 :class="
                                     difficulty === opt.value
                                         ? 'border-lavender'
@@ -122,8 +116,8 @@
                                 "
                             >
                                 <span
-                                    v-if="difficulty === opt.value"
-                                    class="size-2 rounded-full bg-lavender"
+                                    class="size-2 rounded-full bg-lavender transition-opacity"
+                                    :class="difficulty === opt.value ? 'opacity-100' : 'opacity-0'"
                                 />
                             </span>
                         </button>
@@ -139,40 +133,48 @@
                         <UiButton
                             variant="ghost"
                             :disabled="!canSubmit || addCard.loading.value"
-                            @click="onAddNext"
+                            @click="onDone"
                         >
-                            {{ t('card.addNext') }}
+                            {{ t('card.done') }}
                         </UiButton>
                         <UiButton
                             variant="primary"
                             :disabled="!canSubmit || addCard.loading.value"
-                            @click="onDone"
+                            @click="onAddNext"
                         >
-                            {{ t('card.done') }}
+                            <UiSpinner v-if="addCard.loading.value" size="sm" class="mr-1" />
+                            {{ t('card.addNext') }}
                         </UiButton>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT — tall card preview -->
-            <div class="pt-6">
-                <div
-                    class="flex w-full flex-col items-center justify-between rounded-[22px] border border-line-strong px-6 py-7"
+            <!-- RIGHT — tall card preview (hidden on mobile, shown on lg+) -->
+            <div class="hidden pt-6 lg:block">
+                <button
+                    type="button"
+                    class="flex w-full cursor-pointer flex-col items-center justify-between rounded-[22px] border border-line-strong px-6 py-7 transition-all"
                     :style="{
                         height: '480px',
-                        background: 'var(--c-fc-front)',
+                        background: previewFlipped ? 'var(--c-fc-back)' : 'var(--c-fc-front)',
                         boxShadow: '0 30px 60px rgba(0, 0, 0, 0.35)',
                     }"
+                    :aria-label="previewFlipped ? t('study.showFront') : t('card.tapToFlip')"
+                    @click="previewFlipped = !previewFlipped"
                 >
                     <span
                         class="text-[11px] font-semibold uppercase tracking-[.22em] text-cream-faint"
-                        >FRONT</span
+                        >{{ previewFlipped ? t('study.back') : t('study.front') }}</span
                     >
                     <p class="font-display text-[36px] text-cream-dim">
-                        {{ front || 'Your word…' }}
+                        {{
+                            previewFlipped
+                                ? back || t('card.backPlaceholder').slice(0, 24) + '…'
+                                : front || t('card.previewWordPlaceholder')
+                        }}
                     </p>
-                    <span class="text-[13px] text-cream-faint">Tap to flip</span>
-                </div>
+                    <span class="text-[13px] text-cream-faint">{{ t('card.tapToFlip') }}</span>
+                </button>
             </div>
         </div>
     </section>
@@ -303,6 +305,8 @@ const imageUrl = ref<string | null>(null);
 const uploading = ref<MediaKind | null>(null);
 const audioInput = ref<HTMLInputElement | null>(null);
 const imageInput = ref<HTMLInputElement | null>(null);
+
+const previewFlipped = ref(false);
 
 // --- Mimi chat state ---
 type ChatMsg = { role: 'mimi'; html: string } | { role: 'user'; text: string };
@@ -480,6 +484,7 @@ const reset = () => {
     imageUrl.value = null;
     chatMessages.value = [];
     usedEnrich.value = false;
+    previewFlipped.value = false;
 };
 
 const save = async (): Promise<boolean> => {

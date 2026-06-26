@@ -97,7 +97,12 @@ export interface StreamHandlers {
 
 const API_PREFIX = '/api/v1';
 
-const buildInit = (token: string | null, content: string, signal?: AbortSignal): RequestInit => ({
+const buildInit = (
+    token: string | null,
+    content: string,
+    locale: string,
+    signal?: AbortSignal,
+): RequestInit => ({
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
@@ -105,7 +110,7 @@ const buildInit = (token: string | null, content: string, signal?: AbortSignal):
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     credentials: 'include',
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({ content, locale }),
     signal,
 });
 
@@ -155,15 +160,16 @@ export const streamMessage = async (
     content: string,
     handlers: StreamHandlers,
     signal?: AbortSignal,
+    locale = 'en',
 ): Promise<void> => {
     const url = `${getApiBase()}${API_PREFIX}/chat/conversations/${conversationId}/messages?stream=1`;
 
     let res: Response;
     try {
-        res = await fetch(url, buildInit(readAccessToken(), content, signal));
+        res = await fetch(url, buildInit(readAccessToken(), content, locale, signal));
         if (res.status === 401) {
             const fresh = await refreshAccessToken();
-            res = await fetch(url, buildInit(fresh, content, signal));
+            res = await fetch(url, buildInit(fresh, content, locale, signal));
         }
     } catch (e) {
         if (e instanceof Error && e.name === 'AbortError') {

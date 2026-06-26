@@ -12,7 +12,7 @@
                     }}<span class="italic">{{ t('landing.heroTitleEm') }}</span
                     >{{ t('landing.heroTitle2') }}
                 </h1>
-                <p class="mt-5 max-w-[46ch] text-body text-cream-dim">
+                <p class="mt-5 max-w-[46ch] text-body font-medium text-cream">
                     {{ t('landing.heroBody') }}
                 </p>
                 <div class="mt-7 flex flex-wrap gap-3">
