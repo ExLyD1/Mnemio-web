@@ -249,12 +249,13 @@
                 <div
                     class="flex items-center gap-2 rounded-xl border border-line-strong bg-bg-surface px-3 py-2.5"
                 >
-                    <input
+                    <textarea
                         v-model="chatInput"
-                        class="min-w-0 flex-1 bg-transparent text-[13px] text-cream-faint outline-none placeholder:text-cream-faint"
+                        rows="1"
+                        class="max-h-28 min-h-[20px] min-w-0 flex-1 resize-none bg-transparent text-[13px] text-cream-faint outline-none placeholder:text-cream-faint"
                         :placeholder="t('deck.aiInputPlaceholder')"
                         :disabled="chatLoading"
-                        @keydown.enter.prevent="onChatSend"
+                        @keydown.enter="onChatEnterKey"
                     />
                     <button
                         type="button"
@@ -423,6 +424,13 @@ const callEnrich = async (fields: aiApi.EnrichField[]) => {
         chatLoading.value = false;
         scrollChat();
     }
+};
+
+// Enter sends; Shift+Enter inserts a newline (multi-line prompts).
+const onChatEnterKey = (e: KeyboardEvent) => {
+    if (e.shiftKey) return;
+    e.preventDefault();
+    onChatSend();
 };
 
 const onChatSend = async () => {

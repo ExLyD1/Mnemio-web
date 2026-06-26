@@ -338,12 +338,13 @@
             <!-- Footer: input -->
             <div class="border-t border-line p-3">
                 <div class="flex gap-2">
-                    <input
+                    <textarea
                         v-model="chatInput"
-                        class="min-w-0 flex-1 rounded-xl border border-line bg-bg-surface-2 px-3 py-2 text-small text-cream placeholder:text-cream-faint focus:outline-none focus:ring-1 focus:ring-lavender/40 disabled:opacity-50"
+                        rows="1"
+                        class="max-h-32 min-h-[38px] min-w-0 flex-1 resize-none rounded-xl border border-line bg-bg-surface-2 px-3 py-2 text-small text-cream placeholder:text-cream-faint focus:outline-none focus:ring-1 focus:ring-lavender/40 disabled:opacity-50"
                         :placeholder="t('deck.aiInputPlaceholder')"
                         :disabled="generating"
-                        @keydown.enter.prevent="onSend"
+                        @keydown.enter="onEnterKey"
                     />
                     <button
                         type="button"
@@ -522,6 +523,13 @@ const generate = async (topic: string) => {
         generating.value = false;
         scrollToBottom();
     }
+};
+
+// Enter sends; Shift+Enter inserts a newline (multi-line prompts).
+const onEnterKey = (e: KeyboardEvent) => {
+    if (e.shiftKey) return;
+    e.preventDefault();
+    onSend();
 };
 
 const onSend = async () => {

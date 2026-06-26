@@ -145,14 +145,9 @@
 
 <script setup lang="ts">
 import { Trash2 } from 'lucide-vue-next';
-import { useDecks, useToast, useT } from '#imports';
-import { enrichWords, type AiDraftCard, type EnrichWordsResult } from '@/api/ai';
-import { bulkAddCards } from '@/api/cards';
+import { useT } from '#imports';
+import { useAiImport } from '@/composables/useAiImport';
 import { LANGUAGES } from '@/schemas/deck';
-import type { CardInput } from '@/types/deck';
-
-// A draft card plus a per-row include toggle for the review step.
-type ReviewRow = AiDraftCard & { include: boolean };
 
 const props = withDefaults(
     defineProps<{
@@ -165,73 +160,9 @@ const props = withDefaults(
 
 const emit = defineEmits<{ 'update:modelValue': [boolean]; done: [] }>();
 
-const { create } = useDecks();
-const toast = useToast();
 const { t } = useT();
 
 const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
-
-const step = ref<'input' | 'review'>('input');
-const rawWords = ref('');
-const newTitle = ref('');
-const newSrc = ref('en');
-const newTgt = ref('en');
-const context = ref('');
-const rows = ref<ReviewRow[]>([]);
-const meta = ref<EnrichWordsResult['meta'] | null>(null);
-const loading = ref(false);
-const committing = ref(false);
-const error = ref('');
-
-const rowTone = (row: ReviewRow): string => {
-    if (!row.include) {
-        return 'border-line bg-bg-surface-2 opacity-50';
-    }
-    return row.definition.trim()
-        ? 'border-line bg-bg-surface-2'
-        : 'border-error-soft/60 bg-error-soft/5';
-};
-
-const parseWords = (): string[] => {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const raw of rawWords.value.split(/[\n,]+/)) {
-        const w = raw.trim();
-        if (!w) {
-            continue;
-        }
-        const key = w.toLowerCase();
-        if (seen.has(key)) {
-            continue;
-        }
-        seen.add(key);
-        out.push(w);
-        if (out.length >= 100) {
-            break;
-        }
-    }
-    return out;
-};
-
-const parsedCount = computed(() => parseWords().length);
-const committableCount = computed(
-    () => rows.value.filter((r) => r.include && r.definition.trim().length > 0).length,
-);
-const unfilledCount = computed(
-    () => rows.value.filter((r) => r.include && !r.definition.trim()).length,
-);
-
-const reset = () => {
-    step.value = 'input';
-    rawWords.value = '';
-    newTitle.value = '';
-    context.value = '';
-    rows.value = [];
-    meta.value = null;
-    loading.value = false;
-    committing.value = false;
-    error.value = '';
-};
 
 const close = () => emit('update:modelValue', false);
 const onModelUpdate = (open: boolean) => {
@@ -240,93 +171,36 @@ const onModelUpdate = (open: boolean) => {
     }
 };
 
-const effectiveLangs = () => ({
-    source: props.deck?.sourceLanguage ?? newSrc.value,
-    target: props.deck?.targetLanguage ?? newTgt.value,
-});
-
-const onEnrich = async () => {
-    const words = parseWords();
-    if (!words.length) {
-        error.value = t('ai.emptyWords');
-        return;
-    }
-    error.value = '';
-    loading.value = true;
-    try {
-        const { source, target } = effectiveLangs();
-        const res = await enrichWords({
-            words,
-            sourceLanguage: source,
-            targetLanguage: target,
-            context: context.value.trim() || undefined,
-        });
-        rows.value = res.cards.map((c) => ({ ...c, include: c.definition.trim().length > 0 }));
-        meta.value = res.meta;
-        step.value = 'review';
-    } catch (e) {
-        error.value = (e as { message?: string }).message ?? t('ai.enrichError');
-    } finally {
-        loading.value = false;
-    }
-};
-
-const toCardInput = (r: AiDraftCard): CardInput => ({
-    word: r.word,
-    definition: r.definition.trim(),
-    phonetic: r.phonetic ?? null,
-    partOfSpeech: r.partOfSpeech ?? null,
-    example: r.example ?? null,
-    exampleTranslation: r.exampleTranslation ?? null,
-    tags: r.tags,
-    difficulty: r.difficulty,
-});
-
-const onCommit = async () => {
-    const cards = rows.value
-        .filter((r) => r.include && r.definition.trim().length > 0)
-        .map(toCardInput);
-    if (!cards.length) {
-        error.value = t('ai.noCommittable');
-        return;
-    }
-    error.value = '';
-    committing.value = true;
-    try {
-        if (props.deck) {
-            await bulkAddCards(props.deck.id, cards);
-            toast.success(t('ai.added').replace('{n}', String(cards.length)));
-            emit('done');
-            reset();
-            close();
-            return;
-        }
-        const title = newTitle.value.trim();
-        if (!title) {
-            error.value = t('ai.needTitle');
-            return;
-        }
-        const deck = await create.execute({
-            title,
-            description: null,
-            sourceLanguage: newSrc.value,
-            targetLanguage: newTgt.value,
-        });
-        if (!deck) {
-            error.value = create.error.value?.message ?? t('ai.enrichError');
-            return;
-        }
-        await bulkAddCards(deck.id, cards);
-        toast.success(t('ai.added').replace('{n}', String(cards.length)));
-        reset();
+const {
+    step,
+    rawWords,
+    newTitle,
+    newSrc,
+    newTgt,
+    context,
+    rows,
+    meta,
+    loading,
+    committing,
+    error,
+    parsedCount,
+    committableCount,
+    unfilledCount,
+    rowTone,
+    reset,
+    onEnrich,
+    onCommit,
+} = useAiImport({
+    deck: () => props.deck,
+    onAppended: () => {
+        emit('done');
         close();
-        await navigateTo(`/decks/${deck.id}`);
-    } catch (e) {
-        error.value = (e as { message?: string }).message ?? t('ai.enrichError');
-    } finally {
-        committing.value = false;
-    }
-};
+    },
+    onCreated: (deckId) => {
+        close();
+        navigateTo(`/decks/${deckId}`);
+    },
+});
 
 watch(
     () => props.modelValue,

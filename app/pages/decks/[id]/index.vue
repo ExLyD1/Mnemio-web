@@ -1,5 +1,8 @@
 <template>
-    <section class="mx-auto max-w-5xl px-10 py-8">
+    <section
+        class="mx-auto max-w-5xl px-4 py-8 transition-[margin] duration-300 sm:px-10"
+        :class="aiOpen ? 'lg:mr-[360px]' : ''"
+    >
         <NuxtLink
             to="/decks"
             class="mb-5 flex w-fit items-center gap-1.5 text-small text-cream-dim transition-colors hover:text-cream"
@@ -25,8 +28,8 @@
                                         {{ store.deck.title }}
                                     </h1>
                                     <p class="mt-1 text-small text-on-color/80">
-                                        {{ store.deck.sourceLanguage.toUpperCase() }} →
-                                        {{ store.deck.targetLanguage.toUpperCase() }}
+                                        {{ store.deck.targetLanguage.toUpperCase() }} →
+                                        {{ store.deck.sourceLanguage.toUpperCase() }}
                                     </p>
                                 </div>
                             </div>
@@ -335,7 +338,7 @@
         <button
             v-if="ready"
             type="button"
-            class="fixed bottom-[26px] right-[28px] z-30 hidden size-[58px] cursor-pointer place-items-center rounded-full border border-[rgba(242,188,255,.35)] p-0 md:grid"
+            class="fixed bottom-[88px] right-[20px] z-30 grid size-[58px] cursor-pointer place-items-center rounded-full border border-[rgba(242,188,255,.35)] p-0 md:bottom-[26px] md:right-[28px]"
             style="
                 background: linear-gradient(150deg, #572f54, #2c1a2a);
                 box-shadow: 0 10px 28px -6px rgba(169, 142, 227, 0.3);
@@ -346,7 +349,7 @@
             <SharedMimi :size="40" :bob="false" class="pointer-events-none" />
         </button>
 
-        <AiImportDialog
+        <AiImportPanel
             v-if="ready && store.deck && isOwner"
             v-model="aiOpen"
             :deck="{
