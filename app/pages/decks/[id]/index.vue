@@ -28,12 +28,6 @@
                                         {{ store.deck.sourceLanguage.toUpperCase() }} →
                                         {{ store.deck.targetLanguage.toUpperCase() }}
                                     </p>
-                                    <p
-                                        v-if="!isOwner && authorName"
-                                        class="mt-1 text-small text-on-color/70"
-                                    >
-                                        {{ t('discover.byAuthor').replace('{name}', authorName) }}
-                                    </p>
                                 </div>
                             </div>
                             <div class="flex flex-wrap gap-2.5">
@@ -84,7 +78,6 @@
                 </div>
 
                 <div
-                    v-if="isOwner"
                     class="flex flex-wrap gap-x-7 gap-y-1.5 rounded-2xl border border-line bg-bg-surface px-[22px] py-3.5"
                 >
                     <button
@@ -222,7 +215,7 @@
                 </div>
             </div>
 
-            <aside v-if="isOwner" class="flex flex-col gap-4 self-start lg:sticky lg:top-6">
+            <aside class="flex flex-col gap-4 self-start lg:sticky lg:top-6">
                 <div class="rounded-[20px] border border-line bg-bg-surface-2 p-6">
                     <div class="grid place-items-center">
                         <SharedProgressRing :pct="deckStat.masteredPct" label="mastered" />
@@ -252,7 +245,8 @@
                     </UiButton>
                 </div>
 
-                <div class="flex flex-col gap-2">
+                <!-- Owner: authoring controls. Non-owner viewing a public deck: copy CTA. -->
+                <div v-if="isOwner" class="flex flex-col gap-2">
                     <UiButton variant="ghost" @click="navigateTo(`/decks/${id}/edit`)">
                         {{ t('deck.edit') }}
                     </UiButton>
@@ -263,11 +257,10 @@
                         {{ t('card.addCards') }}
                     </UiButton>
                 </div>
-            </aside>
 
-            <aside v-else class="flex flex-col gap-4 self-start lg:sticky lg:top-6">
                 <div
-                    class="flex flex-col gap-3 rounded-[20px] border border-line bg-bg-surface-2 p-6"
+                    v-else
+                    class="flex flex-col gap-3 rounded-[20px] border border-line bg-bg-surface p-[18px]"
                 >
                     <p class="text-eyebrow uppercase text-brand-muted">
                         {{ t('deck.sharedDeck') }}
@@ -364,11 +357,10 @@ import {
 import { useDecks, useCards, useSrsStore, useToast, useT } from '#imports';
 import { isAuthExpiry } from '@/composables/useToast';
 import { swatchFor } from '@/utils/coverSwatches';
-import { getPublicDeck } from '@/api/publicDiscover';
 import { copyDeck } from '@/api/discover';
 import { useAuthStore } from '@/stores/auth';
 import { useAnalytics } from '@/composables/useAnalytics';
-import type { Card, DeckStats, DeckAuthor } from '@/types/deck';
+import type { Card, DeckStats } from '@/types/deck';
 
 definePageMeta({ layout: 'default' });
 
@@ -384,15 +376,16 @@ const auth = useAuthStore();
 const analytics = useAnalytics();
 
 // The deck page serves two roles. When you own the deck you get the full
-// authoring UI (edit/add/delete, your SRS stats). When you open a *public* deck
-// owned by someone else (e.g. via a shared link), the authed `GET /decks/:id`
-// 404s, so we fall back to the no-auth `GET /public/decks/:id` and render a
-// read-only view: study/practice + copy-to-library, but no editing.
-const author = ref<DeckAuthor | null>(null);
+// authoring UI (edit/add/delete). When you open a *public* deck owned by someone
+// else (e.g. via a shared link), `GET /decks/:id` still returns it with
+// `isOwner: false` and viewer-scoped stats, so we render a read-only view:
+// study/practice (in place) + copy-to-library, but no editing. The server's
+// `isOwner` is authoritative; fall back to an ownerId check for older responses.
 const isOwner = computed(
-    () => !!store.deck && !!auth.currentUser && store.deck.ownerId === auth.currentUser.id,
+    () =>
+        store.deck?.isOwner ??
+        (!!store.deck && !!auth.currentUser && store.deck.ownerId === auth.currentUser.id),
 );
-const authorName = computed(() => author.value?.username ?? author.value?.fullName ?? '');
 
 useSeo({ title: t('seo.deckDetailTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -581,21 +574,10 @@ const loading = ref(true);
 
 const load = async () => {
     loading.value = true;
-    author.value = null;
-    // The empty state surfaces any load error (with a retry); no toast needed.
+    // `GET /decks/:id` returns the deck for any authed user when it's public
+    // (with `isOwner`), or 404s when it's private and not yours — the empty
+    // state surfaces that with a retry; no toast needed.
     await fetchOne.execute(id.value);
-    // The owner endpoint 404s for decks you don't own. Fall back to the public
-    // read path so a shared link to a public deck still renders (read-only).
-    if (fetchOne.error.value && isNotFound.value) {
-        try {
-            const pub = await getPublicDeck(id.value);
-            const { cardCount: _cardCount, author: deckAuthor, ...rest } = pub;
-            author.value = deckAuthor;
-            store.deck = { ...rest, cards: pub.cards };
-        } catch {
-            // Genuinely missing or private — leave the error; empty state handles it.
-        }
-    }
     // SRS enriches card state chips; it should not block first paint of the deck.
     srs.fetchAll().catch(() => {});
     loading.value = false;
