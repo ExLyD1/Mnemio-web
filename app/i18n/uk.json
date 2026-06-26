@@ -209,6 +209,7 @@
         "addFirstCard": "Додайте першу.",
         "coachReview": "{n} карток готові до повторення. Починаємо?",
         "coachGood": "Чудово — нічого на черзі. Так тримати!",
+        "coachStudy": "Готові вчитися? У цій колоді {n} карток.",
         "createHeading": "Створити нову колоду.",
         "createHeadingPrefix": "Створіть ",
         "createHeadingAccent": "нову колоду.",

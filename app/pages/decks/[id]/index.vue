@@ -489,11 +489,12 @@ const EMPTY_STATS: DeckStats = {
 const swatch = computed(() => store.deck?.coverColor ?? swatchFor(id.value));
 const deckStat = computed(() => store.deck?.stats ?? EMPTY_STATS);
 const eyebrow = computed(() => store.deck?.subject?.toUpperCase() || 'DECK');
-const coachTip = computed(() =>
-    deckStat.value.due > 0
-        ? t('deck.coachReview').replace('{n}', String(deckStat.value.due))
-        : t('deck.coachGood'),
-);
+const coachTip = computed(() => {
+    if (deckStat.value.due > 0) {
+        return t('deck.coachReview').replace('{n}', String(deckStat.value.due));
+    }
+    return t('deck.coachStudy').replace('{n}', String(store.deck?.cards.length ?? 0));
+});
 
 const breakdownSegments = computed(() => [
     { label: t('deck.statMastered'), count: deckStat.value.mastered, color: 'bg-lavender' },
