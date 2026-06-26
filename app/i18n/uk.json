@@ -106,6 +106,9 @@
         "otpResent": "Новий код надіслано.",
         "socialComingSoon": "Незабаром",
         "stayLoggedIn": "Запам'ятати мене",
+        "emailLabel": "Адреса електронної пошти",
+        "emailPlaceholder": "example@mail.com",
+        "passwordLabel": "Пароль",
         "errors": {
             "email_invalid": "Введіть дійсну адресу електронної пошти.",
             "password_too_short": "Пароль має містити щонайменше 8 символів.",

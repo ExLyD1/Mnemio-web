@@ -169,6 +169,10 @@ export const streamMessage = async (
         res = await fetch(url, buildInit(readAccessToken(), content, locale, signal));
         if (res.status === 401) {
             const fresh = await refreshAccessToken();
+            if (!fresh) {
+                await navigateTo('/login?reason=session_expired');
+                return;
+            }
             res = await fetch(url, buildInit(fresh, content, locale, signal));
         }
     } catch (e) {

@@ -106,6 +106,9 @@
         "otpResent": "New code sent.",
         "socialComingSoon": "Coming soon",
         "stayLoggedIn": "Stay logged in",
+        "emailLabel": "Email address",
+        "emailPlaceholder": "example@mail.com",
+        "passwordLabel": "Password",
         "errors": {
             "email_invalid": "Please enter a valid email address.",
             "password_too_short": "Password must be at least 8 characters.",

@@ -485,6 +485,7 @@ const reset = () => {
     chatMessages.value = [];
     usedEnrich.value = false;
     previewFlipped.value = false;
+    mimiOpen.value = false;
 };
 
 const save = async (): Promise<boolean> => {

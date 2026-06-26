@@ -16,9 +16,9 @@ const LANG_NAME_MAP: Record<string, string> = {
     russian: 'ru',
 };
 
-const normLang = (raw: string): string => {
+export const normLang = (raw: string): string => {
     if (!raw) {
-        return raw;
+        return '';
     }
     const lower = raw.toLowerCase();
     return LANG_NAME_MAP[lower] ?? lower;
@@ -62,8 +62,8 @@ export const getDeck = async (id: string): Promise<Deck> => {
     };
 };
 
-export const createDeck = async (input: DeckInput): Promise<DeckSummary> =>
-    http<DeckSummary>('/decks', {
+export const createDeck = async (input: DeckInput): Promise<DeckSummary> => {
+    const res = await http<DeckSummary>('/decks', {
         method: 'POST',
         body: {
             title: input.title,
@@ -77,15 +77,27 @@ export const createDeck = async (input: DeckInput): Promise<DeckSummary> =>
             ...(input.subject !== undefined ? { subject: input.subject } : {}),
         },
     });
+    return {
+        ...res,
+        sourceLanguage: normLang(res.sourceLanguage),
+        targetLanguage: normLang(res.targetLanguage),
+    };
+};
 
-export const updateDeck = async (id: string, input: Partial<DeckInput>): Promise<DeckSummary> =>
-    http<DeckSummary>(`/decks/${id}`, {
+export const updateDeck = async (id: string, input: Partial<DeckInput>): Promise<DeckSummary> => {
+    const res = await http<DeckSummary>(`/decks/${id}`, {
         method: 'PATCH',
         body: {
             ...input,
             ...(input.description !== undefined ? { description: input.description ?? '' } : {}),
         },
     });
+    return {
+        ...res,
+        sourceLanguage: normLang(res.sourceLanguage),
+        targetLanguage: normLang(res.targetLanguage),
+    };
+};
 
 export const deleteDeck = async (id: string): Promise<void> => {
     await http<void>(`/decks/${id}`, { method: 'DELETE' });

@@ -37,12 +37,15 @@
                 <div>
                     <UiInputField
                         v-model="email"
-                        label="Email address"
+                        :label="t('auth.emailLabel')"
                         type="email"
-                        placeholder="example@mail.com"
+                        :placeholder="t('auth.emailPlaceholder')"
                     >
                         <template #suffix>
-                            <Check v-if="isEmailValid" class="size-4" />
+                            <Check
+                                class="size-4 transition-opacity"
+                                :class="isEmailValid ? 'opacity-100' : 'opacity-0'"
+                            />
                         </template>
                     </UiInputField>
                     <p v-if="emailError" class="mt-1.5 text-small text-error" aria-live="polite">
@@ -53,12 +56,15 @@
                 <div>
                     <UiInputField
                         v-model="password"
-                        label="Password"
+                        :label="t('auth.passwordLabel')"
                         type="password"
                         placeholder="••••••••"
                     >
                         <template #suffix>
-                            <Check v-if="isPasswordValid" class="size-4" />
+                            <Check
+                                class="size-4 transition-opacity"
+                                :class="isPasswordValid ? 'opacity-100' : 'opacity-0'"
+                            />
                         </template>
                     </UiInputField>
                     <p class="mt-1.5 min-h-[20px] text-small" aria-live="polite">

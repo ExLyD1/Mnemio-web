@@ -62,7 +62,7 @@
                         <component :is="f.icon" class="size-5" />
                     </span>
                     <h3 class="mt-4 font-display text-h3 text-cream">{{ t(f.title) }}</h3>
-                    <p class="mt-2 text-small text-cream-dim">{{ t(f.body) }}</p>
+                    <p class="mt-2 text-small text-cream">{{ t(f.body) }}</p>
                 </div>
             </div>
         </section>
@@ -79,7 +79,7 @@
                 >
                     <span class="font-display text-4xl text-brand-bright">{{ i + 1 }}</span>
                     <h3 class="mt-3 font-display text-h3 text-cream">{{ t(s.title) }}</h3>
-                    <p class="mt-2 text-small text-cream-dim">{{ t(s.body) }}</p>
+                    <p class="mt-2 text-small text-cream">{{ t(s.body) }}</p>
                 </div>
             </div>
         </section>
@@ -109,7 +109,7 @@
                 <h2 class="mt-2 font-display text-h1 text-cream">
                     {{ t('landing.aiTitle') }}
                 </h2>
-                <p class="mt-4 max-w-[44ch] text-body text-cream-dim">
+                <p class="mt-4 max-w-[44ch] text-body text-cream">
                     {{ t('landing.aiBody') }}
                 </p>
             </div>
@@ -159,7 +159,7 @@
                     class="rounded-[20px] border border-line bg-bg-surface p-6"
                 >
                     <h3 class="font-display text-h3 text-cream">{{ t(item.q) }}</h3>
-                    <p class="mt-2 text-body text-cream-dim">{{ t(item.a) }}</p>
+                    <p class="mt-2 text-body text-cream">{{ t(item.a) }}</p>
                 </div>
             </div>
         </section>
@@ -171,7 +171,7 @@
                     {{ t('landing.finalCtaTitle1')
                     }}<span class="italic">{{ t('landing.finalCtaTitleEm') }}</span>
                 </h2>
-                <p class="mx-auto mt-3 max-w-[44ch] text-body text-cream-dim">
+                <p class="mx-auto mt-3 max-w-[44ch] text-body text-cream">
                     {{ t('landing.finalCtaBody') }}
                 </p>
                 <div class="mt-6 flex justify-center gap-3">
