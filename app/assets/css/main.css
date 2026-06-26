@@ -14,14 +14,14 @@
 .dark {
     color-scheme: dark;
 
-    --c-bg-base: 20 17 28; /* page — dark plum */
-    --c-bg-deep: 12 10 18; /* sunken pockets */
-    --c-bg-surface: 36 31 52; /* cards, rail — clearly elevated */
-    --c-bg-surface-2: 50 43 70; /* second-level surfaces */
-    --c-bg-well: 15 13 22; /* input wells */
-    --c-bg-muted: 72 67 88;
+    --c-bg-base: 18 15 26; /* page — dark plum (cooler, less warm) */
+    --c-bg-deep: 10 8 16; /* sunken pockets */
+    --c-bg-surface: 32 28 48; /* cards, rail — clearly elevated */
+    --c-bg-surface-2: 44 40 64; /* second-level surfaces */
+    --c-bg-well: 13 11 20; /* input wells */
+    --c-bg-muted: 66 62 82;
 
-    --c-cream: 233 224 216; /* primary text */
+    --c-cream: 218 210 202; /* primary text — softer warm cream, ~13:1 on dark base */
     --c-brand-muted: 142 118 146; /* secondary text */
     --c-brand-pale: 206 178 189; /* tertiary text / chips */
     --c-brand-light: 226 210 200;
@@ -29,30 +29,30 @@
     --c-on-color: 244 238 248; /* light text on colored fills */
     --c-line: 227 210 200; /* borders (alpha applied) */
 
-    --c-fc-front: linear-gradient(160deg, #2c1a2a 0%, #1a1020 100%);
-    --c-fc-back: linear-gradient(160deg, #572f54 0%, #482b5c 100%);
+    /* cooler grape-purple gradient — no reddish warmth */
+    --c-fc-front: linear-gradient(160deg, #221c30 0%, #15112a 100%);
+    --c-fc-back: linear-gradient(160deg, #4a2c54 0%, #3d2758 100%);
 
-    /* Dashboard hero wash — theme-aware so it always agrees with the text color
-       (was previously picked in JS via colorMode, which could desync). */
-    --c-hero: linear-gradient(160deg, #572f54 0%, #2c1a2a 100%);
+    /* Dashboard hero wash — cooled to match the palette shift away from warm wine. */
+    --c-hero: linear-gradient(160deg, #4a2c58 0%, #221c30 100%);
 
-    /* Mimi coach panel wash — dark plum in the default/dark theme. */
+    /* Mimi coach panel wash — cool blue-purple so it reads calm, not warm wine. */
     --c-mimi-ambient: radial-gradient(
         130% 120% at 50% 0%,
-        rgba(87, 47, 84, 0.55),
-        rgba(14, 11, 18, 0.4)
+        rgba(72, 47, 100, 0.48),
+        rgba(12, 9, 18, 0.4)
     );
 }
 
 .light {
     color-scheme: light;
 
-    --c-bg-base: 245 242 250;
-    --c-bg-deep: 235 230 244;
+    --c-bg-base: 251 249 253; /* near-white with barely-perceptible lavender whisper */
+    --c-bg-deep: 244 242 250; /* slightly recessed — lighter than before */
     --c-bg-surface: 255 255 255;
-    --c-bg-surface-2: 248 245 252;
-    --c-bg-well: 252 250 254;
-    --c-bg-muted: 224 217 238;
+    --c-bg-surface-2: 250 248 253;
+    --c-bg-well: 253 252 254;
+    --c-bg-muted: 228 222 240;
 
     --c-cream: 45 28 43;
     --c-brand-muted: 106 80 110;
