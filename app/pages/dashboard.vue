@@ -17,7 +17,7 @@
         <!-- Hero: today's review -->
         <div
             class="rounded-[24px] border border-[rgba(242,188,255,0.18)] px-9 py-8"
-            :style="{ background: heroGradient }"
+            :style="{ background: 'var(--c-hero)' }"
         >
             <!-- Content -->
             <div class="flex items-start justify-between gap-4">
@@ -26,17 +26,32 @@
                         {{ t('dashboard.todayReview') }}
                     </p>
                     <h2 class="mt-2 font-display text-[34px] leading-tight text-cream">
-                        {{ dueCount }} {{ t('dashboard.cardsShort') }}
-                        <span class="text-cream/60">·</span>
-                        {{ t('dashboard.aboutMinutes').replace('{n}', String(reviewMins)) }}
+                        <template v-if="dueCount > 0">
+                            {{ dueCount }} {{ t('dashboard.cardsShort') }}
+                            <span class="text-cream/60">·</span>
+                            {{ t('dashboard.aboutMinutes').replace('{n}', String(reviewMins)) }}
+                        </template>
+                        <template v-else>
+                            {{ t('dashboard.allCaughtUp') }}
+                        </template>
                     </h2>
                     <div class="mt-5">
                         <UiButton
+                            v-if="dueCount > 0"
                             variant="primary"
                             class="gap-1.5"
                             @click="navigateTo(suggestAction?.href ?? '/review')"
                         >
                             {{ suggestAction?.label ?? t('dashboard.startReview') }}
+                            <ArrowRight class="size-4" />
+                        </UiButton>
+                        <UiButton
+                            v-else
+                            variant="primary"
+                            class="gap-1.5"
+                            @click="navigateTo('/decks/create')"
+                        >
+                            {{ t('dashboard.createDeckCta') }}
                             <ArrowRight class="size-4" />
                         </UiButton>
                     </div>
@@ -206,13 +221,6 @@ import * as statsApi from '@/api/stats';
 import { deckToCardVm } from '@/utils/deckVm';
 
 definePageMeta({ layout: 'default' });
-
-const colorMode = useColorMode();
-const heroGradient = computed(() =>
-    colorMode.value === 'dark'
-        ? 'linear-gradient(160deg, #572f54 0%, #2c1a2a 100%)'
-        : 'linear-gradient(160deg, #ede4f8 0%, #d4b8f0 100%)',
-);
 
 const auth = useAuthStore();
 const { store, fetchList } = useDecks();

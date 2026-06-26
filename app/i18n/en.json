@@ -303,6 +303,8 @@
         "cardsToReview": "cards to review",
         "cardsShort": "cards",
         "aboutMinutes": "about {n} min",
+        "allCaughtUp": "All caught up — nothing due today",
+        "createDeckCta": "Create a deck",
         "mostlyFrom": "Mostly from {deck}",
         "orPickDeck": "or pick a deck below",
         "dueShort": "due",

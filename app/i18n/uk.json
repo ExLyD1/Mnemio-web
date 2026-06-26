@@ -303,6 +303,8 @@
         "cardsToReview": "карток до повторення",
         "cardsShort": "карток",
         "aboutMinutes": "близько {n} хв",
+        "allCaughtUp": "Усе повторено — на сьогодні нічого немає",
+        "createDeckCta": "Створити колоду",
         "mostlyFrom": "Переважно з «{deck}»",
         "orPickDeck": "або оберіть колоду нижче",
         "dueShort": "до повтор.",
