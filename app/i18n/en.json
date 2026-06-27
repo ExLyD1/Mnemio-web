@@ -505,7 +505,8 @@
         "sortPopular": "Most popular",
         "copies": "{n} copies",
         "preview": "Preview",
-        "copy": "Copy"
+        "copy": "Copy",
+        "openDeck": "Open deck page"
     },
     "statistics": {
         "title": "Your statistics.",

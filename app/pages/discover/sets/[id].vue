@@ -21,14 +21,21 @@
                 {{ deck.description }}
             </p>
             <div class="flex flex-wrap items-center gap-3 text-small text-brand-muted">
-                <span>{{ t('deck.cardCount').replace('{n}', String(deck.cardCount)) }}</span>
-                <span class="text-brand-muted/60">·</span>
-                <span>{{ t('discover.copies').replace('{n}', String(deck.copyCount)) }}</span>
-                <span class="text-brand-muted/60">·</span>
-                <span>{{ t('discover.byAuthor').replace('{name}', authorName) }}</span>
+                <span>{{ t('deck.cardCount').replace('{n}', String(cardCount)) }}</span>
+                <template v-if="copyCount > 0">
+                    <span class="text-brand-muted/60">·</span>
+                    <span>{{ t('discover.copies').replace('{n}', String(copyCount)) }}</span>
+                </template>
+                <template v-if="authorName">
+                    <span class="text-brand-muted/60">·</span>
+                    <span>{{ t('discover.byAuthor').replace('{name}', authorName) }}</span>
+                </template>
             </div>
-            <div class="mt-2 flex gap-3">
+            <div class="mt-2 flex flex-wrap gap-3">
                 <UiButton variant="primary" @click="onCopy">{{ t('discover.copy') }}</UiButton>
+                <NuxtLink :to="`/decks/${deck.id}`">
+                    <UiButton variant="ghost">{{ t('discover.openDeck') }}</UiButton>
+                </NuxtLink>
             </div>
         </header>
 
@@ -85,8 +92,13 @@ if (error.value || !deck.value) {
     throw createError({ statusCode: 404, statusMessage: 'Deck not found' });
 }
 
+// The public-deck endpoint returns the cards inline but may omit the summary
+// counts/author, so derive them defensively (card count from the embedded cards;
+// author chip hidden when absent) instead of rendering `undefined`.
+const cardCount = computed(() => deck.value?.cardCount ?? deck.value?.cards.length ?? 0);
+const copyCount = computed(() => deck.value?.copyCount ?? 0);
 const authorName = computed(
-    () => deck.value?.author?.username ?? deck.value?.author?.fullName ?? 'someone',
+    () => deck.value?.author?.username ?? deck.value?.author?.fullName ?? '',
 );
 
 useSeo({
@@ -167,7 +179,9 @@ useHead({
                             url: `${base}/discover/sets/${d.id}`,
                             learningResourceType: 'Flashcard deck',
                             educationalLevel: d.subject ?? undefined,
-                            author: { '@type': 'Person', name: authorName.value },
+                            author: authorName.value
+                                ? { '@type': 'Person', name: authorName.value }
+                                : undefined,
                             hasPart: d.cards.map((c) => ({
                                 '@type': 'Flashcard',
                                 name: c.word,
