@@ -159,7 +159,12 @@
                             t('dashboard.weeklyGoal')
                         }}</span>
                         <div class="flex items-center gap-2">
-                            <span class="text-small text-cream"
+                            <span
+                                v-if="weekGoalPct >= 100"
+                                class="text-small font-semibold text-success"
+                                >{{ t('dashboard.goalReached') }}</span
+                            >
+                            <span v-else class="text-small text-cream"
                                 >{{ weekReviewed }} / {{ weekGoal }}
                                 {{ t('dashboard.cards') }}</span
                             >
@@ -177,7 +182,10 @@
                             class="h-full rounded-full transition-[width] duration-500 ease-out"
                             :style="{
                                 width: `${weekGoalPct}%`,
-                                background: 'linear-gradient(90deg, #7c4576, #c2e083)',
+                                background:
+                                    weekGoalPct >= 100
+                                        ? 'linear-gradient(90deg, #52d08e, #a8e063)'
+                                        : 'linear-gradient(90deg, #7c4576, #c2e083)',
                             }"
                         />
                     </div>

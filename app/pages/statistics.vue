@@ -101,9 +101,10 @@
                 <div
                     v-for="(d, i) in series"
                     :key="i"
-                    class="flex-1 truncate text-center text-small text-brand-muted"
+                    class="flex-1 text-center text-small text-brand-muted transition-opacity"
+                    :class="showSeriesLabel(i) ? 'opacity-100' : 'opacity-0'"
                 >
-                    {{ d.label }}
+                    {{ formatSeriesLabel(d.label) }}
                 </div>
             </div>
         </div>
@@ -224,6 +225,24 @@ const series = computed(() => stats.series.value);
 const maxValue = computed(() => Math.max(1, ...series.value.map((d) => d.value)));
 const heat = computed(() => stats.yearHeat.value);
 
+// Bar chart label helpers — avoid crowded/repeated labels for long ranges.
+const DAY_ABBR = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
+const showSeriesLabel = (i: number): boolean => {
+    const total = series.value.length;
+    if (total <= 14) return true;
+    if (total <= 31) return i === 0 || i === total - 1 || i % 7 === 0;
+    return i === 0 || i === total - 1 || i % 14 === 0;
+};
+const formatSeriesLabel = (label: string): string => {
+    const d = new Date(label + 'T00:00:00Z');
+    if (!isNaN(d.getTime())) {
+        const total = series.value.length;
+        if (total <= 14) return DAY_ABBR[d.getUTCDay()] ?? label;
+        return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+    }
+    return label;
+};
+
 const toTrend = (t: StatsTrend | undefined) => {
     const pct = t?.deltaPct ?? 0;
     return {
@@ -253,7 +272,7 @@ onMounted(async () => {
     await Promise.all([
         fetchList.execute({ cursor: null, append: false }),
         stats.load(range.value),
-        stats.loadSeries('7'),
+        stats.loadSeries(range.value),
         achievements.load(),
     ]);
 });
