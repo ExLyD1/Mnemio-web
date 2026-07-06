@@ -117,8 +117,8 @@ const { t } = useT();
     mask-size: 300% 100%;
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
-    -webkit-mask-position: 100% 0;
-    mask-position: 100% 0;
+    -webkit-mask-position: 110% 0;
+    mask-position: 110% 0;
     transition:
         -webkit-mask-position 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
         mask-position 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
