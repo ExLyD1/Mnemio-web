@@ -154,7 +154,7 @@
                     <component
                         :is="a.earned ? Trophy : Lock"
                         class="size-6"
-                        :class="a.earned ? 'text-pink-soft' : 'text-brand-muted'"
+                        :class="a.earned ? 'text-vib-amber' : 'text-brand-muted'"
                     />
                     <span class="text-small font-semibold text-cream">{{ a.name }}</span>
                     <span class="text-small text-brand-muted">{{ a.description }}</span>

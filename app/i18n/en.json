@@ -619,6 +619,7 @@
         "saveError": "Could not save profile"
     },
     "achievements": {
+        "unlocked": "Achievement unlocked: {name} 🏆",
         "first_steps": {
             "name": "First steps",
             "description": "Complete your first study session."

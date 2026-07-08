@@ -1,6 +1,6 @@
 <template>
     <aside class="flex h-full min-h-0 flex-col gap-3">
-        <UiButton variant="light" class="w-full justify-center" @click="$emit('new')">
+        <UiButton variant="primary" class="w-full justify-center" @click="$emit('new')">
             <Plus class="size-4" /> {{ t('chat.newChat') }}
         </UiButton>
 
