@@ -52,8 +52,11 @@
                             :class="isActive(link.to) ? 'text-pink-soft' : ''"
                         />
                         <span
-                            class="flex-1 whitespace-nowrap text-sm font-semibold leading-none text-cream transition-opacity duration-[160ms]"
-                            :class="expanded ? 'opacity-100 delay-[100ms]' : 'opacity-0 delay-0'"
+                            class="flex-1 whitespace-nowrap text-sm font-semibold leading-none transition-opacity duration-[160ms]"
+                            :class="[
+                                expanded ? 'opacity-100 delay-[100ms]' : 'opacity-0 delay-0',
+                                isActive(link.to) ? 'text-on-color' : 'text-cream',
+                            ]"
                         >
                             {{ link.label }}
                         </span>
