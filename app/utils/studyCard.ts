@@ -16,6 +16,7 @@ export interface StudyCard {
     pos: string;
     example: string;
     exampleTranslation: string;
+    audioUrl: string | null;
 }
 
 export const toStudyCard = (card: Card, deck: Deck): StudyCard => {
@@ -33,5 +34,6 @@ export const toStudyCard = (card: Card, deck: Deck): StudyCard => {
         pos: card.partOfSpeech ?? '',
         example: card.example ?? '',
         exampleTranslation: card.exampleTranslation ?? '',
+        audioUrl: card.audioUrl,
     };
 };

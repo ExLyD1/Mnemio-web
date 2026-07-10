@@ -8,7 +8,6 @@
                 </p>
             </div>
             <div v-if="active" class="flex flex-1 items-center justify-center gap-3">
-                <StudyProgressDots :index="completedCount" :total="totalQueue" />
                 <span class="text-small tabular-nums text-brand-muted">
                     {{ t('review.dueLeft').replace('{n}', String(srs.dueCount)) }}
                 </span>

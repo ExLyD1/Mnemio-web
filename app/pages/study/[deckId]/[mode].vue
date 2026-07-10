@@ -13,10 +13,6 @@
                 </p>
             </div>
             <div class="flex flex-1 items-center justify-center gap-3">
-                <StudyProgressDots
-                    :index="practice.study.currentIndex.value"
-                    :total="practice.study.totalCount.value"
-                />
                 <span class="text-small tabular-nums text-brand-muted">
                     {{
                         Math.min(
@@ -28,9 +24,6 @@
                 </span>
             </div>
             <div class="flex items-center gap-3">
-                <span class="hidden text-small text-brand-muted sm:inline">{{
-                    reviewedLabel
-                }}</span>
                 <UiButton variant="ghost" class="!py-2 !text-small" @click="onEnd">
                     {{ t('study.endSession') }}
                 </UiButton>
@@ -80,7 +73,7 @@
                     <div class="flex min-h-[72px] w-full items-center justify-center">
                         <Transition name="rate" mode="out-in">
                             <StudyRatingRow v-if="practice.revealed.value" @grade="onGrade" />
-                            <p v-else class="text-small text-brand-muted">
+                            <p v-else class="hidden text-small text-brand-muted sm:block">
                                 {{ t('study.revealHint') }}
                             </p>
                         </Transition>
@@ -164,12 +157,6 @@ const currentQuestion = computed(() => {
     }
     return buildMultipleChoice(card, practice.study.queue.value);
 });
-
-const reviewedLabel = computed(() =>
-    t('study.reviewedSummary')
-        .replace('{recalled}', String(practice.counts.good + practice.counts.easy))
-        .replace('{revisit}', String(practice.revisit.value.length)),
-);
 
 const onGrade = (rating: SrsRating) => {
     const card = practice.study.currentCard.value;
