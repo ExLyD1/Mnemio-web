@@ -39,10 +39,11 @@
                 "
             >
                 <template v-if="mode !== 'multiple-choice' && studyCard">
+                    <!-- Card row: side arrows on sm+, card takes full width on mobile -->
                     <div class="flex w-full items-center justify-center gap-2 sm:gap-3">
                         <button
                             type="button"
-                            class="grid size-9 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30 sm:size-11"
+                            class="hidden size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30 sm:grid"
                             :aria-label="t('study.prevCard')"
                             :disabled="practice.study.currentIndex.value === 0"
                             @click="practice.goPrev"
@@ -59,7 +60,31 @@
                         </Transition>
                         <button
                             type="button"
-                            class="grid size-9 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30 sm:size-11"
+                            class="hidden size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30 sm:grid"
+                            :aria-label="t('study.nextCard')"
+                            :disabled="
+                                practice.study.currentIndex.value >=
+                                practice.study.totalCount.value - 1
+                            "
+                            @click="practice.goNext"
+                        >
+                            <ChevronRight class="size-5" />
+                        </button>
+                    </div>
+                    <!-- Mobile-only arrow row: appears below the card -->
+                    <div class="flex justify-center gap-8 sm:hidden">
+                        <button
+                            type="button"
+                            class="grid size-11 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
+                            :aria-label="t('study.prevCard')"
+                            :disabled="practice.study.currentIndex.value === 0"
+                            @click="practice.goPrev"
+                        >
+                            <ChevronLeft class="size-5" />
+                        </button>
+                        <button
+                            type="button"
+                            class="grid size-11 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
                             :aria-label="t('study.nextCard')"
                             :disabled="
                                 practice.study.currentIndex.value >=
@@ -273,11 +298,11 @@ onBeforeUnmount(() => {
 }
 .card-enter-from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateX(24px);
 }
 .card-leave-to {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateX(-24px);
 }
 .rate-enter-active {
     transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.15s;

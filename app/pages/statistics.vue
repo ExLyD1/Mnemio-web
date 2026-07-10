@@ -98,11 +98,7 @@
                 />
             </div>
             <div class="relative mt-1 flex gap-1">
-                <div
-                    v-for="(d, i) in series"
-                    :key="i"
-                    class="flex-1"
-                >
+                <div v-for="(d, i) in series" :key="i" class="flex-1">
                     <template v-if="showSeriesLabel(i)">
                         <div class="mx-auto h-1.5 w-px bg-line" />
                         <div class="text-center text-[10px] leading-tight text-brand-muted">

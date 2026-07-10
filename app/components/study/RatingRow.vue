@@ -4,7 +4,10 @@
             v-for="g in GRADES"
             :key="g.key"
             type="button"
-            class="relative flex min-h-[44px] flex-col items-center gap-1 rounded-2xl border border-line bg-bg-surface px-4 py-3 text-cream transition-all hover:bg-brand/10 hover:shadow-md hover:shadow-brand/15"
+            :class="[
+                'relative flex min-h-[44px] flex-col items-center gap-1 rounded-2xl border bg-bg-surface px-4 py-3 transition-all hover:shadow-md hover:shadow-brand/15',
+                toneClass[g.tone],
+            ]"
             @click="$emit('grade', g.key)"
         >
             <StudyKeycap :label="g.hint" class="absolute right-2 top-2" />
@@ -23,4 +26,11 @@ const { t } = useT();
 
 defineEmits<{ grade: [rating: SrsRating] }>();
 
+// Light: border + text colour only. Dark: add a faint bg tint.
+const toneClass: Record<string, string> = {
+    ghost: 'border-error text-error dark:bg-error/10',
+    dark: 'border-vib-amber text-vib-amber dark:bg-vib-amber/10',
+    good: 'border-brand-bright text-brand-bright dark:bg-brand/15',
+    easy: 'border-success text-success dark:bg-success/10',
+};
 </script>

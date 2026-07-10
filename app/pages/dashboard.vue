@@ -179,7 +179,9 @@
                     </div>
                     <div
                         class="h-1.5 w-full overflow-hidden rounded-full bg-line transition-[box-shadow] duration-500"
-                        :class="weekGoalPct >= 100 ? 'shadow-[0_0_8px_2px_rgba(82,208,142,0.45)]' : ''"
+                        :class="
+                            weekGoalPct >= 100 ? 'shadow-[0_0_8px_2px_rgba(82,208,142,0.45)]' : ''
+                        "
                     >
                         <div
                             class="h-full rounded-full transition-[width] duration-500 ease-out"
