@@ -67,8 +67,22 @@
                                 "
                                 @click="cardType = ct.value"
                             >
-                                <p class="text-[14px] font-bold text-cream">{{ ct.label }}</p>
-                                <p class="mt-0.5 text-[12px] text-cream-dim">{{ ct.hint }}</p>
+                                <p
+                                    class="text-[14px] font-bold"
+                                    :class="cardType === ct.value ? 'text-on-color' : 'text-cream'"
+                                >
+                                    {{ ct.label }}
+                                </p>
+                                <p
+                                    class="mt-0.5 text-[12px]"
+                                    :class="
+                                        cardType === ct.value
+                                            ? 'text-on-color/75'
+                                            : 'text-cream-dim'
+                                    "
+                                >
+                                    {{ ct.hint }}
+                                </p>
                             </button>
                         </div>
                     </div>
@@ -148,7 +162,7 @@
                                 }"
                                 @click="coverColor = swatch"
                             >
-                                <Layers class="size-3.5 text-[rgba(242,188,255,.5)]" />
+                                <Layers class="size-3.5 text-white/70" />
                             </button>
                         </div>
                     </div>
@@ -398,14 +412,14 @@ type DraftMsg = { role: 'draft'; data: AiDeckDraft };
 type ChatMsg = UserMsg | MimiMsg | DraftMsg;
 
 const COVER_SWATCHES = [
-    '#572F54',
-    '#3A2654',
-    '#542E40',
-    '#3F2D54',
-    '#2E2E54',
-    '#54322E',
-    '#2E5454',
-    '#54462E',
+    '#7C5CBF',
+    '#4A7FBD',
+    '#C2447A',
+    '#2A9D8F',
+    '#D4845A',
+    '#C45C5C',
+    '#3A9E6F',
+    '#5B6BBF',
 ];
 
 const { create } = useDecks();

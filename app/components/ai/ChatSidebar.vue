@@ -4,6 +4,8 @@
             <Plus class="size-4" /> {{ t('chat.newChat') }}
         </UiButton>
 
+        <hr class="border-line" />
+
         <div class="min-h-0 flex-1 overflow-y-auto pr-0.5">
             <div v-if="loading && !conversations.length" class="flex justify-center py-6">
                 <UiSpinner size="sm" />

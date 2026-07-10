@@ -97,16 +97,13 @@ body {
 }
 
 .page-enter-active {
-    transition:
-        opacity 0.18s ease,
-        transform 0.18s ease;
+    transition: opacity 0.18s ease;
 }
 .page-leave-active {
     transition: opacity 0.12s ease;
 }
 .page-enter-from {
     opacity: 0;
-    transform: translateY(6px);
 }
 .page-leave-to {
     opacity: 0;

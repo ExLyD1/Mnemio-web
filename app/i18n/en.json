@@ -210,6 +210,7 @@
         "coachReview": "{n} cards are ready for review. Want to start?",
         "coachGood": "Looking good — nothing due right now. Keep it up!",
         "coachStudy": "Ready to study? You have {n} cards in this deck.",
+        "coachEmpty": "No cards yet — shall we add some?",
         "createHeading": "Create a new deck.",
         "createHeadingPrefix": "Create a ",
         "createHeadingAccent": "new deck.",

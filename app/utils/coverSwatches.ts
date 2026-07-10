@@ -1,11 +1,13 @@
 /** Vibrant deck cover gradients (oklch pairs — harmonised L/C, hue varies). */
 export const COVER_GRADIENTS = {
-    violet: 'linear-gradient(150deg, oklch(0.64 0.20 300), oklch(0.48 0.17 285))',
-    blue: 'linear-gradient(150deg, oklch(0.64 0.15 252), oklch(0.46 0.15 262))',
-    teal: 'linear-gradient(150deg, oklch(0.70 0.14 175), oklch(0.54 0.13 192))',
-    pink: 'linear-gradient(150deg, oklch(0.68 0.21 350), oklch(0.50 0.20 330))',
-    amber: 'linear-gradient(150deg, oklch(0.76 0.15 75),  oklch(0.62 0.15 48))',
-    coral: 'linear-gradient(150deg, oklch(0.67 0.19 25),  oklch(0.50 0.18 12))',
+    violet: 'linear-gradient(150deg, #9B5DE5, #6A0DAD)',
+    blue: 'linear-gradient(150deg, #4895EF, #1A56DB)',
+    teal: 'linear-gradient(150deg, #2EC4B6, #0A7E75)',
+    pink: 'linear-gradient(150deg, #F72585, #B5179E)',
+    amber: 'linear-gradient(150deg, #F4A261, #E07C2A)',
+    coral: 'linear-gradient(150deg, #FF6B6B, #C9184A)',
+    indigo: 'linear-gradient(150deg, #7B5EA7, #4A3580)',
+    mint: 'linear-gradient(150deg, #43D98E, #1A9E60)',
 } as const;
 
 export type CoverKey = keyof typeof COVER_GRADIENTS;

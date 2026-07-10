@@ -107,7 +107,7 @@
                         @click="filter = 'practiced'"
                     >
                         <span class="font-display text-h2 leading-none text-cream">{{
-                            deckStat.mastered
+                            deckStat.mastered + deckStat.learning
                         }}</span>
                         <span
                             class="text-small transition-colors"
@@ -334,21 +334,6 @@
             @confirm="confirmDeleteCard"
         />
 
-        <!-- Floating Mimi import button — bottom-right, hidden on mobile bottom-tab layouts -->
-        <button
-            v-if="ready"
-            type="button"
-            class="fixed bottom-[88px] right-[20px] z-30 grid size-[58px] cursor-pointer place-items-center rounded-full border border-[rgba(242,188,255,.35)] p-0 md:bottom-[26px] md:right-[28px]"
-            style="
-                background: linear-gradient(150deg, #4a2c58, #221c30);
-                box-shadow: 0 10px 28px -6px rgba(169, 142, 227, 0.3);
-            "
-            :aria-label="t('ai.launchAppend')"
-            @click="aiOpen = true"
-        >
-            <SharedMimi :size="40" :bob="false" class="pointer-events-none" />
-        </button>
-
         <AiImportPanel
             v-if="ready && store.deck && isOwner"
             v-model="aiOpen"
@@ -493,10 +478,13 @@ const swatch = computed(() => store.deck?.coverColor ?? swatchFor(id.value));
 const deckStat = computed(() => store.deck?.stats ?? EMPTY_STATS);
 const eyebrow = computed(() => store.deck?.subject?.toUpperCase() || 'DECK');
 const coachTip = computed(() => {
+    if (!store.deck?.cards.length) {
+        return t('deck.coachEmpty');
+    }
     if (deckStat.value.due > 0) {
         return t('deck.coachReview').replace('{n}', String(deckStat.value.due));
     }
-    return t('deck.coachStudy').replace('{n}', String(store.deck?.cards.length ?? 0));
+    return t('deck.coachStudy').replace('{n}', String(store.deck.cards.length));
 });
 
 const breakdownSegments = computed(() => [
@@ -524,7 +512,7 @@ const filteredCards = computed(() => {
             case 'new':
                 return cardState(card) === 'new';
             case 'practiced':
-                return cardState(card) === 'mastered';
+                return cardState(card) !== 'new';
             case 'due':
                 return isDue(card);
             default:

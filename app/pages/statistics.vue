@@ -97,14 +97,18 @@
                     :title="`${d.label}: ${d.value}`"
                 />
             </div>
-            <div class="mt-1.5 flex gap-1">
+            <div class="relative mt-1 flex gap-1">
                 <div
                     v-for="(d, i) in series"
                     :key="i"
-                    class="flex-1 text-center text-small text-brand-muted transition-opacity"
-                    :class="showSeriesLabel(i) ? 'opacity-100' : 'opacity-0'"
+                    class="flex-1"
                 >
-                    {{ formatSeriesLabel(d.label) }}
+                    <template v-if="showSeriesLabel(i)">
+                        <div class="mx-auto h-1.5 w-px bg-line" />
+                        <div class="text-center text-[10px] leading-tight text-brand-muted">
+                            {{ formatSeriesLabel(d.label) }}
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -230,8 +234,14 @@ const DAY_ABBR = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
 const showSeriesLabel = (i: number): boolean => {
     const total = series.value.length;
     if (total <= 14) return true;
-    if (total <= 31) return i === 0 || i === total - 1 || i % 7 === 0;
-    return i === 0 || i === total - 1 || i % 14 === 0;
+    const step = total <= 31 ? 7 : 14;
+    if (i % step === 0 || i === 0) return true;
+    // Show the last point only if it's far enough from the previous step mark.
+    if (i === total - 1) {
+        const prevMark = Math.floor((total - 1) / step) * step;
+        return i - prevMark >= 3;
+    }
+    return false;
 };
 const formatSeriesLabel = (label: string): string => {
     const d = new Date(label + 'T00:00:00Z');
