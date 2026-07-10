@@ -165,6 +165,7 @@ import { CheckCheck, Lightbulb, X } from 'lucide-vue-next';
 import { useSrsStore, useToast, useT } from '#imports';
 import { useMimi } from '@/composables/useMimi';
 import { useAnalytics } from '@/composables/useAnalytics';
+import { useAchievements } from '@/composables/useAchievements';
 import * as aiApi from '@/api/ai';
 import type { SrsRating } from '@/types/srs';
 import type { StudyCard } from '@/utils/studyCard';
@@ -176,6 +177,7 @@ const toast = useToast();
 const { t } = useT();
 const mimi = useMimi();
 const analytics = useAnalytics();
+const achievements = useAchievements();
 
 useSeo({ title: t('seo.reviewTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -250,6 +252,7 @@ const onRate = async (rating: SrsRating) => {
             finished.value = true;
             mimi.say('done');
             analytics.track('review_due_cleared', { cards_reviewed: completedCount.value });
+            achievements.load().catch(() => {});
         }
     } catch (e) {
         const err = e as { message?: string };

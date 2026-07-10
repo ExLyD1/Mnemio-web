@@ -24,7 +24,7 @@
             </div>
 
             <div class="flex flex-col gap-[20px]">
-                <p class="text-small">
+                <p class="text-small text-brand-muted">
                     {{
                         t(
                             activeTab === 'login'
@@ -78,7 +78,7 @@
 
             <UiButton
                 type="submit"
-                variant="light"
+                variant="primary"
                 class="mt-[32px] w-full rounded-xl text-body font-bold"
                 :disabled="loading"
             >

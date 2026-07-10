@@ -126,6 +126,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import { useDecks, useT } from '#imports';
 import { usePractice } from '@/composables/usePractice';
 import { usePracticeStore } from '@/stores/practice';
+import { useAchievements } from '@/composables/useAchievements';
 import { buildMultipleChoice } from '@/composables/useMultipleChoice';
 import { toStudyCard } from '@/utils/studyCard';
 import { GRADES } from '@/utils/grades';
@@ -141,6 +142,7 @@ const mode = computed(() => String(route.params.mode) as StudyMode);
 const { store, fetchOne } = useDecks();
 const { t } = useT();
 const practice = usePractice();
+const achievements = useAchievements();
 
 useSeo({ title: t('seo.studyTitle'), description: t('seo.appDesc'), noindex: true });
 const practiceStore = usePracticeStore();
@@ -210,6 +212,7 @@ const finalize = () => {
         revisit: [...practice.revisit.value],
     });
     practice.mimi.say('done');
+    achievements.load().catch(() => {});
     navigateTo(`/study/${deckId.value}/results`);
 };
 

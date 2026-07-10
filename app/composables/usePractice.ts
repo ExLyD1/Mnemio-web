@@ -2,6 +2,8 @@ import { reactive, ref } from 'vue';
 import { useStudySession } from '@/composables/useStudySession';
 import { useSrsStore } from '@/stores/srs';
 import { useMimi } from '@/composables/useMimi';
+import { useToast } from '@/composables/useToast';
+import { useT } from '@/composables/useT';
 import type { Card } from '@/types/deck';
 import type { SrsRating } from '@/types/srs';
 
@@ -13,6 +15,8 @@ export const usePractice = () => {
     const study = useStudySession();
     const srs = useSrsStore();
     const mimi = useMimi();
+    const toast = useToast();
+    const { t } = useT();
 
     const revealed = ref(false);
     const streak = ref(0);
@@ -52,8 +56,11 @@ export const usePractice = () => {
         }
         try {
             await srs.rate(card.id, card.deckId, rating);
-        } catch {
+        } catch (e) {
             // A failed rating shouldn't stop the session; keep moving.
+            // But surface it so the user knows their progress wasn't saved.
+            const err = e as { message?: string };
+            toast.error(err.message ?? t('review.errors.rate_failed'));
         }
         revealed.value = false;
         await study.answer(correct);

@@ -97,13 +97,18 @@
                     :title="`${d.label}: ${d.value}`"
                 />
             </div>
-            <div class="mt-1.5 flex gap-1">
+            <div class="relative mt-1 flex gap-1">
                 <div
                     v-for="(d, i) in series"
                     :key="i"
-                    class="flex-1 truncate text-center text-small text-brand-muted"
+                    class="flex-1"
                 >
-                    {{ d.label }}
+                    <template v-if="showSeriesLabel(i)">
+                        <div class="mx-auto h-1.5 w-px bg-line" />
+                        <div class="text-center text-[10px] leading-tight text-brand-muted">
+                            {{ formatSeriesLabel(d.label) }}
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -153,7 +158,7 @@
                     <component
                         :is="a.earned ? Trophy : Lock"
                         class="size-6"
-                        :class="a.earned ? 'text-pink-soft' : 'text-brand-muted'"
+                        :class="a.earned ? 'text-vib-amber' : 'text-brand-muted'"
                     />
                     <span class="text-small font-semibold text-cream">{{ a.name }}</span>
                     <span class="text-small text-brand-muted">{{ a.description }}</span>
@@ -224,6 +229,30 @@ const series = computed(() => stats.series.value);
 const maxValue = computed(() => Math.max(1, ...series.value.map((d) => d.value)));
 const heat = computed(() => stats.yearHeat.value);
 
+// Bar chart label helpers — avoid crowded/repeated labels for long ranges.
+const DAY_ABBR = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
+const showSeriesLabel = (i: number): boolean => {
+    const total = series.value.length;
+    if (total <= 14) return true;
+    const step = total <= 31 ? 7 : 14;
+    if (i % step === 0 || i === 0) return true;
+    // Show the last point only if it's far enough from the previous step mark.
+    if (i === total - 1) {
+        const prevMark = Math.floor((total - 1) / step) * step;
+        return i - prevMark >= 3;
+    }
+    return false;
+};
+const formatSeriesLabel = (label: string): string => {
+    const d = new Date(label + 'T00:00:00Z');
+    if (!isNaN(d.getTime())) {
+        const total = series.value.length;
+        if (total <= 14) return DAY_ABBR[d.getUTCDay()] ?? label;
+        return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+    }
+    return label;
+};
+
 const toTrend = (t: StatsTrend | undefined) => {
     const pct = t?.deltaPct ?? 0;
     return {
@@ -253,7 +282,7 @@ onMounted(async () => {
     await Promise.all([
         fetchList.execute({ cursor: null, append: false }),
         stats.load(range.value),
-        stats.loadSeries('7'),
+        stats.loadSeries(range.value),
         achievements.load(),
     ]);
 });

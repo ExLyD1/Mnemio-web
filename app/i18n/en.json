@@ -210,6 +210,7 @@
         "coachReview": "{n} cards are ready for review. Want to start?",
         "coachGood": "Looking good — nothing due right now. Keep it up!",
         "coachStudy": "Ready to study? You have {n} cards in this deck.",
+        "coachEmpty": "No cards yet — shall we add some?",
         "createHeading": "Create a new deck.",
         "createHeadingPrefix": "Create a ",
         "createHeadingAccent": "new deck.",
@@ -313,6 +314,7 @@
         "allCaughtUp": "All caught up! No cards due right now.",
         "thisWeek": "This week",
         "weeklyGoal": "Weekly goal",
+        "goalReached": "Goal reached!",
         "editGoal": "Edit goal",
         "daysPracticed": "Days practiced",
         "cardsReviewed": "Cards reviewed"
@@ -618,6 +620,7 @@
         "saveError": "Could not save profile"
     },
     "achievements": {
+        "unlocked": "Achievement unlocked: {name} 🏆",
         "first_steps": {
             "name": "First steps",
             "description": "Complete your first study session."

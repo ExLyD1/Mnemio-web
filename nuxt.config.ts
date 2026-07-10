@@ -216,5 +216,16 @@ export default defineNuxtConfig({
         optimizeDeps: {
             include: ['@vue/devtools-core', '@vue/devtools-kit'],
         },
+        // The repo lives on a Windows mapped/virtual drive (A:\), where native
+        // filesystem events don't reach Vite's watcher — so saves never trigger
+        // HMR/rebuild and the running dev server appears "frozen". Polling checks
+        // for changes on a timer instead. Remove this once the repo is on a local
+        // C:\ path (native fs events work there and polling just wastes CPU).
+        server: {
+            watch: {
+                usePolling: true,
+                interval: 300,
+            },
+        },
     },
 });

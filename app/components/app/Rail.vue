@@ -43,7 +43,7 @@
                             'flex h-11 w-full items-center gap-3.5 rounded-[13px] px-3 transition-colors',
                             isActive(link.to)
                                 ? 'bg-brand text-on-color'
-                                : 'text-cream-faint hover:bg-brand/20 hover:text-cream',
+                                : 'text-brand-muted dark:text-cream-faint hover:bg-brand/70 hover:text-on-color dark:hover:bg-brand/20 dark:hover:text-cream',
                         ]"
                     >
                         <component
@@ -52,8 +52,11 @@
                             :class="isActive(link.to) ? 'text-pink-soft' : ''"
                         />
                         <span
-                            class="flex-1 whitespace-nowrap text-sm font-semibold leading-none text-cream transition-opacity duration-[160ms]"
-                            :class="expanded ? 'opacity-100 delay-[100ms]' : 'opacity-0 delay-0'"
+                            class="flex-1 whitespace-nowrap text-sm font-semibold leading-none transition-opacity duration-[160ms]"
+                            :class="[
+                                expanded ? 'opacity-100 delay-[100ms]' : 'opacity-0 delay-0',
+                                isActive(link.to) ? 'text-on-color' : 'text-cream',
+                            ]"
                         >
                             {{ link.label }}
                         </span>
@@ -76,7 +79,7 @@
                 <NuxtLink
                     to="/review"
                     :aria-label="t('rail.practice')"
-                    class="flex h-11 w-full items-center gap-3.5 rounded-[13px] bg-brand/30 px-3 text-lavender transition-colors hover:bg-brand/50"
+                    class="flex h-11 w-full items-center gap-3.5 rounded-[13px] bg-brand/30 px-3 text-brand dark:text-lavender transition-colors hover:bg-brand/60 hover:text-on-color dark:hover:bg-brand/50 dark:hover:text-lavender"
                 >
                     <span class="relative shrink-0">
                         <Sparkles class="size-5" />
@@ -88,7 +91,7 @@
                         </span>
                     </span>
                     <span
-                        class="whitespace-nowrap text-sm font-semibold leading-none text-lavender transition-opacity duration-[160ms]"
+                        class="whitespace-nowrap text-sm font-semibold leading-none transition-opacity duration-[160ms]"
                         :class="expanded ? 'opacity-100 delay-[100ms]' : 'opacity-0 delay-0'"
                     >
                         {{ t('rail.practice') }}
@@ -99,7 +102,7 @@
             <!-- Library group (expanded only) -->
             <template v-if="expanded && libraryDecks.length">
                 <p
-                    class="mt-3 px-3 pb-2 text-[11px] font-semibold uppercase tracking-[.18em] text-cream-faint"
+                    class="mt-3 px-3 pb-2 text-[11px] font-semibold uppercase tracking-[.18em] text-brand-muted dark:text-cream-faint"
                 >
                     {{ t('deck.libraryEyebrow') }}
                 </p>
@@ -113,7 +116,9 @@
                     <span class="min-w-0 flex-1 truncate text-[13px] text-cream-dim">
                         {{ deck.title }}
                     </span>
-                    <span class="text-[11px] text-cream-faint">{{ deck.masteredPct }}%</span>
+                    <span class="text-[11px] text-brand-muted dark:text-cream-faint"
+                        >{{ deck.masteredPct }}%</span
+                    >
                 </NuxtLink>
             </template>
 

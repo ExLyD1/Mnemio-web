@@ -168,14 +168,14 @@
                             :class="[
                                 'flex flex-col items-center gap-2 rounded-2xl border p-5 text-center',
                                 a.earned
-                                    ? 'border-brand-bright bg-brand/20'
+                                    ? 'border-brand-bright bg-brand/10'
                                     : 'border-line bg-bg-surface-2 opacity-60',
                             ]"
                         >
                             <component
                                 :is="a.earned ? Trophy : Lock"
                                 class="size-7"
-                                :class="a.earned ? 'text-pink-soft' : 'text-brand-muted'"
+                                :class="a.earned ? 'text-vib-amber' : 'text-brand-muted'"
                             />
                             <span class="text-small font-semibold text-cream">{{
                                 achName(a)

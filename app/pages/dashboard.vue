@@ -139,8 +139,8 @@
                             :class="
                                 pt.value > 0
                                     ? isToday(i)
-                                        ? 'border border-pink/40 bg-gradient-to-b from-brand-bright to-plum text-cream shadow-md'
-                                        : 'border border-pink/30 bg-gradient-to-b from-brand-bright to-plum text-cream'
+                                        ? 'border border-pink/40 bg-gradient-to-b from-brand-bright to-plum text-on-color shadow-md'
+                                        : 'border border-pink/30 bg-gradient-to-b from-brand-bright to-plum text-on-color'
                                     : 'border border-line dark:bg-white/[0.03] bg-brand/5 text-cream-faint'
                             "
                         >
@@ -159,7 +159,12 @@
                             t('dashboard.weeklyGoal')
                         }}</span>
                         <div class="flex items-center gap-2">
-                            <span class="text-small text-cream"
+                            <span
+                                v-if="weekGoalPct >= 100"
+                                class="text-small font-semibold text-success"
+                                >{{ t('dashboard.goalReached') }}</span
+                            >
+                            <span v-else class="text-small text-cream"
                                 >{{ weekReviewed }} / {{ weekGoal }}
                                 {{ t('dashboard.cards') }}</span
                             >
@@ -172,12 +177,18 @@
                             </NuxtLink>
                         </div>
                     </div>
-                    <div class="h-1.5 w-full overflow-hidden rounded-full bg-line">
+                    <div
+                        class="h-1.5 w-full overflow-hidden rounded-full bg-line transition-[box-shadow] duration-500"
+                        :class="weekGoalPct >= 100 ? 'shadow-[0_0_8px_2px_rgba(82,208,142,0.45)]' : ''"
+                    >
                         <div
                             class="h-full rounded-full transition-[width] duration-500 ease-out"
                             :style="{
-                                width: `${weekGoalPct}%`,
-                                background: 'linear-gradient(90deg, #7c4576, #c2e083)',
+                                width: `${Math.min(weekGoalPct, 100)}%`,
+                                background:
+                                    weekGoalPct >= 100
+                                        ? '#52d08e'
+                                        : 'linear-gradient(90deg, #7c4576, #c2e083)',
                             }"
                         />
                     </div>
