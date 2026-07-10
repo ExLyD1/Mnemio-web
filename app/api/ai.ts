@@ -50,12 +50,7 @@ export const generateDeck = async (
 };
 
 export type EnrichField =
-    | 'phonetic'
-    | 'partOfSpeech'
-    | 'example'
-    | 'exampleTranslation'
-    | 'tags'
-    | 'difficulty';
+    'phonetic' | 'partOfSpeech' | 'example' | 'exampleTranslation' | 'tags' | 'difficulty';
 
 export interface EnrichWordsInput {
     /** 1–100 words; the server trims + de-dups before the provider sees them. */
