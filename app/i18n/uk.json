@@ -218,8 +218,12 @@
         "createSubtitle": "Налаштуйте оболонку зараз — картки додасте за хвилину.",
         "createAndAdd": "Створити й додати картки",
         "createEmpty": "Створити порожню колоду",
-        "subjectCategory": "Тема / категорія",
-        "subjectPlaceholder": "напр. Мови, Наука, Історія…",
+        "categoryLabel": "Категорія",
+        "category": {
+            "languages": "Мови",
+            "tech": "Техлексика",
+            "other": "Інше"
+        },
         "cardType": "Тип карток",
         "cardTypeBasic": "Базовий",
         "cardTypeBasicHint": "Лицьова та зворотна",

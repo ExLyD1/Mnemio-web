@@ -30,14 +30,25 @@
                         />
                     </div>
 
-                    <!-- Subject / category -->
+                    <!-- Category picker -->
                     <div>
-                        <p class="flabel">{{ t('deck.subjectCategory') }}</p>
-                        <input
-                            v-model="subject"
-                            class="w-full rounded-xl border border-line-strong dark:bg-[rgba(255,255,255,.03)] bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
-                            :placeholder="t('deck.subjectPlaceholder')"
-                        />
+                        <p class="flabel">{{ t('deck.categoryLabel') }}</p>
+                        <div class="flex gap-2.5">
+                            <button
+                                v-for="cat in DECK_CATEGORIES"
+                                :key="cat"
+                                type="button"
+                                class="flex-1 cursor-pointer rounded-[14px] border p-3.5 text-center text-[14px] font-medium transition-colors"
+                                :class="
+                                    category === cat
+                                        ? 'border-[rgba(242,188,255,.3)] bg-brand text-on-color'
+                                        : 'border-line bg-bg-surface text-cream hover:border-line-strong'
+                                "
+                                @click="category = cat"
+                            >
+                                {{ t(`deck.category.${cat}`) }}
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Description -->
@@ -403,6 +414,8 @@ import { useAnalytics } from '@/composables/useAnalytics';
 import { useDecksStore } from '@/stores/decks';
 import { LANGUAGES } from '@/schemas/deck';
 import type { DeckInput } from '@/types/deck';
+import { DECK_CATEGORIES, normCategory } from '@/utils/deckCategories';
+import type { DeckCategory } from '@/utils/deckCategories';
 
 definePageMeta({ layout: 'default' });
 
@@ -435,7 +448,7 @@ useSeo({ title: t('seo.deckCreateTitle'), description: t('seo.appDesc'), noindex
 
 // Form state
 const title = ref('');
-const subject = ref('');
+const category = ref<DeckCategory>('other');
 const description = ref('');
 const sourceLanguage = ref('en');
 const targetLanguage = ref('es');
@@ -481,7 +494,7 @@ const buildInput = (): DeckInput => ({
     // All decks are public — anyone can discover and copy them.
     isPublic: true,
     coverColor: coverColor.value,
-    subject: subject.value.trim() || null,
+    subject: category.value,
 });
 
 const validate = (): boolean => {
@@ -599,7 +612,7 @@ const onAccept = async (d: AiDeckDraft) => {
             description: d.description,
             sourceLanguage: d.sourceLanguage,
             targetLanguage: d.targetLanguage,
-            subject: d.subject ?? null,
+            subject: normCategory(d.subject),
             glyph: d.glyph ?? null,
         });
         if (!deck) throw new Error('create failed');

@@ -218,8 +218,12 @@
         "createSubtitle": "Set up the shell now — add cards in a minute.",
         "createAndAdd": "Create & add cards",
         "createEmpty": "Create empty deck",
-        "subjectCategory": "Subject / category",
-        "subjectPlaceholder": "e.g. Languages, Science, History…",
+        "categoryLabel": "Category",
+        "category": {
+            "languages": "Languages",
+            "tech": "Tech lexicon",
+            "other": "Other"
+        },
         "cardType": "Card type",
         "cardTypeBasic": "Basic",
         "cardTypeBasicHint": "Front & back",
