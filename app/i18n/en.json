@@ -50,7 +50,8 @@
         "statistics": "Statistics",
         "ai": "AI assistant",
         "practice": "Practice",
-        "profile": "Profile"
+        "profile": "Profile",
+        "menu": "Menu"
     },
     "topbar": {
         "search": "Search decks…",
@@ -418,6 +419,16 @@
         "summaryRecalled": "You recalled {correct} of {total} cards",
         "summaryRevisit": " — {n} to revisit.",
         "summaryPerfect": ". Flawless run!",
+        "shuffleBtn": "Shuffle",
+        "trackProgress": "Track progress",
+        "roundComplete": "Round done!",
+        "unknownCards": "{n} cards still unknown",
+        "studyUnknown": "Study unknown again",
+        "srsLabel": "Study mode",
+        "srsOn": "With SRS",
+        "srsOff": "Just browse",
+        "srsOnHint": "SRS on — your schedule updates after each answer.",
+        "srsOffHint": "Browse mode — answers won't update your schedule.",
         "errors": {
             "emptyDeck": "This deck has no cards to study."
         }
@@ -534,7 +545,15 @@
         "insightEyebrow": "Mimi noticed something",
         "insightLowest": "“{title}” is your lowest deck at {pct}% mastered — a quick session would help.",
         "insightEmpty": "Create a deck and start studying to unlock insights.",
-        "startHint": "Start a hint session"
+        "startHint": "Start a hint session",
+        "studyTime": "Study time",
+        "studyTimeUnit": "min",
+        "decksStudied": "Decks studied",
+        "dsSessionCount": "{n} sessions",
+        "dsCardsReviewed": "{n} cards",
+        "dsLastStudied": "Last studied",
+        "cardSeries": "Mastery curve",
+        "cardSeriesComingSoon": "Cumulative mastery trend — coming soon."
     },
     "onboarding": {
         "stepOf": "Step {i} of 2",

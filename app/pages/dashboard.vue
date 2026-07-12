@@ -300,7 +300,7 @@ const onResume = () => {
         navigateTo('/review');
         return;
     }
-    navigateTo(`/study/${s.deckId}/${s.mode}`);
+    navigateTo(`/study/${s.deckId}/${s.mode}?resume=1`);
 };
 
 // This week — last 7 points of series, with 2-char day labels derived client-side

@@ -50,7 +50,8 @@
         "statistics": "Статистика",
         "ai": "Помічник ШІ",
         "practice": "Практика",
-        "profile": "Профіль"
+        "profile": "Профіль",
+        "menu": "Меню"
     },
     "topbar": {
         "search": "Пошук колод…",
@@ -418,6 +419,16 @@
         "summaryRecalled": "Ви згадали {correct} із {total} карток",
         "summaryRevisit": " — {n} повторити.",
         "summaryPerfect": ". Бездоганно!",
+        "shuffleBtn": "Перемішати",
+        "trackProgress": "Відстежувати прогрес",
+        "roundComplete": "Раунд завершено!",
+        "unknownCards": "{n} карток ще не знаю",
+        "studyUnknown": "Пройти ще раз",
+        "srsLabel": "Режим навчання",
+        "srsOn": "З алгоритмом",
+        "srsOff": "Швидкий перегляд",
+        "srsOnHint": "SRS увімкнено — розклад оновлюється після кожної відповіді.",
+        "srsOffHint": "Режим перегляду — відповіді не змінюють розклад.",
         "errors": {
             "emptyDeck": "У цій колоді немає карток для вивчення."
         }
@@ -534,7 +545,15 @@
         "insightEyebrow": "Мімі дещо помітила",
         "insightLowest": "«{title}» — ваша найслабша колода: {pct}% засвоєно — швидка сесія допоможе.",
         "insightEmpty": "Створіть колоду та почніть вчитися, щоб побачити рекомендації.",
-        "startHint": "Почати сесію підказок"
+        "startHint": "Почати сесію підказок",
+        "studyTime": "Час навчання",
+        "studyTimeUnit": "хв",
+        "decksStudied": "Вивчені колоди",
+        "dsSessionCount": "{n} сесій",
+        "dsCardsReviewed": "{n} карток",
+        "dsLastStudied": "Останнє заняття",
+        "cardSeries": "Крива засвоєння",
+        "cardSeriesComingSoon": "Кумулятивний тренд засвоєння — незабаром."
     },
     "onboarding": {
         "stepOf": "Крок {i} з 2",
