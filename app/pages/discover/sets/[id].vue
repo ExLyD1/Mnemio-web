@@ -41,7 +41,7 @@
 
         <ul class="flex flex-col gap-3">
             <li
-                v-for="card in deck.cards"
+                v-for="card in visibleCards"
                 :key="card.id"
                 class="flex flex-col gap-1 rounded-2xl border border-line bg-bg-surface p-5"
             >
@@ -52,11 +52,18 @@
                 </p>
             </li>
         </ul>
+
+        <div v-if="deck.cards.length > visibleCardCount" class="flex justify-center">
+            <UiButton variant="ghost" @click="visibleCardCount += CARD_PAGE">
+                {{ t('common.loadMore') }}
+                ({{ deck.cards.length - visibleCardCount }} {{ t('deck.statTotal').toLowerCase() }})
+            </UiButton>
+        </div>
     </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { createError, useHead, useRoute, useSiteConfig, useToast, useT } from '#imports';
 import { getPublicDeck } from '@/api/publicDiscover';
 import { copyDeck } from '@/api/discover';
@@ -95,6 +102,10 @@ if (error.value || !deck.value) {
 // The public-deck endpoint returns the cards inline but may omit the summary
 // counts/author, so derive them defensively (card count from the embedded cards;
 // author chip hidden when absent) instead of rendering `undefined`.
+const CARD_PAGE = 30;
+const visibleCardCount = ref(CARD_PAGE);
+const visibleCards = computed(() => deck.value?.cards.slice(0, visibleCardCount.value) ?? []);
+
 const cardCount = computed(() => deck.value?.cardCount ?? deck.value?.cards.length ?? 0);
 const copyCount = computed(() => deck.value?.copyCount ?? 0);
 const authorName = computed(

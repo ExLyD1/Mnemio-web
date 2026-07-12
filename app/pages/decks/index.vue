@@ -68,6 +68,14 @@
             </NuxtLink>
         </div>
 
+        <!-- Load more -->
+        <div v-if="store.nextCursor" class="flex justify-center">
+            <UiButton variant="ghost" :disabled="store.loadingList" @click="store.loadMore()">
+                <UiSpinner v-if="store.loadingList" size="sm" class="mr-2" />
+                {{ t('common.loadMore') }}
+            </UiButton>
+        </div>
+
         <AiImportDialog v-model="aiOpen" />
     </section>
 </template>
