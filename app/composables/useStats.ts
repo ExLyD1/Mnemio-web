@@ -1,6 +1,12 @@
 import { ref, computed } from 'vue';
 import * as statsApi from '@/api/stats';
-import type { StatsActivity, StatsOverview, StatsRange, StatsSeriesPoint } from '@/types/stats';
+import type {
+    DeckStudied,
+    StatsActivity,
+    StatsOverview,
+    StatsRange,
+    StatsSeriesPoint,
+} from '@/types/stats';
 
 export interface HeatCell {
     day: number;
@@ -62,6 +68,9 @@ export const useStats = () => {
     const overview = ref<StatsOverview | null>(null);
     const activity = ref<ActivityVM | null>(null);
     const series = ref<StatsSeriesPoint[]>([]);
+    const studyTime = ref<StatsSeriesPoint[]>([]);
+    const decksStudied = ref<DeckStudied[]>([]);
+    const cardSeriesPending = ref<boolean>(true);
     const loading = ref(false);
 
     const reviewed = computed(() => overview.value?.reviewed ?? 0);
@@ -75,6 +84,21 @@ export const useStats = () => {
     const loadSeries = async (range: StatsRange = '30') => {
         const res = await statsApi.getSeries(range);
         series.value = res.points;
+    };
+
+    const loadStudyTime = async (range: StatsRange = '30') => {
+        const res = await statsApi.getStudyTime(range);
+        studyTime.value = res.points;
+    };
+
+    const loadDecksStudied = async (range: StatsRange = '30') => {
+        const res = await statsApi.getDecksStudied(range);
+        decksStudied.value = res.items;
+    };
+
+    const loadCardSeries = async (range: StatsRange = '30') => {
+        const res = await statsApi.getCardSeries(range);
+        cardSeriesPending.value = res.pending;
     };
 
     const load = async (range: StatsRange = '30') => {
@@ -100,6 +124,9 @@ export const useStats = () => {
         overview,
         activity,
         series,
+        studyTime,
+        decksStudied,
+        cardSeriesPending,
         loading,
         reviewed,
         streak,
@@ -110,5 +137,8 @@ export const useStats = () => {
         monthLabel,
         load,
         loadSeries,
+        loadStudyTime,
+        loadDecksStudied,
+        loadCardSeries,
     };
 };

@@ -50,3 +50,29 @@ export interface DeckPerformance {
     retention: number;
     reviewed: number;
 }
+
+export interface StatsStudyTimeSeries {
+    range: StatsRange;
+    unit: 'ms';
+    points: StatsSeriesPoint[];
+}
+
+export interface DeckStudied {
+    deckId: string;
+    title: string;
+    sessionCount: number;
+    cardsReviewed: number;
+    lastStudiedAt: string;
+}
+
+export interface StatsDecksStudied {
+    range: StatsRange;
+    items: DeckStudied[];
+}
+
+export interface StatsCardSeries {
+    range: StatsRange;
+    pending: boolean;
+    metric: string | null;
+    points: StatsSeriesPoint[];
+}

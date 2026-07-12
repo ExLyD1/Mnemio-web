@@ -2,9 +2,12 @@ import { http } from '@/utils/http';
 import type {
     DeckPerformance,
     StatsActivity,
+    StatsCardSeries,
+    StatsDecksStudied,
     StatsOverview,
     StatsRange,
     StatsSeries,
+    StatsStudyTimeSeries,
 } from '@/types/stats';
 
 export const getOverview = (range: StatsRange = '30'): Promise<StatsOverview> =>
@@ -17,3 +20,14 @@ export const getActivity = (): Promise<StatsActivity> => http<StatsActivity>('/s
 
 export const getDeckPerformance = (): Promise<{ items: DeckPerformance[] }> =>
     http<{ items: DeckPerformance[] }>('/stats/decks');
+
+const clientTz = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+export const getStudyTime = (range: StatsRange = '30'): Promise<StatsStudyTimeSeries> =>
+    http<StatsStudyTimeSeries>('/stats/study-time', { query: { range, tz: clientTz() } });
+
+export const getDecksStudied = (range: StatsRange = '30'): Promise<StatsDecksStudied> =>
+    http<StatsDecksStudied>('/stats/decks-studied', { query: { range, tz: clientTz() } });
+
+export const getCardSeries = (range: StatsRange = '30'): Promise<StatsCardSeries> =>
+    http<StatsCardSeries>('/stats/card-series', { query: { range, tz: clientTz() } });
