@@ -13,22 +13,27 @@
             />
         </div>
 
-        <div v-if="sidebarOpen" class="fixed inset-0 z-40 md:hidden">
-            <div class="absolute inset-0 bg-black/50" @click="sidebarOpen = false" />
-            <div
-                class="absolute inset-y-0 left-0 w-72 max-w-[82%] border-r border-line bg-bg-base p-3"
-            >
-                <AiChatSidebar
-                    :conversations="chat.conversations.value"
-                    :active-id="chat.activeId.value"
-                    :loading="chat.loadingList.value"
-                    @new="onNew"
-                    @select="onSelect"
-                    @rename="chat.rename"
-                    @delete="chat.remove"
+        <Transition name="chat-drawer">
+            <div v-if="sidebarOpen" class="fixed inset-0 z-40 md:hidden">
+                <div
+                    class="chat-drawer-backdrop absolute inset-0 bg-black/50"
+                    @click="sidebarOpen = false"
                 />
+                <div
+                    class="chat-drawer-panel absolute inset-y-0 left-0 w-72 max-w-[82%] border-r border-line bg-bg-base p-3"
+                >
+                    <AiChatSidebar
+                        :conversations="chat.conversations.value"
+                        :active-id="chat.activeId.value"
+                        :loading="chat.loadingList.value"
+                        @new="onNew"
+                        @select="onSelect"
+                        @rename="chat.rename"
+                        @delete="chat.remove"
+                    />
+                </div>
             </div>
-        </div>
+        </Transition>
 
         <!-- Main column -->
         <div class="flex min-w-0 flex-1 flex-col">
@@ -309,7 +314,7 @@ watch(chat.loadingThread, (l) => {
 
 onMounted(async () => {
     await chat.loadConversations();
-    if (chat.conversations.value.length) {
+    if (chat.conversations.value.length && window.matchMedia('(min-width: 768px)').matches) {
         await chat.openConversation(chat.conversations.value[0]!.id);
     }
 });
@@ -353,6 +358,23 @@ onMounted(async () => {
     background: rgb(var(--c-bg-well));
     padding: 0.1rem 0.35rem;
     font-size: 0.9em;
+}
+/* Mobile chat sidebar drawer: panel slides from left, backdrop fades */
+.chat-drawer-enter-active .chat-drawer-panel,
+.chat-drawer-leave-active .chat-drawer-panel {
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.chat-drawer-enter-from .chat-drawer-panel,
+.chat-drawer-leave-to .chat-drawer-panel {
+    transform: translateX(-100%);
+}
+.chat-drawer-enter-active .chat-drawer-backdrop,
+.chat-drawer-leave-active .chat-drawer-backdrop {
+    transition: opacity 0.3s ease;
+}
+.chat-drawer-enter-from .chat-drawer-backdrop,
+.chat-drawer-leave-to .chat-drawer-backdrop {
+    opacity: 0;
 }
 .chat-prose :deep(pre) {
     overflow-x: auto;

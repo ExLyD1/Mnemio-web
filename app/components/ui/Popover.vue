@@ -1,18 +1,18 @@
 <template>
     <div ref="root" class="relative inline-block">
         <slot name="trigger" :open="isOpen" :toggle="toggle" :close="close" />
-        <Transition name="pop">
-            <div
-                v-if="isOpen"
-                :class="[
-                    'absolute z-[55] mt-2 min-w-[12rem] rounded-2xl border border-line-strong bg-bg-surface p-1.5 shadow-soft-elevation',
-                    align === 'right' ? 'right-0' : 'left-0',
-                ]"
-                role="menu"
-            >
-                <slot :close="close" />
-            </div>
-        </Transition>
+        <Teleport to="body">
+            <Transition name="pop">
+                <div
+                    v-if="isOpen"
+                    :style="panelStyle"
+                    class="fixed z-[200] min-w-[12rem] rounded-2xl border border-line-strong bg-bg-surface p-1.5 shadow-soft-elevation"
+                    role="menu"
+                >
+                    <slot :close="close" />
+                </div>
+            </Transition>
+        </Teleport>
     </div>
 </template>
 
@@ -29,7 +29,22 @@ const emit = defineEmits<{ 'update:open': [value: boolean] }>();
 const internal = ref(false);
 const isOpen = computed(() => (props.open !== undefined ? props.open : internal.value));
 
+const root = ref<HTMLElement | null>(null);
+const panelStyle = ref<Record<string, string>>({});
+
+const computePosition = () => {
+    if (!root.value) return;
+    const rect = root.value.getBoundingClientRect();
+    const top = `${rect.bottom + 8}px`;
+    if (props.align === 'right') {
+        panelStyle.value = { top, right: `${window.innerWidth - rect.right}px` };
+    } else {
+        panelStyle.value = { top, left: `${rect.left}px` };
+    }
+};
+
 const setOpen = (value: boolean) => {
+    if (value) computePosition();
     if (props.open !== undefined) {
         emit('update:open', value);
     } else {
@@ -40,7 +55,6 @@ const setOpen = (value: boolean) => {
 const toggle = () => setOpen(!isOpen.value);
 const close = () => setOpen(false);
 
-const root = ref<HTMLElement | null>(null);
 onClickOutside(root, () => close());
 
 const onKey = (e: KeyboardEvent) => {
