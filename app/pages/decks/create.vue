@@ -100,24 +100,28 @@
 
                     <!-- Language selects (required for API) -->
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div>
+                        <div class="group">
                             <UiSelect
                                 v-model="targetLanguage"
                                 :label="t('deck.frontLang')"
                                 :options="languageOptions"
                             />
-                            <p class="mt-1 text-small text-brand-muted">
+                            <p
+                                class="mt-1 text-small text-brand-muted opacity-0 transition-opacity group-focus-within:opacity-100"
+                            >
                                 {{ t('deck.frontLangHint') }} —
                                 {{ t('deck.frontLangExample').replace('{lang}', frontLangLabel) }}
                             </p>
                         </div>
-                        <div>
+                        <div class="group">
                             <UiSelect
                                 v-model="sourceLanguage"
                                 :label="t('deck.backLang')"
                                 :options="languageOptions"
                             />
-                            <p class="mt-1 text-small text-brand-muted">
+                            <p
+                                class="mt-1 text-small text-brand-muted opacity-0 transition-opacity group-focus-within:opacity-100"
+                            >
                                 {{ t('deck.backLangHint') }} —
                                 {{ t('deck.backLangExample').replace('{lang}', backLangLabel) }}
                             </p>
@@ -179,9 +183,7 @@
                     </div>
 
                     <!-- Generate with AI card -->
-                    <div
-                        class="rounded-[20px] border border-[rgba(169,142,227,.3)] bg-[rgba(169,142,227,.18)] p-[18px]"
-                    >
+                    <div class="rounded-[20px] border border-line bg-bg-surface p-[18px]">
                         <div class="mb-2 flex items-center gap-2.5">
                             <Sparkles class="size-4 text-lavender" />
                             <p class="text-[14px] font-bold text-cream">{{ t('deck.aiTitle') }}</p>
@@ -197,11 +199,45 @@
                             {{ t('deck.aiOpenGenerator') }}
                         </button>
                     </div>
+
+                    <!-- Privacy -->
+                    <div>
+                        <p class="flabel">{{ t('deck.privacy') }}</p>
+                        <div class="flex gap-2.5">
+                            <button
+                                type="button"
+                                class="flex-1 cursor-pointer rounded-[14px] border p-3.5 text-center text-[14px] font-medium transition-colors"
+                                :class="
+                                    isPublic
+                                        ? 'border-[rgba(242,188,255,.3)] bg-brand text-on-color'
+                                        : 'border-line bg-bg-well text-cream hover:border-line-strong'
+                                "
+                                @click="isPublic = true"
+                            >
+                                {{ t('deck.privacyPublic') }}
+                            </button>
+                            <button
+                                type="button"
+                                class="flex-1 cursor-pointer rounded-[14px] border p-3.5 text-center text-[14px] font-medium transition-colors"
+                                :class="
+                                    !isPublic
+                                        ? 'border-[rgba(242,188,255,.3)] bg-brand text-on-color'
+                                        : 'border-line bg-bg-well text-cream hover:border-line-strong'
+                                "
+                                @click="isPublic = false"
+                            >
+                                {{ t('deck.privacyPrivate') }}
+                            </button>
+                        </div>
+                        <p class="mt-1.5 text-small text-brand-muted">
+                            {{ isPublic ? t('deck.publicHint') : t('deck.privacyPrivateHint') }}
+                        </p>
+                    </div>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div class="mt-8 flex justify-end gap-2.5">
+            <div class="mt-8 flex items-center justify-between gap-2.5">
                 <UiButton variant="ghost" :disabled="create.loading.value" @click="onCreateEmpty">
                     {{ t('deck.createEmpty') }}
                 </UiButton>
@@ -454,6 +490,7 @@ const sourceLanguage = ref('en');
 const targetLanguage = ref('es');
 const cardType = ref<'basic' | 'cloze' | 'image'>('basic');
 const coverColor = ref(COVER_SWATCHES[0]);
+const isPublic = ref(true);
 
 const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
 
@@ -491,8 +528,7 @@ const buildInput = (): DeckInput => ({
     description: description.value.trim() || null,
     sourceLanguage: sourceLanguage.value,
     targetLanguage: targetLanguage.value,
-    // All decks are public — anyone can discover and copy them.
-    isPublic: true,
+    isPublic: isPublic.value,
     coverColor: coverColor.value,
     subject: category.value,
 });
@@ -517,7 +553,7 @@ const trackDeckCreated = (deckId: string, source: 'manual' | 'ai_generated', car
         source_language: sourceLanguage.value,
         target_language: targetLanguage.value,
         is_first_deck: isFirstDeck(),
-        is_public: true,
+        is_public: isPublic.value,
     });
 
 const onCreateEmpty = async () => {

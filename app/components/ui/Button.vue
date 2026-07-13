@@ -16,7 +16,7 @@ defineOptions({ inheritAttrs: false });
 
 withDefaults(
     defineProps<{
-        variant?: 'primary' | 'ghost' | 'light' | 'text';
+        variant?: 'primary' | 'ghost' | 'light' | 'text' | 'on-cover' | 'on-cover-ghost';
         disabled?: boolean;
     }>(),
     { variant: 'primary', disabled: false },
@@ -27,5 +27,8 @@ const variants = {
     ghost: 'bg-transparent text-cream border border-line-strong hover:border-cream-dim hover:bg-brand/15',
     light: 'bg-brand-light text-brand hover:bg-brand-pale',
     text: 'text-brand-pale hover:text-brand-light',
+    // Safe for use on any deck cover gradient (always dark/saturated)
+    'on-cover': 'bg-white/90 text-[#1a0d2e] hover:bg-white shadow-sm',
+    'on-cover-ghost': 'bg-transparent text-on-color border border-white/50 hover:bg-white/10',
 } as const;
 </script>

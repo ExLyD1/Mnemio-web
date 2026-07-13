@@ -35,7 +35,7 @@
                             </div>
                             <div class="flex flex-wrap gap-2.5">
                                 <UiButton
-                                    variant="primary"
+                                    variant="on-cover"
                                     :disabled="!store.deck.cards.length"
                                     :title="t('deck.studyNowHint')"
                                     @click="navigateTo(`/study/${id}`)"
@@ -43,22 +43,18 @@
                                     {{ t('deck.studyNow') }}
                                 </UiButton>
                                 <UiButton
-                                    variant="ghost"
-                                    :disabled="!store.deck.cards.length"
-                                    :title="t('deck.practiceAllHint')"
-                                    @click="navigateTo(`/study/${id}/flashcard`)"
-                                >
-                                    {{ t('deck.practiceAll') }}
-                                </UiButton>
-                                <UiButton
                                     v-if="!isOwner"
-                                    variant="ghost"
+                                    variant="on-cover-ghost"
                                     :title="t('deck.copyToLibrary')"
                                     @click="onCopy"
                                 >
                                     <BookCopy class="size-4" /> {{ t('deck.copyToLibrary') }}
                                 </UiButton>
-                                <UiButton variant="ghost" :title="t('deck.share')" @click="onShare">
+                                <UiButton
+                                    variant="on-cover-ghost"
+                                    :title="t('deck.share')"
+                                    @click="onShare"
+                                >
                                     <Share2 class="size-4" /> {{ t('deck.share') }}
                                 </UiButton>
                             </div>
@@ -117,24 +113,6 @@
                                     : 'text-brand-muted'
                             "
                             >{{ t('deck.statPracticed') }}</span
-                        >
-                    </button>
-                    <button
-                        type="button"
-                        class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
-                        @click="filter = 'due'"
-                    >
-                        <span class="font-display text-h2 leading-none text-lavender">{{
-                            deckStat.due
-                        }}</span>
-                        <span
-                            class="text-small transition-colors"
-                            :class="
-                                filter === 'due'
-                                    ? 'text-brand underline underline-offset-2'
-                                    : 'text-brand-muted'
-                            "
-                            >{{ t('deck.statDue') }}</span
                         >
                     </button>
                     <button
@@ -246,27 +224,10 @@
                     class="flex flex-col gap-3 rounded-[20px] border border-line bg-mimi-ambient p-[18px]"
                 >
                     <SharedMimi :message="coachTip" placement="left" :size="64" />
-                    <UiButton
-                        v-if="deckStat.due > 0"
-                        variant="primary"
-                        @click="navigateTo(`/study/${id}`)"
-                    >
-                        {{ t('dashboard.reviewNow') }}
-                    </UiButton>
-                    <UiButton
-                        v-else-if="store.deck.cards.length"
-                        variant="ghost"
-                        @click="navigateTo(`/study/${id}`)"
-                    >
-                        {{ t('deck.study') }}
-                    </UiButton>
                 </div>
 
                 <!-- Owner: authoring controls. Non-owner viewing a public deck: copy CTA. -->
                 <div v-if="isOwner" class="flex flex-col gap-2">
-                    <UiButton variant="ghost" @click="navigateTo(`/decks/${id}/edit`)">
-                        {{ t('deck.edit') }}
-                    </UiButton>
                     <UiButton variant="ghost" @click="aiOpen = true">
                         <Sparkles class="size-4" /> {{ t('ai.launchAppend') }}
                     </UiButton>
