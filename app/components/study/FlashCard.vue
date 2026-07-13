@@ -12,11 +12,7 @@
                 class="face front absolute inset-0 rounded-[24px] border border-line-strong p-6 shadow-flash-card sm:p-10"
                 :style="{ background: 'var(--c-fc-front)' }"
             >
-                <StudyLangPill :lang="card.lang" :region="card.region" />
                 <p class="fc-word break-words font-display text-cream">{{ card.word }}</p>
-                <span class="flex items-center gap-2 text-small text-brand-muted">
-                    <StudyKeycap label="Space" /> {{ t('study.toReveal') }}
-                </span>
             </div>
 
             <div
@@ -24,26 +20,25 @@
                 :style="{ background: 'var(--c-fc-back)' }"
             >
                 <div class="grid h-full gap-4 sm:gap-6 sm:grid-cols-[42%_1fr]">
-                    <div class="flex flex-col gap-3 text-left sm:border-r sm:border-line sm:pr-6">
-                        <StudyLangPill :lang="card.lang" :region="card.region" />
-                        <p class="break-words font-display text-2xl text-cream sm:text-4xl">
-                            {{ card.word }}
-                        </p>
+                    <div class="flex flex-col gap-2 text-left sm:border-r sm:border-line sm:pr-6">
+                        <div class="flex flex-wrap items-baseline gap-2">
+                            <p class="break-words font-display text-2xl text-cream sm:text-4xl">
+                                {{ card.word }}
+                            </p>
+                            <SharedPill v-if="card.pos" tone="muted">
+                                {{ card.pos }}
+                            </SharedPill>
+                        </div>
                         <p v-if="card.reading" class="break-words text-body text-brand-pale">
                             {{ card.reading }}
                         </p>
-                        <UiTooltip :content="t('study.audioComingSoon')" side="top">
-                            <button
-                                type="button"
-                                disabled
-                                class="inline-flex w-fit items-center gap-1.5 rounded-full border border-line-strong px-3 py-1.5 text-small text-brand-muted opacity-60"
-                            >
-                                <Volume2 class="size-4" /> {{ t('study.listen') }}
-                            </button>
-                        </UiTooltip>
-                        <SharedPill v-if="card.pos" tone="muted" class="w-fit">
-                            {{ card.pos }}
-                        </SharedPill>
+                        <button
+                            v-if="card.audioUrl"
+                            type="button"
+                            class="inline-flex w-fit items-center gap-1.5 rounded-full border border-line-strong px-3 py-1.5 text-small text-brand-muted transition-colors hover:border-brand hover:text-cream"
+                        >
+                            <Volume2 class="size-4" /> {{ t('study.listen') }}
+                        </button>
                     </div>
                     <div class="flex flex-col gap-4 text-left">
                         <div>

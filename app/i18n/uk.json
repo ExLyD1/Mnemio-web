@@ -50,7 +50,8 @@
         "statistics": "Статистика",
         "ai": "Помічник ШІ",
         "practice": "Практика",
-        "profile": "Профіль"
+        "profile": "Профіль",
+        "menu": "Меню"
     },
     "topbar": {
         "search": "Пошук колод…",
@@ -217,8 +218,12 @@
         "createSubtitle": "Налаштуйте оболонку зараз — картки додасте за хвилину.",
         "createAndAdd": "Створити й додати картки",
         "createEmpty": "Створити порожню колоду",
-        "subjectCategory": "Тема / категорія",
-        "subjectPlaceholder": "напр. Мови, Наука, Історія…",
+        "categoryLabel": "Категорія",
+        "category": {
+            "languages": "Мови",
+            "tech": "Техлексика",
+            "other": "Інше"
+        },
         "cardType": "Тип карток",
         "cardTypeBasic": "Базовий",
         "cardTypeBasicHint": "Лицьова та зворотна",
@@ -394,15 +399,13 @@
         "noResultsTitle": "Немає завершених сесій",
         "noResultsMessage": "Почніть сесію навчання, щоб побачити тут результати.",
         "couldNotStartTitle": "Не вдалося почати",
-        "endSession": "Завершити сесію",
+        "endSession": "Завершити",
         "revealHint": "Торкніться картки або натисніть Пробіл, щоб побачити відповідь.",
         "toReveal": "щоб показати",
         "revealAnswer": "Показати відповідь",
         "prevCard": "Попередня картка",
         "nextCard": "Наступна картка",
-        "reviewedSummary": "{recalled} згадано · {revisit} повторити",
         "listen": "Прослухати",
-        "audioComingSoon": "Аудіо незабаром",
         "meaning": "Значення",
         "inContext": "У контексті",
         "sessionComplete": "Сесію завершено",
@@ -420,6 +423,16 @@
         "summaryRecalled": "Ви згадали {correct} із {total} карток",
         "summaryRevisit": " — {n} повторити.",
         "summaryPerfect": ". Бездоганно!",
+        "shuffleBtn": "Перемішати",
+        "trackProgress": "Відстежувати прогрес",
+        "roundComplete": "Раунд завершено!",
+        "unknownCards": "{n} карток ще не знаю",
+        "studyUnknown": "Пройти ще раз",
+        "srsLabel": "Режим навчання",
+        "srsOn": "З алгоритмом",
+        "srsOff": "Швидкий перегляд",
+        "srsOnHint": "SRS увімкнено — розклад оновлюється після кожної відповіді.",
+        "srsOffHint": "Режим перегляду — відповіді не змінюють розклад.",
         "errors": {
             "emptyDeck": "У цій колоді немає карток для вивчення."
         }
@@ -536,7 +549,15 @@
         "insightEyebrow": "Мімі дещо помітила",
         "insightLowest": "«{title}» — ваша найслабша колода: {pct}% засвоєно — швидка сесія допоможе.",
         "insightEmpty": "Створіть колоду та почніть вчитися, щоб побачити рекомендації.",
-        "startHint": "Почати сесію підказок"
+        "startHint": "Почати сесію підказок",
+        "studyTime": "Час навчання",
+        "studyTimeUnit": "хв",
+        "decksStudied": "Вивчені колоди",
+        "dsSessionCount": "{n} сесій",
+        "dsCardsReviewed": "{n} карток",
+        "dsLastStudied": "Останнє заняття",
+        "cardSeries": "Крива засвоєння",
+        "cardSeriesComingSoon": "Кумулятивний тренд засвоєння — незабаром."
     },
     "onboarding": {
         "stepOf": "Крок {i} з 2",
@@ -770,7 +791,6 @@
         ]
     },
     "landing": {
-        "heroBadge": "Нас обрали 240 000 учнів",
         "heroTitle1": "Перетворюйте нові слова на ",
         "heroTitleEm": "тривалу",
         "heroTitle2": " пам'ять.",

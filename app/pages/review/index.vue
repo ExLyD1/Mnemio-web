@@ -8,7 +8,6 @@
                 </p>
             </div>
             <div v-if="active" class="flex flex-1 items-center justify-center gap-3">
-                <StudyProgressDots :index="completedCount" :total="totalQueue" />
                 <span class="text-small tabular-nums text-brand-muted">
                     {{ t('review.dueLeft').replace('{n}', String(srs.dueCount)) }}
                 </span>
@@ -23,27 +22,36 @@
             <SharedPageLoader v-if="srs.loading && !srs.dueCards.length" />
 
             <template v-else-if="active && studyCard">
-                <div class="relative w-full max-w-3xl">
-                    <StudyFlashCard
-                        :card="studyCard"
-                        :revealed="revealed"
-                        @flip="revealed = !revealed"
-                    />
-                    <!-- Tip button — visible only when revealed -->
-                    <button
-                        v-if="revealed"
-                        type="button"
-                        class="absolute right-3 top-3 flex items-center gap-1.5 rounded-full border border-line-strong bg-bg-surface/80 px-3 py-1.5 text-small text-brand-muted backdrop-blur transition-colors hover:bg-bg-surface hover:text-cream"
-                        @click="tipOpen = !tipOpen"
-                    >
-                        <Lightbulb class="size-3.5" />
-                        {{ t('review.tip') }}
-                    </button>
+                <div class="flex w-full items-center justify-center">
+                    <div class="relative w-full max-w-3xl">
+                        <Transition name="card" mode="out-in">
+                            <StudyFlashCard
+                                :key="studyCard.id"
+                                :card="studyCard"
+                                :revealed="revealed"
+                                @flip="revealed = !revealed"
+                            />
+                        </Transition>
+                        <!-- Tip button — visible only when revealed -->
+                        <button
+                            v-if="revealed"
+                            type="button"
+                            class="absolute right-3 top-3 flex items-center gap-1.5 rounded-full border border-line-strong bg-bg-surface/80 px-3 py-1.5 text-small text-brand-muted backdrop-blur transition-colors hover:bg-bg-surface hover:text-cream"
+                            @click="tipOpen = !tipOpen"
+                        >
+                            <Lightbulb class="size-3.5" />
+                            {{ t('review.tip') }}
+                        </button>
+                    </div>
                 </div>
-                <StudyRatingRow v-if="revealed" @grade="onRate" />
-                <p v-else class="text-small text-brand-muted">
-                    {{ t('review.flipHint') }}
-                </p>
+                <div class="flex min-h-[72px] w-full items-center justify-center">
+                    <Transition name="rate" mode="out-in">
+                        <StudyRatingRow v-if="revealed" @grade="onRate" />
+                        <p v-else class="hidden text-small text-brand-muted sm:block">
+                            {{ t('study.revealHint') }}
+                        </p>
+                    </Transition>
+                </div>
             </template>
 
             <template v-else-if="finished">
@@ -323,6 +331,34 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* Card X-axis transition (matches study page) */
+.card-enter-active,
+.card-leave-active {
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
+}
+.card-enter-from {
+    opacity: 0;
+    transform: translateX(24px);
+}
+.card-leave-to {
+    opacity: 0;
+    transform: translateX(-24px);
+}
+
+/* Rating row fade transition (matches study page) */
+.rate-enter-active {
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.15s;
+}
+.rate-leave-active {
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.rate-enter-from,
+.rate-leave-to {
+    opacity: 0;
+}
+
 /* Mobile: slide up from bottom */
 .tip-slide-enter-active,
 .tip-slide-leave-active {

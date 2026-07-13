@@ -68,19 +68,13 @@
             </NuxtLink>
         </div>
 
-        <!-- Floating Mimi import button -->
-        <button
-            type="button"
-            class="fixed bottom-[26px] right-[28px] z-30 hidden size-[58px] cursor-pointer place-items-center rounded-full border border-[rgba(242,188,255,.35)] p-0 md:grid"
-            style="
-                background: linear-gradient(150deg, #4a2c58, #221c30);
-                box-shadow: 0 10px 28px -6px rgba(169, 142, 227, 0.3);
-            "
-            :aria-label="t('ai.titleNew')"
-            @click="aiOpen = true"
-        >
-            <SharedMimi :size="40" :bob="false" class="pointer-events-none" />
-        </button>
+        <!-- Load more -->
+        <div v-if="store.nextCursor" class="flex justify-center">
+            <UiButton variant="ghost" :disabled="store.loadingList" @click="store.loadMore()">
+                <UiSpinner v-if="store.loadingList" size="sm" class="mr-2" />
+                {{ t('common.loadMore') }}
+            </UiButton>
+        </div>
 
         <AiImportDialog v-model="aiOpen" />
     </section>
@@ -90,6 +84,7 @@
 import { Plus, Library } from 'lucide-vue-next';
 import { useDecks, usePreferencesStore, useT } from '#imports';
 import { deckToCardVm } from '@/utils/deckVm';
+import { DECK_CATEGORIES, normCategory } from '@/utils/deckCategories';
 
 definePageMeta({ layout: 'default' });
 
@@ -106,30 +101,29 @@ const filter = ref('all');
 const favCount = computed(() => store.summaries.filter((d) => prefs.isFavorite(d.id)).length);
 
 const filterOptions = computed(() => {
-    const counts = new Map<string, number>();
+    const catCount = new Map<string, number>();
     for (const d of store.summaries) {
-        if (d.subject) {
-            counts.set(d.subject, (counts.get(d.subject) ?? 0) + 1);
-        }
+        const cat = normCategory(d.subject);
+        catCount.set(cat, (catCount.get(cat) ?? 0) + 1);
     }
-    const subjects = [...counts.entries()].map(([subject, count]) => ({
-        key: `subject:${subject}`,
-        label: subject,
-        count,
-    }));
     const base = [{ key: 'all', label: t('deck.filterAll'), count: store.summaries.length }];
     if (favCount.value > 0) {
         base.push({ key: 'mine', label: t('deck.filterMine'), count: favCount.value });
     }
-    return [...base, ...subjects];
+    const cats = DECK_CATEGORIES.filter((cat) => catCount.has(cat)).map((cat) => ({
+        key: `cat:${cat}`,
+        label: t(`deck.category.${cat}`),
+        count: catCount.get(cat) ?? 0,
+    }));
+    return [...base, ...cats];
 });
 
 const deckVms = computed(() => {
     const list = store.summaries.filter((d) => {
         if (filter.value === 'all') return true;
         if (filter.value === 'mine') return prefs.isFavorite(d.id);
-        if (filter.value.startsWith('subject:')) {
-            return d.subject === filter.value.slice('subject:'.length);
+        if (filter.value.startsWith('cat:')) {
+            return normCategory(d.subject) === filter.value.slice('cat:'.length);
         }
         return true;
     });

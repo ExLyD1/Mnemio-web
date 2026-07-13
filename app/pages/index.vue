@@ -3,11 +3,7 @@
         <!-- Hero -->
         <section class="mx-auto grid max-w-[1080px] items-center gap-10 px-6 py-20 lg:grid-cols-2">
             <div>
-                <SharedPill tone="plum">
-                    <Star class="size-3.5 fill-pink-soft text-pink-soft" />
-                    {{ t('landing.heroBadge') }}
-                </SharedPill>
-                <h1 class="mt-5 font-display text-display text-cream">
+                <h1 class="font-display text-display text-cream">
                     {{ t('landing.heroTitle1')
                     }}<span class="italic">{{ t('landing.heroTitleEm') }}</span
                     >{{ t('landing.heroTitle2') }}
@@ -188,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-import { Star, Upload, Wand2, Brain, Image, Flame, WifiOff } from 'lucide-vue-next';
+import { Upload, Wand2, Brain, Image, Flame, WifiOff } from 'lucide-vue-next';
 import { useHead, useT } from '#imports';
 import { SAMPLE_DECK } from '@/composables/useSampleDeck';
 

@@ -27,6 +27,13 @@
             />
         </div>
         <p v-else class="text-body text-brand-muted">{{ t('discover.noResults') }}</p>
+
+        <div v-if="more.cursor.value" class="flex justify-center">
+            <UiButton variant="ghost" :disabled="more.loading.value" @click="onLoadMore">
+                <UiSpinner v-if="more.loading.value" size="sm" class="mr-2" />
+                {{ t('common.loadMore') }}
+            </UiButton>
+        </div>
     </section>
 </template>
 
@@ -35,10 +42,10 @@ import { computed } from 'vue';
 import { createError, useHead, useRoute, useSiteConfig, useToast, useT } from '#imports';
 import { listPublicDecks, getPublicCategories } from '@/api/publicDiscover';
 import { copyDeck } from '@/api/discover';
-import { deckToCardVm } from '@/utils/deckVm';
 import { useAuthStore } from '@/stores/auth';
 import { useAnalytics } from '@/composables/useAnalytics';
-import type { DeckCardVM, DeckWithAuthor } from '@/types/deck';
+import { useDiscoverMore, discoverToVm } from '@/composables/useDiscoverMore';
+import type { DeckCardVM } from '@/types/deck';
 
 definePageMeta({ layout: 'default' });
 
@@ -70,12 +77,12 @@ const { data, error } = await useAsyncData(
         }
         const res = await listPublicDecks({ subject: match.subject, sort: 'popular' }).catch(
             () => ({
-                items: [] as DeckWithAuthor[],
-                nextCursor: null,
+                items: [],
+                nextCursor: null as string | null,
                 total: 0,
             }),
         );
-        return { subject: match.subject, items: res.items };
+        return { subject: match.subject, items: res.items, nextCursor: res.nextCursor };
     },
 );
 if (error.value || !data.value) {
@@ -84,12 +91,22 @@ if (error.value || !data.value) {
 
 const subjectName = computed(() => data.value?.subject ?? slug.value.replace(/-/g, ' '));
 
-const toVm = (d: DeckWithAuthor): DeckCardVM => ({
-    ...deckToCardVm(d),
-    author: d.author.username ?? d.author.fullName ?? 'someone',
-    copies: d.copyCount,
-});
-const decks = computed<DeckCardVM[]>(() => (data.value?.items ?? []).map(toVm));
+const more = useDiscoverMore();
+more.init(data.value?.nextCursor ?? null);
+
+const decks = computed<DeckCardVM[]>(() => [
+    ...(data.value?.items ?? []).map(discoverToVm),
+    ...more.extra.value,
+]);
+
+const onLoadMore = () =>
+    more.loadMore(() =>
+        listPublicDecks({
+            subject: subjectName.value,
+            sort: 'popular',
+            cursor: more.cursor.value!,
+        }),
+    );
 
 useSeo({
     title: t('seo.topicTitle').replace('{subject}', subjectName.value),

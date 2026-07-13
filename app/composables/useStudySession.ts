@@ -101,6 +101,79 @@ export const useStudySession = () => {
         }
     };
 
+    // Resume an existing incomplete session, rebuilding queue from session.cardIds order.
+    const resume = async (deck: Deck, sessionId: string) => {
+        state.value = 'loading';
+        error.value = null;
+        try {
+            let s: StudySession;
+            if (sessions.active?.id === sessionId) {
+                s = sessions.active;
+            } else {
+                s = await sessions.resume(sessionId);
+            }
+
+            // Rebuild queue in the same card order the session recorded.
+            const cardMap = new Map(deck.cards.map((c) => [c.id, c]));
+            const ordered = s.cardIds
+                .map((id) => cardMap.get(id))
+                .filter((c): c is Card => c !== undefined);
+
+            queue.value = ordered.length > 0 ? ordered : shuffle([...deck.cards]);
+
+            const idx = Math.max(0, Math.min(s.index, queue.value.length - 1));
+            session.value = { ...s, index: idx };
+            elapsedMs.value = 0;
+            startedAt.value = Date.now();
+            state.value = 'active';
+            modeProp.value = toModeProp(s.mode);
+            deckId.value = deck.id;
+            resumeTimer();
+            return session.value;
+        } catch (e) {
+            error.value = (e as { message?: string }).message ?? 'Could not resume session.';
+            state.value = 'idle';
+            return null;
+        }
+    };
+
+    // Start a new session with a specific subset/order of cards (used by track-progress rounds).
+    const startWithCards = async (deck: Deck, mode: StudyMode, cards: Card[]) => {
+        if (cards.length === 0) {
+            error.value = 'study.errors.emptyDeck';
+            state.value = 'idle';
+            return null;
+        }
+        state.value = 'loading';
+        error.value = null;
+        try {
+            const created = await sessions.start({ deckId: deck.id, mode });
+            session.value = created;
+            queue.value = [...cards];
+            elapsedMs.value = 0;
+            startedAt.value = Date.now();
+            state.value = 'active';
+            modeProp.value = toModeProp(mode);
+            deckId.value = deck.id;
+            resumeTimer();
+            return created;
+        } catch (e) {
+            error.value = (e as { message?: string }).message ?? 'Could not start session.';
+            state.value = 'idle';
+            return null;
+        }
+    };
+
+    // Re-randomize the current queue and restart from card 0.
+    const reshuffle = async () => {
+        if (!session.value || queue.value.length === 0) {
+            return;
+        }
+        queue.value = shuffle([...queue.value]);
+        session.value = { ...session.value, index: 0 };
+        await sessions.updateActive({ index: 0 });
+    };
+
     const finishComplete = async () => {
         if (!session.value) {
             return;
@@ -211,6 +284,9 @@ export const useStudySession = () => {
         isLastCard,
         progress,
         start,
+        resume,
+        startWithCards,
+        reshuffle,
         answer,
         goTo,
         goNext,

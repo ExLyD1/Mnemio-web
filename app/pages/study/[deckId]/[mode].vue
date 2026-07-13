@@ -13,10 +13,6 @@
                 </p>
             </div>
             <div class="flex flex-1 items-center justify-center gap-3">
-                <StudyProgressDots
-                    :index="practice.study.currentIndex.value"
-                    :total="practice.study.totalCount.value"
-                />
                 <span class="text-small tabular-nums text-brand-muted">
                     {{
                         Math.min(
@@ -28,9 +24,6 @@
                 </span>
             </div>
             <div class="flex items-center gap-3">
-                <span class="hidden text-small text-brand-muted sm:inline">{{
-                    reviewedLabel
-                }}</span>
                 <UiButton variant="ghost" class="!py-2 !text-small" @click="onEnd">
                     {{ t('study.endSession') }}
                 </UiButton>
@@ -40,16 +33,44 @@
         <main class="flex flex-1 flex-col items-center justify-center gap-5 p-4 sm:gap-8 sm:p-6">
             <SharedPageLoader v-if="loading" />
 
+            <!-- Between-rounds overlay (track-progress mode, round finished, revisit > 0) -->
+            <template v-else-if="roundDone">
+                <div class="flex w-full max-w-sm flex-col items-center gap-6 text-center">
+                    <div class="flex flex-col items-center gap-2">
+                        <p class="font-display text-h2 text-cream">
+                            {{ t('study.roundComplete') }}
+                        </p>
+                        <p class="text-body text-cream-dim">
+                            {{
+                                t('study.unknownCards').replace(
+                                    '{n}',
+                                    String(practice.revisitCards.value.length),
+                                )
+                            }}
+                        </p>
+                    </div>
+                    <div class="flex flex-col gap-3 w-full">
+                        <UiButton variant="primary" @click="studyUnknown">
+                            {{ t('study.studyUnknown') }}
+                        </UiButton>
+                        <UiButton variant="ghost" @click="finalize">
+                            {{ t('study.endSession') }}
+                        </UiButton>
+                    </div>
+                </div>
+            </template>
+
             <template
                 v-else-if="
                     practice.study.state.value === 'active' && practice.study.currentCard.value
                 "
             >
                 <template v-if="mode !== 'multiple-choice' && studyCard">
+                    <!-- Card row: side arrows on sm+, card takes full width on mobile -->
                     <div class="flex w-full items-center justify-center gap-2 sm:gap-3">
                         <button
                             type="button"
-                            class="grid size-9 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30 sm:size-11"
+                            class="hidden size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30 sm:grid"
                             :aria-label="t('study.prevCard')"
                             :disabled="practice.study.currentIndex.value === 0"
                             @click="practice.goPrev"
@@ -66,7 +87,31 @@
                         </Transition>
                         <button
                             type="button"
-                            class="grid size-9 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30 sm:size-11"
+                            class="hidden size-11 shrink-0 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30 sm:grid"
+                            :aria-label="t('study.nextCard')"
+                            :disabled="
+                                practice.study.currentIndex.value >=
+                                practice.study.totalCount.value - 1
+                            "
+                            @click="practice.goNext"
+                        >
+                            <ChevronRight class="size-5" />
+                        </button>
+                    </div>
+                    <!-- Mobile-only arrow row: appears below the card -->
+                    <div class="flex justify-center gap-8 sm:hidden">
+                        <button
+                            type="button"
+                            class="grid size-11 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
+                            :aria-label="t('study.prevCard')"
+                            :disabled="practice.study.currentIndex.value === 0"
+                            @click="practice.goPrev"
+                        >
+                            <ChevronLeft class="size-5" />
+                        </button>
+                        <button
+                            type="button"
+                            class="grid size-11 place-items-center rounded-full border border-line-strong text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream disabled:cursor-not-allowed disabled:opacity-30"
                             :aria-label="t('study.nextCard')"
                             :disabled="
                                 practice.study.currentIndex.value >=
@@ -80,10 +125,52 @@
                     <div class="flex min-h-[72px] w-full items-center justify-center">
                         <Transition name="rate" mode="out-in">
                             <StudyRatingRow v-if="practice.revealed.value" @grade="onGrade" />
-                            <p v-else class="text-small text-brand-muted">
+                            <p v-else class="hidden text-small text-brand-muted sm:block">
                                 {{ t('study.revealHint') }}
                             </p>
                         </Transition>
+                    </div>
+
+                    <!-- Shuffle + Track-progress controls -->
+                    <div class="flex items-center justify-center gap-4 sm:gap-6">
+                        <button
+                            type="button"
+                            class="flex items-center gap-1.5 text-small text-brand-muted transition-colors hover:text-cream"
+                            @click="onReshuffle"
+                        >
+                            <Shuffle class="size-3.5" />
+                            {{ t('study.shuffleBtn') }}
+                        </button>
+                        <span class="h-3 w-px bg-line" aria-hidden="true" />
+                        <label
+                            class="flex cursor-pointer items-center gap-2 text-small text-brand-muted"
+                        >
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="trackProgress"
+                                :aria-label="t('study.trackProgress')"
+                                class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                :class="
+                                    trackProgress
+                                        ? 'border-brand bg-brand'
+                                        : 'border-line bg-bg-surface-2'
+                                "
+                                @click="trackProgress = !trackProgress"
+                            >
+                                <span
+                                    class="pointer-events-none inline-block h-3 w-3 transform rounded-full transition-transform"
+                                    :class="
+                                        trackProgress
+                                            ? 'translate-x-[18px] bg-white'
+                                            : 'translate-x-0.5 bg-brand-muted'
+                                    "
+                                />
+                            </button>
+                            <span :class="trackProgress ? 'text-cream' : ''">
+                                {{ t('study.trackProgress') }}
+                            </span>
+                        </label>
                     </div>
                 </template>
 
@@ -122,10 +209,11 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, Shuffle } from 'lucide-vue-next';
 import { useDecks, useT } from '#imports';
 import { usePractice } from '@/composables/usePractice';
 import { usePracticeStore } from '@/stores/practice';
+import { useSessionsStore } from '@/stores/sessions';
 import { useAchievements } from '@/composables/useAchievements';
 import { buildMultipleChoice } from '@/composables/useMultipleChoice';
 import { toStudyCard } from '@/utils/studyCard';
@@ -141,13 +229,23 @@ const mode = computed(() => String(route.params.mode) as StudyMode);
 
 const { store, fetchOne } = useDecks();
 const { t } = useT();
-const practice = usePractice();
+const sessionsStore = useSessionsStore();
+
+// SRS is on unless the mode picker sent ?srs=0.
+const srsEnabled = route.query.srs !== '0';
+const practice = usePractice({ srsEnabled });
 const achievements = useAchievements();
 
 useSeo({ title: t('seo.studyTitle'), description: t('seo.appDesc'), noindex: true });
 const practiceStore = usePracticeStore();
 
 const loading = ref(true);
+// Track-progress mode: when true, a completed round shows a "study again" CTA
+// instead of going to the results page (if there are revisit cards left).
+const TRACK_KEY = 'mnemio_track_progress';
+const trackProgress = ref(false);
+// True when a round is done and we're waiting for the user to start the next.
+const roundDone = ref(false);
 
 const studyCard = computed(() => {
     const card = practice.study.currentCard.value;
@@ -164,12 +262,6 @@ const currentQuestion = computed(() => {
     }
     return buildMultipleChoice(card, practice.study.queue.value);
 });
-
-const reviewedLabel = computed(() =>
-    t('study.reviewedSummary')
-        .replace('{recalled}', String(practice.counts.good + practice.counts.easy))
-        .replace('{revisit}', String(practice.revisit.value.length)),
-);
 
 const onGrade = (rating: SrsRating) => {
     const card = practice.study.currentCard.value;
@@ -216,11 +308,31 @@ const finalize = () => {
     navigateTo(`/study/${deckId.value}/results`);
 };
 
+// Start another round with only the not-yet-known cards.
+const studyUnknown = async () => {
+    if (!store.deck) return;
+    const cards = [...practice.revisitCards.value];
+    practice.resetCounts();
+    roundDone.value = false;
+    await practice.study.startWithCards(store.deck, mode.value, cards);
+};
+
+// Shuffle the current queue and jump back to card 0.
+const onReshuffle = async () => {
+    practice.revealed.value = false;
+    await practice.study.reshuffle();
+};
+
 watch(
     () => practice.study.state.value,
     (state) => {
         if (state === 'results') {
-            finalize();
+            if (trackProgress.value && practice.revisitCards.value.length > 0) {
+                // Stay on this page; user can loop over the unknown cards.
+                roundDone.value = true;
+            } else {
+                finalize();
+            }
         }
     },
 );
@@ -261,15 +373,35 @@ const startSession = async () => {
         await fetchOne.execute(deckId.value);
         deck = store.deck;
     }
-    if (deck) {
-        await practice.study.start(deck, mode.value);
+    if (!deck) {
+        loading.value = false;
+        return;
     }
+
+    // ?resume=1 → restore queue order and position from the persisted session.
+    if (route.query.resume === '1') {
+        const s = sessionsStore.active ?? sessionsStore.latestIncomplete;
+        if (s && s.deckId === deckId.value) {
+            await practice.study.resume(deck, s.id);
+            loading.value = false;
+            return;
+        }
+    }
+
+    await practice.study.start(deck, mode.value);
     loading.value = false;
 };
 
 onMounted(() => {
+    // Restore track-progress preference from localStorage.
+    const saved = localStorage.getItem(TRACK_KEY);
+    if (saved !== null) trackProgress.value = saved === 'true';
     startSession();
     window.addEventListener('keydown', onKey);
+});
+
+watch(trackProgress, (val) => {
+    localStorage.setItem(TRACK_KEY, String(val));
 });
 
 onBeforeUnmount(() => {
@@ -286,11 +418,11 @@ onBeforeUnmount(() => {
 }
 .card-enter-from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateX(24px);
 }
 .card-leave-to {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateX(-24px);
 }
 .rate-enter-active {
     transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.15s;

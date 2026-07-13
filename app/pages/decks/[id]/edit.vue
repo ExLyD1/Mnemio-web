@@ -9,7 +9,7 @@
             >
                 <ArrowLeft class="size-5" />
             </button>
-            <h1 class="text-h1 font-bold text-neutral-0">{{ t('deck.editTitle') }}</h1>
+            <h1 class="text-h1 font-bold text-cream">{{ t('deck.editTitle') }}</h1>
         </header>
 
         <SharedPageLoader v-if="fetchOne.loading.value && !store.deck" />
@@ -21,6 +21,7 @@
                     description: store.deck.description,
                     sourceLanguage: store.deck.sourceLanguage,
                     targetLanguage: store.deck.targetLanguage,
+                    isPublic: store.deck.isPublic,
                 }"
                 :loading="update.loading.value"
                 :submit-label="t('common.save')"
@@ -31,7 +32,7 @@
 
         <UiEmptyState v-else :title="t('deck.notFoundTitle')" :message="t('deck.notFoundMessage')">
             <template #action>
-                <UiButton variant="light" @click="navigateTo('/decks')">
+                <UiButton variant="primary" @click="navigateTo('/decks')">
                     {{ t('deck.backToDecks') }}
                 </UiButton>
             </template>

@@ -50,7 +50,8 @@
         "statistics": "Statistics",
         "ai": "AI assistant",
         "practice": "Practice",
-        "profile": "Profile"
+        "profile": "Profile",
+        "menu": "Menu"
     },
     "topbar": {
         "search": "Search decks…",
@@ -217,8 +218,12 @@
         "createSubtitle": "Set up the shell now — add cards in a minute.",
         "createAndAdd": "Create & add cards",
         "createEmpty": "Create empty deck",
-        "subjectCategory": "Subject / category",
-        "subjectPlaceholder": "e.g. Languages, Science, History…",
+        "categoryLabel": "Category",
+        "category": {
+            "languages": "Languages",
+            "tech": "Tech lexicon",
+            "other": "Other"
+        },
         "cardType": "Card type",
         "cardTypeBasic": "Basic",
         "cardTypeBasicHint": "Front & back",
@@ -394,15 +399,13 @@
         "noResultsTitle": "No completed session",
         "noResultsMessage": "Start a study session to see your results here.",
         "couldNotStartTitle": "Couldn't start",
-        "endSession": "End session",
+        "endSession": "Finish",
         "revealHint": "Tap the card or press Space to reveal.",
         "toReveal": "to reveal",
         "revealAnswer": "Reveal answer",
         "prevCard": "Previous card",
         "nextCard": "Next card",
-        "reviewedSummary": "{recalled} recalled · {revisit} to revisit",
         "listen": "Listen",
-        "audioComingSoon": "Audio coming soon",
         "meaning": "Meaning",
         "inContext": "In context",
         "sessionComplete": "Session complete",
@@ -420,6 +423,16 @@
         "summaryRecalled": "You recalled {correct} of {total} cards",
         "summaryRevisit": " — {n} to revisit.",
         "summaryPerfect": ". Flawless run!",
+        "shuffleBtn": "Shuffle",
+        "trackProgress": "Track progress",
+        "roundComplete": "Round done!",
+        "unknownCards": "{n} cards still unknown",
+        "studyUnknown": "Study unknown again",
+        "srsLabel": "Study mode",
+        "srsOn": "With SRS",
+        "srsOff": "Just browse",
+        "srsOnHint": "SRS on — your schedule updates after each answer.",
+        "srsOffHint": "Browse mode — answers won't update your schedule.",
         "errors": {
             "emptyDeck": "This deck has no cards to study."
         }
@@ -536,7 +549,15 @@
         "insightEyebrow": "Mimi noticed something",
         "insightLowest": "“{title}” is your lowest deck at {pct}% mastered — a quick session would help.",
         "insightEmpty": "Create a deck and start studying to unlock insights.",
-        "startHint": "Start a hint session"
+        "startHint": "Start a hint session",
+        "studyTime": "Study time",
+        "studyTimeUnit": "min",
+        "decksStudied": "Decks studied",
+        "dsSessionCount": "{n} sessions",
+        "dsCardsReviewed": "{n} cards",
+        "dsLastStudied": "Last studied",
+        "cardSeries": "Mastery curve",
+        "cardSeriesComingSoon": "Cumulative mastery trend — coming soon."
     },
     "onboarding": {
         "stepOf": "Step {i} of 2",
@@ -770,7 +791,6 @@
         ]
     },
     "landing": {
-        "heroBadge": "Loved by 240,000 learners",
         "heroTitle1": "Turn new words into ",
         "heroTitleEm": "lasting",
         "heroTitle2": " memory.",

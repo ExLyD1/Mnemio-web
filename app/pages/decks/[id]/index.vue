@@ -35,7 +35,7 @@
                             </div>
                             <div class="flex flex-wrap gap-2.5">
                                 <UiButton
-                                    variant="primary"
+                                    variant="on-cover"
                                     :disabled="!store.deck.cards.length"
                                     :title="t('deck.studyNowHint')"
                                     @click="navigateTo(`/study/${id}`)"
@@ -43,22 +43,18 @@
                                     {{ t('deck.studyNow') }}
                                 </UiButton>
                                 <UiButton
-                                    variant="ghost"
-                                    :disabled="!store.deck.cards.length"
-                                    :title="t('deck.practiceAllHint')"
-                                    @click="navigateTo(`/study/${id}/flashcard`)"
-                                >
-                                    {{ t('deck.practiceAll') }}
-                                </UiButton>
-                                <UiButton
                                     v-if="!isOwner"
-                                    variant="ghost"
+                                    variant="on-cover-ghost"
                                     :title="t('deck.copyToLibrary')"
                                     @click="onCopy"
                                 >
                                     <BookCopy class="size-4" /> {{ t('deck.copyToLibrary') }}
                                 </UiButton>
-                                <UiButton variant="ghost" :title="t('deck.share')" @click="onShare">
+                                <UiButton
+                                    variant="on-cover-ghost"
+                                    :title="t('deck.share')"
+                                    @click="onShare"
+                                >
                                     <Share2 class="size-4" /> {{ t('deck.share') }}
                                 </UiButton>
                             </div>
@@ -122,24 +118,6 @@
                     <button
                         type="button"
                         class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
-                        @click="filter = 'due'"
-                    >
-                        <span class="font-display text-h2 leading-none text-lavender">{{
-                            deckStat.due
-                        }}</span>
-                        <span
-                            class="text-small transition-colors"
-                            :class="
-                                filter === 'due'
-                                    ? 'text-brand underline underline-offset-2'
-                                    : 'text-brand-muted'
-                            "
-                            >{{ t('deck.statDue') }}</span
-                        >
-                    </button>
-                    <button
-                        type="button"
-                        class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
                         @click="filter = 'new'"
                     >
                         <span class="font-display text-h2 leading-none text-cream">{{
@@ -170,7 +148,7 @@
 
                         <div class="max-h-[420px] overflow-y-auto">
                             <SharedCardRow
-                                v-for="(card, i) in filteredCards"
+                                v-for="(card, i) in visibleCards"
                                 :key="card.id"
                                 :index="i + 1"
                                 :card="card"
@@ -184,6 +162,20 @@
                                 class="px-4 py-10 text-center text-body text-brand-muted"
                             >
                                 {{ t('deck.noCardsMatch') }}
+                            </div>
+                            <div
+                                v-else-if="filteredCards.length > visibleCardCount"
+                                class="flex justify-center py-3"
+                            >
+                                <button
+                                    type="button"
+                                    class="text-small text-brand-muted hover:text-cream"
+                                    @click="visibleCardCount += CARD_PAGE"
+                                >
+                                    {{ t('common.loadMore') }}
+                                    ({{ filteredCards.length - visibleCardCount }}
+                                    {{ t('deck.statTotal').toLowerCase() }})
+                                </button>
                             </div>
                         </div>
 
@@ -232,27 +224,10 @@
                     class="flex flex-col gap-3 rounded-[20px] border border-line bg-mimi-ambient p-[18px]"
                 >
                     <SharedMimi :message="coachTip" placement="left" :size="64" />
-                    <UiButton
-                        v-if="deckStat.due > 0"
-                        variant="primary"
-                        @click="navigateTo(`/study/${id}`)"
-                    >
-                        {{ t('dashboard.reviewNow') }}
-                    </UiButton>
-                    <UiButton
-                        v-else-if="store.deck.cards.length"
-                        variant="ghost"
-                        @click="navigateTo(`/study/${id}`)"
-                    >
-                        {{ t('deck.study') }}
-                    </UiButton>
                 </div>
 
                 <!-- Owner: authoring controls. Non-owner viewing a public deck: copy CTA. -->
                 <div v-if="isOwner" class="flex flex-col gap-2">
-                    <UiButton variant="ghost" @click="navigateTo(`/decks/${id}/edit`)">
-                        {{ t('deck.edit') }}
-                    </UiButton>
                     <UiButton variant="ghost" @click="aiOpen = true">
                         <Sparkles class="size-4" /> {{ t('ai.launchAppend') }}
                     </UiButton>
@@ -495,6 +470,8 @@ const breakdownSegments = computed(() => [
 
 const search = ref('');
 const filter = ref('all');
+const CARD_PAGE = 50;
+const visibleCardCount = ref(CARD_PAGE);
 const isDue = (card: Card): boolean => {
     const p = srs.progress[card.id];
     return !!p && new Date(p.nextReviewAt).getTime() <= Date.now();
@@ -506,7 +483,9 @@ const filteredCards = computed(() => {
     return cards.filter((card) => {
         if (q) {
             const haystack = `${card.word} ${card.definition} ${card.phonetic ?? ''}`.toLowerCase();
-            if (!haystack.includes(q)) return false;
+            if (!haystack.includes(q)) {
+                return false;
+            }
         }
         switch (filter.value) {
             case 'new':
@@ -520,6 +499,13 @@ const filteredCards = computed(() => {
         }
     });
 });
+
+// Reset visible window when filter or search changes.
+watch([search, filter], () => {
+    visibleCardCount.value = CARD_PAGE;
+});
+
+const visibleCards = computed(() => filteredCards.value.slice(0, visibleCardCount.value));
 
 const menuItems = computed(() => [
     { key: 'edit', label: t('deck.edit'), icon: Pencil },

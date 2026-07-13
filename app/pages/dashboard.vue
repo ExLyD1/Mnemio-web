@@ -179,7 +179,9 @@
                     </div>
                     <div
                         class="h-1.5 w-full overflow-hidden rounded-full bg-line transition-[box-shadow] duration-500"
-                        :class="weekGoalPct >= 100 ? 'shadow-[0_0_8px_2px_rgba(82,208,142,0.45)]' : ''"
+                        :class="
+                            weekGoalPct >= 100 ? 'shadow-[0_0_8px_2px_rgba(82,208,142,0.45)]' : ''
+                        "
                     >
                         <div
                             class="h-full rounded-full transition-[width] duration-500 ease-out"
@@ -298,7 +300,7 @@ const onResume = () => {
         navigateTo('/review');
         return;
     }
-    navigateTo(`/study/${s.deckId}/${s.mode}`);
+    navigateTo(`/study/${s.deckId}/${s.mode}?resume=1`);
 };
 
 // This week — last 7 points of series, with 2-char day labels derived client-side

@@ -33,6 +33,13 @@
             {{ t('discover.noResults') }}
         </p>
 
+        <div v-if="more.cursor.value" class="flex justify-center">
+            <UiButton variant="ghost" :disabled="more.loading.value" @click="onLoadMore">
+                <UiSpinner v-if="more.loading.value" size="sm" class="mr-2" />
+                {{ t('common.loadMore') }}
+            </UiButton>
+        </div>
+
         <div v-if="categories.length && !search.trim()">
             <h2 class="mb-3 font-display text-h2 text-cream">{{ t('discover.categories') }}</h2>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -78,10 +85,10 @@ import { useHead, useRoute, useSiteConfig, useToast, useT } from '#imports';
 import { useDebounceFn } from '@vueuse/core';
 import { listPublicDecks, getPublicCategories } from '@/api/publicDiscover';
 import { copyDeck } from '@/api/discover';
-import { deckToCardVm } from '@/utils/deckVm';
 import { useAuthStore } from '@/stores/auth';
 import { useAnalytics } from '@/composables/useAnalytics';
-import type { DeckCardVM, DeckWithAuthor } from '@/types/deck';
+import { useDiscoverMore, discoverToVm } from '@/composables/useDiscoverMore';
+import type { DeckCardVM } from '@/types/deck';
 
 definePageMeta({ layout: 'default' });
 
@@ -99,12 +106,6 @@ const slugify = (s: string): string =>
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
-
-const toVm = (d: DeckWithAuthor): DeckCardVM => ({
-    ...deckToCardVm(d),
-    author: d.author.username ?? d.author.fullName ?? 'someone',
-    copies: d.copyCount,
-});
 
 const search = ref(typeof route.query.q === 'string' ? route.query.q : '');
 const filter = ref('all');
@@ -141,8 +142,26 @@ const { data, pending } = await useAsyncData(
     { watch: [filter, sort] },
 );
 
-const decks = computed<DeckCardVM[]>(() => (data.value?.[0].items ?? []).map(toVm));
+const more = useDiscoverMore();
+
+// When the SSR page refreshes (filter/sort/search change), reset the extra pages.
+watch(data, (d) => more.init(d?.[0]?.nextCursor ?? null), { immediate: true });
+
+const decks = computed<DeckCardVM[]>(() => [
+    ...(data.value?.[0].items ?? []).map(discoverToVm),
+    ...more.extra.value,
+]);
 const categories = computed(() => data.value?.[1].items ?? []);
+
+const onLoadMore = () =>
+    more.loadMore(() =>
+        listPublicDecks({
+            q: search.value.trim() || undefined,
+            lang: filter.value === 'all' ? undefined : filter.value,
+            sort: sort.value,
+            cursor: more.cursor.value!,
+        }),
+    );
 
 // Debounced refetch as the user types (re-runs the same useAsyncData handler).
 const debouncedRefresh = useDebounceFn(() => refreshNuxtData('discover-catalog'), 150);

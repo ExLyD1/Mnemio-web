@@ -77,6 +77,54 @@
             </div>
         </div>
 
+        <!-- Decks studied (Item 4) -->
+        <div
+            v-if="stats.decksStudied.value.length"
+            class="rounded-[20px] border border-line bg-bg-surface p-5"
+        >
+            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
+                {{ t('statistics.decksStudied') }}
+            </p>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div
+                    v-for="d in stats.decksStudied.value"
+                    :key="d.deckId"
+                    class="flex flex-col gap-3 rounded-2xl border border-line bg-bg-surface-2 p-4"
+                >
+                    <p class="line-clamp-2 font-display text-base text-cream">{{ d.title }}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-small text-brand-muted">
+                            {{
+                                t('statistics.dsSessionCount').replace(
+                                    '{n}',
+                                    String(d.sessionCount),
+                                )
+                            }}
+                        </span>
+                        <span class="text-small text-brand-muted">
+                            {{
+                                t('statistics.dsCardsReviewed').replace(
+                                    '{n}',
+                                    String(d.cardsReviewed),
+                                )
+                            }}
+                        </span>
+                    </div>
+                    <p class="text-small text-brand-muted">
+                        {{ t('statistics.dsLastStudied') }}:
+                        {{ formatLastStudied(d.lastStudiedAt) }}
+                    </p>
+                    <UiButton
+                        variant="ghost"
+                        class="!py-1 !text-small"
+                        @click="navigateTo(`/study/${d.deckId}`)"
+                    >
+                        {{ t('statistics.review') }}
+                    </UiButton>
+                </div>
+            </div>
+        </div>
+
         <div class="rounded-[20px] border border-line bg-bg-surface p-5">
             <p class="mb-3 text-eyebrow uppercase text-brand-muted">
                 {{ t('statistics.activity') }}
@@ -84,6 +132,7 @@
             <SharedActivityHeatmap :weeks="heat" />
         </div>
 
+        <!-- Cards reviewed chart -->
         <div class="rounded-[20px] border border-line bg-bg-surface p-5">
             <p class="mb-4 text-eyebrow uppercase text-brand-muted">
                 {{ t('statistics.cardsReviewed') }}
@@ -93,23 +142,61 @@
                     v-for="(d, i) in series"
                     :key="i"
                     class="flex-1 rounded-t bg-brand transition-all hover:bg-brand-bright"
-                    :style="{ height: `${(d.value / maxValue) * 100}%` }"
+                    :style="{ height: `${(d.value / maxReviewed) * 100}%` }"
                     :title="`${d.label}: ${d.value}`"
                 />
             </div>
             <div class="relative mt-1 flex gap-1">
-                <div
-                    v-for="(d, i) in series"
-                    :key="i"
-                    class="flex-1"
-                >
-                    <template v-if="showSeriesLabel(i)">
+                <div v-for="(d, i) in series" :key="i" class="flex-1">
+                    <template v-if="showBarLabel(i, series.length)">
                         <div class="mx-auto h-1.5 w-px bg-line" />
                         <div class="text-center text-[10px] leading-tight text-brand-muted">
-                            {{ formatSeriesLabel(d.label) }}
+                            {{ formatBarLabel(d.label, series.length) }}
                         </div>
                     </template>
                 </div>
+            </div>
+        </div>
+
+        <!-- Study time chart (Item 2) -->
+        <div class="rounded-[20px] border border-line bg-bg-surface p-5">
+            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
+                {{ t('statistics.studyTime') }}
+            </p>
+            <div class="flex h-40 items-end gap-1">
+                <div
+                    v-for="(d, i) in stats.studyTime.value"
+                    :key="i"
+                    class="flex-1 rounded-t bg-lavender transition-all hover:bg-lavender/80"
+                    :style="{ height: `${(d.value / maxStudyTime) * 100}%` }"
+                    :title="`${d.label}: ${msToMin(d.value)} ${t('statistics.studyTimeUnit')}`"
+                />
+            </div>
+            <div class="relative mt-1 flex gap-1">
+                <div v-for="(d, i) in stats.studyTime.value" :key="i" class="flex-1">
+                    <template v-if="showBarLabel(i, stats.studyTime.value.length)">
+                        <div class="mx-auto h-1.5 w-px bg-line" />
+                        <div class="text-center text-[10px] leading-tight text-brand-muted">
+                            {{ formatBarLabel(d.label, stats.studyTime.value.length) }}
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mastery curve — coming soon (Item 3) -->
+        <div class="rounded-[20px] border border-line bg-bg-surface p-5">
+            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
+                {{ t('statistics.cardSeries') }}
+            </p>
+            <div
+                v-if="stats.cardSeriesPending.value"
+                class="flex flex-col items-center gap-3 py-8 text-center"
+            >
+                <Clock class="size-6 text-brand-muted opacity-50" />
+                <p class="max-w-sm text-body text-brand-muted">
+                    {{ t('statistics.cardSeriesComingSoon') }}
+                </p>
             </div>
         </div>
 
@@ -184,10 +271,11 @@
 </template>
 
 <script setup lang="ts">
-import { Trophy, Lock } from 'lucide-vue-next';
+import { Trophy, Lock, Clock } from 'lucide-vue-next';
 import { useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
+import { useAppLocale } from '@/composables/useAppLocale';
 import type { StatsRange, StatsTrend } from '@/types/stats';
 
 definePageMeta({ layout: 'default' });
@@ -195,6 +283,7 @@ definePageMeta({ layout: 'default' });
 const { store, fetchList } = useDecks();
 const { t } = useT();
 const stats = useStats();
+const { current: locale } = useAppLocale();
 
 useSeo({ title: t('seo.statisticsTitle'), description: t('seo.appDesc'), noindex: true });
 const achievements = useAchievements();
@@ -226,27 +315,33 @@ const rangeOptions = computed(() => [
 ]);
 
 const series = computed(() => stats.series.value);
-const maxValue = computed(() => Math.max(1, ...series.value.map((d) => d.value)));
+const maxReviewed = computed(() => Math.max(1, ...series.value.map((d) => d.value)));
+const maxStudyTime = computed(() => Math.max(1, ...stats.studyTime.value.map((d) => d.value)));
 const heat = computed(() => stats.yearHeat.value);
 
-// Bar chart label helpers — avoid crowded/repeated labels for long ranges.
+const msToMin = (ms: number): number => Math.round(ms / 60000);
+
+const formatLastStudied = (iso: string): string =>
+    new Date(iso).toLocaleDateString(locale.value === 'uk' ? 'uk-UA' : 'en-US', {
+        month: 'short',
+        day: 'numeric',
+    });
+
+// Shared bar-label helpers used by all bar charts.
 const DAY_ABBR = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
-const showSeriesLabel = (i: number): boolean => {
-    const total = series.value.length;
+const showBarLabel = (i: number, total: number): boolean => {
     if (total <= 14) return true;
     const step = total <= 31 ? 7 : 14;
     if (i % step === 0 || i === 0) return true;
-    // Show the last point only if it's far enough from the previous step mark.
     if (i === total - 1) {
         const prevMark = Math.floor((total - 1) / step) * step;
         return i - prevMark >= 3;
     }
     return false;
 };
-const formatSeriesLabel = (label: string): string => {
+const formatBarLabel = (label: string, total: number): string => {
     const d = new Date(label + 'T00:00:00Z');
     if (!isNaN(d.getTime())) {
-        const total = series.value.length;
         if (total <= 14) return DAY_ABBR[d.getUTCDay()] ?? label;
         return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
     }
@@ -275,7 +370,13 @@ const insight = computed(() => {
 });
 
 watch(range, async (r) => {
-    await Promise.all([stats.load(r), stats.loadSeries(r)]);
+    await Promise.all([
+        stats.load(r),
+        stats.loadSeries(r),
+        stats.loadStudyTime(r),
+        stats.loadDecksStudied(r),
+        stats.loadCardSeries(r),
+    ]);
 });
 
 onMounted(async () => {
@@ -283,6 +384,9 @@ onMounted(async () => {
         fetchList.execute({ cursor: null, append: false }),
         stats.load(range.value),
         stats.loadSeries(range.value),
+        stats.loadStudyTime(range.value),
+        stats.loadDecksStudied(range.value),
+        stats.loadCardSeries(range.value),
         achievements.load(),
     ]);
 });
