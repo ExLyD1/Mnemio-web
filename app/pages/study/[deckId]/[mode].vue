@@ -170,6 +170,14 @@
                             <span :class="trackProgress ? 'text-cream' : ''">
                                 {{ t('study.trackProgress') }}
                             </span>
+                            <span class="group/tip relative inline-flex items-center">
+                                <Info class="size-3.5 cursor-help text-brand-muted/50 transition-colors group-hover/tip:text-brand-muted" />
+                                <span
+                                    class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-52 -translate-x-1/2 rounded-xl bg-[#1a0d2e] px-3 py-2.5 text-center text-[11px] leading-relaxed text-white shadow-xl opacity-0 transition-opacity duration-150 group-hover/tip:opacity-100"
+                                >
+                                    {{ t('study.trackProgressHint') }}
+                                </span>
+                            </span>
                         </label>
                     </div>
                 </template>
@@ -209,7 +217,7 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight, Shuffle } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, Info, Shuffle } from 'lucide-vue-next';
 import { useDecks, useT } from '#imports';
 import { usePractice } from '@/composables/usePractice';
 import { usePracticeStore } from '@/stores/practice';

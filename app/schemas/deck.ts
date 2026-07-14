@@ -37,6 +37,7 @@ export const deckSchema = z
             .string()
             .refine((v) => languageCodes.includes(v), 'deck.errors.language_invalid'),
         isPublic: z.boolean().default(true),
+        subject: z.string().max(40).default('other'),
     })
     .refine((data) => data.sourceLanguage !== data.targetLanguage, {
         message: 'deck.errors.languages_same',

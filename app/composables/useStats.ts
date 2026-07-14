@@ -70,6 +70,7 @@ export const useStats = () => {
     const series = ref<StatsSeriesPoint[]>([]);
     const studyTime = ref<StatsSeriesPoint[]>([]);
     const decksStudied = ref<DeckStudied[]>([]);
+    const cardSeries = ref<StatsSeriesPoint[]>([]);
     const cardSeriesPending = ref<boolean>(true);
     const loading = ref(false);
 
@@ -99,6 +100,7 @@ export const useStats = () => {
     const loadCardSeries = async (range: StatsRange = '30') => {
         const res = await statsApi.getCardSeries(range);
         cardSeriesPending.value = res.pending;
+        cardSeries.value = res.points;
     };
 
     const load = async (range: StatsRange = '30') => {
@@ -126,6 +128,7 @@ export const useStats = () => {
         series,
         studyTime,
         decksStudied,
+        cardSeries,
         cardSeriesPending,
         loading,
         reviewed,

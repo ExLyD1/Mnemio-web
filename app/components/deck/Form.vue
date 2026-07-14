@@ -26,6 +26,17 @@
 
         <div>
             <p class="mb-2 text-[11px] font-semibold uppercase tracking-[.12em] text-cream/40">
+                {{ t('deck.categoryLabel') }}
+            </p>
+            <UiCategorySelect
+                v-model="subject"
+                :options="categoryOptions"
+                :placeholder="t('deck.category.other')"
+            />
+        </div>
+
+        <div>
+            <p class="mb-2 text-[11px] font-semibold uppercase tracking-[.12em] text-cream/40">
                 {{ t('deck.privacy') }}
             </p>
             <div class="flex gap-2">
@@ -76,13 +87,15 @@ import { useForm, useField } from 'vee-validate';
 import { deckSchema } from '@/schemas/deck';
 import { toFormValidator } from '@/utils/zodValidator';
 import { useT } from '@/composables/useT';
+import { DECK_CATEGORIES } from '@/utils/deckCategories';
+import type { DeckCategory } from '@/utils/deckCategories';
 import type { Deck } from '@/types/deck';
 
 const props = withDefaults(
     defineProps<{
         initial?: Pick<
             Deck,
-            'title' | 'description' | 'sourceLanguage' | 'targetLanguage' | 'isPublic'
+            'title' | 'description' | 'sourceLanguage' | 'targetLanguage' | 'isPublic' | 'subject'
         > | null;
         loading?: boolean;
         submitLabel?: string;
@@ -98,12 +111,18 @@ const emit = defineEmits<{
             sourceLanguage: string;
             targetLanguage: string;
             isPublic: boolean;
+            subject: DeckCategory;
         },
     ];
     cancel: [];
 }>();
 
 const { t } = useT();
+
+const categoryOptions = DECK_CATEGORIES.map((cat) => ({
+    value: cat,
+    label: t(`deck.category.${cat}`),
+}));
 
 const { handleSubmit } = useForm({
     validationSchema: toFormValidator(deckSchema),
@@ -115,12 +134,14 @@ const { handleSubmit } = useForm({
         sourceLanguage: props.initial?.sourceLanguage ?? 'en',
         targetLanguage: props.initial?.targetLanguage ?? 'es',
         isPublic: props.initial?.isPublic ?? true,
+        subject: (props.initial?.subject as DeckCategory | null) ?? 'other',
     },
 });
 
 const { value: title, errorMessage: titleError } = useField<string>('title');
 const { value: description, errorMessage: descriptionError } = useField<string>('description');
 const { value: isPublic } = useField<boolean>('isPublic');
+const { value: subject } = useField<DeckCategory>('subject');
 
 const onSubmit = handleSubmit((values) => {
     emit('submit', {
@@ -129,6 +150,7 @@ const onSubmit = handleSubmit((values) => {
         sourceLanguage: values.sourceLanguage,
         targetLanguage: values.targetLanguage,
         isPublic: values.isPublic,
+        subject: values.subject as DeckCategory,
     });
 });
 </script>
