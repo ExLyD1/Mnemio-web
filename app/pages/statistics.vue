@@ -184,11 +184,12 @@
             </div>
         </div>
 
-        <!-- Mastery curve — coming soon (Item 3) -->
+        <!-- Mastery curve (Item 3) -->
         <div class="rounded-[20px] border border-line bg-bg-surface p-5">
             <p class="mb-4 text-eyebrow uppercase text-brand-muted">
                 {{ t('statistics.cardSeries') }}
             </p>
+            <!-- Pending placeholder -->
             <div
                 v-if="stats.cardSeriesPending.value"
                 class="flex flex-col items-center gap-3 py-8 text-center"
@@ -196,6 +197,54 @@
                 <Clock class="size-6 text-brand-muted opacity-50" />
                 <p class="max-w-sm text-body text-brand-muted">
                     {{ t('statistics.cardSeriesComingSoon') }}
+                </p>
+            </div>
+            <!-- Live cumulative area+line chart -->
+            <div v-else>
+                <svg
+                    :viewBox="`0 0 ${CURVE_W} ${CURVE_H}`"
+                    class="w-full"
+                    style="height: 160px"
+                    aria-hidden="true"
+                    preserveAspectRatio="none"
+                >
+                    <!-- Filled area under the curve -->
+                    <path :d="cardSeriesAreaPath" class="fill-[#4ade80] opacity-[.12]" />
+                    <!-- The line itself -->
+                    <polyline
+                        :points="cardSeriesPolyline"
+                        fill="none"
+                        class="stroke-[#4ade80]"
+                        stroke-width="2"
+                        stroke-linejoin="round"
+                        stroke-linecap="round"
+                    />
+                    <!-- Invisible hover targets with native tooltips -->
+                    <circle
+                        v-for="pt in cardSeriesPoints"
+                        :key="pt.label"
+                        :cx="pt.x"
+                        :cy="pt.y"
+                        r="4"
+                        class="cursor-default fill-[#4ade80] opacity-0 transition-opacity hover:opacity-100"
+                    >
+                        <title>{{ pt.label }}: {{ pt.value }}</title>
+                    </circle>
+                </svg>
+                <!-- X-axis labels (same pattern as bar charts) -->
+                <div class="relative mt-1 flex gap-1">
+                    <div v-for="(d, i) in stats.cardSeries.value" :key="i" class="flex-1">
+                        <template v-if="showBarLabel(i, stats.cardSeries.value.length)">
+                            <div class="mx-auto h-1.5 w-px bg-line" />
+                            <div class="text-center text-[10px] leading-tight text-brand-muted">
+                                {{ formatBarLabel(d.label, stats.cardSeries.value.length) }}
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <!-- Caption -->
+                <p class="mt-3 text-small text-brand-muted/60">
+                    {{ t('statistics.cardSeriesNote') }}
                 </p>
             </div>
         </div>
@@ -347,6 +396,33 @@ const formatBarLabel = (label: string, total: number): string => {
     }
     return label;
 };
+
+// Mastery curve helpers
+const CURVE_W = 400;
+const CURVE_H = 100;
+const maxCardSeries = computed(() => Math.max(1, ...stats.cardSeries.value.map((d) => d.value)));
+const cardSeriesPoints = computed(() =>
+    stats.cardSeries.value.map((p, i) => {
+        const n = stats.cardSeries.value.length;
+        return {
+            x: n <= 1 ? CURVE_W / 2 : (i / (n - 1)) * CURVE_W,
+            y: (1 - p.value / maxCardSeries.value) * CURVE_H,
+            label: p.label,
+            value: p.value,
+        };
+    }),
+);
+const cardSeriesPolyline = computed(() =>
+    cardSeriesPoints.value.map((p) => `${p.x},${p.y}`).join(' '),
+);
+const cardSeriesAreaPath = computed(() => {
+    const pts = cardSeriesPoints.value;
+    if (!pts.length) {
+        return '';
+    }
+    const line = pts.map((p) => `${p.x},${p.y}`).join(' L ');
+    return `M ${pts[0].x} ${CURVE_H} L ${line} L ${pts[pts.length - 1].x} ${CURVE_H} Z`;
+});
 
 const toTrend = (t: StatsTrend | undefined) => {
     const pct = t?.deltaPct ?? 0;

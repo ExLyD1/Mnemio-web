@@ -33,22 +33,11 @@
                     <!-- Category picker -->
                     <div>
                         <p class="flabel">{{ t('deck.categoryLabel') }}</p>
-                        <div class="flex gap-2.5">
-                            <button
-                                v-for="cat in DECK_CATEGORIES"
-                                :key="cat"
-                                type="button"
-                                class="flex-1 cursor-pointer rounded-[14px] border p-3.5 text-center text-[14px] font-medium transition-colors"
-                                :class="
-                                    category === cat
-                                        ? 'border-[rgba(242,188,255,.3)] bg-brand text-on-color'
-                                        : 'border-line bg-bg-surface text-cream hover:border-line-strong'
-                                "
-                                @click="category = cat"
-                            >
-                                {{ t(`deck.category.${cat}`) }}
-                            </button>
-                        </div>
+                        <UiCategorySelect
+                            v-model="category"
+                            :options="categoryOptions"
+                            :placeholder="t('deck.category.other')"
+                        />
                     </div>
 
                     <!-- Description -->
@@ -491,6 +480,11 @@ const targetLanguage = ref('es');
 const cardType = ref<'basic' | 'cloze' | 'image'>('basic');
 const coverColor = ref(COVER_SWATCHES[0]);
 const isPublic = ref(true);
+
+const categoryOptions = DECK_CATEGORIES.map((cat) => ({
+    value: cat,
+    label: t(`deck.category.${cat}`),
+}));
 
 const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
 

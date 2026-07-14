@@ -22,6 +22,7 @@
                     sourceLanguage: store.deck.sourceLanguage,
                     targetLanguage: store.deck.targetLanguage,
                     isPublic: store.deck.isPublic,
+                    subject: normCategory(store.deck.subject),
                 }"
                 :loading="update.loading.value"
                 :submit-label="t('common.save')"
@@ -43,6 +44,7 @@
 <script setup lang="ts">
 import { ArrowLeft } from 'lucide-vue-next';
 import { useDecks, useToast, useT } from '#imports';
+import { normCategory } from '@/utils/deckCategories';
 
 definePageMeta({ layout: 'default' });
 
@@ -63,6 +65,7 @@ const onSubmit = async (payload: {
     sourceLanguage: string;
     targetLanguage: string;
     isPublic: boolean;
+    subject: string;
 }) => {
     const result = await update.execute(deckId.value, payload);
     if (result) {

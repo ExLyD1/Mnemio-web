@@ -121,15 +121,6 @@
             </div>
         </main>
 
-        <SharedMimi
-            v-if="active && mimi.message.value && !tipOpen"
-            :message="mimi.message.value"
-            :mood="mimi.mood.value"
-            placement="right"
-            :size="92"
-            class="fixed bottom-6 right-6 hidden md:flex"
-        />
-
         <!-- Docked tip panel: right drawer on desktop, bottom sheet on mobile -->
         <Transition name="tip-slide">
             <div
@@ -171,7 +162,6 @@
 <script setup lang="ts">
 import { CheckCheck, Lightbulb, X } from 'lucide-vue-next';
 import { useSrsStore, useToast, useT } from '#imports';
-import { useMimi } from '@/composables/useMimi';
 import { useAnalytics } from '@/composables/useAnalytics';
 import { useAchievements } from '@/composables/useAchievements';
 import * as aiApi from '@/api/ai';
@@ -183,7 +173,6 @@ definePageMeta({ layout: 'study' });
 const srs = useSrsStore();
 const toast = useToast();
 const { t } = useT();
-const mimi = useMimi();
 const analytics = useAnalytics();
 const achievements = useAchievements();
 
@@ -241,7 +230,6 @@ const startReview = () => {
     counts.hard = 0;
     counts.good = 0;
     counts.easy = 0;
-    mimi.say('idle');
 };
 
 const onRate = async (rating: SrsRating) => {
@@ -250,7 +238,6 @@ const onRate = async (rating: SrsRating) => {
         return;
     }
     revealed.value = false;
-    mimi.say(rating === 'again' ? 'forgot' : rating);
     try {
         await srs.rate(due.card.id, due.card.deckId, rating);
         completedCount.value += 1;
@@ -258,7 +245,6 @@ const onRate = async (rating: SrsRating) => {
         if (srs.dueCount === 0) {
             active.value = false;
             finished.value = true;
-            mimi.say('done');
             analytics.track('review_due_cleared', { cards_reviewed: completedCount.value });
             achievements.load().catch(() => {});
         }
