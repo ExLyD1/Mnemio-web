@@ -76,3 +76,12 @@ export interface StatsCardSeries {
     metric: string | null;
     points: StatsSeriesPoint[];
 }
+
+export interface StatsPerformance {
+    range: StatsRange;
+    userRecall: number; // 0..100
+    percentile: number; // 0..100 — share of peers strictly below the user
+    sampleSize: number; // eligible learners compared (incl. the user)
+    buckets: number[]; // 10 counts: [0,10) … [90,100]
+    enoughData: boolean;
+}

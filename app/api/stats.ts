@@ -5,6 +5,7 @@ import type {
     StatsCardSeries,
     StatsDecksStudied,
     StatsOverview,
+    StatsPerformance,
     StatsRange,
     StatsSeries,
     StatsStudyTimeSeries,
@@ -31,3 +32,6 @@ export const getDecksStudied = (range: StatsRange = '30'): Promise<StatsDecksStu
 
 export const getCardSeries = (range: StatsRange = '30'): Promise<StatsCardSeries> =>
     http<StatsCardSeries>('/stats/card-series', { query: { range, tz: clientTz() } });
+
+export const getPerformance = (range: StatsRange = '30'): Promise<StatsPerformance> =>
+    http<StatsPerformance>('/stats/performance', { query: { range } });
