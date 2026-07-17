@@ -1,8 +1,18 @@
 <template>
     <div :class="['rounded-[20px] border p-5', tones[tone]]">
         <div class="flex items-start justify-between gap-2">
-            <p class="text-small font-semibold uppercase tracking-[0.08em] text-brand-muted">
+            <p
+                class="flex items-center gap-1 text-small font-semibold uppercase tracking-[0.08em] text-brand-muted"
+            >
                 {{ label }}
+                <span
+                    v-if="info"
+                    :title="info"
+                    :aria-label="info"
+                    class="inline-flex cursor-help text-brand-muted/70"
+                >
+                    <Info class="size-3.5" />
+                </span>
             </p>
             <span
                 v-if="trend"
@@ -21,13 +31,14 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowUp, ArrowDown } from 'lucide-vue-next';
+import { ArrowUp, ArrowDown, Info } from 'lucide-vue-next';
 
 withDefaults(
     defineProps<{
         label: string;
         value: string | number;
         sub?: string;
+        info?: string;
         tone?: 'plain' | 'plum' | 'accent' | 'blue' | 'green' | 'pink';
         trend?: { dir: 'up' | 'down'; label: string };
     }>(),
@@ -35,11 +46,11 @@ withDefaults(
 );
 
 const tones = {
-    plain: 'border-line bg-bg-surface',
-    plum: 'border-lavender/60 bg-lavender/20 dark:border-brand-bright/40 dark:bg-brand/25',
-    accent: 'border-accent/30 bg-accent/10',
-    blue: 'border-accent-light/45 bg-gradient-to-br from-accent-light/25 to-accent/15',
-    green: 'border-success/45 bg-gradient-to-br from-success-bright/25 to-success/15',
-    pink: 'border-pink-soft/45 bg-gradient-to-br from-pink-soft/25 to-error-soft/15',
+    plain: 'border-line-strong bg-bg-surface-2',
+    plum: 'border-lavender/70 bg-lavender/30 dark:border-brand-bright/70 dark:bg-brand/45',
+    accent: 'border-accent-light/50 bg-accent/20',
+    blue: 'border-accent-light/70 bg-gradient-to-br from-accent-light/40 to-accent/25',
+    green: 'border-success/70 bg-gradient-to-br from-success-bright/40 to-success/25',
+    pink: 'border-pink-soft/70 bg-gradient-to-br from-pink-soft/40 to-error-soft/25',
 } as const;
 </script>

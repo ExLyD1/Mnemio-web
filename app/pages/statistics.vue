@@ -8,7 +8,7 @@
             <UiSegmentedControl v-model="range" :options="rangeOptions" />
         </header>
 
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
             <SharedStatTile
                 :label="t('statistics.due')"
                 :value="dueTotal"
@@ -19,13 +19,13 @@
                 :label="t('statistics.reviewed')"
                 :value="stats.reviewed.value"
                 :sub="t('statistics.reviewedSub')"
-                :trend="reviewedTrend"
                 tone="blue"
             />
             <SharedStatTile
-                :label="t('statistics.retention')"
+                :label="t('statistics.recallRate')"
                 :value="`${stats.retention.value}%`"
-                :trend="retentionTrend"
+                :sub="t('statistics.recallRateSub')"
+                :info="t('statistics.recallRateInfo')"
                 tone="green"
             />
             <SharedStatTile
@@ -33,6 +33,18 @@
                 :value="daysPracticed"
                 :sub="t('statistics.daysPracticedSub')"
                 tone="pink"
+            />
+            <SharedStatTile
+                :label="t('statistics.streak')"
+                :value="stats.streak.value"
+                :sub="t('statistics.streakSub')"
+                tone="accent"
+            />
+            <SharedStatTile
+                :label="t('statistics.wordsKnown')"
+                :value="wordsKnown"
+                :sub="t('statistics.wordsKnownSub')"
+                tone="plain"
             />
         </div>
 
@@ -77,203 +89,125 @@
             </div>
         </div>
 
-        <!-- Decks studied (Item 4) -->
-        <div
-            v-if="stats.decksStudied.value.length"
-            class="rounded-[20px] border border-line bg-bg-surface p-5"
-        >
-            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
-                {{ t('statistics.decksStudied') }}
-            </p>
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <div
-                    v-for="d in stats.decksStudied.value"
-                    :key="d.deckId"
-                    class="flex flex-col gap-3 rounded-2xl border border-line bg-bg-surface-2 p-4"
-                >
-                    <p class="line-clamp-2 font-display text-base text-cream">{{ d.title }}</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-small text-brand-muted">
-                            {{
-                                t('statistics.dsSessionCount').replace(
-                                    '{n}',
-                                    String(d.sessionCount),
-                                )
-                            }}
-                        </span>
-                        <span class="text-small text-brand-muted">
-                            {{
-                                t('statistics.dsCardsReviewed').replace(
-                                    '{n}',
-                                    String(d.cardsReviewed),
-                                )
-                            }}
-                        </span>
+        <!-- Study trend + Performance (side by side on desktop, stacked on mobile) -->
+        <div class="grid gap-6 lg:grid-cols-2">
+            <!-- Study trend: reviews / time toggle -->
+            <div class="rounded-[20px] border border-line bg-bg-surface p-5">
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p class="text-eyebrow uppercase text-brand-muted">
+                            {{ t('statistics.studyTrend') }}
+                        </p>
+                        <p class="mt-1 font-display text-base text-cream">{{ trendSummary }}</p>
                     </div>
-                    <p class="text-small text-brand-muted">
-                        {{ t('statistics.dsLastStudied') }}:
-                        {{ formatLastStudied(d.lastStudiedAt) }}
-                    </p>
-                    <UiButton
-                        variant="ghost"
-                        class="!py-1 !text-small"
-                        @click="navigateTo(`/study/${d.deckId}`)"
+                    <UiSegmentedControl v-model="trendMode" :options="trendOptions" />
+                </div>
+                <div class="flex h-40 items-end gap-1">
+                    <div
+                        v-for="(d, i) in trendPoints"
+                        :key="i"
+                        class="group relative flex h-full flex-1 items-end rounded-t bg-brand/10"
                     >
-                        {{ t('statistics.review') }}
-                    </UiButton>
-                </div>
-            </div>
-        </div>
-
-        <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-            <p class="mb-3 text-eyebrow uppercase text-brand-muted">
-                {{ t('statistics.activity') }}
-            </p>
-            <SharedActivityHeatmap :weeks="heat" />
-        </div>
-
-        <!-- Cards reviewed chart -->
-        <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
-                {{ t('statistics.cardsReviewed') }}
-            </p>
-            <div class="flex h-40 items-end gap-1">
-                <div
-                    v-for="(d, i) in series"
-                    :key="i"
-                    class="flex-1 rounded-t bg-brand transition-all hover:bg-brand-bright"
-                    :style="{ height: `${(d.value / maxReviewed) * 100}%` }"
-                    :title="`${d.label}: ${d.value}`"
-                />
-            </div>
-            <div class="relative mt-1 flex gap-1">
-                <div v-for="(d, i) in series" :key="i" class="flex-1">
-                    <template v-if="showBarLabel(i, series.length)">
-                        <div class="mx-auto h-1.5 w-px bg-line" />
-                        <div class="text-center text-[10px] leading-tight text-brand-muted">
-                            {{ formatBarLabel(d.label, series.length) }}
+                        <div
+                            class="w-full rounded-t transition-all group-hover:brightness-110"
+                            :class="
+                                i === trendPoints.length - 1
+                                    ? 'bg-pink-soft'
+                                    : trendMode === 'time'
+                                      ? 'bg-lavender'
+                                      : 'bg-vib-pink'
+                            "
+                            :style="{ height: barHeight(d.value) }"
+                        />
+                        <div
+                            class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-line-strong bg-bg-surface-2 px-2.5 py-1.5 text-center shadow-lg group-hover:block"
+                        >
+                            <span
+                                class="block text-[10px] uppercase tracking-wide text-brand-muted"
+                            >
+                                {{ formatBarLabel(d.label, trendPoints.length) }}
+                            </span>
+                            <span class="block text-small font-semibold text-cream">
+                                {{ trendTooltip(d) }}
+                            </span>
                         </div>
-                    </template>
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Study time chart (Item 2) -->
-        <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
-                {{ t('statistics.studyTime') }}
-            </p>
-            <div class="flex h-40 items-end gap-1">
-                <div
-                    v-for="(d, i) in stats.studyTime.value"
-                    :key="i"
-                    class="flex-1 rounded-t bg-lavender transition-all hover:bg-lavender/80"
-                    :style="{ height: `${(d.value / maxStudyTime) * 100}%` }"
-                    :title="`${d.label}: ${msToMin(d.value)} ${t('statistics.studyTimeUnit')}`"
-                />
-            </div>
-            <div class="relative mt-1 flex gap-1">
-                <div v-for="(d, i) in stats.studyTime.value" :key="i" class="flex-1">
-                    <template v-if="showBarLabel(i, stats.studyTime.value.length)">
-                        <div class="mx-auto h-1.5 w-px bg-line" />
-                        <div class="text-center text-[10px] leading-tight text-brand-muted">
-                            {{ formatBarLabel(d.label, stats.studyTime.value.length) }}
-                        </div>
-                    </template>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mastery curve (Item 3) -->
-        <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
-                {{ t('statistics.cardSeries') }}
-            </p>
-            <!-- Pending placeholder -->
-            <div
-                v-if="stats.cardSeriesPending.value"
-                class="flex flex-col items-center gap-3 py-8 text-center"
-            >
-                <Clock class="size-6 text-brand-muted opacity-50" />
-                <p class="max-w-sm text-body text-brand-muted">
-                    {{ t('statistics.cardSeriesComingSoon') }}
-                </p>
-            </div>
-            <!-- Live cumulative area+line chart -->
-            <div v-else>
-                <svg
-                    :viewBox="`0 0 ${CURVE_W} ${CURVE_H}`"
-                    class="w-full"
-                    style="height: 160px"
-                    aria-hidden="true"
-                    preserveAspectRatio="none"
-                >
-                    <!-- Filled area under the curve -->
-                    <path :d="cardSeriesAreaPath" class="fill-[#4ade80] opacity-[.12]" />
-                    <!-- The line itself -->
-                    <polyline
-                        :points="cardSeriesPolyline"
-                        fill="none"
-                        class="stroke-[#4ade80]"
-                        stroke-width="2"
-                        stroke-linejoin="round"
-                        stroke-linecap="round"
-                    />
-                    <!-- Invisible hover targets with native tooltips -->
-                    <circle
-                        v-for="pt in cardSeriesPoints"
-                        :key="pt.label"
-                        :cx="pt.x"
-                        :cy="pt.y"
-                        r="4"
-                        class="cursor-default fill-[#4ade80] opacity-0 transition-opacity hover:opacity-100"
-                    >
-                        <title>{{ pt.label }}: {{ pt.value }}</title>
-                    </circle>
-                </svg>
-                <!-- X-axis labels (same pattern as bar charts) -->
                 <div class="relative mt-1 flex gap-1">
-                    <div v-for="(d, i) in stats.cardSeries.value" :key="i" class="flex-1">
-                        <template v-if="showBarLabel(i, stats.cardSeries.value.length)">
+                    <div v-for="(d, i) in trendPoints" :key="i" class="flex-1">
+                        <template v-if="showBarLabel(i, trendPoints.length)">
                             <div class="mx-auto h-1.5 w-px bg-line" />
                             <div class="text-center text-[10px] leading-tight text-brand-muted">
-                                {{ formatBarLabel(d.label, stats.cardSeries.value.length) }}
+                                {{ formatBarLabel(d.label, trendPoints.length) }}
                             </div>
                         </template>
                     </div>
                 </div>
-                <!-- Caption -->
-                <p class="mt-3 text-small text-brand-muted/60">
-                    {{ t('statistics.cardSeriesNote') }}
-                </p>
             </div>
-        </div>
 
-        <div class="rounded-[20px] border border-line bg-bg-surface p-5">
-            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
-                {{ t('statistics.deckPerformance') }}
-            </p>
-            <div v-if="store.summaries.length" class="flex flex-col gap-1">
-                <div
-                    v-for="d in store.summaries"
-                    :key="d.id"
-                    class="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-brand/10"
-                >
-                    <NuxtLink
-                        :to="`/decks/${d.id}`"
-                        class="truncate font-display text-base text-cream hover:underline"
-                    >
-                        {{ d.title }}
-                    </NuxtLink>
-                    <span class="text-small text-brand-muted">{{
-                        t('statistics.cardsCount').replace('{n}', String(d.cardCount))
-                    }}</span>
-                    <span class="w-28">
-                        <SharedProgressBar :value="d.stats.masteredPct" />
+            <!-- Performance: recall distribution vs other learners -->
+            <div class="rounded-[20px] border border-line bg-bg-surface p-5">
+                <div class="mb-1 flex items-center justify-between gap-3">
+                    <p class="text-eyebrow uppercase text-brand-muted">
+                        {{ t('statistics.performance') }}
+                    </p>
+                    <span v-if="perf?.enoughData" class="text-small font-semibold text-vib-pink">
+                        {{
+                            t('statistics.performanceTop').replace(
+                                '{n}',
+                                String(100 - perf.percentile),
+                            )
+                        }}
                     </span>
                 </div>
+                <p class="mb-4 text-small text-brand-muted">{{ t('statistics.performanceSub') }}</p>
+
+                <!-- Enough learners: real recall distribution -->
+                <div v-if="perf?.enoughData">
+                    <svg
+                        :viewBox="`0 0 ${PERF_W} ${PERF_H}`"
+                        class="w-full"
+                        style="height: 150px"
+                        preserveAspectRatio="none"
+                        aria-hidden="true"
+                    >
+                        <path :d="perfArea" class="fill-vib-pink opacity-[.15]" />
+                        <polyline
+                            :points="perfLine"
+                            fill="none"
+                            class="stroke-cream"
+                            stroke-width="2"
+                            stroke-linejoin="round"
+                        />
+                        <line
+                            :x1="perfMarkerX"
+                            y1="6"
+                            :x2="perfMarkerX"
+                            :y2="PERF_H"
+                            class="stroke-vib-pink"
+                            stroke-width="2"
+                            stroke-dasharray="4 3"
+                        />
+                        <circle :cx="perfMarkerX" :cy="perfMarkerY" r="4" class="fill-vib-pink" />
+                    </svg>
+                    <div class="mt-2 flex items-center justify-between text-small text-brand-muted">
+                        <span class="font-semibold text-cream">{{
+                            t('statistics.performanceYou').replace('{n}', String(perf.userRecall))
+                        }}</span>
+                        <span>{{
+                            t('statistics.performancePeers').replace('{n}', String(perf.sampleSize))
+                        }}</span>
+                    </div>
+                </div>
+
+                <!-- Not enough learners yet -->
+                <div v-else class="flex flex-col items-center gap-3 py-10 text-center">
+                    <Users class="size-6 text-brand-muted opacity-50" />
+                    <p class="max-w-xs text-body text-brand-muted">
+                        {{ t('statistics.performanceEmpty') }}
+                    </p>
+                </div>
             </div>
-            <p v-else class="text-body text-brand-muted">{{ t('statistics.noDecks') }}</p>
         </div>
 
         <div class="rounded-[20px] border border-line bg-bg-surface p-5">
@@ -320,23 +254,29 @@
 </template>
 
 <script setup lang="ts">
-import { Trophy, Lock, Clock } from 'lucide-vue-next';
+import { Trophy, Lock, Users } from 'lucide-vue-next';
 import { useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
-import { useAppLocale } from '@/composables/useAppLocale';
-import type { StatsRange, StatsTrend } from '@/types/stats';
+import type { StatsRange, StatsSeriesPoint } from '@/types/stats';
 
 definePageMeta({ layout: 'default' });
 
 const { store, fetchList } = useDecks();
 const { t } = useT();
 const stats = useStats();
-const { current: locale } = useAppLocale();
 
 useSeo({ title: t('seo.statisticsTitle'), description: t('seo.appDesc'), noindex: true });
 const achievements = useAchievements();
 const dueTotal = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
+
+// Words known ≈ cards mastered across all decks (mature cards).
+const wordsKnown = computed(() =>
+    store.summaries.reduce(
+        (sum, d) => sum + Math.round((d.cardCount * d.stats.masteredPct) / 100),
+        0,
+    ),
+);
 
 const weakestDecks = computed(() =>
     [...store.summaries]
@@ -363,18 +303,68 @@ const rangeOptions = computed(() => [
     { value: 'all', label: t('statistics.rangeAll') },
 ]);
 
-const series = computed(() => stats.series.value);
-const maxReviewed = computed(() => Math.max(1, ...series.value.map((d) => d.value)));
-const maxStudyTime = computed(() => Math.max(1, ...stats.studyTime.value.map((d) => d.value)));
-const heat = computed(() => stats.yearHeat.value);
-
 const msToMin = (ms: number): number => Math.round(ms / 60000);
 
-const formatLastStudied = (iso: string): string =>
-    new Date(iso).toLocaleDateString(locale.value === 'uk' ? 'uk-UA' : 'en-US', {
-        month: 'short',
-        day: 'numeric',
-    });
+// Study trend: one chart that toggles between cards reviewed and time studied.
+type TrendMode = 'cards' | 'time';
+const trendMode = ref<TrendMode>('cards');
+const trendOptions = computed(() => [
+    { value: 'cards', label: t('statistics.trendCards') },
+    { value: 'time', label: t('statistics.trendTime') },
+]);
+const trendPoints = computed<StatsSeriesPoint[]>(() =>
+    trendMode.value === 'time' ? stats.studyTime.value : stats.series.value,
+);
+const trendMax = computed(() => Math.max(1, ...trendPoints.value.map((d) => d.value)));
+// Keep any non-zero day visible with a small floor height.
+const barHeight = (v: number): string =>
+    v <= 0 ? '0%' : `max(${(v / trendMax.value) * 100}%, 6px)`;
+const trendTooltip = (d: StatsSeriesPoint): string =>
+    trendMode.value === 'time'
+        ? `${msToMin(d.value)} ${t('statistics.studyTimeUnit')}`
+        : t('statistics.dsCardsReviewed').replace('{n}', String(d.value));
+const trendTotal = computed(() => trendPoints.value.reduce((sum, d) => sum + d.value, 0));
+const trendSummary = computed(() =>
+    trendMode.value === 'time'
+        ? t('statistics.trendTotalTime').replace('{n}', String(msToMin(trendTotal.value)))
+        : t('statistics.trendTotalCards').replace('{n}', String(trendTotal.value)),
+);
+
+// Performance: build the recall-distribution curve from the backend buckets.
+const PERF_W = 340;
+const PERF_H = 130;
+const perf = computed(() => stats.performance.value);
+const perfPoints = computed<{ x: number; y: number }[]>(() => {
+    const b = perf.value?.buckets ?? [];
+    if (b.length < 2) return [];
+    const maxC = Math.max(1, ...b);
+    return b.map((c, i) => ({
+        x: (i / (b.length - 1)) * PERF_W,
+        y: PERF_H - 6 - (c / maxC) * (PERF_H - 16),
+    }));
+});
+const perfLine = computed(() => perfPoints.value.map((p) => `${p.x},${p.y}`).join(' '));
+const perfArea = computed(() => {
+    const pts = perfPoints.value;
+    if (!pts.length) return '';
+    const body = pts.map((p) => `${p.x} ${p.y}`).join(' L ');
+    return `M ${pts[0]!.x} ${PERF_H} L ${body} L ${pts[pts.length - 1]!.x} ${PERF_H} Z`;
+});
+const perfMarkerX = computed(() => ((perf.value?.userRecall ?? 0) / 100) * PERF_W);
+const perfMarkerY = computed(() => {
+    const pts = perfPoints.value;
+    if (pts.length < 2) return PERF_H;
+    const x = perfMarkerX.value;
+    for (let i = 1; i < pts.length; i++) {
+        const a = pts[i - 1]!;
+        const b = pts[i]!;
+        if (x <= b.x) {
+            const t = b.x === a.x ? 0 : (x - a.x) / (b.x - a.x);
+            return a.y + (b.y - a.y) * t;
+        }
+    }
+    return pts[pts.length - 1]!.y;
+});
 
 // Shared bar-label helpers used by all bar charts.
 const DAY_ABBR = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
@@ -397,43 +387,6 @@ const formatBarLabel = (label: string, total: number): string => {
     return label;
 };
 
-// Mastery curve helpers
-const CURVE_W = 400;
-const CURVE_H = 100;
-const maxCardSeries = computed(() => Math.max(1, ...stats.cardSeries.value.map((d) => d.value)));
-const cardSeriesPoints = computed(() =>
-    stats.cardSeries.value.map((p, i) => {
-        const n = stats.cardSeries.value.length;
-        return {
-            x: n <= 1 ? CURVE_W / 2 : (i / (n - 1)) * CURVE_W,
-            y: (1 - p.value / maxCardSeries.value) * CURVE_H,
-            label: p.label,
-            value: p.value,
-        };
-    }),
-);
-const cardSeriesPolyline = computed(() =>
-    cardSeriesPoints.value.map((p) => `${p.x},${p.y}`).join(' '),
-);
-const cardSeriesAreaPath = computed(() => {
-    const pts = cardSeriesPoints.value;
-    if (!pts.length) {
-        return '';
-    }
-    const line = pts.map((p) => `${p.x},${p.y}`).join(' L ');
-    return `M ${pts[0].x} ${CURVE_H} L ${line} L ${pts[pts.length - 1].x} ${CURVE_H} Z`;
-});
-
-const toTrend = (t: StatsTrend | undefined) => {
-    const pct = t?.deltaPct ?? 0;
-    return {
-        dir: pct < 0 ? ('down' as const) : ('up' as const),
-        label: `${pct >= 0 ? '+' : ''}${pct}%`,
-    };
-};
-const reviewedTrend = computed(() => toTrend(stats.overview.value?.trends.reviewed));
-const retentionTrend = computed(() => toTrend(stats.overview.value?.trends.retention));
-
 const insight = computed(() => {
     const weakest = store.summaries
         .map((d) => ({ title: d.title, pct: d.stats.masteredPct }))
@@ -450,8 +403,7 @@ watch(range, async (r) => {
         stats.load(r),
         stats.loadSeries(r),
         stats.loadStudyTime(r),
-        stats.loadDecksStudied(r),
-        stats.loadCardSeries(r),
+        stats.loadPerformance(r),
     ]);
 });
 
@@ -461,8 +413,7 @@ onMounted(async () => {
         stats.load(range.value),
         stats.loadSeries(range.value),
         stats.loadStudyTime(range.value),
-        stats.loadDecksStudied(range.value),
-        stats.loadCardSeries(range.value),
+        stats.loadPerformance(range.value),
         achievements.load(),
     ]);
 });

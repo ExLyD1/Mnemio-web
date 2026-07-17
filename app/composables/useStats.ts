@@ -4,6 +4,7 @@ import type {
     DeckStudied,
     StatsActivity,
     StatsOverview,
+    StatsPerformance,
     StatsRange,
     StatsSeriesPoint,
 } from '@/types/stats';
@@ -72,6 +73,7 @@ export const useStats = () => {
     const decksStudied = ref<DeckStudied[]>([]);
     const cardSeries = ref<StatsSeriesPoint[]>([]);
     const cardSeriesPending = ref<boolean>(true);
+    const performance = ref<StatsPerformance | null>(null);
     const loading = ref(false);
 
     const reviewed = computed(() => overview.value?.reviewed ?? 0);
@@ -103,6 +105,10 @@ export const useStats = () => {
         cardSeries.value = res.points;
     };
 
+    const loadPerformance = async (range: StatsRange = '30') => {
+        performance.value = await statsApi.getPerformance(range);
+    };
+
     const load = async (range: StatsRange = '30') => {
         loading.value = true;
         try {
@@ -130,6 +136,7 @@ export const useStats = () => {
         decksStudied,
         cardSeries,
         cardSeriesPending,
+        performance,
         loading,
         reviewed,
         streak,
@@ -143,5 +150,6 @@ export const useStats = () => {
         loadStudyTime,
         loadDecksStudied,
         loadCardSeries,
+        loadPerformance,
     };
 };
