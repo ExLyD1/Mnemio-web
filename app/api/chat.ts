@@ -1,5 +1,5 @@
-import { http, getApiBase, refreshAccessToken } from '@/utils/http';
-import { readAccessToken } from '@/utils/authToken';
+import { http } from '@/utils/http';
+import { runSse } from '@/utils/sse';
 
 // ─── Wire types (docs/api-contract.md §Chat) ──────────────────────────────────
 
@@ -37,6 +37,8 @@ export interface ChatMessage {
     tokensOutput?: number | null;
     createdAt: string;
     attachments?: ChatAttachment[];
+    /** Client-only object URL for an attached image (never persisted; lost on reload). */
+    localImageUrl?: string;
 }
 
 export interface ConversationsPage {
@@ -95,131 +97,55 @@ export interface StreamHandlers {
     onError?: (e: StreamError) => void;
 }
 
-const API_PREFIX = '/api/v1';
-
-const buildInit = (
-    token: string | null,
-    content: string,
-    locale: string,
-    signal?: AbortSignal,
-): RequestInit => ({
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-        Accept: 'text/event-stream',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    credentials: 'include',
-    body: JSON.stringify({ content, locale }),
-    signal,
-});
-
-const parseFrame = (raw: string): { event: string; data: unknown } | null => {
-    let event = 'message';
-    const dataLines: string[] = [];
-    for (const line of raw.split('\n')) {
-        if (line.startsWith('event:')) {
-            event = line.slice(6).trim();
-        } else if (line.startsWith('data:')) {
-            dataLines.push(line.slice(5).trimStart());
-        }
-    }
-    if (!dataLines.length) {
-        return null;
-    }
-    try {
-        return { event, data: JSON.parse(dataLines.join('\n')) };
-    } catch {
-        return null;
-    }
-};
-
-const dispatch = (frame: { event: string; data: unknown }, handlers: StreamHandlers): void => {
-    switch (frame.event) {
-        case 'start':
-            handlers.onStart?.(frame.data as StreamStart);
-            break;
-        case 'token':
-            handlers.onToken?.((frame.data as { delta?: string }).delta ?? '');
-            break;
-        case 'done':
-            handlers.onDone?.(frame.data as StreamDone);
-            break;
-        case 'error':
-            handlers.onError?.(frame.data as StreamError);
-            break;
-    }
-};
-
 /**
  * Stream an assistant reply over SSE. Appends a user message and emits start →
- * token* → done (or error). Retries once on a 401 by refreshing the access token.
+ * token* → done (or error). When `image` is supplied the request is sent as
+ * multipart/form-data ("Вчися з будь-чого" from the chat surface) — the model
+ * reads the image and may call the create_deck tool; otherwise it's plain JSON.
+ * Retries once on a 401 by refreshing the access token (handled by `runSse`).
  */
-export const streamMessage = async (
+export const streamMessage = (
     conversationId: string,
     content: string,
     handlers: StreamHandlers,
     signal?: AbortSignal,
     locale = 'en',
+    image?: File | null,
 ): Promise<void> => {
-    const url = `${getApiBase()}${API_PREFIX}/chat/conversations/${conversationId}/messages?stream=1`;
-
-    let res: Response;
-    try {
-        res = await fetch(url, buildInit(readAccessToken(), content, locale, signal));
-        if (res.status === 401) {
-            const fresh = await refreshAccessToken();
-            if (!fresh) {
-                await navigateTo('/login?reason=session_expired');
-                return;
-            }
-            res = await fetch(url, buildInit(fresh, content, locale, signal));
+    let body: FormData | Record<string, unknown>;
+    if (image) {
+        const form = new FormData();
+        form.append('image', image);
+        if (content) {
+            form.append('content', content);
         }
-    } catch (e) {
-        if (e instanceof Error && e.name === 'AbortError') {
-            return;
-        }
-        handlers.onError?.({ code: 'NETWORK_ERROR', message: 'Chat request failed.' });
-        return;
+        form.append('locale', locale);
+        body = form;
+    } else {
+        body = { content, locale };
     }
 
-    if (!res.ok || !res.body) {
-        let err: StreamError = { code: 'NETWORK_ERROR', message: 'Chat request failed.' };
-        try {
-            const j = (await res.json()) as Partial<StreamError>;
-            if (j.code) {
-                err = { code: j.code, message: j.message ?? err.message, details: j.details };
+    return runSse({
+        path: `/chat/conversations/${conversationId}/messages`,
+        query: '?stream=1',
+        body,
+        signal,
+        onError: (e) => handlers.onError?.(e),
+        onFrame: (frame) => {
+            switch (frame.event) {
+                case 'start':
+                    handlers.onStart?.(frame.data as StreamStart);
+                    break;
+                case 'token':
+                    handlers.onToken?.((frame.data as { delta?: string }).delta ?? '');
+                    break;
+                case 'done':
+                    handlers.onDone?.(frame.data as StreamDone);
+                    break;
+                case 'error':
+                    handlers.onError?.(frame.data as StreamError);
+                    break;
             }
-        } catch {
-            // non-JSON body; keep the default
-        }
-        handlers.onError?.(err);
-        return;
-    }
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    try {
-        for (;;) {
-            const { value, done } = await reader.read();
-            if (done) {
-                break;
-            }
-            buffer += decoder.decode(value, { stream: true });
-            let idx: number;
-            while ((idx = buffer.indexOf('\n\n')) !== -1) {
-                const raw = buffer.slice(0, idx);
-                buffer = buffer.slice(idx + 2);
-                const frame = parseFrame(raw);
-                if (frame) {
-                    dispatch(frame, handlers);
-                }
-            }
-        }
-    } catch (e) {
-        if (!(e instanceof Error) || e.name !== 'AbortError') {
-            handlers.onError?.({ code: 'NETWORK_ERROR', message: 'Chat stream interrupted.' });
-        }
-    }
+        },
+    });
 };

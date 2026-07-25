@@ -7,6 +7,15 @@ let tempSeq = 0;
 const tempId = (p: string) => `tmp-${p}-${++tempSeq}`;
 
 /**
+ * Client-only cache of attached-image previews, keyed by server message id. The
+ * backend never persists the image, so this is how a thumbnail survives switching
+ * conversations or leaving and returning to the page within the same session.
+ * Module-level (not per-instance) so it outlives the page's mount. Lost on a full
+ * reload — the object URLs die with the document.
+ */
+const imagePreviewCache = new Map<string, string>();
+
+/**
  * Chat state + actions for the AI assistant page: a conversation sidebar, the
  * active thread, and an optimistic streaming `send`. One instance per page.
  */
@@ -22,6 +31,7 @@ export const useChat = () => {
 
     let controller: AbortController | null = null;
     let lastContent = '';
+    let lastImage: File | null = null;
 
     const patch = (id: string, fields: Partial<ChatMessage>) => {
         const i = messages.value.findIndex((m) => m.id === id);
@@ -67,7 +77,12 @@ export const useChat = () => {
         loadingThread.value = true;
         try {
             const res = await chatApi.getConversation(id);
-            messages.value = res.messages;
+            // Re-attach any client-only image previews we still hold for this session.
+            messages.value = res.messages.map((m) =>
+                imagePreviewCache.has(m.id)
+                    ? { ...m, localImageUrl: imagePreviewCache.get(m.id) }
+                    : m,
+            );
         } catch (e) {
             const err = e as Partial<ApiError>;
             streamError.value = { code: err.code ?? 'NETWORK_ERROR', message: err.message ?? '' };
@@ -83,12 +98,14 @@ export const useChat = () => {
         streamError.value = null;
     };
 
-    const send = async (content: string) => {
+    const send = async (content: string, image?: File | null) => {
         const text = content.trim();
-        if (!text || streaming.value) {
+        // An image-only turn is valid — the model reads the image itself.
+        if ((!text && !image) || streaming.value) {
             return;
         }
         lastContent = text;
+        lastImage = image ?? null;
         streamError.value = null;
 
         // First message in a brand-new chat → create the conversation first.
@@ -115,6 +132,7 @@ export const useChat = () => {
         const userTmp = tempId('user');
         const asstTmp = tempId('asst');
         const now = new Date().toISOString();
+        const localImageUrl = image ? URL.createObjectURL(image) : undefined;
         messages.value.push({
             id: userTmp,
             conversationId: convId,
@@ -122,6 +140,7 @@ export const useChat = () => {
             content: text,
             status: 'complete',
             createdAt: now,
+            localImageUrl,
         });
         messages.value.push({
             id: asstTmp,
@@ -138,7 +157,14 @@ export const useChat = () => {
             convId,
             text,
             {
-                onStart: (e) => patch(userTmp, { ...e.userMessage }),
+                onStart: (e) => {
+                    // Keep the client-only preview and remember it under the real
+                    // server id so it re-renders when the thread is refetched later.
+                    patch(userTmp, { ...e.userMessage, localImageUrl });
+                    if (localImageUrl) {
+                        imagePreviewCache.set(e.userMessage.id, localImageUrl);
+                    }
+                },
                 onToken: (delta) => {
                     const i = messages.value.findIndex((m) => m.id === asstTmp);
                     const cur = messages.value[i];
@@ -157,11 +183,12 @@ export const useChat = () => {
             },
             controller.signal,
             locale.value,
+            image,
         );
         streaming.value = false;
     };
 
-    const retry = () => send(lastContent);
+    const retry = () => send(lastContent, lastImage);
 
     const rename = async (id: string, title: string) => {
         const trimmed = title.trim();

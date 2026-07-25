@@ -13,7 +13,7 @@ subscriptions via Stripe). **65 endpoints under `/api/v1`** + `GET /health` +
 `GET /ready` + static `/media/*`. Nothing in this document is "coming later"
 unless it says so explicitly.
 
-### Endpoint inventory (65 under `/api/v1`)
+### Endpoint inventory (66 under `/api/v1`)
 
 | Domain       | Endpoints                                                                                                                                                                                             |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -27,7 +27,7 @@ unless it says so explicitly.
 | Achievements | `GET /achievements`                                                                                                                                                                                   |
 | Stats        | `GET /stats/overview` · `GET /stats/series` · `GET /stats/activity` · `GET /stats/decks`                                                                                                              |
 | Discover     | `GET /discover/decks` · `GET /discover/featured` · `GET /discover/categories` · `POST /decks/:id/copy`                                                                                                |
-| AI           | `POST /ai/enrich-words` · `POST /ai/generate-deck` · `POST /ai/suggest`                                                                                                                               |
+| AI           | `POST /ai/enrich-words` · `POST /ai/generate-deck` · `POST /ai/deck-from-image` · `POST /ai/suggest`                                                                                                  |
 | Imports      | `POST /imports/quizlet` · `POST /imports/text`                                                                                                                                                        |
 | Chat         | `GET /chat/conversations` · `POST /chat/conversations` · `GET /chat/conversations/:id` · `PATCH /chat/conversations/:id` · `DELETE /chat/conversations/:id` · `POST /chat/conversations/:id/messages` |
 | Public (SEO) | `GET /public/discover/decks` · `GET /public/discover/categories` · `GET /public/decks/:id` · `GET /public/sitemap/decks`                                                                              |
@@ -37,22 +37,22 @@ unless it says so explicitly.
 
 ### Invariants the FE must respect
 
-| #   | Rule                                                                                                                                                                                                                                                                                                                                                                                               |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Refresh token is an **HttpOnly cookie** `mnemio_refresh` on path `/api/v1/auth`. **Never in any body.** Send `credentials: 'include'` on every call.                                                                                                                                                                                                                                               |
-| 2   | Access token in `localStorage`, sent as `Authorization: Bearer …`.                                                                                                                                                                                                                                                                                                                                 |
-| 3   | On `{ code: 'AUTH_INVALID_TOKEN' }` → `POST /auth/refresh` (no body), retry once; on `{ code: 'AUTH_INVALID_REFRESH' }` → hard logout, never retry.                                                                                                                                                                                                                                                |
-| 4   | `POST /srs/rate` body is `{ cardId, rating }` — `'again'\|'hard'\|'good'\|'easy'`. Server derives `deckId`.                                                                                                                                                                                                                                                                                        |
-| 5   | Session XP is **server-computed** `correct*10 + 25`. Never send `xp`. The user's total `xp` changes server-side — refresh via `/auth/me` or `/dashboard.stats.xp`.                                                                                                                                                                                                                                 |
-| 6   | `User.fullName` (was `displayName`); `User.streak` is exposed but always `0` — use `/stats/overview.streak` instead.                                                                                                                                                                                                                                                                               |
-| 7   | Username-taken error code is `AUTH_USERNAME_TAKEN`.                                                                                                                                                                                                                                                                                                                                                |
-| 8   | Every list response is `{ items, nextCursor }`; one variant (`GET /decks`) adds `total`. Cursor is opaque.                                                                                                                                                                                                                                                                                         |
-| 9   | Ownership is checked at the repo layer — listing/getting/modifying someone else's deck/card/session always returns `404 *_NOT_FOUND` or `403 *_FORBIDDEN`.                                                                                                                                                                                                                                         |
-| 10  | Only one `active` session per user. Both `POST /sessions` and `POST /sessions/:id/resume` flip a pre-existing active session to `incomplete` atomically.                                                                                                                                                                                                                                           |
-| 11  | Every auth response (`login`, `verify-email`, `refresh`, `me`) now carries `welcome: { hasDeck, hasSession, hasReviewed }` — use it for dashboard variant selection instead of fanning out three count probes from the FE.                                                                                                                                                                         |
-| 12  | `/imports/*` and `/ai/*` share a per-user daily-cap rollup in `ai_usage`. A user can hit the import cap without affecting AI calls and vice versa — distinct error codes (`IMPORT_BUDGET_EXCEEDED` vs `AI_BUDGET_EXCEEDED`).                                                                                                                                                                       |
-| 13  | `/chat/conversations/:id/messages` is the only endpoint where partial-success matters: a streamed assistant reply that gets cut mid-flight is persisted with `status: 'partial'` and the user is NOT charged a daily-cap unit. The FE can render the half-reply and offer "retry."                                                                                                                 |
-| 14  | `GET /auth/me` (and every token-issuing auth response) now returns `plan: 'free' \| 'premium'` at the top level. Store it in auth state alongside `user` — the FE uses it to show/hide premium UI and to optimistically gate features before the server enforces them. On `403 PREMIUM_REQUIRED` from any endpoint, show the paywall modal (the server enforces even if the FE shows the feature). |
+| #   | Rule                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Refresh token is an **HttpOnly cookie** `mnemio_refresh` on path `/api/v1/auth`. **Never in any body.** Send `credentials: 'include'` on every call.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 2   | Access token in `localStorage`, sent as `Authorization: Bearer …`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 3   | On `{ code: 'AUTH_INVALID_TOKEN' }` → `POST /auth/refresh` (no body), retry once; on `{ code: 'AUTH_INVALID_REFRESH' }` → hard logout, never retry.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 4   | `POST /srs/rate` body is `{ cardId, rating }` — `'again'\|'hard'\|'good'\|'easy'`. Server derives `deckId`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 5   | Session XP is **server-computed** `correct*10 + 25`. Never send `xp`. The user's total `xp` changes server-side — refresh via `/auth/me` or `/dashboard.stats.xp`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 6   | `User.fullName` (was `displayName`); `User.streak` is exposed but always `0` — use `/stats/overview.streak` instead.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 7   | Username-taken error code is `AUTH_USERNAME_TAKEN`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 8   | Every list response is `{ items, nextCursor }`; one variant (`GET /decks`) adds `total`. Cursor is opaque.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 9   | Ownership is checked at the repo layer — listing/**modifying** someone else's deck/card/session always returns `404 *_NOT_FOUND` or `403 *_FORBIDDEN`. **Exception (public decks):** an authenticated non-owner may **read, study, and rate** a deck with `isPublic = true` — `GET /decks/:id`, `POST /sessions`, and `POST /srs/rate` succeed. SRS is keyed by `(requesterId, cardId)`, so each studier has fully independent progress and a viewer never touches the owner's. **Writes stay owner-only** (`PATCH`/`DELETE` deck, all card create/update/delete). Flipping `isPublic = false` re-locks read/study/rate immediately (back to `404`); previously-written viewer SRS rows persist but become unreachable. |
+| 10  | Only one `active` session per user. Both `POST /sessions` and `POST /sessions/:id/resume` flip a pre-existing active session to `incomplete` atomically.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 11  | Every auth response (`login`, `verify-email`, `refresh`, `me`) now carries `welcome: { hasDeck, hasSession, hasReviewed }` — use it for dashboard variant selection instead of fanning out three count probes from the FE.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 12  | `/imports/*` and `/ai/*` share a per-user daily-cap rollup in `ai_usage`. A user can hit the import cap without affecting AI calls and vice versa — distinct error codes (`IMPORT_BUDGET_EXCEEDED` vs `AI_BUDGET_EXCEEDED`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 13  | `/chat/conversations/:id/messages` is the only endpoint where partial-success matters: a streamed assistant reply that gets cut mid-flight is persisted with `status: 'partial'` and the user is NOT charged a daily-cap unit. The FE can render the half-reply and offer "retry."                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 14  | `GET /auth/me` (and every token-issuing auth response) now returns `plan: 'free' \| 'premium'` at the top level. Store it in auth state alongside `user` — the FE uses it to show/hide premium UI and to optimistically gate features before the server enforces them. On `403 PREMIUM_REQUIRED` from any endpoint, show the paywall modal (the server enforces even if the FE shows the feature).                                                                                                                                                                                                                                                                                                                      |
 
 ### Demo data
 
@@ -125,41 +125,45 @@ type ApiError = {
 | 500    | Internal — backend bug                                        |
 
 **Codes the FE should map specifically:**
-| Code | Where | UX |
-|---|---|---|
-| `VALIDATION_ERROR` | any | Field errors from `details` |
-| `AUTH_EMAIL_TAKEN` | `POST /auth/register` | "An account already exists. Log in instead." |
-| `AUTH_INVALID_CREDENTIALS` | `POST /auth/login` | "Email or password is incorrect." (do **not** distinguish "no such user" from "wrong password") |
-| `AUTH_INVALID_CODE` | `POST /auth/verify-email` | "Invalid verification code." |
-| `AUTH_OTP_EXHAUSTED` | `POST /auth/verify-email` | "Too many attempts. Request a new code." |
-| `AUTH_OTP_COOLDOWN` | `POST /auth/resend-otp` | "Wait {N}s before requesting another code." |
-| `EMAIL_NOT_VERIFIED` | `POST /auth/login` | Route the user to OTP step; `details.userId` included |
-| `AUTH_INVALID_TOKEN` | any auth-required endpoint | Try `/auth/refresh`; on failure → logout |
-| `AUTH_INVALID_REFRESH` | `POST /auth/refresh` | Hard logout — token is revoked or stolen |
-| `AUTH_USERNAME_TAKEN` | `PATCH /users/me` | Inline field error on `username` |
-| `DECK_NOT_FOUND` / `CARD_NOT_FOUND` / `SESSION_NOT_FOUND` | resource routes | 404 page or toast |
-| `DECK_EMPTY` | `POST /sessions` | Disable "Study" CTA when `cardCount === 0` |
-| `SESSION_NOT_ACTIVE` | `POST /sessions/:id/complete` | Refetch session, sync FE state |
-| `AI_TOO_MANY_WORDS` | `POST /ai/enrich-words` | "Max {max} words per batch — got {got}." `details.{max,got}` |
-| `AI_BUDGET_EXCEEDED` | any `/ai/*` | "Daily AI quota reached." `details.kind`, `details.capPerDay` |
-| `AI_PROVIDER_ERROR` | any `/ai/*` | Generic "AI is having a moment — try again." `details.providerStatus` for logs |
-| `AI_VALIDATION_FAILED` | any `/ai/*` | Same UX as provider error; LLM returned garbage |
-| `IMPORT_BAD_URL` | `POST /imports/quizlet` | "URL must be a `quizlet.com` set link." |
-| `IMPORT_NOT_FOUND` | `POST /imports/quizlet` | "Set is private, removed, or doesn't exist." |
-| `IMPORT_PARSE_FAILED` | `POST /imports/*` · `POST /decks/:id/cards/import` | "Couldn't parse this content." Suggest pasting text instead for Quizlet. |
-| `IMPORT_UPSTREAM_ERROR` | `POST /imports/quizlet` | "Quizlet didn't respond — try again." `details.providerStatus` |
-| `IMPORT_BUDGET_EXCEEDED` | `POST /imports/*` | "Daily import quota reached." `details.capPerDay` |
-| `OAUTH_NOT_CONFIGURED` | `/auth/oauth/*` | "Google sign-in isn't enabled on this deployment." Hide the button. |
-| `OAUTH_BAD_EXCHANGE_CODE` | `POST /auth/oauth/exchange` | "Sign-in code missing — start over." |
-| `OAUTH_EXCHANGE_EXPIRED` | `POST /auth/oauth/exchange` | "Sign-in took too long — start over." |
-| `OAUTH_EMAIL_UNVERIFIED` | `/auth/oauth/google/callback` | Surface via the `/auth/oauth/error?reason=` redirect. |
-| `AUTH_EMAIL_UNVERIFIED_LINK` | `/auth/oauth/google/callback` | The user already has an unverified password account with that email; tell them to verify it first or use a different Google account. |
-| `NOT_READY` | `GET /ready` | 503 — DB ping failed. Ops-only; FE doesn't call `/ready`. |
-| `CHAT_NOT_FOUND` | any `/chat/conversations/:id*` | 404 — conversation missing or owned by someone else. |
-| `PREMIUM_REQUIRED` | any gated endpoint | 403 — feature requires an active subscription. Show paywall/upgrade modal. |
-| `BILLING_NOT_CONFIGURED` | any `/billing/*` | 400 — Stripe keys absent on this deployment. Hide billing UI entirely. |
-| `BILLING_NO_SUBSCRIPTION` | `GET /billing/subscription` · `POST /billing/portal` | 404 — user has no subscription row. Treat the same as `plan: 'free'`. |
-| `BILLING_PRICE_NOT_CONFIGURED` | `POST /billing/checkout` | 400 — specific plan price ID missing in env. Fall back to the other plan or show "unavailable". |
+
+| Code                                                      | Where                                                                            | UX                                                                                                                                   |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `VALIDATION_ERROR`                                        | any                                                                              | Field errors from `details`                                                                                                          |
+| `AUTH_EMAIL_TAKEN`                                        | `POST /auth/register`                                                            | "An account already exists. Log in instead."                                                                                         |
+| `AUTH_INVALID_CREDENTIALS`                                | `POST /auth/login`                                                               | "Email or password is incorrect." (do **not** distinguish "no such user" from "wrong password")                                      |
+| `AUTH_INVALID_CODE`                                       | `POST /auth/verify-email`                                                        | "Invalid verification code."                                                                                                         |
+| `AUTH_OTP_EXHAUSTED`                                      | `POST /auth/verify-email`                                                        | "Too many attempts. Request a new code."                                                                                             |
+| `AUTH_OTP_COOLDOWN`                                       | `POST /auth/resend-otp`                                                          | "Wait {N}s before requesting another code."                                                                                          |
+| `EMAIL_NOT_VERIFIED`                                      | `POST /auth/login`                                                               | Route the user to OTP step; `details.userId` included                                                                                |
+| `AUTH_INVALID_TOKEN`                                      | any auth-required endpoint                                                       | Try `/auth/refresh`; on failure → logout                                                                                             |
+| `AUTH_INVALID_REFRESH`                                    | `POST /auth/refresh`                                                             | Hard logout — token is revoked or stolen                                                                                             |
+| `AUTH_USERNAME_TAKEN`                                     | `PATCH /users/me`                                                                | Inline field error on `username`                                                                                                     |
+| `DECK_NOT_FOUND` / `CARD_NOT_FOUND` / `SESSION_NOT_FOUND` | resource routes                                                                  | 404 page or toast                                                                                                                    |
+| `DECK_EMPTY`                                              | `POST /sessions`                                                                 | Disable "Study" CTA when `cardCount === 0`                                                                                           |
+| `SESSION_NOT_ACTIVE`                                      | `POST /sessions/:id/complete`                                                    | Refetch session, sync FE state                                                                                                       |
+| `AI_TOO_MANY_WORDS`                                       | `POST /ai/enrich-words`                                                          | "Max {max} words per batch — got {got}." `details.{max,got}`                                                                         |
+| `AI_BUDGET_EXCEEDED`                                      | any `/ai/*`                                                                      | "Daily AI quota reached." `details.kind`, `details.capPerDay`                                                                        |
+| `AI_PROVIDER_ERROR`                                       | any `/ai/*`                                                                      | Generic "AI is having a moment — try again." `details.providerStatus` for logs                                                       |
+| `AI_VALIDATION_FAILED`                                    | any `/ai/*`                                                                      | Same UX as provider error; LLM returned garbage                                                                                      |
+| `AI_IMAGE_MISSING`                                        | `POST /ai/deck-from-image` · `POST /chat/conversations/:id/messages` (multipart) | Client bug — no `image` field in the multipart body.                                                                                 |
+| `AI_IMAGE_UNSUPPORTED_TYPE`                               | `POST /ai/deck-from-image` · image-attached chat message                         | "That image type isn't supported — try PNG, JPEG, WEBP, or GIF." `details.allowed`                                                   |
+| `AI_IMAGE_TOO_LARGE`                                      | `POST /ai/deck-from-image` · image-attached chat message                         | "That image is too large." `details.maxBytes`                                                                                        |
+| `IMPORT_BAD_URL`                                          | `POST /imports/quizlet`                                                          | "URL must be a `quizlet.com` set link."                                                                                              |
+| `IMPORT_NOT_FOUND`                                        | `POST /imports/quizlet`                                                          | "Set is private, removed, or doesn't exist."                                                                                         |
+| `IMPORT_PARSE_FAILED`                                     | `POST /imports/*` · `POST /decks/:id/cards/import`                               | "Couldn't parse this content." Suggest pasting text instead for Quizlet.                                                             |
+| `IMPORT_UPSTREAM_ERROR`                                   | `POST /imports/quizlet`                                                          | "Quizlet didn't respond — try again." `details.providerStatus`                                                                       |
+| `IMPORT_BUDGET_EXCEEDED`                                  | `POST /imports/*`                                                                | "Daily import quota reached." `details.capPerDay`                                                                                    |
+| `OAUTH_NOT_CONFIGURED`                                    | `/auth/oauth/*`                                                                  | "Google sign-in isn't enabled on this deployment." Hide the button.                                                                  |
+| `OAUTH_BAD_EXCHANGE_CODE`                                 | `POST /auth/oauth/exchange`                                                      | "Sign-in code missing — start over."                                                                                                 |
+| `OAUTH_EXCHANGE_EXPIRED`                                  | `POST /auth/oauth/exchange`                                                      | "Sign-in took too long — start over."                                                                                                |
+| `OAUTH_EMAIL_UNVERIFIED`                                  | `/auth/oauth/google/callback`                                                    | Surface via the `/auth/oauth/error?reason=` redirect.                                                                                |
+| `AUTH_EMAIL_UNVERIFIED_LINK`                              | `/auth/oauth/google/callback`                                                    | The user already has an unverified password account with that email; tell them to verify it first or use a different Google account. |
+| `NOT_READY`                                               | `GET /ready`                                                                     | 503 — DB ping failed. Ops-only; FE doesn't call `/ready`.                                                                            |
+| `CHAT_NOT_FOUND`                                          | any `/chat/conversations/:id*`                                                   | 404 — conversation missing or owned by someone else.                                                                                 |
+| `PREMIUM_REQUIRED`                                        | any gated endpoint                                                               | 403 — feature requires an active subscription. Show paywall/upgrade modal.                                                           |
+| `BILLING_NOT_CONFIGURED`                                  | any `/billing/*`                                                                 | 400 — Stripe keys absent on this deployment. Hide billing UI entirely.                                                               |
+| `BILLING_NO_SUBSCRIPTION`                                 | `GET /billing/subscription` · `POST /billing/portal`                             | 404 — user has no subscription row. Treat the same as `plan: 'free'`.                                                                |
+| `BILLING_PRICE_NOT_CONFIGURED`                            | `POST /billing/checkout`                                                         | 400 — specific plan price ID missing in env. Fall back to the other plan or show "unavailable".                                      |
 
 **429 envelope:** `@fastify/rate-limit` is now configured with our standard
 envelope, so a rate-limited request returns
@@ -351,9 +355,11 @@ type WelcomeState = {
     hasReviewed: boolean;
 };
 
-// Ephemeral card draft — used as both the AI-enrichment / generate-deck
-// output and the /imports/* output, so the FE renders one review/preview
-// UI for all three sources.
+// Ephemeral card draft — used as both the AI-enrichment / generate-deck /
+// deck-from-image output and the /imports/* output, so the FE renders one
+// review/preview UI for all four sources. For deck-from-image specifically,
+// `example` is the actual sentence the word appeared in on the image (not a
+// generated one) whenever the source material had one.
 type AiCardDraft = {
     word: string;
     definition: string;
@@ -392,14 +398,16 @@ type ChatMessage = {
 };
 
 // Structured side-effect produced when the chat model called a tool. Today
-// the only kind is 'deck' (the create_deck tool). Future tools (audio,
-// image, study session…) extend this discriminated union without breaking
-// the FE contract.
+// the only kind is 'deck' (the create_deck / add_cards tools). Future tools
+// (audio, image, study session…) extend this discriminated union without
+// breaking the FE contract.
 type ChatAttachment = {
     type: 'deck';
     deckId: string;
     title: string;
-    cardCount: number;
+    cardCount: number; // the deck's CURRENT total after the tool ran
+    action?: 'created' | 'appended'; // 'created' = create_deck, 'appended' = add_cards
+    addedCount?: number; // cards just appended (only on action: 'appended')
 };
 ```
 
@@ -674,15 +682,22 @@ The FE's Deck Detail page, study queue, and Add Card flow all assume the entire
 card list is present, so the deck detail returns cards **inline** rather than
 paged. Hard cap is 1000 (matches the FE per-deck limit).
 
+Returns to the **owner** OR any authenticated user when the deck is
+`isPublic = true` (see invariant #9). `role`/`isOwner` tell the FE which UI to
+render; `stats` always reflect **the requester's** SRS, never the owner's. A
+private deck 404s for non-owners.
+
 ```ts
 // Query: ?cardsLimit?=number(<=1000)  default 1000
 
 // 200 Response
 {
-  deck: Deck;
-  cards: Card[];              // sorted by (position ASC, id ASC), up to cap
+  deck: Deck;                // deck.stats = the REQUESTER's progress
+  cards: Card[];             // sorted by (position ASC, id ASC), up to cap
+  role: 'owner' | 'viewer';
+  isOwner: boolean;
 }
-// Errors: 404 DECK_NOT_FOUND
+// Errors: 404 DECK_NOT_FOUND   (also when a non-owner requests a private deck)
 ```
 
 Example:
@@ -919,12 +934,13 @@ Rate a card. Server runs SM-2 and upserts the user's `CardProgress`.
 Rating → SM-2 quality mapping (matches the frontend composable). EF delta uses
 the standard SuperMemo-2 formula `ΔEF = 0.1 − (5−q)(0.08 + (5−q)·0.02)`, with EF
 floored at 1.3.
-| Rating | Quality | Effect |
-|---|---|---|
-| `again` | 0 | Failure path: repetitions=0, interval=1d, **EF −0.2** |
-| `hard` | 2 | Treated as failure (q<3): same reset path, **EF −0.32** |
-| `good` | 3 | Advance: repetitions++, interval = 1 / 6 / round(prev × prevEF), **EF −0.14** |
-| `easy` | 5 | Advance same way, **EF +0.10** |
+
+| Rating  | Quality | Effect                                                                        |
+| ------- | ------- | ----------------------------------------------------------------------------- |
+| `again` | 0       | Failure path: repetitions=0, interval=1d, **EF −0.2**                         |
+| `hard`  | 2       | Treated as failure (q<3): same reset path, **EF −0.32**                       |
+| `good`  | 3       | Advance: repetitions++, interval = 1 / 6 / round(prev × prevEF), **EF −0.14** |
+| `easy`  | 5       | Advance same way, **EF +0.10**                                                |
 
 #### `GET /srs/due` _(auth)_
 
@@ -1307,6 +1323,90 @@ Same SSE protocol as enrich-words, but with one additional event type:
 render the deck shell before any cards arrive. Then `card` events for each
 generated card, then `done`.
 
+#### `POST /ai/deck-from-image` _(auth)_ ⭐ key feature
+
+"Вчися з будь-чого" — extracts a study-ready deck from a single image (a
+screenshot, a photo of a textbook page, a video subtitle frame). The image is
+**read once and never persisted** — it exists only for the duration of the
+request. **Server does not persist the deck either** — same accept flow as
+`generate-deck` (`POST /decks` + `POST /decks/:id/cards/bulk`).
+
+Request is `multipart/form-data` (not JSON):
+
+```ts
+// Request (multipart/form-data)
+{
+  image: File;                   // field name "image" — png/jpeg/webp/gif,
+                                  // ≤ AI_IMAGE_MAX_BYTES (default 5 MB)
+  sourceLanguage?: string;       // default 'en' — language of definitions
+  targetLanguage?: string;       // omit to let the model detect it from the image
+  count?: number;                // 1–20, default 8 (upper bound — fewer cards
+                                  // come back if the image doesn't have that many)
+  instructions?: string;         // ≤ 300 chars — refine hint on a re-submit of
+                                  // the same image, e.g. "more words", "harder"
+}
+
+// 200 Response (non-streaming)
+{
+  provider: 'mock' | 'anthropic';
+  draft: {
+    title: string;
+    description: string;
+    sourceLanguage: string;
+    targetLanguage: string;
+    subject?: string;
+    glyph?: string;
+    cards: AiCardDraft[];        // may be empty — see `note` below
+  };
+  note?: 'no_text';              // present when the image had no readable,
+                                  // learnable text. This is NOT an error —
+                                  // show a friendly empty state, not a toast.
+}
+```
+
+**Invariants:**
+
+- **Only real words.** Cards are built exclusively from words the model
+  found in the image — never invented. This is a trust guarantee, not just a
+  prompt hint.
+- **Context, not a bare translation.** `example` is the sentence the word
+  appeared in on the image, where the source material had one.
+- **Honest empty state.** No readable/learnable text → `cards: []` +
+  `note: 'no_text'`, HTTP 200. The FE should show a clear message ("couldn't
+  find any words — try a clearer photo") and a retry action, not a generic
+  error toast.
+
+**Errors:**
+
+- `400 AI_IMAGE_MISSING` — no `image` field in the multipart body.
+- `400 AI_IMAGE_UNSUPPORTED_TYPE` — MIME type isn't png/jpeg/webp/gif.
+- `400 AI_IMAGE_TOO_LARGE` — image exceeds `AI_IMAGE_MAX_BYTES`.
+- `429 AI_BUDGET_EXCEEDED` — daily `image` cap hit (separate from `generate`).
+- `502 AI_PROVIDER_ERROR` / `502 AI_VALIDATION_FAILED` — same as generate-deck.
+
+##### Streaming variant — `Accept: text/event-stream`
+
+Same SSE protocol as `generate-deck` (`start` → `header` → `card`×N →
+`done`), with one difference: the `done` frame carries `note` when present.
+
+```
+event: start
+data: { "provider": "anthropic" }
+
+event: header
+data: { "type": "header", "deck": { "title": "...", "..." } }
+
+event: card
+data: { "type": "card", "position": 0, "card": { "..." } }
+
+event: done
+data: { "meta": { "durationMs": 1200, "tokensInput": 900, "tokensOutput": 300 } }
+```
+
+A `no_text` result streams `start` → `header` (explaining there's nothing to
+learn) → `done` with `note: 'no_text'` and zero `card` events — the FE can
+treat "no cards arrived" and `note` as the same signal.
+
 #### `POST /ai/suggest` _(auth)_
 
 Contextual Mimi nudge for the dashboard / deck detail / review screens.
@@ -1329,15 +1429,21 @@ Always single-response (small payload, no streaming needed).
 
 #### Common — rate limits + budget
 
-| Limit                       | Free tier   | Premium tier  | Throws                       |
-| --------------------------- | ----------- | ------------- | ---------------------------- |
-| Request rate                | 30/min/user | 30/min/user   | `429 RATE_LIMITED`           |
-| Daily `enrich` cap          | 5/day       | 50/day (env)  | `429 AI_BUDGET_EXCEEDED`     |
-| Daily `generate` cap        | 20/day      | 200/day (env) | `429 AI_BUDGET_EXCEEDED`     |
-| Daily `suggest` cap         | 60/day      | 600/day (env) | `429 AI_BUDGET_EXCEEDED`     |
-| Daily `chat` cap            | 50/day      | 500/day (env) | `429 AI_BUDGET_EXCEEDED`     |
-| Daily `import` cap          | 20/day      | 200/day (env) | `429 IMPORT_BUDGET_EXCEEDED` |
-| Max words per `enrich` call | 100         | 100           | `400 AI_TOO_MANY_WORDS`      |
+| Limit                                                | Free tier   | Premium tier  | Throws                       |
+| ---------------------------------------------------- | ----------- | ------------- | ---------------------------- |
+| Request rate                                         | 30/min/user | 30/min/user   | `429 RATE_LIMITED`           |
+| Daily `enrich` cap                                   | 5/day       | 50/day (env)  | `429 AI_BUDGET_EXCEEDED`     |
+| Daily `generate` cap                                 | 20/day      | 200/day (env) | `429 AI_BUDGET_EXCEEDED`     |
+| Daily `suggest` cap                                  | 60/day      | 600/day (env) | `429 AI_BUDGET_EXCEEDED`     |
+| Daily `chat` cap                                     | 50/day      | 500/day (env) | `429 AI_BUDGET_EXCEEDED`     |
+| Daily `image` cap                                    | 10/day      | 100/day (env) | `429 AI_BUDGET_EXCEEDED`     |
+| Daily `import` cap                                   | 20/day      | 200/day (env) | `429 IMPORT_BUDGET_EXCEEDED` |
+| Max words per `enrich` call                          | 100         | 100           | `400 AI_TOO_MANY_WORDS`      |
+| Max image size (`deck-from-image` + chat attachment) | 5 MB (env)  | 5 MB (env)    | `400 AI_IMAGE_TOO_LARGE`     |
+
+`image` is its own daily cap — vision calls cost more than text-only ones. It
+covers **both** `POST /ai/deck-from-image` and any chat turn with an attached
+image (a chat turn with an image is metered as `image`, not `chat`).
 
 Free and premium caps are independently configurable via env
 (`AI_DAILY_*_CAP_PER_USER` for free, `AI_DAILY_*_CAP_PREMIUM_PER_USER` for
@@ -1476,11 +1582,45 @@ Hard delete. Cascades to all messages.
 Append a user message and stream the assistant reply.
 
 ```ts
-// Request
+// Request (JSON — Content-Type: application/json)
 {
-    content: string;
-} // 1..4000 chars (trimmed)
+  content: string;                  // 1..4000 chars (trimmed)
+  deckId?: string;                  // uuid — the deck the user currently has OPEN.
+                                    // When present (and owned), unlocks the
+                                    // add_cards tool so "add these words to this
+                                    // deck" appends instead of creating a new deck.
+  locale?: string;                  // the chat/UI language, e.g. "uk", "en-US".
+                                    // Normalized to an ISO 639-1 code server-side.
+                                    // Drives the reply language and the default
+                                    // create_deck/add_cards language pair when the
+                                    // user doesn't ask for a specific one.
+}
 ```
+
+**Image attachment (multipart/form-data)** — same endpoint, sent as
+`multipart/form-data` instead of JSON when the user drops an image into the
+chat ("Вчися з будь-чого" from the chat surface):
+
+```ts
+// Request (multipart/form-data)
+{
+  image: File;                      // field name "image" — png/jpeg/webp/gif,
+                                    // ≤ AI_IMAGE_MAX_BYTES (default 5 MB)
+  content?: string;                 // optional here — image-only messages are
+                                    // valid; when both are sent, content is
+                                    // additional instruction alongside the image
+  deckId?: string;                  // same semantics as the JSON body
+  locale?: string;                  // same semantics as the JSON body
+}
+```
+
+The model reads the image itself (no separate extraction endpoint) and, when
+it finds words worth learning, calls the existing `create_deck` tool — same
+`tool_use`/`tool_result` SSE frames as a text request. **The image is never
+persisted** — it's held in memory for the request only. An image-attached
+turn is metered against the **`image`** daily cap, not `chat` (vision calls
+cost more). If the image has no readable, learnable text the model just
+replies saying so — no tool call, no attachment.
 
 **SSE response** (when `Accept: text/event-stream` or `?stream=1`):
 
@@ -1494,19 +1634,25 @@ data: {
 event: token
 data: { delta: string }             // one event per provider chunk
 
-# Optional pair — emitted only when the model calls a tool (today: create_deck).
+# Optional pair — emitted only when the model calls a tool.
+# Tools: create_deck (always) and add_cards (only when the request carried a
+# deckId the user owns).
 event: tool_use
-data: { name: 'create_deck', input: { topic?, words?, sourceLanguage?, ... } }
+data: { name: 'create_deck' | 'add_cards', input: { topic?, words?, ... } }
 
 event: tool_result
 data: {
-  name: 'create_deck',
+  name: 'create_deck' | 'add_cards',
   ok: boolean,                       // true on success
   data: ChatAttachment | { reason: string }  // attachment on ok:true, reason on ok:false
 }
 
-# More `event: token` frames may follow as the model writes its follow-up
-# text after the tool runs.
+# IMPORTANT (BUG-2506-12): any tokens streamed BEFORE `tool_use` are a neutral
+# pre-tool preamble, NOT a result — the FE should clear them on `tool_use` and
+# render the post-`tool_result` tokens. The persisted `assistantMessage.content`
+# is the post-tool text only, so a "added it" confirmation can never appear
+# without a matching successful `tool_result`. More `event: token` frames follow
+# after the tool runs.
 
 event: done
 data: {
@@ -1520,26 +1666,61 @@ event: error                         // mid-stream failure
 data: { code: string, message: string, details?: object }
 ```
 
-**Tool semantics:** when the model decides the user wants a deck
-(explicit words, topic request, "make me a deck"…), it calls
-`create_deck`. The backend runs it via the existing `enrich-words` or
-`generate-deck` pipeline and persists a real `Deck` + `Card[]` owned by
-the caller. The SSE stream emits `tool_use` → `tool_result`, then more
-`token` frames as the model writes its confirmation. The final
-`assistantMessage.attachments` contains
-`[{ type: 'deck', deckId, title, cardCount }]` — the FE already renders
-this as a clickable link card.
+**Tool semantics:** two deck tools, chosen by the model:
 
-If the tool fails (`ok: false`), no attachment is persisted, the model
-writes a text apology, and `assistantMessage.attachments` is omitted.
-The user is still charged one `chat` budget unit. The underlying error
-code lives in `tool_result.data.reason` (`AI_BUDGET_EXCEEDED`,
-`AI_PROVIDER_ERROR`, `INTERNAL`, etc.).
+- **`create_deck`** — when the user wants a NEW deck (explicit words, topic
+  request, "make me a deck"…). Persists a fresh `Deck` + `Card[]`; attachment
+  `action: 'created'`.
+- **`add_cards`** — appends to the deck the user is viewing. Offered **only**
+  when the request carried a `deckId` the caller owns; the target deckId comes
+  from that context (never from the model), and the new cards use the deck's
+  own languages. Persists `Card[]` onto the existing deck via the same
+  bulk-create path; attachment `action: 'appended'`, `addedCount: N`, and
+  `cardCount` = the deck's new total.
+
+Both run via the existing `enrich-words` / `generate-deck` pipeline. The final
+`assistantMessage.attachments` carries the affected deck so the FE can render a
+link card and refresh the open deck.
+
+**Content matching the chat text:** the model is instructed to pass `words` —
+the exact items it names in its reply — for any enumerable request ("10 names
+of X", a specific list/category); `topic` is reserved for genuinely open-ended
+requests. This keeps the persisted cards in sync with what Mimi told the user.
+The `tool_result` JSON the model sees (not the FE-facing attachment) also
+includes the first ~10 persisted `words`, so the model's post-tool reply is
+grounded in what was actually saved rather than re-deriving it from memory.
+The `topic` branch (`generateDeck`) additionally gets one deterministic retry
+if the draft comes back empty or well short of the requested `count`.
+
+**Language:** `create_deck`/`add_cards` resolve source/target languages with
+this precedence: an explicit pair the model passes (honoring a custom request
+like "words in Spanish, definitions in Portuguese") wins; otherwise the
+request's `locale` is the default; otherwise the user's saved preferences;
+otherwise a hardcoded fallback. Every language value (`locale`, model output,
+and `Deck.sourceLanguage`/`targetLanguage`/`Preference` fields) is normalized
+to an ISO 639-1 code (`src/shared/lang.ts`) before persisting — full names like
+"English" are mapped to `en` — so the FE's code-keyed language `<select>`
+always has a match.
+
+If the tool fails (`ok: false`), no attachment is persisted, the model writes a
+text apology (post-tool), and `assistantMessage.attachments` is omitted. The
+user is still charged one `chat` budget unit. The error code lives in
+`tool_result.data.reason` (`AI_BUDGET_EXCEEDED`, `DECK_NOT_FOUND`,
+`NEEDS_WORDS_OR_TOPIC`, `AI_PROVIDER_ERROR`, `INTERNAL`, …).
 
 After an `event: error` the assistant message stays in the database with
 `status: 'partial'` and whatever text we got before the failure. The user
 is NOT charged a daily-cap unit. The FE should render the partial reply
 and offer the user a "retry" affordance.
+
+**Errors specific to the multipart (image) request:**
+
+- `400 CHAT_EMPTY_MESSAGE` — neither `content` nor `image` was sent.
+- `400 AI_IMAGE_MISSING` — multipart body has no `image` field.
+- `400 AI_IMAGE_UNSUPPORTED_TYPE` / `400 AI_IMAGE_TOO_LARGE` — see the AI
+  section's common errors table.
+- `429 AI_BUDGET_EXCEEDED` with `details.kind === 'image'` on an image turn
+  (vs `'chat'` for a text-only turn).
 
 **Non-SSE response** (default JSON):
 
@@ -1741,13 +1922,14 @@ Stripe event receiver. The FE **never calls this directly** — it is only for
 Stripe's servers. Listed here for completeness.
 
 The backend processes:
-| Stripe event | Effect |
-|---|---|
-| `customer.subscription.created` | Upsert subscription row (→ `trialing`/`active`) |
+
+| Stripe event                    | Effect                                           |
+| ------------------------------- | ------------------------------------------------ |
+| `customer.subscription.created` | Upsert subscription row (→ `trialing`/`active`)  |
 | `customer.subscription.updated` | Update status, plan, period, `cancelAtPeriodEnd` |
-| `customer.subscription.deleted` | Set status → `expired` |
-| `invoice.payment_succeeded` | Set status → `active`, advance period dates |
-| `invoice.payment_failed` | Set status → `past_due` |
+| `customer.subscription.deleted` | Set status → `expired`                           |
+| `invoice.payment_succeeded`     | Set status → `active`, advance period dates      |
+| `invoice.payment_failed`        | Set status → `past_due`                          |
 
 All events are idempotent (duplicate delivery is a no-op). Unhandled event
 types return 200 silently.

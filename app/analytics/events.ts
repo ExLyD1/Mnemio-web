@@ -15,10 +15,10 @@
 
 export type Plan = 'free' | 'trial' | 'premium';
 export type StudyModeProp = 'flashcard' | 'multiple_choice' | 'srs';
-export type AiFeature = 'generate_deck' | 'enrich_words' | 'suggestion';
+export type AiFeature = 'generate_deck' | 'enrich_words' | 'suggestion' | 'deck_from_image';
 export type Grade = 'again' | 'hard' | 'good' | 'easy';
 export type GradeCounts = Partial<Record<Grade, number>>;
-export type CreationSource = 'manual' | 'ai_generated' | 'imported' | 'copied';
+export type CreationSource = 'manual' | 'ai_generated' | 'ai_from_image' | 'imported' | 'copied';
 export type BillingPlanProp = 'monthly' | 'annual';
 export type PaywallContext = 'ai_budget' | 'feature';
 

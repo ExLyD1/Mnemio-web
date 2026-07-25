@@ -1,5 +1,6 @@
 import { http } from '@/utils/http';
 import { normLang } from '@/api/decks';
+import { runSse, type StreamError } from '@/utils/sse';
 import type { CardDifficulty } from '@/types/deck';
 
 export interface AiDraftCard {
@@ -48,6 +49,122 @@ export const generateDeck = async (
         },
     };
 };
+
+// ─── Deck from image ("Вчися з будь-чого") ────────────────────────────────────
+
+export interface DeckFromImageInput {
+    image: File;
+    /** Language of the generated definitions (default 'en'). */
+    sourceLanguage?: string;
+    /** Omit to let the model detect the image's language. */
+    targetLanguage?: string;
+    /** 1–20 upper bound (default 8). */
+    count?: number;
+    /** ≤300-char refine hint on a re-submit, e.g. "more words", "harder". */
+    instructions?: string;
+}
+
+export interface DeckFromImageResult {
+    provider: string;
+    draft: AiDeckDraft;
+    /** Present when the image had no readable/learnable text — NOT an error. */
+    note?: 'no_text';
+}
+
+const buildImageForm = (input: DeckFromImageInput): FormData => {
+    const form = new FormData();
+    form.append('image', input.image);
+    if (input.sourceLanguage) {
+        form.append('sourceLanguage', input.sourceLanguage);
+    }
+    if (input.targetLanguage) {
+        form.append('targetLanguage', input.targetLanguage);
+    }
+    if (input.count !== undefined) {
+        form.append('count', String(input.count));
+    }
+    if (input.instructions?.trim()) {
+        form.append('instructions', input.instructions.trim());
+    }
+    return form;
+};
+
+const normDraft = (draft: AiDeckDraft): AiDeckDraft => ({
+    ...draft,
+    sourceLanguage: normLang(draft.sourceLanguage),
+    targetLanguage: normLang(draft.targetLanguage),
+});
+
+/** Non-streaming variant — one POST returns the whole draft. */
+export const deckFromImage = async (input: DeckFromImageInput): Promise<DeckFromImageResult> => {
+    const res = await http<DeckFromImageResult>('/ai/deck-from-image', {
+        method: 'POST',
+        body: buildImageForm(input),
+    });
+    return { ...res, draft: normDraft(res.draft) };
+};
+
+export interface DeckDraftHeader {
+    title: string;
+    description: string;
+    sourceLanguage: string;
+    targetLanguage: string;
+    subject?: string;
+    glyph?: string;
+}
+
+export interface DeckFromImageStreamHandlers {
+    onStart?: (e: { provider?: string }) => void;
+    onHeader?: (deck: DeckDraftHeader) => void;
+    onCard?: (e: { position: number; card: AiDraftCard }) => void;
+    onDone?: (e: { note?: 'no_text'; meta?: Record<string, unknown> }) => void;
+    onError?: (e: StreamError) => void;
+}
+
+/**
+ * Streaming variant — emits start → header → card×N → done over SSE so the FE
+ * can render the deck shell and stream cards in as they arrive. `done` carries
+ * `note: 'no_text'` when the image had nothing learnable (zero card events).
+ */
+export const streamDeckFromImage = (
+    input: DeckFromImageInput,
+    handlers: DeckFromImageStreamHandlers,
+    signal?: AbortSignal,
+): Promise<void> =>
+    runSse({
+        path: '/ai/deck-from-image',
+        query: '?stream=1',
+        body: buildImageForm(input),
+        signal,
+        onError: (e) => handlers.onError?.(e),
+        onFrame: (frame) => {
+            switch (frame.event) {
+                case 'start':
+                    handlers.onStart?.(frame.data as { provider?: string });
+                    break;
+                case 'header': {
+                    const deck = (frame.data as { deck: DeckDraftHeader }).deck;
+                    handlers.onHeader?.({
+                        ...deck,
+                        sourceLanguage: normLang(deck.sourceLanguage),
+                        targetLanguage: normLang(deck.targetLanguage),
+                    });
+                    break;
+                }
+                case 'card':
+                    handlers.onCard?.(frame.data as { position: number; card: AiDraftCard });
+                    break;
+                case 'done':
+                    handlers.onDone?.(
+                        frame.data as { note?: 'no_text'; meta?: Record<string, unknown> },
+                    );
+                    break;
+                case 'error':
+                    handlers.onError?.(frame.data as StreamError);
+                    break;
+            }
+        },
+    });
 
 export type EnrichField =
     'phonetic' | 'partOfSpeech' | 'example' | 'exampleTranslation' | 'tags' | 'difficulty';
