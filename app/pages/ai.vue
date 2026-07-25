@@ -94,6 +94,21 @@
                             class="flex min-w-0 flex-col gap-1"
                             :class="m.role === 'user' ? 'items-end' : 'items-start'"
                         >
+                            <!-- Attached image thumbnail (client-only; tap to zoom) -->
+                            <button
+                                v-if="m.localImageUrl"
+                                type="button"
+                                class="overflow-hidden rounded-2xl border border-line transition-opacity hover:opacity-90"
+                                :aria-label="t('image.viewImage')"
+                                @click="viewerUrl = m.localImageUrl ?? null"
+                            >
+                                <img
+                                    :src="m.localImageUrl"
+                                    :alt="t('image.previewAlt')"
+                                    class="max-h-48 max-w-[80%] object-cover"
+                                />
+                            </button>
+
                             <!-- Typing dots: streaming assistant with no text yet -->
                             <div
                                 v-if="isStreaming(i) && !m.content"
@@ -243,6 +258,32 @@
                 </div>
             </div>
         </div>
+
+        <!-- Image lightbox -->
+        <Teleport to="body">
+            <div
+                v-if="viewerUrl"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6"
+                role="dialog"
+                aria-modal="true"
+                @click="viewerUrl = null"
+            >
+                <button
+                    type="button"
+                    class="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                    :aria-label="t('common.close')"
+                    @click="viewerUrl = null"
+                >
+                    <X class="size-5" />
+                </button>
+                <img
+                    :src="viewerUrl"
+                    :alt="t('image.previewAlt')"
+                    class="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
+                    @click.stop
+                />
+            </div>
+        </Teleport>
     </section>
 </template>
 
@@ -270,6 +311,7 @@ const inputEl = ref<HTMLTextAreaElement | null>(null);
 const imageInput = ref<HTMLInputElement | null>(null);
 const attachedImage = ref<File | null>(null);
 const attachedPreview = ref<string | null>(null);
+const viewerUrl = ref<string | null>(null);
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -418,11 +460,23 @@ watch(chat.loadingThread, (l) => {
     }
 });
 
+const onKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && viewerUrl.value) {
+        viewerUrl.value = null;
+    }
+};
+
 onMounted(async () => {
+    window.addEventListener('keydown', onKeydown);
     await chat.loadConversations();
     if (chat.conversations.value.length && window.matchMedia('(min-width: 768px)').matches) {
         await chat.openConversation(chat.conversations.value[0]!.id);
     }
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', onKeydown);
+    chat.cleanup();
 });
 </script>
 

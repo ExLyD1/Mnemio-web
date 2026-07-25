@@ -41,7 +41,8 @@
         "loadMore": "Load more",
         "language": "Language",
         "or": "OR",
-        "retry": "Retry"
+        "retry": "Retry",
+        "close": "Close"
     },
     "rail": {
         "home": "Home",
@@ -790,7 +791,8 @@
             "AI_IMAGE_TOO_LARGE": "That image is too large — the limit is 5 MB.",
             "AI_PROVIDER_ERROR": "AI is having a moment — please try again.",
             "AI_VALIDATION_FAILED": "AI is having a moment — please try again."
-        }
+        },
+        "viewImage": "View image"
     },
     "aiPage": {
         "title": "AI assistant",

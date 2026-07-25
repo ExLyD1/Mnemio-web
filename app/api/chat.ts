@@ -37,6 +37,8 @@ export interface ChatMessage {
     tokensOutput?: number | null;
     createdAt: string;
     attachments?: ChatAttachment[];
+    /** Client-only object URL for an attached image (never persisted; lost on reload). */
+    localImageUrl?: string;
 }
 
 export interface ConversationsPage {

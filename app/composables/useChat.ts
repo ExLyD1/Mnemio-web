@@ -23,6 +23,8 @@ export const useChat = () => {
     let controller: AbortController | null = null;
     let lastContent = '';
     let lastImage: File | null = null;
+    // Object URLs for client-only image previews — revoked on cleanup to avoid leaks.
+    const objectUrls: string[] = [];
 
     const patch = (id: string, fields: Partial<ChatMessage>) => {
         const i = messages.value.findIndex((m) => m.id === id);
@@ -118,6 +120,11 @@ export const useChat = () => {
         const userTmp = tempId('user');
         const asstTmp = tempId('asst');
         const now = new Date().toISOString();
+        let localImageUrl: string | undefined;
+        if (image) {
+            localImageUrl = URL.createObjectURL(image);
+            objectUrls.push(localImageUrl);
+        }
         messages.value.push({
             id: userTmp,
             conversationId: convId,
@@ -125,6 +132,7 @@ export const useChat = () => {
             content: text,
             status: 'complete',
             createdAt: now,
+            localImageUrl,
         });
         messages.value.push({
             id: asstTmp,
@@ -166,6 +174,11 @@ export const useChat = () => {
     };
 
     const retry = () => send(lastContent, lastImage);
+
+    /** Revoke any image preview object URLs. Call from the page's onBeforeUnmount. */
+    const cleanup = () => {
+        objectUrls.splice(0).forEach((u) => URL.revokeObjectURL(u));
+    };
 
     const rename = async (id: string, title: string) => {
         const trimmed = title.trim();
@@ -210,5 +223,6 @@ export const useChat = () => {
         retry,
         rename,
         remove,
+        cleanup,
     };
 };
