@@ -22,6 +22,7 @@ export const useChat = () => {
 
     let controller: AbortController | null = null;
     let lastContent = '';
+    let lastImage: File | null = null;
 
     const patch = (id: string, fields: Partial<ChatMessage>) => {
         const i = messages.value.findIndex((m) => m.id === id);
@@ -83,12 +84,14 @@ export const useChat = () => {
         streamError.value = null;
     };
 
-    const send = async (content: string) => {
+    const send = async (content: string, image?: File | null) => {
         const text = content.trim();
-        if (!text || streaming.value) {
+        // An image-only turn is valid — the model reads the image itself.
+        if ((!text && !image) || streaming.value) {
             return;
         }
         lastContent = text;
+        lastImage = image ?? null;
         streamError.value = null;
 
         // First message in a brand-new chat → create the conversation first.
@@ -157,11 +160,12 @@ export const useChat = () => {
             },
             controller.signal,
             locale.value,
+            image,
         );
         streaming.value = false;
     };
 
-    const retry = () => send(lastContent);
+    const retry = () => send(lastContent, lastImage);
 
     const rename = async (id: string, title: string) => {
         const trimmed = title.trim();

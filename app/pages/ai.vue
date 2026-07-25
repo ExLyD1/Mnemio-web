@@ -164,28 +164,82 @@
 
             <!-- Composer -->
             <div class="border-t border-line px-4 py-3">
-                <div
-                    class="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-line-strong bg-bg-surface p-2 focus-within:border-brand-bright"
-                >
-                    <textarea
-                        ref="inputEl"
-                        v-model="draft"
-                        rows="1"
-                        :placeholder="t('chat.placeholder')"
-                        class="max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-body text-cream outline-none placeholder:text-brand-muted"
-                        @input="autoGrow"
-                        @keydown.enter="onEnterKey"
-                    />
-                    <UiButton
-                        variant="primary"
-                        class="shrink-0"
-                        :disabled="!draft.trim() || chat.streaming.value"
-                        :aria-label="t('chat.send')"
-                        @click="onSend"
+                <div class="mx-auto max-w-3xl">
+                    <!-- Attached image preview + mode toggle -->
+                    <div v-if="attachedImage" class="mb-2 flex items-center gap-3">
+                        <div class="relative">
+                            <img
+                                :src="attachedPreview!"
+                                :alt="t('image.previewAlt')"
+                                class="size-12 rounded-lg border border-line object-cover"
+                            />
+                            <button
+                                type="button"
+                                class="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-bg-surface-2 text-brand-muted transition-colors hover:text-cream"
+                                :aria-label="t('image.remove')"
+                                @click="clearAttachment"
+                            >
+                                <X class="size-3" />
+                            </button>
+                        </div>
+                        <!-- Direct-create vs editable-preview toggle (editable coming soon → disabled) -->
+                        <div
+                            class="flex items-center gap-1 rounded-full border border-line p-0.5 opacity-60"
+                            :title="t('image.previewSoon')"
+                        >
+                            <span class="rounded-full bg-brand px-3 py-1 text-small text-on-color">
+                                {{ t('image.modeDirect') }}
+                            </span>
+                            <button
+                                type="button"
+                                disabled
+                                class="cursor-not-allowed rounded-full px-3 py-1 text-small text-brand-muted"
+                            >
+                                {{ t('image.modePreview') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex items-end gap-2 rounded-2xl border border-line-strong bg-bg-surface p-2 focus-within:border-brand-bright"
                     >
-                        <UiSpinner v-if="chat.streaming.value" size="sm" />
-                        <Send v-else class="size-4" />
-                    </UiButton>
+                        <input
+                            ref="imageInput"
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            class="hidden"
+                            @change="onPickImage"
+                        />
+                        <UiButton
+                            variant="ghost"
+                            class="shrink-0"
+                            :disabled="chat.streaming.value"
+                            :aria-label="t('image.attach')"
+                            @click="imageInput?.click()"
+                        >
+                            <ImagePlus class="size-4" />
+                        </UiButton>
+                        <textarea
+                            ref="inputEl"
+                            v-model="draft"
+                            rows="1"
+                            :placeholder="t('chat.placeholder')"
+                            class="max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-body text-cream outline-none placeholder:text-brand-muted"
+                            @input="autoGrow"
+                            @keydown.enter="onEnterKey"
+                            @paste="onPasteImage"
+                        />
+                        <UiButton
+                            variant="primary"
+                            class="shrink-0"
+                            :disabled="(!draft.trim() && !attachedImage) || chat.streaming.value"
+                            :aria-label="t('chat.send')"
+                            @click="onSend"
+                        >
+                            <UiSpinner v-if="chat.streaming.value" size="sm" />
+                            <Send v-else class="size-4" />
+                        </UiButton>
+                    </div>
                 </div>
             </div>
         </div>
@@ -193,7 +247,7 @@
 </template>
 
 <script setup lang="ts">
-import { Send, Menu } from 'lucide-vue-next';
+import { Send, Menu, ImagePlus, X } from 'lucide-vue-next';
 import { useChat, useToast, useT } from '#imports';
 import { useAuthStore } from '@/stores/auth';
 import { usePremiumGateStore } from '@/stores/premiumGate';
@@ -213,6 +267,51 @@ const draft = ref('');
 const sidebarOpen = ref(false);
 const threadEl = ref<HTMLElement | null>(null);
 const inputEl = ref<HTMLTextAreaElement | null>(null);
+const imageInput = ref<HTMLInputElement | null>(null);
+const attachedImage = ref<File | null>(null);
+const attachedPreview = ref<string | null>(null);
+
+const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+const clearAttachment = () => {
+    if (attachedPreview.value) {
+        URL.revokeObjectURL(attachedPreview.value);
+    }
+    attachedPreview.value = null;
+    attachedImage.value = null;
+};
+
+const stageImage = (f: File | null | undefined) => {
+    if (!f) {
+        return;
+    }
+    if (!ALLOWED_IMAGE_TYPES.includes(f.type)) {
+        toast.error(t('image.errUnsupportedType'));
+        return;
+    }
+    if (f.size > MAX_IMAGE_BYTES) {
+        toast.error(t('image.errTooLarge'));
+        return;
+    }
+    clearAttachment();
+    attachedImage.value = f;
+    attachedPreview.value = URL.createObjectURL(f);
+};
+
+const onPickImage = (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    stageImage(input.files?.[0]);
+    input.value = '';
+};
+
+const onPasteImage = (e: ClipboardEvent) => {
+    const f = e.clipboardData?.files?.[0];
+    if (f && f.type.startsWith('image/')) {
+        e.preventDefault();
+        stageImage(f);
+    }
+};
 
 const activeTitle = computed(
     () => chat.conversations.value.find((c) => c.id === chat.activeId.value)?.title ?? '',
@@ -272,11 +371,18 @@ const onEnterKey = (e: KeyboardEvent) => {
 
 const onSend = async () => {
     const text = draft.value.trim();
-    if (!text || chat.streaming.value) {
+    const image = attachedImage.value;
+    if ((!text && !image) || chat.streaming.value) {
         return;
     }
     resetInput();
-    await chat.send(text);
+    // Detach immediately — send() holds its own reference for retry.
+    attachedImage.value = null;
+    if (attachedPreview.value) {
+        URL.revokeObjectURL(attachedPreview.value);
+        attachedPreview.value = null;
+    }
+    await chat.send(text, image);
 };
 
 const onSelect = (id: string) => {

@@ -187,7 +187,17 @@
                         >
                             {{ t('deck.aiOpenGenerator') }}
                         </button>
+                        <button
+                            type="button"
+                            class="mt-2.5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-line px-[18px] py-3 text-[14px] font-semibold text-cream transition-colors hover:border-lavender hover:text-lavender"
+                            @click="imageOpen = true"
+                        >
+                            <ImagePlus class="size-4" />
+                            {{ t('image.openFromImage') }}
+                        </button>
                     </div>
+
+                    <AiImageDeckDialog v-model="imageOpen" @created="onImageCreated" />
 
                     <!-- Privacy -->
                     <div>
@@ -430,7 +440,7 @@
 </template>
 
 <script setup lang="ts">
-import { Sparkles, Layers, X, ArrowUp, ArrowRight } from 'lucide-vue-next';
+import { Sparkles, Layers, X, ArrowUp, ArrowRight, ImagePlus } from 'lucide-vue-next';
 import { useDecks, useToast, useT } from '#imports';
 import * as aiApi from '@/api/ai';
 import type { AiDeckDraft } from '@/api/ai';
@@ -501,6 +511,8 @@ const cardTypes = computed(() => [
 
 // Chat / panel state
 const mimiOpen = ref(false);
+const imageOpen = ref(false);
+const onImageCreated = (deckId: string) => navigateTo(`/decks/${deckId}`);
 const chatBodyEl = ref<HTMLElement | null>(null);
 const messages = ref<ChatMsg[]>([]);
 const chatInput = ref('');
