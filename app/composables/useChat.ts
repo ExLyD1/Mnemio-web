@@ -7,6 +7,15 @@ let tempSeq = 0;
 const tempId = (p: string) => `tmp-${p}-${++tempSeq}`;
 
 /**
+ * Client-only cache of attached-image previews, keyed by server message id. The
+ * backend never persists the image, so this is how a thumbnail survives switching
+ * conversations or leaving and returning to the page within the same session.
+ * Module-level (not per-instance) so it outlives the page's mount. Lost on a full
+ * reload — the object URLs die with the document.
+ */
+const imagePreviewCache = new Map<string, string>();
+
+/**
  * Chat state + actions for the AI assistant page: a conversation sidebar, the
  * active thread, and an optimistic streaming `send`. One instance per page.
  */
@@ -23,8 +32,6 @@ export const useChat = () => {
     let controller: AbortController | null = null;
     let lastContent = '';
     let lastImage: File | null = null;
-    // Object URLs for client-only image previews — revoked on cleanup to avoid leaks.
-    const objectUrls: string[] = [];
 
     const patch = (id: string, fields: Partial<ChatMessage>) => {
         const i = messages.value.findIndex((m) => m.id === id);
@@ -70,7 +77,12 @@ export const useChat = () => {
         loadingThread.value = true;
         try {
             const res = await chatApi.getConversation(id);
-            messages.value = res.messages;
+            // Re-attach any client-only image previews we still hold for this session.
+            messages.value = res.messages.map((m) =>
+                imagePreviewCache.has(m.id)
+                    ? { ...m, localImageUrl: imagePreviewCache.get(m.id) }
+                    : m,
+            );
         } catch (e) {
             const err = e as Partial<ApiError>;
             streamError.value = { code: err.code ?? 'NETWORK_ERROR', message: err.message ?? '' };
@@ -120,11 +132,7 @@ export const useChat = () => {
         const userTmp = tempId('user');
         const asstTmp = tempId('asst');
         const now = new Date().toISOString();
-        let localImageUrl: string | undefined;
-        if (image) {
-            localImageUrl = URL.createObjectURL(image);
-            objectUrls.push(localImageUrl);
-        }
+        const localImageUrl = image ? URL.createObjectURL(image) : undefined;
         messages.value.push({
             id: userTmp,
             conversationId: convId,
@@ -149,7 +157,14 @@ export const useChat = () => {
             convId,
             text,
             {
-                onStart: (e) => patch(userTmp, { ...e.userMessage }),
+                onStart: (e) => {
+                    // Keep the client-only preview and remember it under the real
+                    // server id so it re-renders when the thread is refetched later.
+                    patch(userTmp, { ...e.userMessage, localImageUrl });
+                    if (localImageUrl) {
+                        imagePreviewCache.set(e.userMessage.id, localImageUrl);
+                    }
+                },
                 onToken: (delta) => {
                     const i = messages.value.findIndex((m) => m.id === asstTmp);
                     const cur = messages.value[i];
@@ -174,11 +189,6 @@ export const useChat = () => {
     };
 
     const retry = () => send(lastContent, lastImage);
-
-    /** Revoke any image preview object URLs. Call from the page's onBeforeUnmount. */
-    const cleanup = () => {
-        objectUrls.splice(0).forEach((u) => URL.revokeObjectURL(u));
-    };
 
     const rename = async (id: string, title: string) => {
         const trimmed = title.trim();
@@ -223,6 +233,5 @@ export const useChat = () => {
         retry,
         rename,
         remove,
-        cleanup,
     };
 };

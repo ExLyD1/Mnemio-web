@@ -476,7 +476,6 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
     window.removeEventListener('keydown', onKeydown);
-    chat.cleanup();
 });
 </script>
 
