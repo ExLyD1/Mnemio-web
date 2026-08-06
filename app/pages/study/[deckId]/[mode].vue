@@ -175,7 +175,7 @@
                                     class="size-3.5 cursor-help text-brand-muted/50 transition-colors group-hover/tip:text-brand-muted"
                                 />
                                 <span
-                                    class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-52 -translate-x-1/2 rounded-xl bg-[#1a0d2e] px-3 py-2.5 text-center text-[11px] leading-relaxed text-white shadow-xl opacity-0 transition-opacity duration-150 group-hover/tip:opacity-100"
+                                    class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-52 -translate-x-1/2 rounded-xl bg-plum-deep px-3 py-2.5 text-center text-[11px] leading-relaxed text-on-color shadow-xl opacity-0 transition-opacity duration-150 group-hover/tip:opacity-100"
                                 >
                                     {{ t('study.trackProgressHint') }}
                                 </span>
@@ -224,7 +224,6 @@ import { useDecks, useT } from '#imports';
 import { usePractice } from '@/composables/usePractice';
 import { usePracticeStore } from '@/stores/practice';
 import { useSessionsStore } from '@/stores/sessions';
-import { useAchievements } from '@/composables/useAchievements';
 import { buildMultipleChoice } from '@/composables/useMultipleChoice';
 import { toStudyCard } from '@/utils/studyCard';
 import { GRADES } from '@/utils/grades';
@@ -244,7 +243,6 @@ const sessionsStore = useSessionsStore();
 // SRS is on unless the mode picker sent ?srs=0.
 const srsEnabled = route.query.srs !== '0';
 const practice = usePractice({ srsEnabled });
-const achievements = useAchievements();
 
 useSeo({ title: t('seo.studyTitle'), description: t('seo.appDesc'), noindex: true });
 const practiceStore = usePracticeStore();
@@ -314,7 +312,6 @@ const finalize = () => {
         revisit: [...practice.revisit.value],
     });
     practice.mimi.say('done');
-    achievements.load().catch(() => {});
     navigateTo(`/study/${deckId.value}/results`);
 };
 

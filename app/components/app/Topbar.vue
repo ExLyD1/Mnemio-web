@@ -60,19 +60,51 @@
                 <template #trigger="{ toggle }">
                     <button
                         type="button"
-                        class="grid size-10 place-items-center rounded-full text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream"
+                        class="relative grid size-10 place-items-center rounded-full text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream"
                         :aria-label="t('topbar.notifications')"
                         @click="toggle"
                     >
                         <Bell class="size-5" />
+                        <span
+                            v-if="unseenAchievements.length > 0"
+                            class="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-bg-surface bg-lavender px-1 text-[10px] font-bold text-plum-deep"
+                        >
+                            {{ unseenAchievements.length > 9 ? '9+' : unseenAchievements.length }}
+                        </span>
                     </button>
                 </template>
-                <template #default>
-                    <div class="w-56 px-3 py-6 text-center">
+                <template #default="{ close }">
+                    <div v-if="unseenAchievements.length === 0" class="w-64 px-3 py-6 text-center">
                         <Bell class="mx-auto size-5 text-brand-muted" />
                         <p class="mt-2 text-small text-brand-muted">
                             {{ t('topbar.noNotifications') }}
                         </p>
+                    </div>
+                    <div v-else class="w-72">
+                        <button
+                            v-for="a in unseenAchievements"
+                            :key="a.key"
+                            type="button"
+                            class="flex w-full items-start gap-2.5 rounded-xl px-3 py-2 text-left transition-colors hover:bg-brand/20"
+                            @click="onNotificationClick(a, close)"
+                        >
+                            <Trophy class="mt-0.5 size-4 shrink-0 text-lavender" />
+                            <span class="min-w-0 flex-1">
+                                <span class="block truncate text-body text-brand-pale">
+                                    {{ t(`achievements.${a.key}.name`, a.name) }}
+                                </span>
+                                <span class="block text-small text-brand-muted">
+                                    {{ t('topbar.achievementUnlocked') }}
+                                </span>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            class="mt-1 flex w-full items-center justify-center gap-1.5 rounded-xl border-t border-line px-3 py-2 text-small text-lavender transition-colors hover:bg-brand/20"
+                            @click="onViewAll(close)"
+                        >
+                            {{ t('topbar.viewAchievements') }}
+                        </button>
                     </div>
                 </template>
             </UiPopover>
@@ -126,9 +158,11 @@
 </template>
 
 <script setup lang="ts">
-import { Bell, Plus, User, LogOut, Sun, Moon } from 'lucide-vue-next';
+import { Bell, Plus, User, LogOut, Sun, Moon, Trophy } from 'lucide-vue-next';
 import { useAuth, useAuthStore, useColorMode, useDecks, useToast, useT } from '#imports';
+import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import { mediaUrl } from '@/utils/media';
+import type { Achievement } from '@/types/achievement';
 
 const colorMode = useColorMode();
 const toggleTheme = () => {
@@ -142,6 +176,20 @@ const { store, fetchList } = useDecks();
 const { logout } = useAuth();
 const toast = useToast();
 const { t } = useT();
+const notifications = useAchievementNotifications();
+const unseenAchievements = notifications.unseen;
+
+const onNotificationClick = async (a: Achievement, close: () => void) => {
+    close();
+    await notifications.ack([a.key]);
+    await navigateTo('/profile?tab=achievements');
+};
+
+const onViewAll = async (close: () => void) => {
+    close();
+    await notifications.ack();
+    await navigateTo('/profile?tab=achievements');
+};
 
 // Quick matches against the user's own decks; the full search lives on /discover.
 const suggestions = computed(() => {

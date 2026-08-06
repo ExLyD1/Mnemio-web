@@ -1,5 +1,6 @@
 import { http } from '@/utils/http';
 import type { CardProgress, SrsRating } from '@/types/srs';
+import type { Achievement } from '@/types/achievement';
 
 interface WireProgress {
     cardId: string;
@@ -8,6 +9,12 @@ interface WireProgress {
     easeFactor: number;
     nextReviewAt: string;
     lastReviewedAt: string | null;
+}
+
+// POST /srs/rate additionally reports achievements unlocked by this rating —
+// see docs/api-contract.md.
+interface WireRateResult extends WireProgress {
+    newAchievements: Achievement[];
 }
 
 export interface DueItem {
@@ -36,12 +43,12 @@ export const rateCard = async (
     cardId: string,
     deckId: string,
     rating: SrsRating,
-): Promise<CardProgress> => {
-    const p = await http<WireProgress>('/srs/rate', {
+): Promise<{ progress: CardProgress; newAchievements: Achievement[] }> => {
+    const p = await http<WireRateResult>('/srs/rate', {
         method: 'POST',
         body: { cardId, rating },
     });
-    return toProgress(p, deckId);
+    return { progress: toProgress(p, deckId), newAchievements: p.newAchievements };
 };
 
 export const listProgress = async (): Promise<CardProgress[]> => {

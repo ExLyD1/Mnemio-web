@@ -2,6 +2,7 @@ import { ref, computed } from 'vue';
 import { useDecks, useToast, useT } from '#imports';
 import { enrichWords, type AiDraftCard, type EnrichWordsResult } from '@/api/ai';
 import { bulkAddCards } from '@/api/cards';
+import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import type { CardInput } from '@/types/deck';
 
 /** A draft card plus a per-row include toggle for the review step. */
@@ -30,6 +31,7 @@ export const useAiImport = (opts: UseAiImportOptions) => {
     const { create } = useDecks();
     const toast = useToast();
     const { t } = useT();
+    const notifications = useAchievementNotifications();
 
     const step = ref<'input' | 'review'>('input');
     const rawWords = ref('');
@@ -151,8 +153,9 @@ export const useAiImport = (opts: UseAiImportOptions) => {
         try {
             const deck = opts.deck();
             if (deck) {
-                await bulkAddCards(deck.id, cards);
+                const { newAchievements } = await bulkAddCards(deck.id, cards);
                 toast.success(t('ai.added').replace('{n}', String(cards.length)));
+                notifications.announce(newAchievements);
                 opts.onAppended?.();
                 reset();
                 return;
@@ -172,8 +175,9 @@ export const useAiImport = (opts: UseAiImportOptions) => {
                 error.value = create.error.value?.message ?? t('ai.enrichError');
                 return;
             }
-            await bulkAddCards(created.id, cards);
+            const { newAchievements } = await bulkAddCards(created.id, cards);
             toast.success(t('ai.added').replace('{n}', String(cards.length)));
+            notifications.announce(newAchievements);
             reset();
             opts.onCreated?.(created.id);
         } catch (e) {

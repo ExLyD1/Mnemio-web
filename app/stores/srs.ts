@@ -3,6 +3,7 @@ import * as srsApi from '@/api/srs';
 import * as decksApi from '@/api/decks';
 import { isDue } from '@/composables/useSpacedRepetition';
 import { useDecksStore } from '@/stores/decks';
+import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import type { CardProgress, SrsRating } from '@/types/srs';
 import type { Card } from '@/types/deck';
 
@@ -18,6 +19,9 @@ export const useSrsStore = defineStore('srs', () => {
     const loading = ref(false);
 
     const decks = useDecksStore();
+    // Grabbed once at store setup (valid Vue/i18n context) and reused inside
+    // `rate()` after its await — see useAchievementNotifications.ts.
+    const notifications = useAchievementNotifications();
 
     const dueCount = computed(() => dueCards.value.length);
 
@@ -84,9 +88,14 @@ export const useSrsStore = defineStore('srs', () => {
     };
 
     const rate = async (cardId: string, deckId: string, rating: SrsRating) => {
-        const updated = await srsApi.rateCard(cardId, deckId, rating);
+        const { progress: updated, newAchievements } = await srsApi.rateCard(
+            cardId,
+            deckId,
+            rating,
+        );
         progress.value = { ...progress.value, [cardId]: updated };
         dueCards.value = dueCards.value.filter((d) => d.card.id !== cardId);
+        notifications.announce(newAchievements);
         return updated;
     };
 

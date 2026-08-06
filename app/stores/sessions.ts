@@ -1,12 +1,16 @@
 import { defineStore, ref, computed } from '#imports';
 import * as sessionsApi from '@/api/sessions';
 import type { SessionPatch } from '@/api/sessions';
+import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import type { StudyMode, StudySession } from '@/types/session';
 
 export const useSessionsStore = defineStore('sessions', () => {
     const active = ref<StudySession | null>(null);
     const incomplete = ref<StudySession[]>([]);
     const lastCompleted = ref<StudySession | null>(null);
+    // Grabbed once at store setup (valid Vue/i18n context) and reused inside
+    // `complete()` after its await — see useAchievementNotifications.ts.
+    const notifications = useAchievementNotifications();
 
     const latestIncomplete = computed(() => incomplete.value[0] ?? null);
 
@@ -38,9 +42,12 @@ export const useSessionsStore = defineStore('sessions', () => {
         if (!active.value) {
             return null;
         }
-        const ended = await sessionsApi.completeSession(active.value.id);
+        const { session: ended, newAchievements } = await sessionsApi.completeSession(
+            active.value.id,
+        );
         active.value = null;
         lastCompleted.value = ended;
+        notifications.announce(newAchievements);
         return ended;
     };
 

@@ -1,5 +1,6 @@
 import { http } from '@/utils/http';
 import type { SessionCounts, StudyMode, StudySession } from '@/types/session';
+import type { Achievement } from '@/types/achievement';
 
 type WireMode = 'flashcard' | 'multiple_choice' | 'srs';
 
@@ -18,6 +19,12 @@ interface WireSession {
     durationMs: number;
     startedAt: string;
     endedAt: string | null;
+}
+
+// POST /sessions/:id/complete additionally reports achievements unlocked by
+// finishing this session — see docs/api-contract.md.
+interface WireCompleteResult extends WireSession {
+    newAchievements: Achievement[];
 }
 
 const toFeMode = (m: WireMode): StudyMode => (m === 'multiple_choice' ? 'multiple-choice' : m);
@@ -87,9 +94,13 @@ export const updateActive = async (
     return toSession(s);
 };
 
-export const completeSession = async (sessionId: string): Promise<StudySession> => {
-    const s = await http<WireSession>(`/sessions/${sessionId}/complete`, { method: 'POST' });
-    return toSession(s);
+export const completeSession = async (
+    sessionId: string,
+): Promise<{ session: StudySession; newAchievements: Achievement[] }> => {
+    const s = await http<WireCompleteResult>(`/sessions/${sessionId}/complete`, {
+        method: 'POST',
+    });
+    return { session: toSession(s), newAchievements: s.newAchievements };
 };
 
 export const exitActive = async (sessionId: string): Promise<StudySession> => {

@@ -1,18 +1,27 @@
 import { http } from '@/utils/http';
 import type { Card, CardInput } from '@/types/deck';
+import type { Achievement } from '@/types/achievement';
 
 /** Strip null/undefined so optional fields are omitted, not sent as null. */
 const clean = (input: Record<string, unknown>): Record<string, unknown> =>
     Object.fromEntries(Object.entries(input).filter(([, v]) => v !== null && v !== undefined));
 
-export const addCard = async (deckId: string, input: CardInput): Promise<Card> =>
-    http<Card>(`/decks/${deckId}/cards`, { method: 'POST', body: clean({ ...input }) });
+// POST /decks/:id/cards(/bulk) additionally report achievements unlocked by
+// this create — see docs/api-contract.md.
+export const addCard = async (
+    deckId: string,
+    input: CardInput,
+): Promise<Card & { newAchievements: Achievement[] }> =>
+    http<Card & { newAchievements: Achievement[] }>(`/decks/${deckId}/cards`, {
+        method: 'POST',
+        body: clean({ ...input }),
+    });
 
 export const bulkAddCards = async (
     deckId: string,
     cards: CardInput[],
-): Promise<{ created: number }> =>
-    http<{ created: number }>(`/decks/${deckId}/cards/bulk`, {
+): Promise<{ created: number; newAchievements: Achievement[] }> =>
+    http<{ created: number; newAchievements: Achievement[] }>(`/decks/${deckId}/cards/bulk`, {
         method: 'POST',
         body: { cards: cards.map((c) => clean({ ...c })) },
     });

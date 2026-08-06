@@ -360,7 +360,11 @@ const onAvatar = async (e: Event) => {
     }
 };
 
-const tab = ref('edit');
+// Deep-linkable so the notification bell can land straight on a tab, e.g.
+// /profile?tab=achievements.
+const route = useRoute();
+const initialTab = route.query.tab === 'achievements' ? 'achievements' : 'edit';
+const tab = ref(initialTab);
 const tabs = computed(() => [
     { value: 'edit', label: t('profile.editProfile') },
     { value: 'achievements', label: t('profile.achievements') },

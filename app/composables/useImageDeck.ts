@@ -6,6 +6,7 @@ import { bulkAddCards } from '@/api/cards';
 import { useAuthStore } from '@/stores/auth';
 import { usePremiumGateStore } from '@/stores/premiumGate';
 import { useAnalytics } from '@/composables/useAnalytics';
+import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import { normCategory } from '@/utils/deckCategories';
 import type { ReviewRow } from '@/composables/useAiImport';
 import type { CardInput } from '@/types/deck';
@@ -31,6 +32,7 @@ export const useImageDeck = (opts: { onCreated?: (deckId: string) => void } = {}
     const auth = useAuthStore();
     const premiumGate = usePremiumGateStore();
     const analytics = useAnalytics();
+    const notifications = useAchievementNotifications();
 
     const step = ref<ImageDeckStep>('input');
     const file = ref<File | null>(null);
@@ -217,7 +219,7 @@ export const useImageDeck = (opts: { onCreated?: (deckId: string) => void } = {}
                 error.value = create.error.value?.message ?? t('image.errGeneric');
                 return;
             }
-            await bulkAddCards(created.id, cards);
+            const { newAchievements } = await bulkAddCards(created.id, cards);
             analytics.track('deck_created', {
                 deck_id: created.id,
                 creation_source: 'ai_from_image',
@@ -228,6 +230,7 @@ export const useImageDeck = (opts: { onCreated?: (deckId: string) => void } = {}
                 is_public: false,
             });
             toast.success(t('ai.added').replace('{n}', String(cards.length)));
+            notifications.announce(newAchievements);
             const id = created.id;
             reset();
             opts.onCreated?.(id);

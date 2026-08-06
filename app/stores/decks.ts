@@ -1,6 +1,7 @@
 import { defineStore, ref } from '#imports';
 import * as decksApi from '@/api/decks';
 import * as cardsApi from '@/api/cards';
+import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import type { Card, Deck, DeckInput, DeckSummary, CardInput } from '@/types/deck';
 
 export const useDecksStore = defineStore('decks', () => {
@@ -8,6 +9,9 @@ export const useDecksStore = defineStore('decks', () => {
     const deck = ref<Deck | null>(null);
     const total = ref(0);
     const nextCursor = ref<string | null>(null);
+    // Grabbed once at store setup (valid Vue/i18n context) and reused inside
+    // `addCard()` after its await — see useAchievementNotifications.ts.
+    const notifications = useAchievementNotifications();
     const search = ref('');
     const loadingList = ref(false);
     const loadingDeck = ref(false);
@@ -103,11 +107,12 @@ export const useDecksStore = defineStore('decks', () => {
     };
 
     const addCard = async (deckId: string, input: CardInput): Promise<Card> => {
-        const card = await cardsApi.addCard(deckId, input);
+        const { newAchievements, ...card } = await cardsApi.addCard(deckId, input);
         if (deck.value?.id === deckId) {
             deck.value = { ...deck.value, cards: [...deck.value.cards, card] };
         }
         bumpCardCount(deckId, 1);
+        notifications.announce(newAchievements);
         return card;
     };
 

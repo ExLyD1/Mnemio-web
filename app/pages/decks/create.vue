@@ -25,7 +25,7 @@
                         <p class="flabel">{{ t('deck.title') }}</p>
                         <input
                             v-model="title"
-                            class="w-full rounded-xl border border-line-strong dark:bg-[rgba(255,255,255,.03)] bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
+                            class="w-full rounded-xl border border-line-strong bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
                             :placeholder="t('deck.titlePlaceholder')"
                         />
                     </div>
@@ -45,7 +45,7 @@
                         <p class="flabel">{{ t('deck.description') }}</p>
                         <textarea
                             v-model="description"
-                            class="w-full resize-none rounded-xl border border-line-strong dark:bg-[rgba(255,255,255,.03)] bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
+                            class="w-full resize-none rounded-xl border border-line-strong bg-bg-well px-3.5 py-3.5 text-[14px] text-cream outline-none placeholder:text-cream-faint focus:border-brand-muted"
                             style="height: 84px"
                             :placeholder="t('deck.descriptionPlaceholder')"
                         />
@@ -62,7 +62,7 @@
                                 class="flex-1 cursor-pointer rounded-[14px] border p-4 text-left transition-colors"
                                 :class="
                                     cardType === ct.value
-                                        ? 'border-[rgba(242,188,255,.3)] bg-brand'
+                                        ? 'border-pink-soft/30 bg-brand'
                                         : 'border-line bg-bg-surface hover:border-line-strong'
                                 "
                                 @click="cardType = ct.value"
@@ -162,7 +162,7 @@
                                 style="width: 50px; height: 64px"
                                 :style="{
                                     background: swatch,
-                                    border: `2px solid ${coverColor === swatch ? '#F2BCFF' : 'transparent'}`,
+                                    border: `2px solid ${coverColor === swatch ? 'rgb(var(--c-pink))' : 'transparent'}`,
                                 }"
                                 @click="coverColor = swatch"
                             >
@@ -208,7 +208,7 @@
                                 class="flex-1 cursor-pointer rounded-[14px] border p-3.5 text-center text-[14px] font-medium transition-colors"
                                 :class="
                                     isPublic
-                                        ? 'border-[rgba(242,188,255,.3)] bg-brand text-on-color'
+                                        ? 'border-pink-soft/30 bg-brand text-on-color'
                                         : 'border-line bg-bg-well text-cream hover:border-line-strong'
                                 "
                                 @click="isPublic = true"
@@ -220,7 +220,7 @@
                                 class="flex-1 cursor-pointer rounded-[14px] border p-3.5 text-center text-[14px] font-medium transition-colors"
                                 :class="
                                     !isPublic
-                                        ? 'border-[rgba(242,188,255,.3)] bg-brand text-on-color'
+                                        ? 'border-pink-soft/30 bg-brand text-on-color'
                                         : 'border-line bg-bg-well text-cream hover:border-line-strong'
                                 "
                                 @click="isPublic = false"
@@ -257,7 +257,7 @@
         <Transition name="panel-slide">
             <div
                 v-if="mimiOpen"
-                class="fixed inset-0 z-50 flex w-full flex-col border-line-strong dark:bg-[rgba(13,10,18,.97)] bg-bg-surface md:inset-y-0 md:left-auto md:right-0 md:z-30 md:w-80 md:border-l"
+                class="fixed inset-0 z-50 flex w-full flex-col border-line-strong bg-bg-surface md:inset-y-0 md:left-auto md:right-0 md:z-30 md:w-80 md:border-l"
             >
                 <!-- Header -->
                 <div class="flex items-center justify-between border-b border-line px-5 py-4">
@@ -446,6 +446,7 @@ import * as aiApi from '@/api/ai';
 import type { AiDeckDraft } from '@/api/ai';
 import { bulkAddCards } from '@/api/cards';
 import { useAnalytics } from '@/composables/useAnalytics';
+import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import { useDecksStore } from '@/stores/decks';
 import { LANGUAGES } from '@/schemas/deck';
 import type { DeckInput } from '@/types/deck';
@@ -474,6 +475,7 @@ const { create } = useDecks();
 const toast = useToast();
 const { t } = useT();
 const analytics = useAnalytics();
+const notifications = useAchievementNotifications();
 const decksStore = useDecksStore();
 
 // Best-effort: true when the library has no decks yet at create time.
@@ -658,7 +660,7 @@ const onAccept = async (d: AiDeckDraft) => {
             glyph: d.glyph ?? null,
         });
         if (!deck) throw new Error('create failed');
-        await bulkAddCards(
+        const { newAchievements } = await bulkAddCards(
             deck.id,
             d.cards.map((c) => ({
                 word: c.word,
@@ -681,6 +683,7 @@ const onAccept = async (d: AiDeckDraft) => {
             is_public: false,
         });
         toast.success(t('deck.aiCreated'));
+        notifications.announce(newAchievements);
         await navigateTo(`/decks/${deck.id}`);
     } catch {
         toast.error(t('deck.aiCreateError'));
