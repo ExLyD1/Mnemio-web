@@ -224,6 +224,10 @@ onMounted(() => {
     if (!store.summaries.length) {
         fetchList.execute({ cursor: null, append: false });
     }
+    // Catch-up toast/bell for anything unlocked on another device/tab since
+    // this device last acked. Done here (not the auth plugin) because it
+    // needs useT()/useI18n(), which requires a real component context.
+    void notifications.fetchUnseen();
 });
 
 const displayName = computed(

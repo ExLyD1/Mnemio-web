@@ -1,20 +1,18 @@
 import { useAuthStore } from '@/stores/auth';
 import { usePreferencesStore } from '@/stores/preferences';
-import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 
 export default defineNuxtPlugin(async () => {
     const auth = useAuthStore();
-    // Grabbed synchronously (valid Nuxt-plugin context) before the awaits below.
-    const notifications = useAchievementNotifications();
     await auth.hydrate();
     if (auth.isAuthenticated) {
         const prefs = usePreferencesStore();
         await prefs.hydrate().catch(() => {
             // preferences are non-critical for boot; ignore failures
         });
-        // Catch-up toast/bell for anything unlocked on another device/tab
-        // since this device last acked. Non-critical — errors are swallowed
-        // inside fetchUnseen().
-        void notifications.fetchUnseen();
+        // Achievement catch-up (fetchUnseen) is NOT done here: it needs
+        // useT()/useI18n(), which requires a real component `setup()` context
+        // — a Nuxt plugin doesn't have one (see 02.schema.ts's note on the
+        // same constraint). Done instead in Topbar.vue's onMounted, which is
+        // only ever rendered for authenticated users anyway.
     }
 });
