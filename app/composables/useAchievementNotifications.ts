@@ -38,9 +38,7 @@ export const useAchievementNotifications = () => {
      * Feed newly-unlocked achievements in — whether they arrived inline on a
      * rate/session-complete/card-create response, or via the boot-time
      * `fetchUnseen()` catch-up. Toasts each one once and adds it to `unseen`
-     * for the bell. Achievements are only ever unseen because the server
-     * hasn't acked them yet, so no client-side "already notified" storage is
-     * needed beyond the same-page-load guard above.
+     * for the bell.
      */
     const announce = (achievements: Achievement[]) => {
         const fresh = achievements.filter((a) => !toastedThisSession.has(a.key));
@@ -52,6 +50,15 @@ export const useAchievementNotifications = () => {
             toastedThisSession.add(a.key);
             toast.success(t('achievements.unlocked').replace('{name}', achName(a)));
         }
+        // The popup must only ever fire once. Ack server-side right away so
+        // the next GET /achievements/unseen (next reload/boot/tab) doesn't
+        // hand these back and re-toast them. The bell (`unseen`) keeps
+        // showing them for this session regardless — `ack()` below (called
+        // when the user actually opens/clicks a bell item) is what clears
+        // them from the bell itself.
+        achievementsApi.ackAchievements(fresh.map((a) => a.key)).catch(() => {
+            // best-effort — a failed ack just risks one repeat toast next boot
+        });
     };
 
     /** Marks achievements as seen. Omit `keys` to ack everything unseen. */
