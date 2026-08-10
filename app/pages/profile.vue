@@ -312,12 +312,25 @@
                     </template>
                 </div>
             </template>
+
+            <!-- Sign out — bottom of the page (was previously only reachable from the
+                 mobile menu sheet; moved here so it's in one place on every viewport). -->
+            <div class="border-t border-line pt-5">
+                <UiButton
+                    variant="ghost"
+                    class="w-full justify-center !text-red-400 hover:!bg-red-500/10 hover:!text-red-300"
+                    @click="onSignOut"
+                >
+                    <LogOut class="size-4" />
+                    {{ t('nav.signOut') }}
+                </UiButton>
+            </div>
         </div>
     </section>
 </template>
 
 <script setup lang="ts">
-import { Trophy, Lock, Camera, X } from 'lucide-vue-next';
+import { Trophy, Lock, Camera, X, LogOut } from 'lucide-vue-next';
 import { useAuthStore, useAuth, useDecks, useToast, useT } from '#imports';
 import { useBillingStore } from '@/stores/billing';
 import { useBilling } from '@/composables/useBilling';
@@ -333,7 +346,7 @@ import type { Achievement } from '@/types/achievement';
 definePageMeta({ layout: 'default' });
 
 const auth = useAuthStore();
-const { updateProfile } = useAuth();
+const { updateProfile, logout } = useAuth();
 const { store, fetchList } = useDecks();
 const prefs = usePreferencesStore();
 const stats = useStats();
@@ -358,6 +371,12 @@ const onAvatar = async (e: Event) => {
     } catch {
         toast.error(t('profile.photoError'));
     }
+};
+
+const onSignOut = async () => {
+    await logout.execute();
+    toast.success(t('auth.signedOut'));
+    await navigateTo('/login');
 };
 
 // Deep-linkable so the notification bell can land straight on a tab, e.g.

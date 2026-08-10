@@ -82,17 +82,6 @@
                             <component :is="link.icon" class="size-5 shrink-0 text-brand-muted" />
                             {{ link.label }}
                         </NuxtLink>
-
-                        <div class="my-2 h-px bg-line" />
-
-                        <button
-                            type="button"
-                            class="flex items-center gap-3 rounded-xl px-4 py-3 text-body text-cream-dim transition-colors hover:bg-error-soft/20 hover:text-cream"
-                            @click="onSignOut"
-                        >
-                            <LogOut class="size-5 shrink-0 text-brand-muted" />
-                            {{ t('nav.signOut') }}
-                        </button>
                     </nav>
                 </div>
             </div>
@@ -101,23 +90,10 @@
 </template>
 
 <script setup lang="ts">
-import {
-    LayoutGrid,
-    Library,
-    Compass,
-    BarChart3,
-    Sparkles,
-    User,
-    Menu,
-    LogOut,
-} from 'lucide-vue-next';
+import { LayoutGrid, Library, Compass, BarChart3, Sparkles, User, Menu } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
-import { useAuth } from '@/composables/useAuth';
-import { useToast } from '@/composables/useToast';
 
 const { t } = useT();
-const { logout } = useAuth();
-const toast = useToast();
 
 const menuOpen = ref(false);
 
@@ -134,13 +110,6 @@ const menuLinks = computed(() => [
     { label: t('rail.practice'), to: '/review', icon: Sparkles },
     { label: t('rail.profile'), to: '/profile', icon: User },
 ]);
-
-const onSignOut = async () => {
-    menuOpen.value = false;
-    await logout.execute();
-    toast.success(t('auth.signedOut'));
-    await navigateTo('/login');
-};
 </script>
 
 <style scoped>
