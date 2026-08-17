@@ -158,6 +158,14 @@
                     <p class="mt-2 text-body text-cream">{{ t(item.a) }}</p>
                 </div>
             </div>
+            <p class="mt-6 text-center">
+                <NuxtLink
+                    to="/faq"
+                    class="text-body text-brand-bright underline underline-offset-4 hover:text-cream"
+                >
+                    {{ t('landing.faqSeeAll') }}
+                </NuxtLink>
+            </p>
         </section>
 
         <!-- Final CTA -->
