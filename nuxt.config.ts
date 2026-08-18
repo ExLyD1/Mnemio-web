@@ -26,6 +26,11 @@ export default defineNuxtConfig({
     // topic landing pages, and individual public-deck pages) is intentionally NOT
     // listed — it's crawler-facing, server-rendered learning content. Everything
     // here is private user data and stays out of the index + sitemap.
+    //
+    // `/ai` is anchored with `$` because robots.txt Disallow matches by prefix:
+    // an unanchored `/ai` also blocks any public page whose slug starts with
+    // "ai" (e.g. /ai-flashcards-from-photo), not just the /ai.vue app route it's
+    // meant for. /ai.vue has no sub-routes, so an exact-match anchor is safe.
     robots: {
         disallow: [
             '/dashboard',
@@ -35,7 +40,7 @@ export default defineNuxtConfig({
             '/statistics',
             '/profile',
             '/onboarding',
-            '/ai',
+            '/ai$',
             '/login',
             '/auth',
         ],
