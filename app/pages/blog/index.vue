@@ -12,7 +12,7 @@
 
         <section class="mx-auto max-w-[1080px] px-6 py-16">
             <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                <li v-for="post in articles" :key="post.slug">
+                <li v-for="post in posts" :key="post.slug">
                     <NuxtLink
                         :to="`/blog/${post.slug}`"
                         class="flex h-full flex-col rounded-[20px] border border-line bg-bg-surface p-6 transition-all hover:shadow-lg hover:shadow-brand/10"
@@ -32,15 +32,26 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useAppLocale } from '@/composables/useAppLocale';
 import { useT } from '#imports';
 import { articles } from '@/data/blog';
 
 definePageMeta({ layout: 'marketing' });
 
 const { t } = useT();
+const { current } = useAppLocale();
 
 useSeo({ title: t('seo.blogTitle'), description: t('seo.blogDesc') });
 
+const posts = computed(() =>
+    articles.map((a) => ({ slug: a.slug, date: a.date, ...a.translations[current.value] })),
+);
+
 const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    new Date(iso).toLocaleDateString(current.value === 'uk' ? 'uk-UA' : 'en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
 </script>

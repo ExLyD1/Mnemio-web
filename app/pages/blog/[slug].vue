@@ -3,20 +3,20 @@
         <nav class="mb-6 flex items-center gap-2 text-small text-brand-muted">
             <NuxtLink to="/blog" class="hover:text-cream">{{ t('blog.title') }}</NuxtLink>
             <span>/</span>
-            <span class="line-clamp-1 text-cream">{{ post.title }}</span>
+            <span class="line-clamp-1 text-cream">{{ tr.title }}</span>
         </nav>
 
         <header class="flex flex-col gap-3">
-            <SharedPill tone="plum" class="self-start">{{ post.tag }}</SharedPill>
-            <h1 class="font-display text-display-sm text-cream">{{ post.title }}</h1>
+            <SharedPill tone="plum" class="self-start">{{ tr.tag }}</SharedPill>
+            <h1 class="font-display text-display-sm text-cream">{{ tr.title }}</h1>
             <p class="text-small text-brand-muted">
                 {{ formatDate(post.date) }} ·
-                {{ t('blog.readMinutes').replace('{n}', String(post.readMinutes)) }}
+                {{ t('blog.readMinutes').replace('{n}', String(tr.readMinutes)) }}
             </p>
         </header>
 
         <div class="mt-8 flex flex-col gap-5">
-            <template v-for="(block, i) in post.body" :key="i">
+            <template v-for="(block, i) in tr.body" :key="i">
                 <h2 v-if="block.type === 'h2'" class="mt-4 font-display text-h2 text-cream">
                     {{ block.text }}
                 </h2>
@@ -47,11 +47,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { createError, useHead, useRoute, useSiteConfig, useT } from '#imports';
+import { useAppLocale } from '@/composables/useAppLocale';
 import { getArticle } from '@/data/blog';
 
 definePageMeta({ layout: 'marketing' });
 
 const { t } = useT();
+const { current } = useAppLocale();
 const route = useRoute();
 const site = useSiteConfig();
 
@@ -63,12 +65,19 @@ if (!post.value) {
     throw createError({ statusCode: 404, statusMessage: 'Article not found' });
 }
 
+// Non-null: guarded by the throw above, and slug never changes after initial load.
+const tr = computed(() => post.value!.translations[current.value]);
+
 const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    new Date(iso).toLocaleDateString(current.value === 'uk' ? 'uk-UA' : 'en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
 
 useSeo({
-    title: post.value.title,
-    description: post.value.description,
+    title: tr.value.title,
+    description: tr.value.description,
     type: 'article',
 });
 
@@ -83,6 +92,7 @@ useHead({
                 if (!p) {
                     return '{}';
                 }
+                const t2 = p.translations[current.value];
                 const url = `${base}/blog/${p.slug}`;
                 return JSON.stringify({
                     '@context': 'https://schema.org',
@@ -99,20 +109,20 @@ useHead({
                                 {
                                     '@type': 'ListItem',
                                     position: 2,
-                                    name: p.title,
+                                    name: t2.title,
                                     item: url,
                                 },
                             ],
                         },
                         {
                             '@type': 'BlogPosting',
-                            headline: p.title,
-                            description: p.description,
+                            headline: t2.title,
+                            description: t2.description,
                             url,
                             mainEntityOfPage: url,
                             datePublished: p.date,
                             dateModified: p.date,
-                            inLanguage: 'en',
+                            inLanguage: current.value,
                             author: {
                                 '@type': 'Organization',
                                 name: 'Mnemio',
