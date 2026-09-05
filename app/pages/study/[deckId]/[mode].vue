@@ -124,7 +124,14 @@
                     </div>
                     <div class="flex min-h-[72px] w-full items-center justify-center">
                         <Transition name="rate" mode="out-in">
-                            <StudyRatingRow v-if="practice.revealed.value" @grade="onGrade" />
+                            <StudyRatingRow
+                                v-if="practice.revealed.value && srsEnabled"
+                                @grade="onGrade"
+                            />
+                            <StudySimpleRatingRow
+                                v-else-if="practice.revealed.value"
+                                @answer="onSimpleAnswer"
+                            />
                             <p v-else class="hidden text-small text-brand-muted sm:block">
                                 {{ t('study.revealHint') }}
                             </p>
@@ -278,6 +285,14 @@ const onGrade = (rating: SrsRating) => {
     }
 };
 
+// Non-SRS (browse) mode: just two buttons, no SM-2 grading.
+const onSimpleAnswer = (correct: boolean) => {
+    const card = practice.study.currentCard.value;
+    if (card) {
+        practice.recordSimple(correct, card);
+    }
+};
+
 const mcPendingCorrect = ref<boolean | null>(null);
 
 const onMcPick = (correct: boolean) => {
@@ -364,6 +379,16 @@ const onKey = (e: KeyboardEvent) => {
         return;
     }
     if (practice.revealed.value) {
+        if (!srsEnabled) {
+            if (e.key === '1') {
+                e.preventDefault();
+                onSimpleAnswer(false);
+            } else if (e.key === '2') {
+                e.preventDefault();
+                onSimpleAnswer(true);
+            }
+            return;
+        }
         const idx = ['1', '2', '3', '4'].indexOf(e.key);
         const grade = GRADES[idx];
         if (grade) {

@@ -413,6 +413,8 @@
         "gradeHard": "Складно",
         "gradeGood": "Добре",
         "gradeEasy": "Легко",
+        "simpleKnow": "Я знав це",
+        "simpleForgot": "Не пам'ятаю",
         "continue": "Продовжити",
         "cardOfN": "Картка {i} з {n}",
         "modePickerHint": "Оберіть, як хочете практикуватись.",
