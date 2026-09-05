@@ -86,6 +86,8 @@
                         v-model="draft.birthday"
                         type="date"
                         :label="t('profile.birthday')"
+                        :min="minBirthday"
+                        :max="maxBirthday"
                     />
                     <UiSelect
                         v-model="draft.nativeLanguage"
@@ -440,6 +442,16 @@ const draft = reactive({
     nativeLanguage: 'en',
     learning: [] as string[],
     goal: 'steady',
+});
+
+// Mirrors onboarding.vue's birthday constraints (and the backend's MIN_AGE_YEARS
+// check in users.schema.ts) so the date picker itself can't offer a future date
+// or one implying an age under 13, instead of only rejecting it after Save.
+const minBirthday = '1900-01-01';
+const maxBirthday = computed(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 13);
+    return d.toISOString().slice(0, 10);
 });
 
 const syncDraft = () => {
