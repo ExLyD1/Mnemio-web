@@ -336,7 +336,7 @@ const studyUnknown = async () => {
     const cards = [...practice.revisitCards.value];
     practice.resetCounts();
     roundDone.value = false;
-    await practice.study.startWithCards(store.deck, mode.value, cards);
+    await practice.study.startWithCards(store.deck, mode.value, cards, srsEnabled);
 };
 
 // Shuffle the current queue and jump back to card 0.
@@ -420,7 +420,7 @@ const startSession = async () => {
         }
     }
 
-    await practice.study.start(deck, mode.value);
+    await practice.study.start(deck, mode.value, srsEnabled);
     loading.value = false;
 };
 

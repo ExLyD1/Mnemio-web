@@ -14,6 +14,7 @@ interface WireSession {
     cardIndex: number;
     correct: number;
     xpAwarded: number;
+    srsEnabled: boolean;
     counts: SessionCounts;
     revisitCardIds: string[];
     durationMs: number;
@@ -40,6 +41,7 @@ const toSession = (s: WireSession): StudySession => ({
     correct: s.correct,
     xpAwarded: s.xpAwarded,
     status: s.status,
+    srsEnabled: s.srsEnabled,
     counts: s.counts,
     revisitCardIds: s.revisitCardIds,
     durationMs: s.durationMs,
@@ -63,10 +65,15 @@ export const listIncomplete = async (): Promise<StudySession[]> => {
 export const startSession = async (input: {
     deckId: string;
     mode: StudyMode;
+    srsEnabled?: boolean;
 }): Promise<StudySession> => {
     const s = await http<WireSession>('/sessions', {
         method: 'POST',
-        body: { deckId: input.deckId, mode: toWireMode(input.mode) },
+        body: {
+            deckId: input.deckId,
+            mode: toWireMode(input.mode),
+            srsEnabled: input.srsEnabled ?? true,
+        },
     });
     return toSession(s);
 };

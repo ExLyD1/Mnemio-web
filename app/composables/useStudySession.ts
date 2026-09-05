@@ -65,7 +65,7 @@ export const useStudySession = () => {
     const accuracy = () =>
         totalCount.value ? Math.round((correctCount.value / totalCount.value) * 100) : 0;
 
-    const start = async (deck: Deck, mode: StudyMode) => {
+    const start = async (deck: Deck, mode: StudyMode, srsEnabled = true) => {
         if (deck.cards.length === 0) {
             error.value = 'study.errors.emptyDeck';
             state.value = 'idle';
@@ -79,6 +79,7 @@ export const useStudySession = () => {
                 deckId: deck.id,
                 mode,
                 cardIds: shuffled.map((c) => c.id),
+                srsEnabled,
             });
             session.value = created;
             queue.value = shuffled;
@@ -138,7 +139,12 @@ export const useStudySession = () => {
     };
 
     // Start a new session with a specific subset/order of cards (used by track-progress rounds).
-    const startWithCards = async (deck: Deck, mode: StudyMode, cards: Card[]) => {
+    const startWithCards = async (
+        deck: Deck,
+        mode: StudyMode,
+        cards: Card[],
+        srsEnabled = true,
+    ) => {
         if (cards.length === 0) {
             error.value = 'study.errors.emptyDeck';
             state.value = 'idle';
@@ -147,7 +153,7 @@ export const useStudySession = () => {
         state.value = 'loading';
         error.value = null;
         try {
-            const created = await sessions.start({ deckId: deck.id, mode });
+            const created = await sessions.start({ deckId: deck.id, mode, srsEnabled });
             session.value = created;
             queue.value = [...cards];
             elapsedMs.value = 0;

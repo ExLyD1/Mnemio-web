@@ -19,9 +19,18 @@ export const useSessionsStore = defineStore('sessions', () => {
         incomplete.value = await sessionsApi.listIncomplete();
     };
 
-    const start = async (input: { deckId: string; mode: StudyMode; cardIds?: string[] }) => {
+    const start = async (input: {
+        deckId: string;
+        mode: StudyMode;
+        cardIds?: string[];
+        srsEnabled?: boolean;
+    }) => {
         const replaced = active.value;
-        const session = await sessionsApi.startSession({ deckId: input.deckId, mode: input.mode });
+        const session = await sessionsApi.startSession({
+            deckId: input.deckId,
+            mode: input.mode,
+            srsEnabled: input.srsEnabled,
+        });
         active.value = session;
         if (replaced) {
             incomplete.value = await sessionsApi.listIncomplete();
