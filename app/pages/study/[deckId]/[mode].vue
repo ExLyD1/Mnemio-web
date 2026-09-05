@@ -140,14 +140,36 @@
 
                     <!-- Shuffle + Track-progress controls -->
                     <div class="flex items-center justify-center gap-4 sm:gap-6">
-                        <button
-                            type="button"
-                            class="flex items-center gap-1.5 text-small text-brand-muted transition-colors hover:text-cream"
-                            @click="onReshuffle"
+                        <label
+                            class="flex cursor-pointer items-center gap-2 text-small text-brand-muted"
                         >
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="shuffleEnabled"
+                                :aria-label="t('study.shuffleBtn')"
+                                class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                :class="
+                                    shuffleEnabled
+                                        ? 'border-brand bg-brand'
+                                        : 'border-line bg-bg-surface-2'
+                                "
+                                @click="onToggleShuffle"
+                            >
+                                <span
+                                    class="pointer-events-none inline-block h-3 w-3 transform rounded-full transition-transform"
+                                    :class="
+                                        shuffleEnabled
+                                            ? 'translate-x-[18px] bg-white'
+                                            : 'translate-x-0.5 bg-brand-muted'
+                                    "
+                                />
+                            </button>
                             <Shuffle class="size-3.5" />
-                            {{ t('study.shuffleBtn') }}
-                        </button>
+                            <span :class="shuffleEnabled ? 'text-cream' : ''">
+                                {{ t('study.shuffleBtn') }}
+                            </span>
+                        </label>
                         <span class="h-3 w-px bg-line" aria-hidden="true" />
                         <label
                             class="flex cursor-pointer items-center gap-2 text-small text-brand-muted"
@@ -259,6 +281,11 @@ const loading = ref(true);
 // instead of going to the results page (if there are revisit cards left).
 const TRACK_KEY = 'mnemio_track_progress';
 const trackProgress = ref(false);
+// Shuffle toggle - persistent on/off, not a one-shot "shuffle now" action
+// (that was the old design: a button that reshuffled once and gave no
+// indication whether future cards would also be shuffled).
+const SHUFFLE_KEY = 'mnemio_shuffle_enabled';
+const shuffleEnabled = ref(true);
 // True when a round is done and we're waiting for the user to start the next.
 const roundDone = ref(false);
 
@@ -339,10 +366,19 @@ const studyUnknown = async () => {
     await practice.study.startWithCards(store.deck, mode.value, cards, srsEnabled);
 };
 
-// Shuffle the current queue and jump back to card 0.
-const onReshuffle = async () => {
+// Toggle shuffle mode: turning it on re-shuffles immediately; turning it off
+// restores the deck's original card order. Either way, jump back to card 0
+// so the reorder is unambiguous rather than splicing mid-session.
+const onToggleShuffle = async () => {
+    shuffleEnabled.value = !shuffleEnabled.value;
     practice.revealed.value = false;
-    await practice.study.reshuffle();
+    if (shuffleEnabled.value) {
+        await practice.study.reshuffle();
+    } else if (store.deck) {
+        const inPlay = new Set(practice.study.queue.value.map((c) => c.id));
+        const original = store.deck.cards.filter((c) => inPlay.has(c.id));
+        await practice.study.reorder(original);
+    }
 };
 
 watch(
@@ -420,20 +456,26 @@ const startSession = async () => {
         }
     }
 
-    await practice.study.start(deck, mode.value, srsEnabled);
+    await practice.study.start(deck, mode.value, srsEnabled, shuffleEnabled.value);
     loading.value = false;
 };
 
 onMounted(() => {
-    // Restore track-progress preference from localStorage.
+    // Restore track-progress + shuffle preferences from localStorage.
     const saved = localStorage.getItem(TRACK_KEY);
     if (saved !== null) trackProgress.value = saved === 'true';
+    const savedShuffle = localStorage.getItem(SHUFFLE_KEY);
+    if (savedShuffle !== null) shuffleEnabled.value = savedShuffle === 'true';
     startSession();
     window.addEventListener('keydown', onKey);
 });
 
 watch(trackProgress, (val) => {
     localStorage.setItem(TRACK_KEY, String(val));
+});
+
+watch(shuffleEnabled, (val) => {
+    localStorage.setItem(SHUFFLE_KEY, String(val));
 });
 
 onBeforeUnmount(() => {
