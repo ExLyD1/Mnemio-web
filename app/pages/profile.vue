@@ -446,6 +446,15 @@ const syncDraft = () => {
     draft.fullName = auth.currentUser?.displayName ?? '';
     draft.username = auth.currentUser?.username ?? '';
     draft.birthday = auth.currentUser?.birthday ?? '';
+    // Preferences load asynchronously (boot-time plugin, or the hydrate() call
+    // below) and default to null/[] before that resolves. Syncing those
+    // defaults into the draft here would show "English / no languages" for a
+    // moment - and if the user hits Save during that window, it gets PATCHed
+    // to the server as their real choice, silently wiping their actual
+    // preferences. Skip until prefs.loaded confirms real data is in.
+    if (!prefs.loaded) {
+        return;
+    }
     draft.nativeLanguage = prefs.nativeLanguage ?? 'en';
     draft.learning = [...prefs.learningLanguages];
     draft.goal = prefs.goal ?? 'steady';
@@ -510,6 +519,11 @@ const subStatusClass = computed(() => {
 });
 
 watch(() => auth.currentUser, syncDraft, { immediate: true });
+// Preferences can finish hydrating after this component's initial sync
+// (see the prefs.loaded guard in syncDraft above) - catch that transition
+// so the draft picks up the real language/goal values as soon as they land,
+// without depending on auth.currentUser also changing around the same time.
+watch(() => prefs.loaded, syncDraft);
 
 onMounted(async () => {
     await Promise.all([

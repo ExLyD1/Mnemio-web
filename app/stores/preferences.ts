@@ -34,6 +34,22 @@ export const usePreferencesStore = defineStore('preferences', () => {
         return p;
     };
 
+    // Clears everything back to defaults, including `loaded`. Call this on
+    // logout - without it, a stale user's preferences (native/learning
+    // languages especially) stay in this store's memory across an in-app
+    // account switch (logout -> login as someone else, no full page reload)
+    // and get treated as if they were the new user's already-loaded real data.
+    const reset = () => {
+        interests.value = [];
+        goal.value = null;
+        nativeLanguage.value = null;
+        learningLanguages.value = [];
+        avatarHue.value = null;
+        mimiPlacement.value = null;
+        favorites.value = [];
+        loaded.value = false;
+    };
+
     const isFavorite = (deckId: string): boolean => favorites.value.includes(deckId);
 
     const toggleFavorite = async (deckId: string): Promise<void> => {
@@ -59,6 +75,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
         loaded,
         hydrate,
         update,
+        reset,
         isFavorite,
         toggleFavorite,
     };
