@@ -230,8 +230,8 @@
                         class="size-6"
                         :class="a.earned ? 'text-vib-amber' : 'text-brand-muted'"
                     />
-                    <span class="text-small font-semibold text-cream">{{ a.name }}</span>
-                    <span class="text-small text-brand-muted">{{ a.description }}</span>
+                    <span class="text-small font-semibold text-cream">{{ achName(a) }}</span>
+                    <span class="text-small text-brand-muted">{{ achDesc(a) }}</span>
                 </div>
             </div>
         </div>
@@ -259,11 +259,17 @@ import { useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
 import type { StatsRange, StatsSeriesPoint } from '@/types/stats';
+import type { Achievement } from '@/types/achievement';
 
 definePageMeta({ layout: 'default' });
 
 const { store, fetchList } = useDecks();
 const { t } = useT();
+
+// Backend ships English name/description; translate by the stable `key`
+// (mirrors profile.vue / Topbar.vue), falling back to the server text.
+const achName = (a: Achievement) => t(`achievements.${a.key}.name`, a.name);
+const achDesc = (a: Achievement) => t(`achievements.${a.key}.description`, a.description);
 const stats = useStats();
 
 useSeo({ title: t('seo.statisticsTitle'), description: t('seo.appDesc'), noindex: true });
