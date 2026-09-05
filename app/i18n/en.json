@@ -483,6 +483,7 @@
     "card": {
         "word": "Word",
         "definition": "Definition",
+        "phonetic": "Phonetic (optional)",
         "wordPlaceholder": "hola",
         "definitionPlaceholder": "hello",
         "add": "Add card",

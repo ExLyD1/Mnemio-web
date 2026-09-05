@@ -483,6 +483,7 @@
     "card": {
         "word": "Слово",
         "definition": "Визначення",
+        "phonetic": "Транскрипція (необов'язково)",
         "wordPlaceholder": "hola",
         "definitionPlaceholder": "hello",
         "add": "Додати картку",

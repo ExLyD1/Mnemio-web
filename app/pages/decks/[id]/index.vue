@@ -213,7 +213,7 @@
             <aside class="flex flex-col gap-4 self-start lg:sticky lg:top-6">
                 <div class="rounded-[20px] border border-line bg-bg-surface-2 p-6">
                     <div class="grid place-items-center">
-                        <SharedProgressRing :pct="deckStat.masteredPct" label="mastered" />
+                        <SharedProgressRing :pct="deckStat.masteredPct" :label="t('deck.statMastered')" />
                     </div>
                     <div class="mt-4 w-full border-t border-line pt-4">
                         <SharedBreakdownBar :segments="breakdownSegments" />
@@ -280,7 +280,7 @@
             <div class="flex flex-col gap-4">
                 <UiInputField v-model="editWord" :label="t('card.word')" />
                 <UiTextarea v-model="editDefinition" :label="t('card.definition')" :rows="3" />
-                <UiInputField v-model="editPhonetic" label="Phonetic (optional)" />
+                <UiInputField v-model="editPhonetic" :label="t('card.phonetic')" />
             </div>
             <template #footer>
                 <UiButton variant="ghost" @click="editOpen = false">{{
