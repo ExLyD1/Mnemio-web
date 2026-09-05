@@ -69,14 +69,24 @@ export const setApiBase = (base: string): void => {
 /** The resolved API base URL (empty in dev → same-origin proxy). */
 export const getApiBase = (): string => apiBase;
 
-let inflightRefresh: Promise<string | null> | null = null;
+let inflightRefresh: Promise<{ token: string | null; wasInvalid: boolean }> | null = null;
 
 /**
  * Refresh the access token via the HttpOnly refresh cookie. A single refresh is
  * shared across concurrent callers. Exported so non-`http` callers (e.g. the SSE
  * chat stream, which uses native `fetch`) can reuse the same 401-recovery path.
  */
-export const refreshAccessToken = async (): Promise<string | null> => {
+// `wasInvalid` distinguishes a genuinely dead session (server said
+// AUTH_INVALID_REFRESH: the refresh token is missing/expired/revoked) from a
+// transient failure (network blip, timeout, backend still booting) that
+// merely prevented the refresh from completing this time. Callers must NOT
+// treat the latter as a logout — see the call site below for why (BUG:
+// re-opening the app on a flaky mobile connection could hard-log-out a user
+// with a perfectly valid session, which reads to them as the app crashing).
+export const refreshAccessToken = async (): Promise<{
+    token: string | null;
+    wasInvalid: boolean;
+}> => {
     if (inflightRefresh) {
         return inflightRefresh;
     }
@@ -88,10 +98,16 @@ export const refreshAccessToken = async (): Promise<string | null> => {
                 credentials: 'include',
             });
             writeAccessToken(data.accessToken);
-            return data.accessToken;
-        } catch {
-            writeAccessToken(null);
-            return null;
+            return { token: data.accessToken, wasInvalid: false };
+        } catch (err) {
+            const normalized = normalizeError(err);
+            const wasInvalid = normalized.code === 'AUTH_INVALID_REFRESH';
+            if (wasInvalid) {
+                writeAccessToken(null);
+            }
+            // Transient failure: keep whatever token is already stored (don't
+            // wipe a still-possibly-valid session) and let the caller retry.
+            return { token: null, wasInvalid };
         } finally {
             inflightRefresh = null;
         }
@@ -145,7 +161,7 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
             normalized.code !== 'AUTH_INVALID_REFRESH' &&
             url !== `${API_PREFIX}/auth/refresh`
         ) {
-            const newToken = await refreshAccessToken();
+            const { token: newToken, wasInvalid } = await refreshAccessToken();
             if (newToken) {
                 try {
                     return await send();
@@ -160,7 +176,14 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
                     throw retryNormalized;
                 }
             }
-            onAuthFailure();
+            // Only a confirmed-dead refresh token forces a logout. A transient
+            // refresh failure (network/timeout/backend booting) must not log the
+            // user out — surface the original 401 as a normal error instead so
+            // the caller can retry, without wiping a session that may still be
+            // perfectly valid.
+            if (wasInvalid) {
+                onAuthFailure();
+            }
         }
 
         if (normalized.code === 'AUTH_INVALID_REFRESH') {
