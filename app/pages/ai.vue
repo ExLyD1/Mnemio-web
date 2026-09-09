@@ -16,7 +16,7 @@
         <Transition name="chat-drawer">
             <div v-if="sidebarOpen" class="fixed inset-0 z-40 md:hidden">
                 <div
-                    class="chat-drawer-backdrop absolute inset-0 bg-black/50"
+                    class="chat-drawer-backdrop absolute inset-0 bg-scrim"
                     @click="sidebarOpen = false"
                 />
                 <div
@@ -263,14 +263,14 @@
         <Teleport to="body">
             <div
                 v-if="viewerUrl"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-scrim p-6"
                 role="dialog"
                 aria-modal="true"
                 @click="viewerUrl = null"
             >
                 <button
                     type="button"
-                    class="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                    class="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-on-plum/10 text-on-plum transition-colors hover:bg-on-plum/20"
                     :aria-label="t('common.close')"
                     @click="viewerUrl = null"
                 >
@@ -509,12 +509,12 @@ onBeforeUnmount(() => {
     margin: 0.15rem 0;
 }
 .chat-prose :deep(a) {
-    color: rgb(var(--c-brand-pale));
+    color: rgb(var(--c-purple));
     text-decoration: underline;
 }
 .chat-prose :deep(code) {
     border-radius: 0.3rem;
-    background: rgb(var(--c-bg-well));
+    background: rgb(var(--c-bg-surface-2));
     padding: 0.1rem 0.35rem;
     font-size: 0.9em;
 }
@@ -538,7 +538,7 @@ onBeforeUnmount(() => {
 .chat-prose :deep(pre) {
     overflow-x: auto;
     border-radius: 0.6rem;
-    background: rgb(var(--c-bg-well));
+    background: rgb(var(--c-bg-surface-2));
     padding: 0.6rem 0.8rem;
 }
 .chat-prose :deep(pre code) {

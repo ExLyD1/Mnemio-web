@@ -12,7 +12,7 @@
             <template v-if="billing.billingStore.notConfigured">
                 <a
                     href="mailto:hello@mnemio.xyz"
-                    class="text-body font-semibold text-brand hover:underline"
+                    class="text-body font-semibold text-brand-bright hover:underline"
                 >
                     {{ t('premiumGate.ctaContact') }}
                 </a>

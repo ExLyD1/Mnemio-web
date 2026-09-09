@@ -8,53 +8,58 @@
             :aria-label="revealed ? t('study.showFront') : t('study.revealAnswer')"
             @click="$emit('flip')"
         >
+            <!-- The unrevealed face is `card-dark`, which is a LIGHT lavender
+                 gradient in light mode, so its ink stays on the cream ladder. -->
             <div
-                class="face front absolute inset-0 rounded-[24px] border border-line-strong p-6 shadow-flash-card sm:p-10"
-                :style="{ background: 'var(--c-fc-front)' }"
+                class="face front absolute inset-0 rounded-[24px] border border-line-strong bg-plum-card p-6 shadow-flash-card sm:p-10"
             >
                 <p class="fc-word break-words font-display text-cream">{{ card.word }}</p>
             </div>
 
+            <!-- The revealed face is the plum card gradient in BOTH themes, so all
+                 of its ink comes from the on-plum ladder (cream would be dark ink
+                 on plum in light mode). Hairlines are on-plum too, not `line`. -->
             <div
-                class="face back relative min-h-[260px] rounded-[24px] border border-brand-bright p-5 shadow-flash-card sm:min-h-[340px] sm:p-8"
-                :style="{ background: 'var(--c-fc-back)' }"
+                class="face back relative min-h-[260px] rounded-[24px] border border-on-plum/25 bg-card-plum p-5 text-on-plum shadow-flash-card sm:min-h-[340px] sm:p-8"
             >
                 <div class="grid h-full gap-4 sm:gap-6 sm:grid-cols-[42%_1fr]">
-                    <div class="flex flex-col gap-2 text-left sm:border-r sm:border-line sm:pr-6">
+                    <div
+                        class="flex flex-col gap-2 text-left sm:border-r sm:border-on-plum/20 sm:pr-6"
+                    >
                         <div class="flex flex-wrap items-baseline gap-2">
-                            <p class="break-words font-display text-2xl text-cream sm:text-4xl">
+                            <p class="break-words font-display text-2xl text-on-plum sm:text-4xl">
                                 {{ card.word }}
                             </p>
-                            <SharedPill v-if="card.pos" tone="muted">
+                            <SharedPill v-if="card.pos" tone="on-plum">
                                 {{ card.pos }}
                             </SharedPill>
                         </div>
-                        <p v-if="card.reading" class="break-words text-body text-brand-pale">
+                        <p v-if="card.reading" class="break-words text-body text-on-plum-dim">
                             {{ card.reading }}
                         </p>
                         <button
                             v-if="card.audioUrl"
                             type="button"
-                            class="inline-flex w-fit items-center gap-1.5 rounded-full border border-line-strong px-3 py-1.5 text-small text-brand-muted transition-colors hover:border-brand hover:text-cream"
+                            class="inline-flex w-fit items-center gap-1.5 rounded-full border border-on-plum/25 px-3 py-1.5 text-small text-on-plum-dim transition-colors hover:border-on-plum/50 hover:text-on-plum"
                         >
                             <Volume2 class="size-4" /> {{ t('study.listen') }}
                         </button>
                     </div>
                     <div class="flex flex-col gap-4 text-left">
                         <div>
-                            <p class="text-eyebrow uppercase text-brand-muted">
+                            <p class="text-eyebrow uppercase text-on-plum-faint">
                                 {{ t('study.meaning') }}
                             </p>
-                            <p class="mt-1 break-words text-lg text-cream sm:text-xl">
+                            <p class="mt-1 break-words text-lg text-on-plum sm:text-xl">
                                 {{ card.meaning }}
                             </p>
                         </div>
                         <div v-if="card.example">
-                            <p class="text-eyebrow uppercase text-brand-muted">
+                            <p class="text-eyebrow uppercase text-on-plum-faint">
                                 {{ t('study.inContext') }}
                             </p>
-                            <p class="mt-1 italic text-cream/90">{{ card.example }}</p>
-                            <p class="mt-1 text-small text-brand-muted">
+                            <p class="mt-1 italic text-on-plum-dim">{{ card.example }}</p>
+                            <p class="mt-1 text-small text-on-plum-dim">
                                 {{ card.exampleTranslation }}
                             </p>
                         </div>
@@ -104,6 +109,9 @@ const { t } = useT();
  * The back is unveiled by a soft diagonal gradient mask that sweeps across the
  * card — replacing the old 3D flip with a smooth gradient reveal. The opaque
  * band of the mask slides in from the right; its gentle edge is the "gradient".
+ *
+ * `#000` here is a MASK channel, not ink — it means "fully opaque" and is
+ * theme-independent by definition. Deliberately not tokenised.
  */
 .back {
     -webkit-mask-image: linear-gradient(115deg, #000 0 38%, transparent 62% 100%);

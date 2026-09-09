@@ -65,7 +65,7 @@
                             <template #trigger="{ toggle }">
                                 <button
                                     type="button"
-                                    class="grid size-9 place-items-center rounded-full bg-black/20 text-on-color backdrop-blur transition-colors hover:bg-black/35"
+                                    class="grid size-9 place-items-center rounded-full bg-veil/20 text-on-color backdrop-blur transition-colors hover:bg-veil/35"
                                     :aria-label="t('deck.menuAria')"
                                     @click="toggle"
                                 >
@@ -91,7 +91,7 @@
                             class="text-small transition-colors"
                             :class="
                                 filter === 'all'
-                                    ? 'text-brand underline underline-offset-2'
+                                    ? 'text-brand-bright underline underline-offset-2'
                                     : 'text-brand-muted'
                             "
                             >{{ t('deck.statTotal') }}</span
@@ -109,7 +109,7 @@
                             class="text-small transition-colors"
                             :class="
                                 filter === 'practiced'
-                                    ? 'text-brand underline underline-offset-2'
+                                    ? 'text-brand-bright underline underline-offset-2'
                                     : 'text-brand-muted'
                             "
                             >{{ t('deck.statPracticed') }}</span
@@ -127,7 +127,7 @@
                             class="text-small transition-colors"
                             :class="
                                 filter === 'new'
-                                    ? 'text-brand underline underline-offset-2'
+                                    ? 'text-brand-bright underline underline-offset-2'
                                     : 'text-brand-muted'
                             "
                             >{{ t('deck.statNew') }}</span
@@ -213,7 +213,10 @@
             <aside class="flex flex-col gap-4 self-start lg:sticky lg:top-6">
                 <div class="rounded-[20px] border border-line bg-bg-surface-2 p-6">
                     <div class="grid place-items-center">
-                        <SharedProgressRing :pct="deckStat.masteredPct" label="mastered" />
+                        <SharedProgressRing
+                            :pct="deckStat.masteredPct"
+                            :label="t('deck.statMastered')"
+                        />
                     </div>
                     <div class="mt-4 w-full border-t border-line pt-4">
                         <SharedBreakdownBar :segments="breakdownSegments" />

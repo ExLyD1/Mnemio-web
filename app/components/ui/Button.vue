@@ -25,10 +25,13 @@ withDefaults(
 const variants = {
     primary: 'bg-brand text-on-color hover:bg-brand-bright hover:shadow-md hover:shadow-brand/20',
     ghost: 'bg-transparent text-cream border border-line-strong hover:border-cream-dim hover:bg-brand/15',
-    light: 'bg-brand-light text-brand hover:bg-brand-pale',
+    // A light pill in BOTH themes (on-plum is light in dark mode and white in
+    // light mode), so its ink is plum. `bg-brand-light` was the cream token,
+    // which is dark ink in light mode and rendered as a dark slab.
+    light: 'bg-on-plum text-plum hover:bg-on-plum-dim',
     text: 'text-brand-pale hover:text-brand-light',
     // Safe for use on any deck cover gradient (always dark/saturated)
-    'on-cover': 'bg-white/90 text-[#1a0d2e] hover:bg-white shadow-sm',
-    'on-cover-ghost': 'bg-transparent text-on-color border border-white/50 hover:bg-white/10',
+    'on-cover': 'bg-on-plum/90 text-plum-deep hover:bg-on-plum shadow-sm',
+    'on-cover-ghost': 'bg-transparent text-on-color border border-on-plum/50 hover:bg-on-plum/10',
 } as const;
 </script>

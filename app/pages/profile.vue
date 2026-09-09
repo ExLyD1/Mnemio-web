@@ -228,7 +228,7 @@
 
                         <div
                             v-if="billingStore.subscription.status === 'past_due'"
-                            class="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-small text-red-300"
+                            class="mt-4 rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-small text-error-soft"
                         >
                             {{ t('billing.settings.pastDueWarning') }}
                         </div>
@@ -275,7 +275,7 @@
                             </p>
                             <p
                                 v-if="billingStore.subscription.cancelAtPeriodEnd"
-                                class="text-amber-400"
+                                class="text-warn"
                             >
                                 {{ t('billing.settings.cancelNote') }}
                             </p>
@@ -318,7 +318,7 @@
             <div class="border-t border-line pt-5">
                 <UiButton
                     variant="ghost"
-                    class="w-full justify-center !text-red-400 hover:!bg-red-500/10 hover:!text-red-300"
+                    class="w-full justify-center !text-error-soft hover:!bg-error/10 hover:!text-error-soft"
                     @click="onSignOut"
                 >
                     <LogOut class="size-4" />
@@ -502,10 +502,10 @@ const fmtDate = (iso: string) =>
 
 const subStatusClass = computed(() => {
     const s = billingStore.subscription?.status;
-    if (s === 'active') return 'bg-green-500/15 text-green-400';
-    if (s === 'trialing') return 'bg-brand/15 text-brand';
-    if (s === 'past_due') return 'bg-red-500/15 text-red-400';
-    if (s === 'canceled') return 'bg-amber-500/15 text-amber-400';
+    if (s === 'active') return 'bg-success/15 text-success';
+    if (s === 'trialing') return 'bg-brand/15 text-brand-bright';
+    if (s === 'past_due') return 'bg-error/15 text-error-soft';
+    if (s === 'canceled') return 'bg-warn/15 text-warn';
     return 'bg-bg-muted text-cream-dim';
 });
 

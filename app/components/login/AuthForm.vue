@@ -2,7 +2,7 @@
     <form class="max-w-[500px] w-full" novalidate @submit="onSubmit">
         <UiTabs v-model="activeTab" :tabs="tabs" class="mb-[32px]" />
 
-        <div class="text-[#E3D2C8]">
+        <div class="text-cream">
             <!-- Social buttons -->
             <div class="mb-[28px] flex gap-3">
                 <button

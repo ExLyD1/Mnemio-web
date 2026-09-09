@@ -13,11 +13,12 @@
                 <p class="font-display text-3xl text-cream">{{ front || 'Your word…' }}</p>
                 <span class="text-small text-brand-muted">Tap to flip</span>
             </div>
-            <div class="face back">
-                <span class="text-eyebrow uppercase text-pink-soft">Meaning</span>
-                <p class="text-lg leading-snug text-cream">{{ back || 'The meaning…' }}</p>
+            <!-- The back face is the plum card gradient in both themes → on-plum ink. -->
+            <div class="face back text-on-plum">
+                <span class="text-eyebrow uppercase text-on-plum-faint">Meaning</span>
+                <p class="text-lg leading-snug text-on-plum">{{ back || 'The meaning…' }}</p>
                 <div v-if="tags?.length" class="flex flex-wrap justify-center gap-1.5">
-                    <SharedPill v-for="tag in tags" :key="tag" tone="plum">{{ tag }}</SharedPill>
+                    <SharedPill v-for="tag in tags" :key="tag" tone="on-plum">{{ tag }}</SharedPill>
                 </div>
             </div>
         </div>
@@ -54,11 +55,12 @@ const flipped = ref(false);
 }
 .front {
     background: var(--c-fc-front);
-    border: 1.5px solid rgba(124, 69, 118, 0.45);
+    border: 1.5px solid rgb(var(--c-line) / var(--c-a-line-strong));
 }
 .back {
     background: var(--c-fc-back);
-    border: 1.5px solid #7c4576;
+    /* Sits on the plum gradient, so the hairline is on-plum, not `line`. */
+    border: 1.5px solid rgb(var(--c-on-plum) / 0.25);
     transform: rotateY(180deg);
 }
 </style>

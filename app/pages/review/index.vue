@@ -153,7 +153,7 @@
         </Transition>
         <div
             v-if="tipOpen"
-            class="fixed inset-0 z-20 bg-black/40 md:hidden"
+            class="fixed inset-0 z-20 bg-scrim md:hidden"
             @click="tipOpen = false"
         />
     </section>

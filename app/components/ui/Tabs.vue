@@ -13,7 +13,7 @@
             {{ tab.label }}
             <span
                 v-if="modelValue === tab.key"
-                class="absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-[#E84B8A]"
+                class="absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-purple"
             />
         </button>
     </div>

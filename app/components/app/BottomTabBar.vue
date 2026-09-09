@@ -59,7 +59,7 @@
                 @click.self="menuOpen = false"
             >
                 <div
-                    class="sheet-backdrop absolute inset-0 bg-black/50"
+                    class="sheet-backdrop absolute inset-0 bg-scrim"
                     @click="menuOpen = false"
                 />
                 <div

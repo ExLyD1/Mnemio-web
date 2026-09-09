@@ -166,7 +166,7 @@
                                 }"
                                 @click="coverColor = swatch"
                             >
-                                <Layers class="size-3.5 text-white/70" />
+                                <Layers class="size-3.5 text-on-color/70" />
                             </button>
                         </div>
                     </div>
@@ -460,6 +460,12 @@ type MimiMsg = { role: 'mimi'; text: string };
 type DraftMsg = { role: 'draft'; data: AiDeckDraft };
 type ChatMsg = UserMsg | MimiMsg | DraftMsg;
 
+/*
+ * Deck cover art — user-selectable CONTENT colors, not theme chrome. Like
+ * COVER_GRADIENTS in @/utils/coverSwatches, these stay identical in both themes
+ * (a deck's cover shouldn't change color when the user flips the theme), and
+ * text on top of them uses `on-color`. Deliberately not tokenised.
+ */
 const COVER_SWATCHES = [
     '#7C5CBF',
     '#4A7FBD',

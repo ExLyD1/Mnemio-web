@@ -160,7 +160,7 @@
                         :style="{
                             height: '480px',
                             background: previewFlipped ? 'var(--c-fc-back)' : 'var(--c-fc-front)',
-                            boxShadow: '0 30px 60px rgba(0, 0, 0, 0.35)',
+                            boxShadow: 'var(--c-shadow-float)',
                         }"
                         :aria-label="previewFlipped ? t('study.showFront') : t('card.tapToFlip')"
                         @click="previewFlipped = !previewFlipped"
@@ -186,10 +186,10 @@
         <button
             v-if="!mimiOpen"
             type="button"
-            class="fixed bottom-[26px] right-[28px] z-30 grid size-[58px] cursor-pointer place-items-center rounded-full border border-[rgba(242,188,255,.35)] p-0"
+            class="fixed bottom-[26px] right-[28px] z-30 grid size-[58px] cursor-pointer place-items-center rounded-full border border-pink/35 p-0"
             style="
-                background: linear-gradient(150deg, #4a2c58, #221c30);
-                box-shadow: 0 10px 28px -6px rgba(169, 142, 227, 0.3);
+                background: var(--c-hero);
+                box-shadow: 0 10px 28px -6px rgb(var(--c-purple) / 0.3);
             "
             :aria-label="t('card.mimiHelp')"
             @click="openMimi"
@@ -232,7 +232,7 @@
                         />
                         <div
                             v-else-if="msg.role === 'user'"
-                            class="max-w-[88%] self-end rounded-[14px_4px_14px_14px] border border-[rgba(242,188,255,.25)] bg-brand px-3 py-2.5 text-[13px] leading-[1.5] text-on-color"
+                            class="max-w-[88%] self-end rounded-[14px_4px_14px_14px] border border-pink/25 bg-brand px-3 py-2.5 text-[13px] leading-[1.5] text-on-color"
                         >
                             {{ msg.text }}
                         </div>

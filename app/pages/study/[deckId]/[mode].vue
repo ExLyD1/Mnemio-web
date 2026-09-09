@@ -162,7 +162,7 @@
                                     class="pointer-events-none inline-block h-3 w-3 transform rounded-full transition-transform"
                                     :class="
                                         trackProgress
-                                            ? 'translate-x-[18px] bg-white'
+                                            ? 'translate-x-[18px] bg-on-plum'
                                             : 'translate-x-0.5 bg-brand-muted'
                                     "
                                 />

@@ -6,7 +6,7 @@
             role="combobox"
             :aria-expanded="open"
             aria-haspopup="listbox"
-            class="flex w-full items-center justify-between rounded-xl border border-line-strong bg-bg-well px-3.5 py-3 text-[14px] text-cream transition-colors hover:border-brand-muted focus:border-brand-muted focus:outline-none dark:bg-[rgba(255,255,255,.03)]"
+            class="flex w-full items-center justify-between rounded-xl border border-line-strong bg-bg-well px-3.5 py-3 text-[14px] text-cream transition-colors hover:border-brand-muted focus:border-brand-muted focus:outline-none"
             @click="toggle"
         >
             <span :class="modelValue ? 'text-cream' : 'text-cream-faint'">

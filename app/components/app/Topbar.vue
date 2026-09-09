@@ -67,7 +67,7 @@
                         <Bell class="size-5" />
                         <span
                             v-if="unseenAchievements.length > 0"
-                            class="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-bg-surface bg-lavender px-1 text-[10px] font-bold text-plum-deep"
+                            class="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-bg-surface bg-lavender px-1 text-[10px] font-bold text-on-accent"
                         >
                             {{ unseenAchievements.length > 9 ? '9+' : unseenAchievements.length }}
                         </span>

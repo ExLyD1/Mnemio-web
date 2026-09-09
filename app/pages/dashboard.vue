@@ -14,21 +14,20 @@
             @resume="onResume"
         />
 
-        <!-- Hero: today's review -->
-        <div
-            class="rounded-[24px] border border-[rgba(242,188,255,0.18)] px-9 py-8"
-            :style="{ background: 'var(--c-hero)' }"
-        >
+        <!-- Hero: today's review.
+             Plum gradient fill, so ALL of its ink comes from the on-plum ladder —
+             `cream` is dark ink in light mode and would vanish here. -->
+        <div class="rounded-[24px] border border-on-plum/20 bg-hero px-9 py-8 text-on-plum">
             <!-- Content -->
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0 flex-1">
-                    <p class="text-eyebrow uppercase text-brand-pale">
+                    <p class="text-eyebrow uppercase text-on-plum-dim">
                         {{ t('dashboard.todayReview') }}
                     </p>
-                    <h2 class="mt-2 font-display text-[34px] leading-tight text-cream">
+                    <h2 class="mt-2 font-display text-[34px] leading-tight text-on-plum">
                         <template v-if="dueCount > 0">
                             {{ dueCount }} {{ t('dashboard.cardsShort') }}
-                            <span class="text-cream/60">·</span>
+                            <span class="text-on-plum-faint">·</span>
                             {{ t('dashboard.aboutMinutes').replace('{n}', String(reviewMins)) }}
                         </template>
                         <template v-else>
@@ -74,7 +73,7 @@
                     <div
                         v-for="deck in upNextDecks"
                         :key="deck.id"
-                        class="flex items-center gap-3 border-b border-line px-5 py-3 transition-colors last:border-b-0 dark:hover:bg-white/[0.02] hover:bg-brand/5"
+                        class="flex items-center gap-3 border-b border-line px-5 py-3 transition-colors last:border-b-0 hover:bg-bg-well"
                     >
                         <div
                             class="h-9 w-2.5 shrink-0 rounded-full"
@@ -94,7 +93,7 @@
                             </p>
                         </div>
                         <div class="flex shrink-0 items-center gap-2">
-                            <span v-if="deck.due > 0" class="text-xs font-bold text-pink-soft"
+                            <span v-if="deck.due > 0" class="text-xs font-bold text-purple"
                                 >{{ deck.due }} {{ t('dashboard.dueShort') }}</span
                             >
                             <UiButton
@@ -141,7 +140,7 @@
                                     ? isToday(i)
                                         ? 'border border-pink/40 bg-gradient-to-b from-brand-bright to-plum text-on-color shadow-md'
                                         : 'border border-pink/30 bg-gradient-to-b from-brand-bright to-plum text-on-color'
-                                    : 'border border-line dark:bg-white/[0.03] bg-brand/5 text-cream-faint'
+                                    : 'border border-line bg-bg-muted text-cream-faint'
                             "
                         >
                             {{ pt.value > 0 ? pt.value : '' }}
@@ -180,7 +179,7 @@
                     <div
                         class="h-1.5 w-full overflow-hidden rounded-full bg-line transition-[box-shadow] duration-500"
                         :class="
-                            weekGoalPct >= 100 ? 'shadow-[0_0_8px_2px_rgba(82,208,142,0.45)]' : ''
+                            weekGoalPct >= 100 ? 'shadow-ok-glow' : ''
                         "
                     >
                         <div
@@ -189,8 +188,8 @@
                                 width: `${Math.min(weekGoalPct, 100)}%`,
                                 background:
                                     weekGoalPct >= 100
-                                        ? '#52d08e'
-                                        : 'linear-gradient(90deg, #7c4576, #c2e083)',
+                                        ? 'rgb(var(--c-ok))'
+                                        : 'var(--c-progress)',
                             }"
                         />
                     </div>

@@ -3,7 +3,7 @@
         <img
             src="/images/mimi/axolotl.png"
             alt=""
-            class="loader-bob size-16 select-none drop-shadow-[0_12px_18px_rgba(0,0,0,0.4)]"
+            class="loader-bob size-16 select-none drop-shadow-loader"
             draggable="false"
         />
         <div class="flex items-center gap-1.5">

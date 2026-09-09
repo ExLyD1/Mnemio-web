@@ -22,5 +22,5 @@
 <script setup lang="ts">
 defineProps<{ weeks: number[][] }>();
 
-const levelClass = ['bg-line', 'bg-brand/30', 'bg-brand/50', 'bg-brand/70', 'bg-brand'];
+const levelClass = ['bg-bg-muted', 'bg-purple-soft', 'bg-purple/45', 'bg-purple/70', 'bg-purple'];
 </script>
