@@ -413,6 +413,8 @@
         "gradeHard": "Hard",
         "gradeGood": "Good",
         "gradeEasy": "Easy",
+        "simpleKnow": "I knew it",
+        "simpleForgot": "Forgot",
         "continue": "Continue",
         "cardOfN": "Card {i} of {n}",
         "modePickerHint": "Choose how you want to practice.",
@@ -481,6 +483,7 @@
     "card": {
         "word": "Word",
         "definition": "Definition",
+        "phonetic": "Phonetic (optional)",
         "wordPlaceholder": "hola",
         "definitionPlaceholder": "hello",
         "add": "Add card",

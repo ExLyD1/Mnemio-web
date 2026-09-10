@@ -302,21 +302,41 @@ const onResume = () => {
     navigateTo(`/study/${s.deckId}/${s.mode}?resume=1`);
 };
 
-// This week — last 7 points of series, with 2-char day labels derived client-side
-const DAY_ABBR = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
+// This week — the current ISO calendar week (Monday..Sunday), not a rolling
+// trailing 7 days. A rolling window can start on any weekday and never lines
+// up with "this week" the way the weekly-goal copy implies (BUG: the pips
+// effectively "started from the end" of the week instead of from Monday).
+// Days after today haven't happened yet, so they render as empty/zero rather
+// than being cut off.
+const DAY_ABBR = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const;
 const weekSeries = computed(() => {
-    const pts = stats.series.value.slice(-7);
-    const today = new Date();
-    return pts.map((pt, i) => {
-        const d = new Date(today);
-        d.setDate(today.getDate() - (pts.length - 1 - i));
-        return { value: pt.value, label: DAY_ABBR[d.getDay()] as string };
+    // stats.series is keyed by UTC calendar day (see backend stats.service.ts),
+    // so anchor "this week" to UTC-today too - a local-time Date here would
+    // drift the Monday boundary by a day for viewers on either side of UTC.
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const utcDow = today.getUTCDay(); // 0=Sun..6=Sat
+    const isoDow = utcDow === 0 ? 7 : utcDow; // 1=Mon..7=Sun
+    const monday = new Date(today);
+    monday.setUTCDate(today.getUTCDate() - (isoDow - 1));
+
+    const byIso = new Map(stats.series.value.map((pt) => [pt.label, pt.value]));
+    return Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(monday);
+        d.setUTCDate(monday.getUTCDate() + i);
+        const iso = d.toISOString().slice(0, 10);
+        const isFuture = d > today;
+        return { value: isFuture ? 0 : (byIso.get(iso) ?? 0), label: DAY_ABBR[i] as string };
     });
 });
 const weekReviewed = computed(() => weekSeries.value.reduce((sum, p) => sum + p.value, 0));
 const daysPracticed = computed(() => weekSeries.value.filter((p) => p.value > 0).length);
-// Highlight today's pip (last point in the 7-day series is today)
-const isToday = (i: number) => i === weekSeries.value.length - 1;
+// Highlight today's pip — the Monday-anchored index matching today's weekday.
+const todayIndex = computed(() => {
+    const dow = new Date().getUTCDay();
+    return dow === 0 ? 6 : dow - 1;
+});
+const isToday = (i: number) => i === todayIndex.value;
 
 const goalMap: Record<string, number> = { casual: 50, steady: 100, serious: 250 };
 const weekGoal = computed(() => goalMap[prefs.goal ?? 'steady'] ?? 100);
@@ -328,7 +348,7 @@ onMounted(async () => {
     await Promise.all([
         fetchList.execute({ cursor: null, append: false }),
         stats.load(),
-        stats.loadSeries('7'),
+        stats.loadSeries('30'),
         sessions.hydrate().catch(() => {}),
         srs.fetchAll().catch(() => {}),
         prefs.hydrate().catch(() => {}),

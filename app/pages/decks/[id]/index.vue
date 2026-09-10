@@ -283,7 +283,7 @@
             <div class="flex flex-col gap-4">
                 <UiInputField v-model="editWord" :label="t('card.word')" />
                 <UiTextarea v-model="editDefinition" :label="t('card.definition')" :rows="3" />
-                <UiInputField v-model="editPhonetic" label="Phonetic (optional)" />
+                <UiInputField v-model="editPhonetic" :label="t('card.phonetic')" />
             </div>
             <template #footer>
                 <UiButton variant="ghost" @click="editOpen = false">{{

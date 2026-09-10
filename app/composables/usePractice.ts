@@ -72,8 +72,13 @@ export const usePractice = (options?: { srsEnabled?: boolean }) => {
                 toast.error(err.message ?? t('review.errors.rate_failed'));
             }
         }
-        revealed.value = false;
+        // Don't reset `revealed` yet — that would flip the current card back to its
+        // front for one frame before the queue advances, producing a visible
+        // double-animation (flip-back, then the card-swap transition). Advance the
+        // session first so the outgoing card leaves already answered, then reset
+        // `revealed` for the incoming card, which mounts fresh (new `:key`) anyway.
         await study.answer(correct);
+        revealed.value = false;
         locked.value = false;
     };
 

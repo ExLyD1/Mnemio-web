@@ -87,9 +87,17 @@ export const runSse = async (opts: RunSseOptions): Promise<void> => {
     try {
         res = await fetch(url, buildSseInit(readAccessToken(), makeBody(), opts.signal));
         if (res.status === 401) {
-            const fresh = await refreshAccessToken();
+            const { token: fresh, wasInvalid } = await refreshAccessToken();
             if (!fresh) {
-                await navigateTo('/login?reason=session_expired');
+                // Only a confirmed-dead refresh token forces a re-login. A
+                // transient refresh failure (network blip, backend booting)
+                // must not log the user out of a session that may still be
+                // valid — surface it as a normal stream error instead.
+                if (wasInvalid) {
+                    await navigateTo('/login?reason=session_expired');
+                    return;
+                }
+                opts.onError({ code: 'NETWORK_ERROR', message: 'Request failed.' });
                 return;
             }
             res = await fetch(url, buildSseInit(fresh, makeBody(), opts.signal));

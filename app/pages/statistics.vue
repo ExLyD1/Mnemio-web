@@ -125,7 +125,7 @@
                             <span
                                 class="block text-[10px] uppercase tracking-wide text-brand-muted"
                             >
-                                {{ formatBarLabel(d.label, trendPoints.length) }}
+                                {{ formatBarLabel(d.label, trendPoints.length, trendBucketed) }}
                             </span>
                             <span class="block text-small font-semibold text-cream">
                                 {{ trendTooltip(d) }}
@@ -135,10 +135,10 @@
                 </div>
                 <div class="relative mt-1 flex gap-1">
                     <div v-for="(d, i) in trendPoints" :key="i" class="flex-1">
-                        <template v-if="showBarLabel(i, trendPoints.length)">
+                        <template v-if="showBarLabel(i, trendPoints.length, trendBucketed)">
                             <div class="mx-auto h-1.5 w-px bg-line" />
                             <div class="text-center text-[10px] leading-tight text-brand-muted">
-                                {{ formatBarLabel(d.label, trendPoints.length) }}
+                                {{ formatBarLabel(d.label, trendPoints.length, trendBucketed) }}
                             </div>
                         </template>
                     </div>
@@ -230,8 +230,8 @@
                         class="size-6"
                         :class="a.earned ? 'text-vib-amber' : 'text-brand-muted'"
                     />
-                    <span class="text-small font-semibold text-cream">{{ a.name }}</span>
-                    <span class="text-small text-brand-muted">{{ a.description }}</span>
+                    <span class="text-small font-semibold text-cream">{{ achName(a) }}</span>
+                    <span class="text-small text-brand-muted">{{ achDesc(a) }}</span>
                 </div>
             </div>
         </div>
@@ -259,11 +259,17 @@ import { useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
 import type { StatsRange, StatsSeriesPoint } from '@/types/stats';
+import type { Achievement } from '@/types/achievement';
 
 definePageMeta({ layout: 'default' });
 
 const { store, fetchList } = useDecks();
 const { t } = useT();
+
+// Backend ships English name/description; translate by the stable `key`
+// (mirrors profile.vue / Topbar.vue), falling back to the server text.
+const achName = (a: Achievement) => t(`achievements.${a.key}.name`, a.name);
+const achDesc = (a: Achievement) => t(`achievements.${a.key}.description`, a.description);
 const stats = useStats();
 
 useSeo({ title: t('seo.statisticsTitle'), description: t('seo.appDesc'), noindex: true });
@@ -312,8 +318,27 @@ const trendOptions = computed(() => [
     { value: 'cards', label: t('statistics.trendCards') },
     { value: 'time', label: t('statistics.trendTime') },
 ]);
-const trendPoints = computed<StatsSeriesPoint[]>(() =>
+// The backend caps 'all' at 365 daily points. Rendering that many flex-1 bars
+// with a gap each overflows the chart's width (BUG: bars can't shrink below
+// their own gap total) - bucket into monthly totals once the series gets long
+// so the bar count - and the x-axis - stays bounded regardless of range.
+const MAX_DAILY_BARS = 60;
+const bucketByMonth = (points: StatsSeriesPoint[]): StatsSeriesPoint[] => {
+    const byMonth = new Map<string, number>();
+    for (const p of points) {
+        const monthKey = p.label.slice(0, 7); // 'YYYY-MM'
+        byMonth.set(monthKey, (byMonth.get(monthKey) ?? 0) + p.value);
+    }
+    return [...byMonth.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, value]) => ({ label: `${month}-01`, value }));
+};
+const rawTrendPoints = computed<StatsSeriesPoint[]>(() =>
     trendMode.value === 'time' ? stats.studyTime.value : stats.series.value,
+);
+const trendBucketed = computed(() => rawTrendPoints.value.length > MAX_DAILY_BARS);
+const trendPoints = computed<StatsSeriesPoint[]>(() =>
+    trendBucketed.value ? bucketByMonth(rawTrendPoints.value) : rawTrendPoints.value,
 );
 const trendMax = computed(() => Math.max(1, ...trendPoints.value.map((d) => d.value)));
 // Keep any non-zero day visible with a small floor height.
@@ -368,7 +393,12 @@ const perfMarkerY = computed(() => {
 
 // Shared bar-label helpers used by all bar charts.
 const DAY_ABBR = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
-const showBarLabel = (i: number, total: number): boolean => {
+const showBarLabel = (i: number, total: number, bucketed = false): boolean => {
+    if (bucketed) {
+        // Monthly buckets: label every 2nd-3rd month so text doesn't collide.
+        const step = total <= 12 ? 1 : total <= 24 ? 2 : 3;
+        return i % step === 0 || i === total - 1;
+    }
     if (total <= 14) return true;
     const step = total <= 31 ? 7 : 14;
     if (i % step === 0 || i === 0) return true;
@@ -378,13 +408,14 @@ const showBarLabel = (i: number, total: number): boolean => {
     }
     return false;
 };
-const formatBarLabel = (label: string, total: number): string => {
+const formatBarLabel = (label: string, total: number, bucketed = false): string => {
     const d = new Date(label + 'T00:00:00Z');
-    if (!isNaN(d.getTime())) {
-        if (total <= 14) return DAY_ABBR[d.getUTCDay()] ?? label;
-        return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+    if (isNaN(d.getTime())) return label;
+    if (bucketed) {
+        return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', year: '2-digit' });
     }
-    return label;
+    if (total <= 14) return DAY_ABBR[d.getUTCDay()] ?? label;
+    return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
 };
 
 const insight = computed(() => {

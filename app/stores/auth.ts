@@ -11,6 +11,7 @@ import {
 } from '@/api/auth';
 import { readAccessToken, writeAccessToken } from '@/utils/authToken';
 import { useAnalytics } from '@/composables/useAnalytics';
+import { usePreferencesStore } from '@/stores/preferences';
 import type { User, ProfileUpdate } from '@/types/user';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -37,6 +38,15 @@ export const useAuthStore = defineStore('auth', () => {
         analytics.identify(u.id);
         analytics.registerSuper({ plan: p });
         analytics.setUserProps({ plan: p });
+
+        // Refresh preferences for THIS user right away. Without this, switching
+        // accounts in-app (logout -> login as someone else, no full page reload)
+        // would leave the previous user's native/learning languages etc. sitting
+        // in the preferences store, still marked `loaded`, and get displayed as
+        // if they were this user's real settings.
+        usePreferencesStore()
+            .hydrate()
+            .catch(() => {});
     };
 
     const clearSession = () => {
@@ -45,6 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
         writeAccessToken(null);
         plan.value = 'free';
         useAnalytics().reset();
+        usePreferencesStore().reset();
     };
 
     const hydrate = async () => {

@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/stores/auth';
 import { sanitizeNext } from '@/utils/returnTo';
+import { readAccessToken } from '@/utils/authToken';
 
 // Routes that require a logged-in user. Everything NOT matched here is public and
 // open to anyone (landing, blog, discover, about, pricing, legal, OAuth + billing
@@ -28,7 +29,17 @@ export default defineNuxtRouteMiddleware((to) => {
 
     const auth = useAuthStore();
 
-    if (auth.isAuthenticated) {
+    // The landing page is SSR'd (for crawlers/logged-out visitors) and the auth
+    // store's real hydration is an async apiMe() call — so on first client load,
+    // isAuthenticated is still false for a brief moment even for a returning,
+    // logged-in user, and this middleware would otherwise let the SSR'd landing
+    // page flash on screen before hydrate() resolves and something re-routes them.
+    // The access token in storage is a synchronous, no-network signal that's good
+    // enough to redirect immediately; hydrate() still runs and is the source of
+    // truth for actually loading the user and clearing an invalid session.
+    const likelyAuthed = auth.isAuthenticated || !!readAccessToken();
+
+    if (likelyAuthed) {
         // Convenience redirects for the two app-entry routes only. Content pages
         // (blog, discover, about, pricing, …) stay open — we just don't link to
         // them from the authed UI.

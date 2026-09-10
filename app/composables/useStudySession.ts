@@ -65,7 +65,7 @@ export const useStudySession = () => {
     const accuracy = () =>
         totalCount.value ? Math.round((correctCount.value / totalCount.value) * 100) : 0;
 
-    const start = async (deck: Deck, mode: StudyMode) => {
+    const start = async (deck: Deck, mode: StudyMode, srsEnabled = true, shuffleCards = true) => {
         if (deck.cards.length === 0) {
             error.value = 'study.errors.emptyDeck';
             state.value = 'idle';
@@ -74,11 +74,12 @@ export const useStudySession = () => {
         state.value = 'loading';
         error.value = null;
         try {
-            const shuffled = shuffle(deck.cards);
+            const shuffled = shuffleCards ? shuffle(deck.cards) : [...deck.cards];
             const created = await sessions.start({
                 deckId: deck.id,
                 mode,
                 cardIds: shuffled.map((c) => c.id),
+                srsEnabled,
             });
             session.value = created;
             queue.value = shuffled;
@@ -138,7 +139,12 @@ export const useStudySession = () => {
     };
 
     // Start a new session with a specific subset/order of cards (used by track-progress rounds).
-    const startWithCards = async (deck: Deck, mode: StudyMode, cards: Card[]) => {
+    const startWithCards = async (
+        deck: Deck,
+        mode: StudyMode,
+        cards: Card[],
+        srsEnabled = true,
+    ) => {
         if (cards.length === 0) {
             error.value = 'study.errors.emptyDeck';
             state.value = 'idle';
@@ -147,7 +153,7 @@ export const useStudySession = () => {
         state.value = 'loading';
         error.value = null;
         try {
-            const created = await sessions.start({ deckId: deck.id, mode });
+            const created = await sessions.start({ deckId: deck.id, mode, srsEnabled });
             session.value = created;
             queue.value = [...cards];
             elapsedMs.value = 0;
@@ -170,6 +176,19 @@ export const useStudySession = () => {
             return;
         }
         queue.value = shuffle([...queue.value]);
+        session.value = { ...session.value, index: 0 };
+        await sessions.updateActive({ index: 0 });
+    };
+
+    // Reorder the current queue to a specific card order (e.g. the deck's
+    // original, unshuffled order) and restart from card 0 - the "off" side of
+    // the shuffle toggle. `cards` must be the same set of cards already in
+    // the queue; this only reorders, it doesn't change which cards are in play.
+    const reorder = async (cards: Card[]) => {
+        if (!session.value || cards.length === 0) {
+            return;
+        }
+        queue.value = [...cards];
         session.value = { ...session.value, index: 0 };
         await sessions.updateActive({ index: 0 });
     };
@@ -287,6 +306,7 @@ export const useStudySession = () => {
         resume,
         startWithCards,
         reshuffle,
+        reorder,
         answer,
         goTo,
         goNext,
