@@ -306,6 +306,13 @@ const finish = async () => {
             // (QA (3) #13). Seed it from the interface language the user chose;
             // they can change it in their profile.
             ...(prefs.nativeLanguage ? {} : { nativeLanguage: appLocale.value }),
+            // Owner decision: the default learning language is English (the
+            // interface language itself was already chosen from the visitor's
+            // location — see plugins/04.geo-locale.ts). English speakers keep
+            // an empty list; they pick one in their profile.
+            ...(prefs.learningLanguages.length === 0 && appLocale.value !== 'en'
+                ? { learningLanguages: ['en'] }
+                : {}),
         })
         .catch(() => {});
     analytics.track('onboarding_step_completed', { step: 2, step_name: 'learn' });
