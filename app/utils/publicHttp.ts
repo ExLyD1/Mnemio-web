@@ -29,5 +29,5 @@ export const publicGet = <T>(path: string, options: PublicFetchOptions = {}): Pr
         baseURL,
         method: 'GET',
         query: options.query,
-    });
+    }) as Promise<T>;
 };

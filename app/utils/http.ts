@@ -69,6 +69,19 @@ export const setApiBase = (base: string): void => {
 /** The resolved API base URL (empty in dev → same-origin proxy). */
 export const getApiBase = (): string => apiBase;
 
+/**
+ * The browser's IANA time zone (e.g. "Europe/Kyiv"). Sent on every API call as
+ * X-Timezone so the backend files study activity under the user's LOCAL day
+ * and computes streaks / "days practiced" / daily charts in that zone.
+ */
+export const clientTimeZone = (): string | null => {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+    } catch {
+        return null;
+    }
+};
+
 let inflightRefresh: Promise<{ token: string | null; wasInvalid: boolean }> | null = null;
 
 /**
@@ -90,7 +103,16 @@ export const refreshAccessToken = async (): Promise<{
     if (inflightRefresh) {
         return inflightRefresh;
     }
-    inflightRefresh = (async () => {
+    // The token this tab was using when it hit the 401.
+    const staleToken = readAccessToken();
+    const doRefresh = async (): Promise<{ token: string | null; wasInvalid: boolean }> => {
+        // Another tab may have refreshed while we waited for the lock — its new
+        // token is already in shared storage, so reuse it instead of presenting
+        // the (now rotated) refresh cookie a second time.
+        const current = readAccessToken();
+        if (current && current !== staleToken) {
+            return { token: current, wasInvalid: false };
+        }
         try {
             const data = await $fetch<RefreshResponse>(`${API_PREFIX}/auth/refresh`, {
                 baseURL: apiBase,
@@ -108,10 +130,20 @@ export const refreshAccessToken = async (): Promise<{
             // Transient failure: keep whatever token is already stored (don't
             // wipe a still-possibly-valid session) and let the caller retry.
             return { token: null, wasInvalid };
-        } finally {
-            inflightRefresh = null;
         }
-    })();
+    };
+    // Serialize refreshes ACROSS TABS (Web Locks API). When a laptop wakes up
+    // or the phone is unlocked, every open tab hits a 401 at the same moment
+    // and used to refresh with the same cookie simultaneously; the losers of
+    // that race looked like refresh-token theft to the backend, which then
+    // revoked the whole session ("logged out for no reason"). The backend now
+    // also tolerates this (60s grace window), this just avoids the race.
+    const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+    inflightRefresh = (
+        locks ? locks.request('mnemio-auth-refresh', doRefresh) : doRefresh()
+    ).finally(() => {
+        inflightRefresh = null;
+    });
     return inflightRefresh;
 };
 
@@ -129,6 +161,10 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
 
     const buildHeaders = (): Record<string, string> => {
         const headers: Record<string, string> = { ...(options.headers ?? {}) };
+        const tz = clientTimeZone();
+        if (tz) {
+            headers['X-Timezone'] = tz;
+        }
         if (!options.skipAuth) {
             const token = readAccessToken();
             if (token) {
@@ -138,6 +174,8 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
         return headers;
     };
 
+    // Nitro types `$fetch` responses per route (TypedInternalResponse); for
+    // these dynamic API paths that isn't assignable to T, so assert it.
     const send = () =>
         $fetch<T>(url, {
             baseURL,
@@ -146,7 +184,7 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
             query: options.query,
             headers: buildHeaders(),
             credentials: 'include',
-        });
+        }) as Promise<T>;
 
     try {
         return await send();

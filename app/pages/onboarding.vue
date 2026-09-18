@@ -60,7 +60,24 @@
                         v-model="username"
                         :label="t('onboarding.username')"
                         :placeholder="t('onboarding.usernamePlaceholder')"
+                        autocapitalize="none"
+                        autocomplete="username"
+                        spellcheck="false"
+                        @blur="usernameTouched = true"
                     />
+                    <!-- Checked live, before the user can leave step 1: a wrong
+                         character (e.g. Cyrillic) is flagged as soon as it's
+                         typed; "too short" waits until the field loses focus. -->
+                    <p
+                        v-if="usernameInlineError"
+                        class="mt-1 px-1 text-small text-error"
+                        aria-live="polite"
+                    >
+                        {{ usernameInlineError }}
+                    </p>
+                    <p v-else class="mt-1 px-1 text-small text-brand-muted">
+                        {{ t('username.hint') }}
+                    </p>
                 </div>
                 <div class="mt-4">
                     <span class="mb-1 block text-small text-brand-muted">{{
@@ -135,7 +152,7 @@
             :mood="mimi.mood.value"
             placement="left"
             :size="84"
-            class="fixed bottom-6 left-6"
+            class="pointer-events-none fixed bottom-6 left-6"
         />
     </div>
 </template>
@@ -145,6 +162,8 @@ import { useAuth, useToast, useT } from '#imports';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useMimi } from '@/composables/useMimi';
 import { useAnalytics } from '@/composables/useAnalytics';
+import { useAppLocale } from '@/composables/useAppLocale';
+import { usernameErrorKey, usernameIssue } from '@/utils/username';
 
 definePageMeta({ layout: 'auth' });
 
@@ -177,6 +196,7 @@ const goalOptions = computed(() => [
     { value: 'serious', label: t('onboarding.goalSerious'), note: t('onboarding.goalSeriousNote') },
 ]);
 
+const { current: appLocale } = useAppLocale();
 const step = ref(0);
 const hue = ref(prefs.avatarHue ?? 286);
 const fullName = ref('');
@@ -197,6 +217,30 @@ const say = (message: string) => {
     mimi.message.value = message;
 };
 
+const usernameTouched = ref(false);
+const usernameInlineError = computed(() => {
+    if (!username.value) {
+        return '';
+    }
+    const issue = usernameIssue(username.value);
+    if (!issue || (issue === 'too_short' && !usernameTouched.value)) {
+        return '';
+    }
+    return t(usernameErrorKey(issue));
+});
+
+// On a phone the fixed Mimi bubble sits on top of the Continue / Start
+// button. It used to stay there until the step succeeded, so after any
+// validation message the button could not be tapped at all — the user was
+// stuck ("can't get into the app", QA (2) #4). The bubble is now
+// click-through (pointer-events-none) and goes away as soon as the user
+// starts fixing the input.
+watch([fullName, username, birthday], () => {
+    if (mimi.message.value) {
+        mimi.clear();
+    }
+});
+
 const toggleInterest = (topic: string) => {
     selectedInterests.value = selectedInterests.value.includes(topic)
         ? selectedInterests.value.filter((t) => t !== topic)
@@ -208,8 +252,10 @@ const goStep2 = () => {
         say(t('onboarding.errNeedName'));
         return;
     }
-    if (username.value.trim().length < 3) {
-        say(t('onboarding.errUsername'));
+    const issue = usernameIssue(username.value);
+    if (issue) {
+        usernameTouched.value = true;
+        say(t(usernameErrorKey(issue)));
         return;
     }
     if (!birthday.value) {
@@ -232,9 +278,21 @@ const finish = async () => {
         birthday: birthday.value,
     });
     if (!result) {
-        if (updateProfile.error.value) {
-            toast.error(updateProfile.error.value.message);
+        const err = updateProfile.error.value;
+        // Username problems (taken, or anything the server rejects that the
+        // client check missed) belong to step 1 — send the user back there
+        // with a localized message instead of a raw English toast on step 2.
+        if (err?.code === 'AUTH_USERNAME_TAKEN') {
+            step.value = 0;
+            say(t(usernameErrorKey('taken')));
+            return;
         }
+        if (err?.code === 'VALIDATION_ERROR' && /username/i.test(err.message)) {
+            step.value = 0;
+            say(t(usernameErrorKey('invalid_chars')));
+            return;
+        }
+        toast.error(t('onboarding.errSave'));
         return;
     }
     await prefs
@@ -242,6 +300,19 @@ const finish = async () => {
             avatarHue: hue.value,
             interests: [...selectedInterests.value],
             goal: goal.value,
+            // Onboarding never asks for a native language, so it stayed null
+            // and /profile displayed "English" for Ukrainian speakers — and AI
+            // decks had no native language to write definitions in
+            // (QA (3) #13). Seed it from the interface language the user chose;
+            // they can change it in their profile.
+            ...(prefs.nativeLanguage ? {} : { nativeLanguage: appLocale.value }),
+            // Owner decision: the default learning language is English (the
+            // interface language itself was already chosen from the visitor's
+            // location — see plugins/04.geo-locale.ts). English speakers keep
+            // an empty list; they pick one in their profile.
+            ...(prefs.learningLanguages.length === 0 && appLocale.value !== 'en'
+                ? { learningLanguages: ['en'] }
+                : {}),
         })
         .catch(() => {});
     analytics.track('onboarding_step_completed', { step: 2, step_name: 'learn' });

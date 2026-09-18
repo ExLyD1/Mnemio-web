@@ -229,17 +229,18 @@ import { ImagePlus, ImageOff, Trash2 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import { useT } from '#imports';
 import { useImageDeck, type RefineHint } from '@/composables/useImageDeck';
-import { LANGUAGES } from '@/schemas/deck';
+import { useLanguageName } from '@/composables/useLanguageName';
 
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [boolean]; created: [string] }>();
 
 const { t } = useT();
 
-const targetOptions = [
+const { options: languageOptions } = useLanguageName();
+const targetOptions = computed(() => [
     { value: '', label: t('image.autoDetect') },
-    ...LANGUAGES.map((l) => ({ value: l.code, label: l.label })),
-];
+    ...languageOptions.value,
+]);
 const countOptions = [8, 12, 16, 20].map((n) => ({ value: String(n), label: String(n) }));
 const refinePills: { hint: RefineHint; label: string }[] = [
     { hint: 'more', label: t('image.refineMore') },

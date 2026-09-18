@@ -11,14 +11,14 @@
         <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
             <SharedStatTile
                 :label="t('statistics.due')"
-                :value="dueTotal"
+                :value="stats.dueCount.value"
                 :sub="t('statistics.dueSub')"
                 tone="plum"
             />
             <SharedStatTile
                 :label="t('statistics.reviewed')"
                 :value="stats.reviewed.value"
-                :sub="t('statistics.reviewedSub')"
+                :sub="reviewedSub"
                 tone="blue"
             />
             <SharedStatTile
@@ -50,8 +50,13 @@
 
         <!-- Weakest decks -->
         <div v-if="weakestDecks.length" class="rounded-[20px] border border-line bg-bg-surface p-5">
-            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
+            <p class="text-eyebrow uppercase text-brand-muted">
                 {{ t('statistics.weakestDecks') }}
+            </p>
+            <!-- QA (Mnemio правки #1, (3) #11): "why 0% even though I studied it?"
+                 Spell out what the % measures instead of leaving it implicit. -->
+            <p class="mb-4 mt-1 text-small text-brand-muted">
+                {{ t('statistics.weakestDecksHint') }}
             </p>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div
@@ -90,7 +95,7 @@
         </div>
 
         <!-- Study trend + Performance (side by side on desktop, stacked on mobile) -->
-        <div class="grid gap-6 lg:grid-cols-2">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <!-- Study trend: reviews / time toggle -->
             <div class="rounded-[20px] border border-line bg-bg-surface p-5">
                 <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -258,13 +263,18 @@ import { Trophy, Lock, Users } from 'lucide-vue-next';
 import { useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
-import type { StatsRange, StatsSeriesPoint } from '@/types/stats';
+import * as statsApi from '@/api/stats';
+import { dateLocaleFor, daysPracticedThisWeek, weekdayShort } from '@/utils/practiceWeek';
+import { useAppLocale } from '@/composables/useAppLocale';
+import type { DeckPerformance, StatsRange, StatsSeriesPoint } from '@/types/stats';
 import type { Achievement } from '@/types/achievement';
 
 definePageMeta({ layout: 'default' });
 
 const { store, fetchList } = useDecks();
 const { t } = useT();
+const { current: appLocale } = useAppLocale();
+const dateLocale = computed(() => dateLocaleFor(appLocale.value));
 
 // Backend ships English name/description; translate by the stable `key`
 // (mirrors profile.vue / Topbar.vue), falling back to the server text.
@@ -274,34 +284,42 @@ const stats = useStats();
 
 useSeo({ title: t('seo.statisticsTitle'), description: t('seo.appDesc'), noindex: true });
 const achievements = useAchievements();
-const dueTotal = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
+// Per-deck mastery for ALL of the user's decks. The deck store only holds the
+// first page (20) of the library, so deriving "words known" / "weakest decks"
+// from it silently ignored everything past deck #20.
+const deckPerf = ref<DeckPerformance[]>([]);
+const dueByDeck = computed(() => new Map(store.summaries.map((d) => [d.id, d.stats.due] as const)));
 
-// Words known ≈ cards mastered across all decks (mature cards).
+// Words known ≈ cards mastered across all decks (repetitions >= 3).
 const wordsKnown = computed(() =>
-    store.summaries.reduce(
-        (sum, d) => sum + Math.round((d.cardCount * d.stats.masteredPct) / 100),
-        0,
-    ),
+    deckPerf.value.reduce((sum, d) => sum + Math.round((d.cardCount * d.masteryPct) / 100), 0),
 );
 
 const weakestDecks = computed(() =>
-    [...store.summaries]
-        .sort((a, b) => a.stats.masteredPct - b.stats.masteredPct)
+    [...deckPerf.value]
+        .filter((d) => d.cardCount > 0)
+        .sort((a, b) => a.masteryPct - b.masteryPct)
         .slice(0, 4)
         .map((d) => ({
-            id: d.id,
+            id: d.deckId,
             title: d.title,
-            masteredPct: d.stats.masteredPct,
-            due: d.stats.due,
+            masteredPct: d.masteryPct,
+            due: dueByDeck.value.get(d.deckId) ?? 0,
         })),
 );
 
-const daysPracticed = computed(() => {
-    const pts = stats.series.value;
-    return pts.filter((p) => p.value > 0).length;
-});
+// "Days practiced — this week": the current Mon..Sun week, independent of the
+// selected range (the tile's sub-label says "this week").
+const daysPracticed = computed(() => daysPracticedThisWeek(stats.series.value));
 
 const range = ref<StatsRange>('30');
+// The "Reviewed" tile shows the total for the selected range, so its caption
+// has to follow the range (it used to say "today" regardless).
+const reviewedSub = computed(() =>
+    range.value === 'all'
+        ? t('statistics.reviewedSubAll')
+        : t('statistics.reviewedSubRange').replace('{n}', range.value),
+);
 const rangeOptions = computed(() => [
     { value: '7', label: t('statistics.range7') },
     { value: '30', label: t('statistics.range30') },
@@ -392,7 +410,6 @@ const perfMarkerY = computed(() => {
 });
 
 // Shared bar-label helpers used by all bar charts.
-const DAY_ABBR = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
 const showBarLabel = (i: number, total: number, bucketed = false): boolean => {
     if (bucketed) {
         // Monthly buckets: label every 2nd-3rd month so text doesn't collide.
@@ -412,20 +429,26 @@ const formatBarLabel = (label: string, total: number, bucketed = false): string 
     const d = new Date(label + 'T00:00:00Z');
     if (isNaN(d.getTime())) return label;
     if (bucketed) {
-        return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', year: '2-digit' });
+        return d.toLocaleDateString(dateLocale.value, {
+            timeZone: 'UTC',
+            month: 'short',
+            year: '2-digit',
+        });
     }
-    if (total <= 14) return DAY_ABBR[d.getUTCDay()] ?? label;
-    return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+    if (total <= 14) return weekdayShort(label, appLocale.value);
+    return d.toLocaleDateString(dateLocale.value, {
+        timeZone: 'UTC',
+        month: 'short',
+        day: 'numeric',
+    });
 };
 
 const insight = computed(() => {
-    const weakest = store.summaries
-        .map((d) => ({ title: d.title, pct: d.stats.masteredPct }))
-        .sort((a, b) => a.pct - b.pct)[0];
+    const weakest = weakestDecks.value[0];
     return weakest
         ? t('statistics.insightLowest')
               .replace('{title}', weakest.title)
-              .replace('{pct}', String(weakest.pct))
+              .replace('{pct}', String(weakest.masteredPct))
         : t('statistics.insightEmpty');
 });
 
@@ -446,6 +469,12 @@ onMounted(async () => {
         stats.loadStudyTime(range.value),
         stats.loadPerformance(range.value),
         achievements.load(),
+        statsApi
+            .getDeckPerformance()
+            .then((r) => {
+                deckPerf.value = r.items;
+            })
+            .catch(() => {}),
     ]);
 });
 </script>

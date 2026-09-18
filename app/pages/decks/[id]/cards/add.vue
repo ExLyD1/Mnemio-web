@@ -324,7 +324,7 @@ const chatMessages = ref<ChatMsg[]>([]);
 const chatInput = ref('');
 const chatLoading = ref(false);
 
-const difficultyOptions = computed(() => [
+const difficultyOptions = computed<{ value: CardDifficulty; label: string }[]>(() => [
     { value: 'easy', label: t('card.diffEasy') },
     { value: 'medium', label: t('card.diffMedium') },
     { value: 'hard', label: t('card.diffHard') },

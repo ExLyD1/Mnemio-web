@@ -108,7 +108,7 @@
         "username": "Username*",
         "birthday": "Birthday*",
         "fullNamePlaceholder": "Dracula Alucard",
-        "usernamePlaceholder": "Dracula_Rules34",
+        "usernamePlaceholder": "maks_2008",
         "birthdayPlaceholder": "YYYY-MM-DD",
         "next": "Next",
         "welcomeSubtitle": "Welcome to your study companion",
@@ -126,7 +126,7 @@
             "password_too_short": "Password must be at least 8 characters.",
             "code_invalid": "Enter the 6-digit code.",
             "fullName_required": "Full name is required.",
-            "username_invalid": "Username must be 3–20 letters, numbers, or underscores.",
+            "username_invalid": "Use English letters for your username. Numbers and _ are fine too. For example: maks_2008",
             "birthday_invalid": "Use YYYY-MM-DD format.",
             "birthday_too_young": "You must be at least 13 years old."
         }
@@ -571,7 +571,7 @@
         "title": "Your statistics.",
         "subtitle": "How your memory is trending over time.",
         "reviewed": "Reviewed",
-        "reviewedSub": "cards studied today",
+        "reviewedSub": "cards reviewed",
         "retention": "Retention",
         "recallRate": "Recall rate",
         "recallRateSub": "of due cards remembered",
@@ -621,7 +621,10 @@
         "performancePeers": "{n} learners compared",
         "performanceEmpty": "Not enough learners have studied yet to compare — check back soon.",
         "performanceComingSoon": "Comparing your recall against other learners — coming soon.",
-        "comingSoon": "Coming soon"
+        "comingSoon": "Coming soon",
+        "reviewedSubRange": "cards in the last {n} days",
+        "reviewedSubAll": "cards, all time",
+        "weakestDecksHint": "% of cards mastered. A card counts as mastered after 3 successful reviews in a row with progress tracking (SRS) on; \"Forgot\" and \"Hard\" restart that count."
     },
     "onboarding": {
         "stepOf": "Step {i} of 2",
@@ -632,7 +635,7 @@
         "fullName": "Full name",
         "fullNamePlaceholder": "Ada Lovelace",
         "username": "Username",
-        "usernamePlaceholder": "ada",
+        "usernamePlaceholder": "maks_2008",
         "birthday": "Birthday",
         "learnTitle": "What do you want to learn?",
         "learnSubtitle": "Pick a few interests and a daily goal.",
@@ -661,7 +664,8 @@
             "Geography": "Geography",
             "Art": "Art",
             "Music": "Music"
-        }
+        },
+        "errSave": "Couldn't save your profile. Please try again."
     },
     "profile": {
         "yourProfile": "Your profile",
@@ -677,7 +681,7 @@
         "fullName": "Full name",
         "fullNamePlaceholder": "Ada Lovelace",
         "username": "Username",
-        "usernamePlaceholder": "ada",
+        "usernamePlaceholder": "maks_2008",
         "birthday": "Birthday",
         "nativeLanguage": "Native language",
         "learning": "Learning",
@@ -694,7 +698,7 @@
         "saveChanges": "Save changes",
         "earned": "{x} of {y} earned",
         "statStreak": "Streak",
-        "statDaysPracticed": "Days practiced",
+        "statDaysPracticed": "Days practiced this week",
         "statReviewed": "Reviewed today",
         "statDecks": "Decks",
         "statRetention": "Retention",
@@ -702,7 +706,12 @@
         "photoUpdated": "Photo updated",
         "photoError": "Could not upload photo",
         "saved": "Profile saved",
-        "saveError": "Could not save profile"
+        "saveError": "Could not save profile",
+        "removePhoto": "Remove photo",
+        "photoRemoved": "Photo removed",
+        "photoRemoveError": "Couldn't remove the photo",
+        "photoTooLarge": "That photo is too large. Try a smaller one.",
+        "photoUnsupported": "This image format isn't supported. Use a JPG, PNG or WebP."
     },
     "achievements": {
         "unlocked": "Achievement unlocked: {name} 🏆",
@@ -1256,5 +1265,27 @@
         "row5Anki": "Power users who want full control over their review algorithm",
         "verdictTitle": "Which should you pick?",
         "verdictBody": "If you're starting from something you're already reading — an article, a textbook photo, a PDF — Mnemio builds the deck for you. If you want the biggest catalog of pre-made decks, Quizlet has more volume. If you want maximum control over the review algorithm and don't mind typing cards by hand, Anki is the most customizable."
+    },
+    "username": {
+        "hint": "English letters, numbers and _ only. For example: maks_2008",
+        "errTooShort": "Username is too short — use at least 3 characters.",
+        "errTooLong": "Username is too long — 24 characters max.",
+        "errInvalidChars": "Use English letters for your username. Numbers and _ are fine too. For example: maks_2008",
+        "errReserved": "That username isn't available — try another one.",
+        "errTaken": "That username is already taken — try another one."
+    },
+    "languages": {
+        "en": "English",
+        "es": "Spanish",
+        "fr": "French",
+        "de": "German",
+        "it": "Italian",
+        "pt": "Portuguese",
+        "uk": "Ukrainian",
+        "pl": "Polish",
+        "ja": "Japanese",
+        "ko": "Korean",
+        "zh": "Chinese",
+        "ru": "Russian"
     }
 }

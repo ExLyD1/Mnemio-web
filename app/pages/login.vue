@@ -43,6 +43,7 @@
 import { useAuth, useAuthStore, useToast, useT } from '#imports';
 import { setRemember } from '@/utils/authToken';
 import { rememberReturnTo, takeReturnTo } from '@/utils/returnTo';
+import { usernameErrorKey } from '@/utils/username';
 import { useAnalytics } from '@/composables/useAnalytics';
 
 definePageMeta({ layout: 'auth' });
@@ -69,6 +70,22 @@ const initialTab = route.query.tab === 'register' ? 'register' : ('login' as con
 // the multi-step email flow can return them there after sign-in.
 onMounted(() => rememberReturnTo(route.query.next));
 
+// The boot-time hydrate() can restore a session from the refresh cookie after
+// the route guard already sent the visitor here — don't leave a signed-in
+// user sitting on the login form.
+// Only for that boot-time restore — once the user submits the form, the
+// submit handlers own the navigation (finishAuth), so this must not race them.
+let userActed = false;
+watch(
+    () => authStore.isAuthenticated,
+    (authed) => {
+        if (authed && !userActed && step.value === 'auth' && !authStore.needsProfile) {
+            navigateTo(takeReturnTo());
+        }
+    },
+    { immediate: true },
+);
+
 const showError = (msg: string) => toast.error(t(msg, msg));
 
 const finishAuth = async () => {
@@ -85,6 +102,7 @@ async function onAuthSubmit(payload: {
     activeTab: Tab;
     rememberMe: boolean;
 }) {
+    userActed = true;
     data.email = payload.email;
     data.password = payload.password;
 
@@ -142,8 +160,19 @@ async function onDetailsSubmit(payload: { fullName: string; username: string; bi
     const result = await updateProfile.execute(payload);
     if (result) {
         await navigateTo(takeReturnTo());
-    } else if (updateProfile.error.value) {
-        showError(updateProfile.error.value.message);
+        return;
+    }
+    const err = updateProfile.error.value;
+    if (!err) {
+        return;
+    }
+    // The backend answers in English; show username problems in the UI language.
+    if (err.code === 'AUTH_USERNAME_TAKEN') {
+        showError(usernameErrorKey('taken'));
+    } else if (err.code === 'VALIDATION_ERROR' && /username/i.test(err.message)) {
+        showError(usernameErrorKey('invalid_chars'));
+    } else {
+        showError(err.message);
     }
 }
 </script>

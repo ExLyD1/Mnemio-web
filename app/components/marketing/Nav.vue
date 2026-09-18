@@ -18,6 +18,7 @@
             </div>
 
             <div class="flex items-center gap-2.5">
+                <SharedThemeToggle />
                 <div class="hidden sm:block">
                     <SharedLanguageSwitcher variant="menu" />
                 </div>

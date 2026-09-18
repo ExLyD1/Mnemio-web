@@ -12,7 +12,7 @@
 
         <SharedPageLoader v-if="loading && !ready" />
 
-        <div v-else-if="ready" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div v-else-if="ready && store.deck" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
             <div class="min-w-0 flex flex-col gap-5">
                 <div class="relative">
                     <SharedCoverArt :swatch="swatch" class="p-6">

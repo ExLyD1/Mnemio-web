@@ -20,11 +20,22 @@
                         type="button"
                         class="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-brand text-on-color shadow-soft-elevation transition-transform hover:scale-105"
                         :aria-label="t('profile.changePhoto')"
+                        :disabled="avatarBusy"
                         @click="avatarInput?.click()"
                     >
-                        <Camera class="size-4" />
+                        <UiSpinner v-if="avatarBusy" size="sm" />
+                        <Camera v-else class="size-4" />
                     </button>
                 </div>
+                <button
+                    v-if="auth.currentUser?.avatarUrl"
+                    type="button"
+                    class="mt-2 text-small text-brand-muted underline-offset-2 transition-colors hover:text-cream hover:underline"
+                    :disabled="avatarBusy"
+                    @click="onRemoveAvatar"
+                >
+                    {{ t('profile.removePhoto') }}
+                </button>
                 <h1 class="mt-4 font-display text-h2 text-cream">
                     {{ name || t('profile.yourProfile') }}
                 </h1>
@@ -39,7 +50,7 @@
                     class="mt-4 flex flex-wrap justify-center gap-1.5"
                 >
                     <SharedPill v-for="l in prefs.learningLanguages" :key="l" tone="plum">{{
-                        l
+                        langName(l)
                     }}</SharedPill>
                 </div>
             </div>
@@ -112,7 +123,7 @@
                                 class="inline-flex items-center gap-1 rounded-full border border-line-strong px-2.5 py-1 text-small text-cream-dim transition-colors hover:border-brand-muted hover:text-cream"
                                 @click="removeLearning(code)"
                             >
-                                {{ LANGUAGES.find((l) => l.code === code)?.label ?? code }}
+                                {{ langName(code) }}
                                 <X class="size-3" />
                             </button>
                         </div>
@@ -341,7 +352,11 @@ import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
 import { uploadMedia } from '@/api/media';
 import { mediaUrl } from '@/utils/media';
-import { LANGUAGES } from '@/schemas/deck';
+import { useLanguageName } from '@/composables/useLanguageName';
+import { downscaleToJpeg, ImageDecodeError } from '@/utils/imageResize';
+import { daysPracticedThisWeek, reviewedToday } from '@/utils/practiceWeek';
+import { usernameErrorKey, usernameIssue } from '@/utils/username';
+import { useAppLocale } from '@/composables/useAppLocale';
 import type { ProfileUpdate } from '@/types/user';
 import type { Achievement } from '@/types/achievement';
 
@@ -356,22 +371,61 @@ const achievements = useAchievements();
 const billingStore = useBillingStore();
 const billing = useBilling();
 const toast = useToast();
+const { current: appLocale } = useAppLocale();
 const { t } = useT();
 
 useSeo({ title: t('seo.profileTitle'), description: t('seo.appDesc'), noindex: true });
 
 const avatarInput = ref<HTMLInputElement | null>(null);
+const avatarBusy = ref(false);
 const onAvatar = async (e: Event) => {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
-    if (!file) return;
+    if (!file || avatarBusy.value) return;
+    avatarBusy.value = true;
     try {
-        await uploadMedia('avatar', file);
+        // Shrink/re-encode first: raw phone photos exceed the 2 MB avatar cap
+        // (and HEIC isn't accepted at all), which is why uploads "failed".
+        let upload: File;
+        try {
+            upload = await downscaleToJpeg(file);
+        } catch (err) {
+            if (err instanceof ImageDecodeError) {
+                toast.error(t('profile.photoUnsupported'));
+                return;
+            }
+            throw err;
+        }
+        await uploadMedia('avatar', upload);
         await auth.hydrate();
         toast.success(t('profile.photoUpdated'));
-    } catch {
-        toast.error(t('profile.photoError'));
+    } catch (err) {
+        const code = (err as { code?: string }).code;
+        toast.error(
+            code === 'MEDIA_TOO_LARGE'
+                ? t('profile.photoTooLarge')
+                : code === 'MEDIA_BAD_MIME'
+                  ? t('profile.photoUnsupported')
+                  : t('profile.photoError'),
+        );
+    } finally {
+        avatarBusy.value = false;
+    }
+};
+
+const onRemoveAvatar = async () => {
+    if (avatarBusy.value) return;
+    avatarBusy.value = true;
+    try {
+        const result = await updateProfile.execute({ avatarUrl: null });
+        if (!result) {
+            toast.error(t('profile.photoRemoveError'));
+            return;
+        }
+        toast.success(t('profile.photoRemoved'));
+    } finally {
+        avatarBusy.value = false;
     }
 };
 
@@ -392,9 +446,9 @@ const tabs = computed(() => [
     { value: 'billing', label: t('billing.settings.tabLabel') },
 ]);
 
-const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
+const { name: langName, options: languageOptions } = useLanguageName();
 const learningAddOptions = computed(() =>
-    languageOptions.filter((o) => !draft.learning.includes(o.value)),
+    languageOptions.value.filter((o) => !draft.learning.includes(o.value)),
 );
 const addLearning = (code: string) => {
     if (!code || draft.learning.includes(code)) return;
@@ -426,12 +480,18 @@ const earnedCount = computed(() => achievements.items.value.filter((a) => a.earn
 const achName = (a: Achievement) => t(`achievements.${a.key}.name`, a.name);
 const achDesc = (a: Achievement) => t(`achievements.${a.key}.description`, a.description);
 
-const daysPracticed = computed(() => stats.series.value.filter((p) => p.value > 0).length);
+// Same definitions as the dashboard and /statistics (utils/practiceWeek):
+// "days practiced" = this Mon..Sun week, "reviewed today" = today's count.
+// Previously these were a rolling-7-day count and the 30-day overview total
+// shown under a "today" label (QA (2) #3, (3) #2).
+const daysPracticed = computed(() => daysPracticedThisWeek(stats.series.value));
+const reviewedTodayCount = computed(() => reviewedToday(stats.series.value));
 
 const quickStats = computed(() => [
     { label: t('profile.statDaysPracticed'), value: daysPracticed.value },
-    { label: t('profile.statReviewed'), value: stats.reviewed.value },
-    { label: t('profile.statDecks'), value: store.summaries.length },
+    { label: t('profile.statReviewed'), value: reviewedTodayCount.value },
+    // `summaries` is only the first page (20) of the library; `total` is the real count.
+    { label: t('profile.statDecks'), value: Math.max(store.total, store.summaries.length) },
     { label: t('profile.statRetention'), value: `${stats.retention.value}%` },
 ]);
 
@@ -467,7 +527,7 @@ const syncDraft = () => {
     if (!prefs.loaded) {
         return;
     }
-    draft.nativeLanguage = prefs.nativeLanguage ?? 'en';
+    draft.nativeLanguage = prefs.nativeLanguage ?? appLocale.value;
     draft.learning = [...prefs.learningLanguages];
     draft.goal = prefs.goal ?? 'steady';
 };
@@ -477,7 +537,7 @@ const dirty = computed(
         draft.fullName !== (auth.currentUser?.displayName ?? '') ||
         draft.username !== (auth.currentUser?.username ?? '') ||
         draft.birthday !== (auth.currentUser?.birthday ?? '') ||
-        draft.nativeLanguage !== (prefs.nativeLanguage ?? 'en') ||
+        draft.nativeLanguage !== (prefs.nativeLanguage ?? appLocale.value) ||
         JSON.stringify(draft.learning) !== JSON.stringify(prefs.learningLanguages) ||
         draft.goal !== (prefs.goal ?? 'steady'),
 );
@@ -491,6 +551,11 @@ const onSave = async () => {
         patch.fullName = fullName;
     }
     if (username && username !== (cur?.username ?? '')) {
+        const issue = usernameIssue(username);
+        if (issue) {
+            toast.error(t(usernameErrorKey(issue)));
+            return;
+        }
         patch.username = username;
     }
     if (draft.birthday && draft.birthday !== (cur?.birthday ?? '')) {
@@ -500,7 +565,12 @@ const onSave = async () => {
     if (Object.keys(patch).length > 0) {
         const result = await updateProfile.execute(patch);
         if (!result) {
-            toast.error(updateProfile.error.value?.message ?? t('profile.saveError'));
+            const err = updateProfile.error.value;
+            toast.error(
+                err?.code === 'AUTH_USERNAME_TAKEN'
+                    ? t(usernameErrorKey('taken'))
+                    : (err?.message ?? t('profile.saveError')),
+            );
             return;
         }
     }

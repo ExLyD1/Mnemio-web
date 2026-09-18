@@ -34,7 +34,7 @@
                 {{ deck.title }}
             </h3>
             <p class="mb-3.5 text-[12px] text-cream-faint">
-                <template v-if="deck.tag">{{ deck.tag }} · </template>{{ cardCountLabel }}
+                <template v-if="tagLabel">{{ tagLabel }} · </template>{{ cardCountLabel }}
             </p>
 
             <div class="h-[5px] overflow-hidden rounded-sm bg-bg-muted">
@@ -85,9 +85,9 @@
                 <h3 class="line-clamp-1 font-display text-lg text-cream">{{ deck.title }}</h3>
                 <p class="flex items-center gap-2 text-small text-brand-muted">
                     <span>{{ cardCountLabel }}</span>
-                    <template v-if="deck.tag">
+                    <template v-if="tagLabel">
                         <span class="text-brand-muted/60">·</span>
-                        <span>{{ deck.tag }}</span>
+                        <span>{{ tagLabel }}</span>
                     </template>
                 </p>
 
@@ -148,8 +148,10 @@
 import { Star, Layers, Bookmark } from 'lucide-vue-next';
 import { useT } from '#imports';
 import type { DeckCardVM } from '@/types/deck';
+import { useLanguageName } from '@/composables/useLanguageName';
 
 const { t } = useT();
+const { name: langName } = useLanguageName();
 
 const props = withDefaults(
     defineProps<{
@@ -160,6 +162,9 @@ const props = withDefaults(
     }>(),
     { variant: 'library', favoritable: false },
 );
+
+// Language tag in the active UI language ("Англійська", not "English").
+const tagLabel = computed(() => (props.deck.lang ? langName(props.deck.lang) : props.deck.tag));
 
 defineEmits<{
     toggleFav: [id: string];

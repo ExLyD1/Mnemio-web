@@ -90,8 +90,13 @@
                     >
                         <SharedMimi v-if="m.role === 'assistant'" :size="36" class="shrink-0" />
 
+                        <!-- The 80% cap lives on this column (a % of the definite row
+                             width), not on the bubble: a %-max-width on the bubble
+                             resolved against this content-sized column, which then
+                             shrank to min-content and broke short words mid-word
+                             ("При / віт", QA (3) #5). -->
                         <div
-                            class="flex min-w-0 flex-col gap-1"
+                            class="flex min-w-0 max-w-[85%] flex-col gap-1 sm:max-w-[80%]"
                             :class="m.role === 'user' ? 'items-end' : 'items-start'"
                         >
                             <!-- Attached image thumbnail (client-only; tap to zoom) -->
@@ -127,7 +132,7 @@
 
                             <div
                                 v-else-if="m.content"
-                                class="max-w-[80%] break-words rounded-2xl px-4 py-2.5 text-body"
+                                class="max-w-full break-words rounded-2xl px-4 py-2.5 text-body"
                                 :class="
                                     m.role === 'user'
                                         ? 'whitespace-pre-wrap bg-brand/90 text-on-color shadow-sm'
@@ -154,7 +159,7 @@
                                 :deck-id="a.deckId"
                                 :title="a.title"
                                 :card-count="a.cardCount"
-                                class="w-full max-w-[80%]"
+                                class="w-72 max-w-full"
                             />
 
                             <!-- Partial + retry -->

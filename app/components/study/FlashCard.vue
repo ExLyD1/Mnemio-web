@@ -26,7 +26,10 @@
                     <div
                         class="flex flex-col gap-2 text-left sm:border-r sm:border-on-plum/20 sm:pr-6"
                     >
-                        <div class="flex flex-wrap items-baseline gap-2">
+                        <div
+                            class="flex flex-wrap items-baseline gap-2"
+                            :class="reserveTopRight ? 'pr-28 sm:pr-0' : ''"
+                        >
                             <p class="break-words font-display text-2xl text-on-plum sm:text-4xl">
                                 {{ card.word }}
                             </p>
@@ -45,7 +48,10 @@
                             <Volume2 class="size-4" /> {{ t('study.listen') }}
                         </button>
                     </div>
-                    <div class="flex flex-col gap-4 text-left">
+                    <div
+                        class="flex flex-col gap-4 text-left"
+                        :class="reserveTopRight ? 'sm:pt-9' : ''"
+                    >
                         <div>
                             <p class="text-eyebrow uppercase text-on-plum-faint">
                                 {{ t('study.meaning') }}
@@ -75,7 +81,10 @@ import { Volume2 } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
 import type { StudyCard } from '@/utils/studyCard';
 
-defineProps<{ card: StudyCard; revealed: boolean }>();
+// reserveTopRight: the parent overlays a button in the card's top-right corner
+// (the review page's "Tip" button) — keep the word / part-of-speech pill and
+// the meaning column clear of it (QA (1) #1: the "noun" pill sat under it).
+defineProps<{ card: StudyCard; revealed: boolean; reserveTopRight?: boolean }>();
 defineEmits<{ flip: [] }>();
 
 const { t } = useT();

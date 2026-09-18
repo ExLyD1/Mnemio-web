@@ -29,6 +29,7 @@
                                 :key="studyCard.id"
                                 :card="studyCard"
                                 :revealed="revealed"
+                                reserve-top-right
                                 @flip="revealed = !revealed"
                             />
                         </Transition>
@@ -215,6 +216,7 @@ const studyCard = computed<StudyCard | null>(() => {
         pos: d.card.partOfSpeech ?? '',
         example: d.card.example ?? '',
         exampleTranslation: d.card.exampleTranslation ?? '',
+        audioUrl: d.card.audioUrl ?? null,
     };
 });
 

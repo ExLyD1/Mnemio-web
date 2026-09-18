@@ -32,6 +32,9 @@
                     <p v-if="usernameError" class="mt-1.5 text-small text-error" aria-live="polite">
                         {{ t(usernameError) }}
                     </p>
+                    <p v-else class="mt-1.5 text-small text-brand-muted">
+                        {{ t('username.hint') }}
+                    </p>
                 </div>
 
                 <div>

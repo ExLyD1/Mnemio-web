@@ -242,7 +242,7 @@
             :mood="practice.mimi.mood.value"
             placement="right"
             :size="92"
-            class="fixed bottom-6 right-6"
+            class="pointer-events-none fixed bottom-6 right-6"
         />
     </section>
 </template>

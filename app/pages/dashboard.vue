@@ -3,7 +3,11 @@
         <header>
             <p class="text-eyebrow uppercase text-brand-muted">{{ todayLabel }}</p>
             <h1 class="mt-1 font-display text-display-sm text-cream">
-                {{ greeting }}<span v-if="name" class="italic text-lavender">, {{ name }}.</span>
+                {{ greeting
+                }}<template v-if="name"
+                    >, <span class="italic text-lavender">{{ name }}</span
+                    >.</template
+                >
             </h1>
         </header>
 
@@ -59,7 +63,10 @@
         </div>
 
         <!-- Two-column body -->
-        <div class="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+        <!-- minmax(0, …) tracks: a bare `grid` sizes its implicit column to the
+             widest child's min-content, so a long (truncate/nowrap) deck title
+             pushed the whole page wider than a phone screen (QA (3) #7). -->
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
             <!-- Up next -->
             <div class="flex flex-col rounded-[20px] border border-line bg-bg-surface">
                 <div class="border-b border-line px-5 py-4">
@@ -146,7 +153,7 @@
                             {{ pt.value > 0 ? pt.value : '' }}
                         </div>
                         <span class="text-[10px] leading-none tracking-wide text-cream-faint">{{
-                            pt.label
+                            weekdayShort(pt.iso, locale)
                         }}</span>
                     </div>
                 </div>
@@ -231,6 +238,7 @@ import { usePreferencesStore } from '@/stores/preferences';
 import * as aiApi from '@/api/ai';
 import * as statsApi from '@/api/stats';
 import { deckToCardVm } from '@/utils/deckVm';
+import { currentWeekSeries, weekdayShort } from '@/utils/practiceWeek';
 
 definePageMeta({ layout: 'default' });
 
@@ -303,40 +311,12 @@ const onResume = () => {
 };
 
 // This week — the current ISO calendar week (Monday..Sunday), not a rolling
-// trailing 7 days. A rolling window can start on any weekday and never lines
-// up with "this week" the way the weekly-goal copy implies (BUG: the pips
-// effectively "started from the end" of the week instead of from Monday).
-// Days after today haven't happened yet, so they render as empty/zero rather
-// than being cut off.
-const DAY_ABBR = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const;
-const weekSeries = computed(() => {
-    // stats.series is keyed by UTC calendar day (see backend stats.service.ts),
-    // so anchor "this week" to UTC-today too - a local-time Date here would
-    // drift the Monday boundary by a day for viewers on either side of UTC.
-    const now = new Date();
-    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    const utcDow = today.getUTCDay(); // 0=Sun..6=Sat
-    const isoDow = utcDow === 0 ? 7 : utcDow; // 1=Mon..7=Sun
-    const monday = new Date(today);
-    monday.setUTCDate(today.getUTCDate() - (isoDow - 1));
-
-    const byIso = new Map(stats.series.value.map((pt) => [pt.label, pt.value]));
-    return Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(monday);
-        d.setUTCDate(monday.getUTCDate() + i);
-        const iso = d.toISOString().slice(0, 10);
-        const isFuture = d > today;
-        return { value: isFuture ? 0 : (byIso.get(iso) ?? 0), label: DAY_ABBR[i] as string };
-    });
-});
+// trailing 7 days. Shared with /statistics and /profile via utils/practiceWeek
+// so "days practiced" means the same thing everywhere.
+const weekSeries = computed(() => currentWeekSeries(stats.series.value));
 const weekReviewed = computed(() => weekSeries.value.reduce((sum, p) => sum + p.value, 0));
 const daysPracticed = computed(() => weekSeries.value.filter((p) => p.value > 0).length);
-// Highlight today's pip — the Monday-anchored index matching today's weekday.
-const todayIndex = computed(() => {
-    const dow = new Date().getUTCDay();
-    return dow === 0 ? 6 : dow - 1;
-});
-const isToday = (i: number) => i === todayIndex.value;
+const isToday = (i: number) => weekSeries.value[i]?.isToday ?? false;
 
 const goalMap: Record<string, number> = { casual: 50, steady: 100, serious: 250 };
 const weekGoal = computed(() => goalMap[prefs.goal ?? 'steady'] ?? 100);
@@ -354,10 +334,10 @@ onMounted(async () => {
         prefs.hydrate().catch(() => {}),
     ]);
     try {
+        // (A leftover `mimi.message.value = …` referenced a Mimi instance this
+        // page no longer has — for English users it threw a ReferenceError here,
+        // so the suggested CTA was silently never applied.)
         const s = await aiApi.suggest('dashboard');
-        if (locale.value === 'en') {
-            mimi.message.value = s.suggestion;
-        }
         const href = s.kind === 'deck' ? '/decks/create' : '/review';
         const label =
             locale.value === 'en'
