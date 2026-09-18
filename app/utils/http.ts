@@ -103,7 +103,16 @@ export const refreshAccessToken = async (): Promise<{
     if (inflightRefresh) {
         return inflightRefresh;
     }
-    inflightRefresh = (async () => {
+    // The token this tab was using when it hit the 401.
+    const staleToken = readAccessToken();
+    const doRefresh = async (): Promise<{ token: string | null; wasInvalid: boolean }> => {
+        // Another tab may have refreshed while we waited for the lock — its new
+        // token is already in shared storage, so reuse it instead of presenting
+        // the (now rotated) refresh cookie a second time.
+        const current = readAccessToken();
+        if (current && current !== staleToken) {
+            return { token: current, wasInvalid: false };
+        }
         try {
             const data = await $fetch<RefreshResponse>(`${API_PREFIX}/auth/refresh`, {
                 baseURL: apiBase,
@@ -121,10 +130,20 @@ export const refreshAccessToken = async (): Promise<{
             // Transient failure: keep whatever token is already stored (don't
             // wipe a still-possibly-valid session) and let the caller retry.
             return { token: null, wasInvalid };
-        } finally {
-            inflightRefresh = null;
         }
-    })();
+    };
+    // Serialize refreshes ACROSS TABS (Web Locks API). When a laptop wakes up
+    // or the phone is unlocked, every open tab hits a 401 at the same moment
+    // and used to refresh with the same cookie simultaneously; the losers of
+    // that race looked like refresh-token theft to the backend, which then
+    // revoked the whole session ("logged out for no reason"). The backend now
+    // also tolerates this (60s grace window), this just avoids the race.
+    const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+    inflightRefresh = (
+        locks ? locks.request('mnemio-auth-refresh', doRefresh) : doRefresh()
+    ).finally(() => {
+        inflightRefresh = null;
+    });
     return inflightRefresh;
 };
 
