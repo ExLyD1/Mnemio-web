@@ -490,7 +490,8 @@ const reviewedTodayCount = computed(() => reviewedToday(stats.series.value));
 const quickStats = computed(() => [
     { label: t('profile.statDaysPracticed'), value: daysPracticed.value },
     { label: t('profile.statReviewed'), value: reviewedTodayCount.value },
-    { label: t('profile.statDecks'), value: store.summaries.length },
+    // `summaries` is only the first page (20) of the library; `total` is the real count.
+    { label: t('profile.statDecks'), value: Math.max(store.total, store.summaries.length) },
     { label: t('profile.statRetention'), value: `${stats.retention.value}%` },
 ]);
 
