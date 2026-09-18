@@ -43,6 +43,7 @@
 import { useAuth, useAuthStore, useToast, useT } from '#imports';
 import { setRemember } from '@/utils/authToken';
 import { rememberReturnTo, takeReturnTo } from '@/utils/returnTo';
+import { usernameErrorKey } from '@/utils/username';
 import { useAnalytics } from '@/composables/useAnalytics';
 
 definePageMeta({ layout: 'auth' });
@@ -159,8 +160,19 @@ async function onDetailsSubmit(payload: { fullName: string; username: string; bi
     const result = await updateProfile.execute(payload);
     if (result) {
         await navigateTo(takeReturnTo());
-    } else if (updateProfile.error.value) {
-        showError(updateProfile.error.value.message);
+        return;
+    }
+    const err = updateProfile.error.value;
+    if (!err) {
+        return;
+    }
+    // The backend answers in English; show username problems in the UI language.
+    if (err.code === 'AUTH_USERNAME_TAKEN') {
+        showError(usernameErrorKey('taken'));
+    } else if (err.code === 'VALIDATION_ERROR' && /username/i.test(err.message)) {
+        showError(usernameErrorKey('invalid_chars'));
+    } else {
+        showError(err.message);
     }
 }
 </script>

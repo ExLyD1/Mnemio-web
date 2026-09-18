@@ -63,8 +63,19 @@
                         autocapitalize="none"
                         autocomplete="username"
                         spellcheck="false"
+                        @blur="usernameTouched = true"
                     />
-                    <p class="mt-1 px-1 text-small text-brand-muted">
+                    <!-- Checked live, before the user can leave step 1: a wrong
+                         character (e.g. Cyrillic) is flagged as soon as it's
+                         typed; "too short" waits until the field loses focus. -->
+                    <p
+                        v-if="usernameInlineError"
+                        class="mt-1 px-1 text-small text-error"
+                        aria-live="polite"
+                    >
+                        {{ usernameInlineError }}
+                    </p>
+                    <p v-else class="mt-1 px-1 text-small text-brand-muted">
                         {{ t('username.hint') }}
                     </p>
                 </div>
@@ -206,6 +217,18 @@ const say = (message: string) => {
     mimi.message.value = message;
 };
 
+const usernameTouched = ref(false);
+const usernameInlineError = computed(() => {
+    if (!username.value) {
+        return '';
+    }
+    const issue = usernameIssue(username.value);
+    if (!issue || (issue === 'too_short' && !usernameTouched.value)) {
+        return '';
+    }
+    return t(usernameErrorKey(issue));
+});
+
 // On a phone the fixed Mimi bubble sits on top of the Continue / Start
 // button. It used to stay there until the step succeeded, so after any
 // validation message the button could not be tapped at all — the user was
@@ -231,6 +254,7 @@ const goStep2 = () => {
     }
     const issue = usernameIssue(username.value);
     if (issue) {
+        usernameTouched.value = true;
         say(t(usernameErrorKey(issue)));
         return;
     }

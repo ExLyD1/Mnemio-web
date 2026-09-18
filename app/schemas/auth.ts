@@ -1,6 +1,6 @@
 import { z } from 'zod';
+import { usernameErrorKey, usernameIssue } from '@/utils/username';
 
-const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
 const birthdayRegex = /^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 const parseBirthday = (s: string): Date | null => {
@@ -43,7 +43,15 @@ export const otpSchema = z.object({
 
 export const accountDetailsSchema = z.object({
     fullName: z.string().trim().min(1, 'auth.errors.fullName_required'),
-    username: z.string().regex(usernameRegex, 'auth.errors.username_invalid'),
+    // Same rules (and friendly, localized messages) as onboarding and the
+    // backend — see utils/username.ts. The old regex capped at 20 chars while
+    // the backend allows 24, and its message was hard to understand.
+    username: z.string().superRefine((value, ctx) => {
+        const issue = usernameIssue(value);
+        if (issue) {
+            ctx.addIssue({ code: 'custom', message: usernameErrorKey(issue) });
+        }
+    }),
     birthday: z
         .string()
         .refine((s) => parseBirthday(s) !== null, 'auth.errors.birthday_invalid')

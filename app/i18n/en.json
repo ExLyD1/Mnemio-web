@@ -108,7 +108,7 @@
         "username": "Username*",
         "birthday": "Birthday*",
         "fullNamePlaceholder": "Dracula Alucard",
-        "usernamePlaceholder": "Dracula_Rules34",
+        "usernamePlaceholder": "maks_2008",
         "birthdayPlaceholder": "YYYY-MM-DD",
         "next": "Next",
         "welcomeSubtitle": "Welcome to your study companion",
@@ -126,7 +126,7 @@
             "password_too_short": "Password must be at least 8 characters.",
             "code_invalid": "Enter the 6-digit code.",
             "fullName_required": "Full name is required.",
-            "username_invalid": "Username must be 3–20 letters, numbers, or underscores.",
+            "username_invalid": "Use English letters for your username. Numbers and _ are fine too. For example: maks_2008",
             "birthday_invalid": "Use YYYY-MM-DD format.",
             "birthday_too_young": "You must be at least 13 years old."
         }
@@ -635,7 +635,7 @@
         "fullName": "Full name",
         "fullNamePlaceholder": "Ada Lovelace",
         "username": "Username",
-        "usernamePlaceholder": "ada",
+        "usernamePlaceholder": "maks_2008",
         "birthday": "Birthday",
         "learnTitle": "What do you want to learn?",
         "learnSubtitle": "Pick a few interests and a daily goal.",
@@ -681,7 +681,7 @@
         "fullName": "Full name",
         "fullNamePlaceholder": "Ada Lovelace",
         "username": "Username",
-        "usernamePlaceholder": "ada",
+        "usernamePlaceholder": "maks_2008",
         "birthday": "Birthday",
         "nativeLanguage": "Native language",
         "learning": "Learning",
@@ -1267,12 +1267,12 @@
         "verdictBody": "If you're starting from something you're already reading — an article, a textbook photo, a PDF — Mnemio builds the deck for you. If you want the biggest catalog of pre-made decks, Quizlet has more volume. If you want maximum control over the review algorithm and don't mind typing cards by hand, Anki is the most customizable."
     },
     "username": {
-        "hint": "Latin letters, numbers and _ only, 3–24 characters. Your name above can be in any language.",
-        "errTooShort": "Pick a username with at least 3 characters.",
-        "errTooLong": "Usernames can be at most 24 characters.",
-        "errInvalidChars": "Usernames can only use Latin letters (a–z), numbers and _. Your full name can be in any language.",
-        "errReserved": "That username is reserved — please pick another one.",
-        "errTaken": "That username is already taken — please pick another one."
+        "hint": "English letters, numbers and _ only. For example: maks_2008",
+        "errTooShort": "Username is too short — use at least 3 characters.",
+        "errTooLong": "Username is too long — 24 characters max.",
+        "errInvalidChars": "Use English letters for your username. Numbers and _ are fine too. For example: maks_2008",
+        "errReserved": "That username isn't available — try another one.",
+        "errTaken": "That username is already taken — try another one."
     },
     "languages": {
         "en": "English",
