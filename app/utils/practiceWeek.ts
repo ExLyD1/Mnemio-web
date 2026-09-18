@@ -8,9 +8,9 @@ import type { StatsSeriesPoint } from '@/types/stats';
  * days on /profile — so the same user saw 5 in one place and 8 in another
  * (QA (3) #2/#4, (2) #3).
  *
- * `stats.series` is keyed by UTC calendar day (backend stats.service.ts reads
- * the UTC-dated DailyActivity rollup), so the week and "today" are anchored to
- * UTC too — a local-time Date would shift the Monday boundary by a day.
+ * `stats.series` is keyed by the user's LOCAL calendar day (the backend buckets
+ * activity by the X-Timezone the client sends — see utils/http.ts), so the
+ * week and "today" are anchored to the local calendar too.
  * Any series range the pages load ('7' and up) always covers Monday → today.
  */
 
@@ -24,18 +24,20 @@ export interface WeekDayPoint {
     isToday: boolean;
 }
 
-const utcToday = (now: Date): Date =>
-    new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+// Local calendar day as a day-counter Date (UTC midnight of the local date),
+// so the arithmetic below never trips over DST.
+const localToday = (now: Date): Date =>
+    new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
 export const todayIso = (now: Date = new Date()): string =>
-    utcToday(now).toISOString().slice(0, 10);
+    localToday(now).toISOString().slice(0, 10);
 
 /** The current ISO week (Monday..Sunday). Days after today render as 0. */
 export const currentWeekSeries = (
     series: StatsSeriesPoint[],
     now: Date = new Date(),
 ): WeekDayPoint[] => {
-    const today = utcToday(now);
+    const today = localToday(now);
     const utcDow = today.getUTCDay(); // 0=Sun..6=Sat
     const isoDow = utcDow === 0 ? 7 : utcDow; // 1=Mon..7=Sun
     const monday = new Date(today);
@@ -69,7 +71,7 @@ export const reviewedToday = (series: StatsSeriesPoint[], now: Date = new Date()
 export const dateLocaleFor = (locale: string): string => (locale === 'uk' ? 'uk-UA' : 'en-US');
 
 /**
- * Short weekday name ("Mo" / "пн") for a 'YYYY-MM-DD' UTC day key. The day
+ * Short weekday name ("Mo" / "пн") for a 'YYYY-MM-DD' day key. The day
  * pips and chart axes used a hardcoded English list, so the Ukrainian UI
  * showed "Tu We Th…" (QA (1) #5 screenshot).
  */

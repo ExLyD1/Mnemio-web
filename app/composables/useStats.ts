@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
 import * as statsApi from '@/api/stats';
+import { todayIso } from '@/utils/practiceWeek';
 import type {
     DeckStudied,
     StatsActivity,
@@ -40,14 +41,15 @@ const toLevel = (reviews: number): number => {
 };
 
 const buildMonth = (mc: StatsActivity['monthCalendar']): { weeks: HeatCell[][]; label: string } => {
-    const todayIso = new Date().toISOString().slice(0, 10);
+    // Local calendar day — /stats/activity is keyed by the user's local days.
+    const today = todayIso();
     const cells: HeatCell[] = mc.days.map((d) =>
         d
             ? {
                   day: Number(d.date.slice(8, 10)),
                   inMonth: true,
                   level: toLevel(d.reviews),
-                  today: d.date === todayIso,
+                  today: d.date === today,
               }
             : { day: 0, inMonth: false, level: 0, today: false },
     );

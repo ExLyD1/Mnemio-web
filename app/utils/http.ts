@@ -69,6 +69,19 @@ export const setApiBase = (base: string): void => {
 /** The resolved API base URL (empty in dev → same-origin proxy). */
 export const getApiBase = (): string => apiBase;
 
+/**
+ * The browser's IANA time zone (e.g. "Europe/Kyiv"). Sent on every API call as
+ * X-Timezone so the backend files study activity under the user's LOCAL day
+ * and computes streaks / "days practiced" / daily charts in that zone.
+ */
+export const clientTimeZone = (): string | null => {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+    } catch {
+        return null;
+    }
+};
+
 let inflightRefresh: Promise<{ token: string | null; wasInvalid: boolean }> | null = null;
 
 /**
@@ -129,6 +142,10 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
 
     const buildHeaders = (): Record<string, string> => {
         const headers: Record<string, string> = { ...(options.headers ?? {}) };
+        const tz = clientTimeZone();
+        if (tz) {
+            headers['X-Timezone'] = tz;
+        }
         if (!options.skipAuth) {
             const token = readAccessToken();
             if (token) {

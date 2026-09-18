@@ -1,4 +1,4 @@
-import { getApiBase, refreshAccessToken } from '@/utils/http';
+import { clientTimeZone, getApiBase, refreshAccessToken } from '@/utils/http';
 import { readAccessToken } from '@/utils/authToken';
 
 const API_PREFIX = '/api/v1';
@@ -42,12 +42,14 @@ export interface StreamError {
  */
 const buildSseInit = (token: string | null, body: BodyInit, signal?: AbortSignal): RequestInit => {
     const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+    const tz = clientTimeZone();
     return {
         method: 'POST',
         headers: {
             Accept: 'text/event-stream',
             ...(isForm ? {} : { 'Content-Type': 'application/json' }),
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(tz ? { 'X-Timezone': tz } : {}),
         },
         credentials: 'include',
         body,
