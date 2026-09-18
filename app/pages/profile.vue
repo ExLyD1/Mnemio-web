@@ -39,7 +39,7 @@
                     class="mt-4 flex flex-wrap justify-center gap-1.5"
                 >
                     <SharedPill v-for="l in prefs.learningLanguages" :key="l" tone="plum">{{
-                        l
+                        langName(l)
                     }}</SharedPill>
                 </div>
             </div>
@@ -112,7 +112,7 @@
                                 class="inline-flex items-center gap-1 rounded-full border border-line-strong px-2.5 py-1 text-small text-cream-dim transition-colors hover:border-brand-muted hover:text-cream"
                                 @click="removeLearning(code)"
                             >
-                                {{ LANGUAGES.find((l) => l.code === code)?.label ?? code }}
+                                {{ langName(code) }}
                                 <X class="size-3" />
                             </button>
                         </div>
@@ -341,7 +341,7 @@ import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
 import { uploadMedia } from '@/api/media';
 import { mediaUrl } from '@/utils/media';
-import { LANGUAGES } from '@/schemas/deck';
+import { useLanguageName } from '@/composables/useLanguageName';
 import { daysPracticedThisWeek, reviewedToday } from '@/utils/practiceWeek';
 import { usernameErrorKey, usernameIssue } from '@/utils/username';
 import { useAppLocale } from '@/composables/useAppLocale';
@@ -396,9 +396,9 @@ const tabs = computed(() => [
     { value: 'billing', label: t('billing.settings.tabLabel') },
 ]);
 
-const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
+const { name: langName, options: languageOptions } = useLanguageName();
 const learningAddOptions = computed(() =>
-    languageOptions.filter((o) => !draft.learning.includes(o.value)),
+    languageOptions.value.filter((o) => !draft.learning.includes(o.value)),
 );
 const addLearning = (code: string) => {
     if (!code || draft.learning.includes(code)) return;

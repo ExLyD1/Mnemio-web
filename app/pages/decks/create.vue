@@ -448,7 +448,7 @@ import { bulkAddCards } from '@/api/cards';
 import { useAnalytics } from '@/composables/useAnalytics';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import { useDecksStore } from '@/stores/decks';
-import { LANGUAGES } from '@/schemas/deck';
+import { useLanguageName } from '@/composables/useLanguageName';
 import type { DeckInput } from '@/types/deck';
 import { DECK_CATEGORIES, normCategory } from '@/utils/deckCategories';
 import type { DeckCategory } from '@/utils/deckCategories';
@@ -504,10 +504,7 @@ const categoryOptions = DECK_CATEGORIES.map((cat) => ({
     label: t(`deck.category.${cat}`),
 }));
 
-const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
-
-const labelForLang = (code: string) =>
-    LANGUAGES.find((l) => l.code === code)?.label ?? code.toUpperCase();
+const { name: labelForLang, options: languageOptions } = useLanguageName();
 const frontLangLabel = computed(() => labelForLang(targetLanguage.value));
 const backLangLabel = computed(() => labelForLang(sourceLanguage.value));
 

@@ -147,7 +147,7 @@
 import { Trash2 } from 'lucide-vue-next';
 import { useT } from '#imports';
 import { useAiImport } from '@/composables/useAiImport';
-import { LANGUAGES } from '@/schemas/deck';
+import { useLanguageName } from '@/composables/useLanguageName';
 
 const props = withDefaults(
     defineProps<{
@@ -162,7 +162,7 @@ const emit = defineEmits<{ 'update:modelValue': [boolean]; done: [] }>();
 
 const { t } = useT();
 
-const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
+const { options: languageOptions } = useLanguageName();
 
 const close = () => emit('update:modelValue', false);
 const onModelUpdate = (open: boolean) => {

@@ -1268,5 +1268,19 @@
         "errInvalidChars": "Usernames can only use Latin letters (a–z), numbers and _. Your full name can be in any language.",
         "errReserved": "That username is reserved — please pick another one.",
         "errTaken": "That username is already taken — please pick another one."
+    },
+    "languages": {
+        "en": "English",
+        "es": "Spanish",
+        "fr": "French",
+        "de": "German",
+        "it": "Italian",
+        "pt": "Portuguese",
+        "uk": "Ukrainian",
+        "pl": "Polish",
+        "ja": "Japanese",
+        "ko": "Korean",
+        "zh": "Chinese",
+        "ru": "Russian"
     }
 }
