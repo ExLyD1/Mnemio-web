@@ -60,7 +60,13 @@
                         v-model="username"
                         :label="t('onboarding.username')"
                         :placeholder="t('onboarding.usernamePlaceholder')"
+                        autocapitalize="none"
+                        autocomplete="username"
+                        spellcheck="false"
                     />
+                    <p class="mt-1 px-1 text-small text-brand-muted">
+                        {{ t('username.hint') }}
+                    </p>
                 </div>
                 <div class="mt-4">
                     <span class="mb-1 block text-small text-brand-muted">{{
@@ -145,6 +151,8 @@ import { useAuth, useToast, useT } from '#imports';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useMimi } from '@/composables/useMimi';
 import { useAnalytics } from '@/composables/useAnalytics';
+import { useAppLocale } from '@/composables/useAppLocale';
+import { usernameErrorKey, usernameIssue } from '@/utils/username';
 
 definePageMeta({ layout: 'auth' });
 
@@ -177,6 +185,7 @@ const goalOptions = computed(() => [
     { value: 'serious', label: t('onboarding.goalSerious'), note: t('onboarding.goalSeriousNote') },
 ]);
 
+const { current: appLocale } = useAppLocale();
 const step = ref(0);
 const hue = ref(prefs.avatarHue ?? 286);
 const fullName = ref('');
@@ -208,8 +217,9 @@ const goStep2 = () => {
         say(t('onboarding.errNeedName'));
         return;
     }
-    if (username.value.trim().length < 3) {
-        say(t('onboarding.errUsername'));
+    const issue = usernameIssue(username.value);
+    if (issue) {
+        say(t(usernameErrorKey(issue)));
         return;
     }
     if (!birthday.value) {
@@ -232,9 +242,21 @@ const finish = async () => {
         birthday: birthday.value,
     });
     if (!result) {
-        if (updateProfile.error.value) {
-            toast.error(updateProfile.error.value.message);
+        const err = updateProfile.error.value;
+        // Username problems (taken, or anything the server rejects that the
+        // client check missed) belong to step 1 — send the user back there
+        // with a localized message instead of a raw English toast on step 2.
+        if (err?.code === 'AUTH_USERNAME_TAKEN') {
+            step.value = 0;
+            say(t(usernameErrorKey('taken')));
+            return;
         }
+        if (err?.code === 'VALIDATION_ERROR' && /username/i.test(err.message)) {
+            step.value = 0;
+            say(t(usernameErrorKey('invalid_chars')));
+            return;
+        }
+        toast.error(t('onboarding.errSave'));
         return;
     }
     await prefs
@@ -242,6 +264,12 @@ const finish = async () => {
             avatarHue: hue.value,
             interests: [...selectedInterests.value],
             goal: goal.value,
+            // Onboarding never asks for a native language, so it stayed null
+            // and /profile displayed "English" for Ukrainian speakers — and AI
+            // decks had no native language to write definitions in
+            // (QA (3) #13). Seed it from the interface language the user chose;
+            // they can change it in their profile.
+            ...(prefs.nativeLanguage ? {} : { nativeLanguage: appLocale.value }),
         })
         .catch(() => {});
     analytics.track('onboarding_step_completed', { step: 2, step_name: 'learn' });

@@ -343,6 +343,8 @@ import { uploadMedia } from '@/api/media';
 import { mediaUrl } from '@/utils/media';
 import { LANGUAGES } from '@/schemas/deck';
 import { daysPracticedThisWeek, reviewedToday } from '@/utils/practiceWeek';
+import { usernameErrorKey, usernameIssue } from '@/utils/username';
+import { useAppLocale } from '@/composables/useAppLocale';
 import type { ProfileUpdate } from '@/types/user';
 import type { Achievement } from '@/types/achievement';
 
@@ -357,6 +359,7 @@ const achievements = useAchievements();
 const billingStore = useBillingStore();
 const billing = useBilling();
 const toast = useToast();
+const { current: appLocale } = useAppLocale();
 const { t } = useT();
 
 useSeo({ title: t('seo.profileTitle'), description: t('seo.appDesc'), noindex: true });
@@ -473,7 +476,7 @@ const syncDraft = () => {
     if (!prefs.loaded) {
         return;
     }
-    draft.nativeLanguage = prefs.nativeLanguage ?? 'en';
+    draft.nativeLanguage = prefs.nativeLanguage ?? appLocale.value;
     draft.learning = [...prefs.learningLanguages];
     draft.goal = prefs.goal ?? 'steady';
 };
@@ -483,7 +486,7 @@ const dirty = computed(
         draft.fullName !== (auth.currentUser?.displayName ?? '') ||
         draft.username !== (auth.currentUser?.username ?? '') ||
         draft.birthday !== (auth.currentUser?.birthday ?? '') ||
-        draft.nativeLanguage !== (prefs.nativeLanguage ?? 'en') ||
+        draft.nativeLanguage !== (prefs.nativeLanguage ?? appLocale.value) ||
         JSON.stringify(draft.learning) !== JSON.stringify(prefs.learningLanguages) ||
         draft.goal !== (prefs.goal ?? 'steady'),
 );
@@ -497,6 +500,11 @@ const onSave = async () => {
         patch.fullName = fullName;
     }
     if (username && username !== (cur?.username ?? '')) {
+        const issue = usernameIssue(username);
+        if (issue) {
+            toast.error(t(usernameErrorKey(issue)));
+            return;
+        }
         patch.username = username;
     }
     if (draft.birthday && draft.birthday !== (cur?.birthday ?? '')) {
@@ -506,7 +514,12 @@ const onSave = async () => {
     if (Object.keys(patch).length > 0) {
         const result = await updateProfile.execute(patch);
         if (!result) {
-            toast.error(updateProfile.error.value?.message ?? t('profile.saveError'));
+            const err = updateProfile.error.value;
+            toast.error(
+                err?.code === 'AUTH_USERNAME_TAKEN'
+                    ? t(usernameErrorKey('taken'))
+                    : (err?.message ?? t('profile.saveError')),
+            );
             return;
         }
     }

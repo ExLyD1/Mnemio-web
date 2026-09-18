@@ -664,7 +664,8 @@
             "Geography": "Geography",
             "Art": "Art",
             "Music": "Music"
-        }
+        },
+        "errSave": "Couldn't save your profile. Please try again."
     },
     "profile": {
         "yourProfile": "Your profile",
@@ -1259,5 +1260,13 @@
         "row5Anki": "Power users who want full control over their review algorithm",
         "verdictTitle": "Which should you pick?",
         "verdictBody": "If you're starting from something you're already reading — an article, a textbook photo, a PDF — Mnemio builds the deck for you. If you want the biggest catalog of pre-made decks, Quizlet has more volume. If you want maximum control over the review algorithm and don't mind typing cards by hand, Anki is the most customizable."
+    },
+    "username": {
+        "hint": "Latin letters, numbers and _ only, 3–24 characters. Your name above can be in any language.",
+        "errTooShort": "Pick a username with at least 3 characters.",
+        "errTooLong": "Usernames can be at most 24 characters.",
+        "errInvalidChars": "Usernames can only use Latin letters (a–z), numbers and _. Your full name can be in any language.",
+        "errReserved": "That username is reserved — please pick another one.",
+        "errTaken": "That username is already taken — please pick another one."
     }
 }
