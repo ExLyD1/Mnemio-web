@@ -141,7 +141,7 @@
             :mood="mimi.mood.value"
             placement="left"
             :size="84"
-            class="fixed bottom-6 left-6"
+            class="pointer-events-none fixed bottom-6 left-6"
         />
     </div>
 </template>
@@ -205,6 +205,18 @@ const say = (message: string) => {
     mimi.mood.value = 'idle';
     mimi.message.value = message;
 };
+
+// On a phone the fixed Mimi bubble sits on top of the Continue / Start
+// button. It used to stay there until the step succeeded, so after any
+// validation message the button could not be tapped at all — the user was
+// stuck ("can't get into the app", QA (2) #4). The bubble is now
+// click-through (pointer-events-none) and goes away as soon as the user
+// starts fixing the input.
+watch([fullName, username, birthday], () => {
+    if (mimi.message.value) {
+        mimi.clear();
+    }
+});
 
 const toggleInterest = (topic: string) => {
     selectedInterests.value = selectedInterests.value.includes(topic)
