@@ -58,10 +58,7 @@
                 class="fixed inset-0 z-50 md:hidden"
                 @click.self="menuOpen = false"
             >
-                <div
-                    class="sheet-backdrop absolute inset-0 bg-scrim"
-                    @click="menuOpen = false"
-                />
+                <div class="sheet-backdrop absolute inset-0 bg-scrim" @click="menuOpen = false" />
                 <div
                     class="sheet-panel absolute inset-x-0 bottom-0 rounded-t-[24px] border-t border-line bg-bg-surface pb-safe"
                 >

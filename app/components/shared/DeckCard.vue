@@ -66,10 +66,7 @@
                     :aria-label="deck.favorite ? t('deck.removeFavorite') : t('deck.addFavorite')"
                     @click.prevent.stop="$emit('toggleFav', deck.id)"
                 >
-                    <Star
-                        class="size-4"
-                        :class="deck.favorite ? 'fill-purple text-purple' : ''"
-                    />
+                    <Star class="size-4" :class="deck.favorite ? 'fill-purple text-purple' : ''" />
                 </button>
                 <span
                     v-if="variant !== 'discover' && deck.due > 0"

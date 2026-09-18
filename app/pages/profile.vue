@@ -286,10 +286,7 @@
                                     )
                                 }}
                             </p>
-                            <p
-                                v-if="billingStore.subscription.cancelAtPeriodEnd"
-                                class="text-warn"
-                            >
+                            <p v-if="billingStore.subscription.cancelAtPeriodEnd" class="text-warn">
                                 {{ t('billing.settings.cancelNote') }}
                             </p>
                         </div>

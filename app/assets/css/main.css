@@ -94,7 +94,8 @@
     );
     --c-card-dark: linear-gradient(160deg, #24272b, #15171a);
     --c-card-plum: linear-gradient(160deg, #33383c, #212528);
-    --c-glow: radial-gradient(900px 500px at 80% -10%, rgba(122, 201, 142, 0.14), transparent 60%),
+    --c-glow:
+        radial-gradient(900px 500px at 80% -10%, rgba(122, 201, 142, 0.14), transparent 60%),
         radial-gradient(700px 400px at -10% 30%, rgba(60, 60, 66, 0.28), transparent 65%);
 
     /* stat-tile numerals — order: blue, neutral, green, accent */
@@ -177,7 +178,8 @@
        ink stays --c-cream. Name kept for cross-theme parity (light spec §2). */
     --c-card-dark: linear-gradient(160deg, #f1f8f0, #e5f0e3);
     --c-card-plum: linear-gradient(160deg, #2d5a40, #204030);
-    --c-glow: radial-gradient(900px 500px at 80% -10%, rgba(120, 190, 140, 0.2), transparent 60%),
+    --c-glow:
+        radial-gradient(900px 500px at 80% -10%, rgba(120, 190, 140, 0.2), transparent 60%),
         radial-gradient(700px 400px at -10% 30%, rgba(198, 224, 196, 0.3), transparent 65%);
 
     /* stat-tile numerals — dark variants */

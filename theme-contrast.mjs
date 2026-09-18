@@ -109,4 +109,6 @@ for (const [name, t] of Object.entries(THEMES)) {
         );
     }
 }
-console.log(`\n${fails === 0 ? 'All pairings meet their floor.' : fails + ' pairing(s) below floor.'}`);
+console.log(
+    `\n${fails === 0 ? 'All pairings meet their floor.' : fails + ' pairing(s) below floor.'}`,
+);

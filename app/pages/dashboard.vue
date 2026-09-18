@@ -185,18 +185,14 @@
                     </div>
                     <div
                         class="h-1.5 w-full overflow-hidden rounded-full bg-line transition-[box-shadow] duration-500"
-                        :class="
-                            weekGoalPct >= 100 ? 'shadow-ok-glow' : ''
-                        "
+                        :class="weekGoalPct >= 100 ? 'shadow-ok-glow' : ''"
                     >
                         <div
                             class="h-full rounded-full transition-[width] duration-500 ease-out"
                             :style="{
                                 width: `${Math.min(weekGoalPct, 100)}%`,
                                 background:
-                                    weekGoalPct >= 100
-                                        ? 'rgb(var(--c-ok))'
-                                        : 'var(--c-progress)',
+                                    weekGoalPct >= 100 ? 'rgb(var(--c-ok))' : 'var(--c-progress)',
                             }"
                         />
                     </div>

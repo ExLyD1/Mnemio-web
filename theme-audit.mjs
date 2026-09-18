@@ -56,7 +56,8 @@ const walk = (dir, out = []) => {
 };
 const files = walk('app');
 for (const f of files) {
-    for (const m of readFileSync(f, 'utf8').matchAll(/var\((--c-[a-z0-9-]+)/g)) referenced.add(m[1]);
+    for (const m of readFileSync(f, 'utf8').matchAll(/var\((--c-[a-z0-9-]+)/g))
+        referenced.add(m[1]);
 }
 const undef = [...referenced].filter((t) => !darkTokens.has(t));
 if (undef.length === 0) console.log(`  PASS — all ${referenced.size} referenced tokens defined`);
@@ -68,9 +69,12 @@ else {
 console.log('\n=== 3. Ink-on-surface violations ===');
 // Solid (non-alpha) plum/purple fills. Translucent tints (bg-brand/20) are light
 // lavender in light mode and correctly take cream ink, so they are excluded.
-const SOLID_FILL = /\b(bg-brand|bg-plum|bg-plum-2|bg-plum-deep|bg-hero|bg-card-plum|bg-plum-card-back|bg-lavender|bg-purple)(?![-/\w])/;
-const CREAM_INK = /\btext-(cream|cream-dim|cream-faint|brand-muted|brand-pale|brand-light)(?![-\w])/;
-const SURFACE = /\b(bg-bg-surface|bg-bg-surface-2|bg-bg-base|bg-bg-deep|bg-card-dark|bg-plum-card)(?![-/\w])/;
+const SOLID_FILL =
+    /\b(bg-brand|bg-plum|bg-plum-2|bg-plum-deep|bg-hero|bg-card-plum|bg-plum-card-back|bg-lavender|bg-purple)(?![-/\w])/;
+const CREAM_INK =
+    /\btext-(cream|cream-dim|cream-faint|brand-muted|brand-pale|brand-light)(?![-\w])/;
+const SURFACE =
+    /\b(bg-bg-surface|bg-bg-surface-2|bg-bg-base|bg-bg-deep|bg-card-dark|bg-plum-card)(?![-/\w])/;
 const ONPLUM_INK = /\btext-on-plum(-dim|-faint)?(?![-\w])/;
 
 const violations = [];
@@ -95,12 +99,15 @@ for (const f of files.filter((f) => f.endsWith('.vue'))) {
     readFileSync(f, 'utf8')
         .split('\n')
         .forEach((line, i) => {
-            if (/#[0-9A-Fa-f]{3,8}\b|rgba\(/.test(line)) lits.push(`${f}:${i + 1}  ${line.trim().slice(0, 70)}`);
+            if (/#[0-9A-Fa-f]{3,8}\b|rgba\(/.test(line))
+                lits.push(`${f}:${i + 1}  ${line.trim().slice(0, 70)}`);
         });
 }
 const ALLOWED = /FlashCard\.vue|decks\\create\.vue|decks\/create\.vue/;
 const bad = lits.filter((l) => !ALLOWED.test(l));
-console.log(`  ${lits.length} literal(s) total; ${lits.length - bad.length} in documented exceptions`);
+console.log(
+    `  ${lits.length} literal(s) total; ${lits.length - bad.length} in documented exceptions`,
+);
 if (bad.length === 0) console.log('  PASS — no undocumented literals');
 else {
     failures++;
