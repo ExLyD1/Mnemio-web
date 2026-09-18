@@ -69,6 +69,22 @@ const initialTab = route.query.tab === 'register' ? 'register' : ('login' as con
 // the multi-step email flow can return them there after sign-in.
 onMounted(() => rememberReturnTo(route.query.next));
 
+// The boot-time hydrate() can restore a session from the refresh cookie after
+// the route guard already sent the visitor here — don't leave a signed-in
+// user sitting on the login form.
+// Only for that boot-time restore — once the user submits the form, the
+// submit handlers own the navigation (finishAuth), so this must not race them.
+let userActed = false;
+watch(
+    () => authStore.isAuthenticated,
+    (authed) => {
+        if (authed && !userActed && step.value === 'auth' && !authStore.needsProfile) {
+            navigateTo(takeReturnTo());
+        }
+    },
+    { immediate: true },
+);
+
 const showError = (msg: string) => toast.error(t(msg, msg));
 
 const finishAuth = async () => {
@@ -85,6 +101,7 @@ async function onAuthSubmit(payload: {
     activeTab: Tab;
     rememberMe: boolean;
 }) {
+    userActed = true;
     data.email = payload.email;
     data.password = payload.password;
 

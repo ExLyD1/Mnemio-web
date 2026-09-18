@@ -9,7 +9,8 @@ import {
     updateProfile as apiUpdateProfile,
     oauthExchange as apiOauthExchange,
 } from '@/api/auth';
-import { readAccessToken, writeAccessToken } from '@/utils/authToken';
+import { canRestoreFromCookie, readAccessToken, writeAccessToken } from '@/utils/authToken';
+import { refreshAccessToken } from '@/utils/http';
 import { useAnalytics } from '@/composables/useAnalytics';
 import { usePreferencesStore } from '@/stores/preferences';
 import type { User, ProfileUpdate } from '@/types/user';
@@ -59,9 +60,22 @@ export const useAuthStore = defineStore('auth', () => {
     };
 
     const hydrate = async () => {
-        const token = readAccessToken();
+        let token = readAccessToken();
         if (!token) {
-            return;
+            // The access token lives in script storage, which mobile browsers
+            // may clear (e.g. Safari after 7 days without a visit) while the
+            // 30-day HttpOnly refresh cookie is still valid. Previously that
+            // meant "logged out on reopen" (QA (3) #10) even though the session
+            // was fine. Try to restore it from the cookie first. For visitors
+            // with no session this is one 401 on boot and nothing else.
+            if (!canRestoreFromCookie()) {
+                return;
+            }
+            const restored = await refreshAccessToken();
+            if (!restored.token) {
+                return;
+            }
+            token = restored.token;
         }
         accessToken.value = token;
         try {
