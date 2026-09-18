@@ -16,7 +16,10 @@ export interface ProfileDetails {
 }
 
 /** Partial profile patch — `PATCH /users/me` accepts any subset (≥1 field). */
-export type ProfileUpdate = Partial<ProfileDetails>;
+export type ProfileUpdate = Partial<ProfileDetails> & {
+    /** Only `null` is accepted — removes the profile photo. */
+    avatarUrl?: null;
+};
 
 export interface Preference {
     interests: string[];

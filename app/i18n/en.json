@@ -706,7 +706,12 @@
         "photoUpdated": "Photo updated",
         "photoError": "Could not upload photo",
         "saved": "Profile saved",
-        "saveError": "Could not save profile"
+        "saveError": "Could not save profile",
+        "removePhoto": "Remove photo",
+        "photoRemoved": "Photo removed",
+        "photoRemoveError": "Couldn't remove the photo",
+        "photoTooLarge": "That photo is too large. Try a smaller one.",
+        "photoUnsupported": "This image format isn't supported. Use a JPG, PNG or WebP."
     },
     "achievements": {
         "unlocked": "Achievement unlocked: {name} 🏆",

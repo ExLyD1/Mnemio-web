@@ -706,7 +706,12 @@
         "photoUpdated": "Фото оновлено",
         "photoError": "Не вдалося завантажити фото",
         "saved": "Профіль збережено",
-        "saveError": "Не вдалося зберегти профіль"
+        "saveError": "Не вдалося зберегти профіль",
+        "removePhoto": "Видалити фото",
+        "photoRemoved": "Фото видалено",
+        "photoRemoveError": "Не вдалося видалити фото",
+        "photoTooLarge": "Фото завелике. Спробуйте менше.",
+        "photoUnsupported": "Цей формат зображення не підтримується. Використайте JPG, PNG або WebP."
     },
     "achievements": {
         "unlocked": "Досягнення отримано: {name} 🏆",

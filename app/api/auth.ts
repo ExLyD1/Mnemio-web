@@ -163,7 +163,7 @@ export const me = async (): Promise<MeResult> => {
 
 export const updateProfile = async (details: ProfileUpdate): Promise<MeResult> => {
     // Send only the provided, non-empty fields — PATCH /users/me accepts any subset.
-    const body: Record<string, string> = {};
+    const body: Record<string, string | null> = {};
     if (details.fullName) {
         body.fullName = details.fullName;
     }
@@ -172,6 +172,9 @@ export const updateProfile = async (details: ProfileUpdate): Promise<MeResult> =
     }
     if (details.birthday) {
         body.birthday = details.birthday;
+    }
+    if (details.avatarUrl === null) {
+        body.avatarUrl = null;
     }
     const res = await http<UpdateProfileResponse>('/users/me', { method: 'PATCH', body });
     return { user: toUser(res.user), needsProfile: res.needsProfile };
