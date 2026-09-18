@@ -138,6 +138,8 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
         return headers;
     };
 
+    // Nitro types `$fetch` responses per route (TypedInternalResponse); for
+    // these dynamic API paths that isn't assignable to T, so assert it.
     const send = () =>
         $fetch<T>(url, {
             baseURL,
@@ -146,7 +148,7 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
             query: options.query,
             headers: buildHeaders(),
             credentials: 'include',
-        });
+        }) as Promise<T>;
 
     try {
         return await send();

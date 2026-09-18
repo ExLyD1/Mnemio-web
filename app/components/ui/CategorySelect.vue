@@ -174,8 +174,9 @@ const onKey = (e: KeyboardEvent) => {
         nextTick(scrollToFocused);
     } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (focused.value >= 0 && filtered.value[focused.value]) {
-            pick(filtered.value[focused.value].value);
+        const option = focused.value >= 0 ? filtered.value[focused.value] : undefined;
+        if (option) {
+            pick(option.value);
         }
     } else if (e.key === 'Escape') {
         close();

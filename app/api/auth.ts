@@ -161,7 +161,10 @@ export const me = async (): Promise<MeResult> => {
     return { user: toUser(res.user), needsProfile: res.needsProfile, plan: res.plan };
 };
 
-export const updateProfile = async (details: ProfileUpdate): Promise<MeResult> => {
+// PATCH /users/me returns { user, needsProfile } — no `plan` (unlike /auth/me).
+export type UpdateProfileResult = Omit<MeResult, 'plan'>;
+
+export const updateProfile = async (details: ProfileUpdate): Promise<UpdateProfileResult> => {
     // Send only the provided, non-empty fields — PATCH /users/me accepts any subset.
     const body: Record<string, string | null> = {};
     if (details.fullName) {

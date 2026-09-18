@@ -334,10 +334,10 @@ onMounted(async () => {
         prefs.hydrate().catch(() => {}),
     ]);
     try {
+        // (A leftover `mimi.message.value = …` referenced a Mimi instance this
+        // page no longer has — for English users it threw a ReferenceError here,
+        // so the suggested CTA was silently never applied.)
         const s = await aiApi.suggest('dashboard');
-        if (locale.value === 'en') {
-            mimi.message.value = s.suggestion;
-        }
         const href = s.kind === 'deck' ? '/decks/create' : '/review';
         const label =
             locale.value === 'en'

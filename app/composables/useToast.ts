@@ -9,7 +9,8 @@ export interface Toast {
 }
 
 const toasts = ref<Toast[]>([]);
-const timers = new Map<number, ReturnType<typeof setTimeout>>();
+// Browser timer ids (window.setTimeout returns a number).
+const timers = new Map<number, number>();
 let nextId = 1;
 const DEFAULT_TTL = 4000;
 const MAX_VISIBLE = 4;

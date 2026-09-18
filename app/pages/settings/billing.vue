@@ -115,7 +115,7 @@ const { t } = useT();
 const billingStore = useBillingStore();
 const billing = useBilling();
 
-useSeo({ title: t('billing.settings.seoTitle'), noindex: true });
+useSeo({ title: t('billing.settings.seoTitle'), description: t('seo.appDesc'), noindex: true });
 
 onMounted(() => billingStore.load());
 

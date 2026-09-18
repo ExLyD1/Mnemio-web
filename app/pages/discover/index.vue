@@ -88,7 +88,7 @@ import { copyDeck } from '@/api/discover';
 import { useAuthStore } from '@/stores/auth';
 import { useAnalytics } from '@/composables/useAnalytics';
 import { useDiscoverMore, discoverToVm } from '@/composables/useDiscoverMore';
-import type { DeckCardVM } from '@/types/deck';
+import type { DeckCardVM, DeckWithAuthor } from '@/types/deck';
 
 definePageMeta({ layout: 'default' });
 

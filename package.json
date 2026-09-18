@@ -11,6 +11,7 @@
         "postinstall": "nuxt prepare",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
+        "typecheck": "nuxi typecheck",
         "format:check": "prettier . --check --ignore-path .prettierignore",
         "format": "prettier . --write --ignore-path .prettierignore",
         "validate": "npm run lint && npm run format:check",
@@ -43,6 +44,7 @@
     "devDependencies": {
         "@types/dompurify": "^3.0.5",
         "@types/mixpanel-browser": "^2.60.0",
+        "@types/node": "^22.20.3",
         "@typescript-eslint/eslint-plugin": "^8.58.0",
         "@typescript-eslint/parser": "^8.58.0",
         "eslint": "^10.2.0",
@@ -51,6 +53,8 @@
         "eslint-plugin-tailwindcss": "^3.18.2",
         "eslint-plugin-vue": "^10.8.0",
         "prettier": "^3.8.1",
-        "vue-eslint-parser": "^10.4.0"
+        "typescript": "^6.0.3",
+        "vue-eslint-parser": "^10.4.0",
+        "vue-tsc": "^3.3.11"
     }
 }

@@ -508,11 +508,13 @@ const { name: labelForLang, options: languageOptions } = useLanguageName();
 const frontLangLabel = computed(() => labelForLang(targetLanguage.value));
 const backLangLabel = computed(() => labelForLang(sourceLanguage.value));
 
-const cardTypes = computed(() => [
-    { value: 'basic', label: t('deck.cardTypeBasic'), hint: t('deck.cardTypeBasicHint') },
-    { value: 'cloze', label: t('deck.cardTypeCloze'), hint: t('deck.cardTypeClozeHint') },
-    { value: 'image', label: t('deck.cardTypeImage'), hint: t('deck.cardTypeImageHint') },
-]);
+const cardTypes = computed<{ value: 'basic' | 'cloze' | 'image'; label: string; hint: string }[]>(
+    () => [
+        { value: 'basic', label: t('deck.cardTypeBasic'), hint: t('deck.cardTypeBasicHint') },
+        { value: 'cloze', label: t('deck.cardTypeCloze'), hint: t('deck.cardTypeClozeHint') },
+        { value: 'image', label: t('deck.cardTypeImage'), hint: t('deck.cardTypeImageHint') },
+    ],
+);
 
 // Chat / panel state
 const mimiOpen = ref(false);
