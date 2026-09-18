@@ -571,7 +571,7 @@
         "title": "Your statistics.",
         "subtitle": "How your memory is trending over time.",
         "reviewed": "Reviewed",
-        "reviewedSub": "cards studied today",
+        "reviewedSub": "cards reviewed",
         "retention": "Retention",
         "recallRate": "Recall rate",
         "recallRateSub": "of due cards remembered",
@@ -621,7 +621,10 @@
         "performancePeers": "{n} learners compared",
         "performanceEmpty": "Not enough learners have studied yet to compare — check back soon.",
         "performanceComingSoon": "Comparing your recall against other learners — coming soon.",
-        "comingSoon": "Coming soon"
+        "comingSoon": "Coming soon",
+        "reviewedSubRange": "cards in the last {n} days",
+        "reviewedSubAll": "cards, all time",
+        "weakestDecksHint": "% of cards mastered. A card counts as mastered after 3 successful reviews in a row with progress tracking (SRS) on; \"Forgot\" and \"Hard\" restart that count."
     },
     "onboarding": {
         "stepOf": "Step {i} of 2",
@@ -694,7 +697,7 @@
         "saveChanges": "Save changes",
         "earned": "{x} of {y} earned",
         "statStreak": "Streak",
-        "statDaysPracticed": "Days practiced",
+        "statDaysPracticed": "Days practiced this week",
         "statReviewed": "Reviewed today",
         "statDecks": "Decks",
         "statRetention": "Retention",

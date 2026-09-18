@@ -342,6 +342,7 @@ import { useAchievements } from '@/composables/useAchievements';
 import { uploadMedia } from '@/api/media';
 import { mediaUrl } from '@/utils/media';
 import { LANGUAGES } from '@/schemas/deck';
+import { daysPracticedThisWeek, reviewedToday } from '@/utils/practiceWeek';
 import type { ProfileUpdate } from '@/types/user';
 import type { Achievement } from '@/types/achievement';
 
@@ -426,11 +427,16 @@ const earnedCount = computed(() => achievements.items.value.filter((a) => a.earn
 const achName = (a: Achievement) => t(`achievements.${a.key}.name`, a.name);
 const achDesc = (a: Achievement) => t(`achievements.${a.key}.description`, a.description);
 
-const daysPracticed = computed(() => stats.series.value.filter((p) => p.value > 0).length);
+// Same definitions as the dashboard and /statistics (utils/practiceWeek):
+// "days practiced" = this Mon..Sun week, "reviewed today" = today's count.
+// Previously these were a rolling-7-day count and the 30-day overview total
+// shown under a "today" label (QA (2) #3, (3) #2).
+const daysPracticed = computed(() => daysPracticedThisWeek(stats.series.value));
+const reviewedTodayCount = computed(() => reviewedToday(stats.series.value));
 
 const quickStats = computed(() => [
     { label: t('profile.statDaysPracticed'), value: daysPracticed.value },
-    { label: t('profile.statReviewed'), value: stats.reviewed.value },
+    { label: t('profile.statReviewed'), value: reviewedTodayCount.value },
     { label: t('profile.statDecks'), value: store.summaries.length },
     { label: t('profile.statRetention'), value: `${stats.retention.value}%` },
 ]);
