@@ -29,6 +29,7 @@
                                 :key="studyCard.id"
                                 :card="studyCard"
                                 :revealed="revealed"
+                                reserve-top-right
                                 @flip="revealed = !revealed"
                             />
                         </Transition>
