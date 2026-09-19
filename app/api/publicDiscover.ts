@@ -34,5 +34,13 @@ export const listPublicDecks = (
 export const getPublicCategories = (): Promise<{ items: DiscoverCategory[] }> =>
     publicGet('/public/discover/categories');
 
-export const getPublicDeck = (id: string): Promise<PublicDeckDetail> =>
-    publicGet(`/public/decks/${id}`);
+// The backend returns `{ deck, cards }` (mirroring GET /decks/:id). Typing that
+// response as a flat deck made every field on the public SEO page `undefined` —
+// empty <h1>, empty <title>, and an "Open deck" link to /decks/undefined — while
+// `cards` resolved by coincidence and masked it.
+export const getPublicDeck = async (id: string): Promise<PublicDeckDetail> => {
+    const res = await publicGet<{ deck: DeckWithAuthor; cards: Card[] }>(
+        `/public/decks/${id}`,
+    );
+    return { ...res.deck, cards: res.cards };
+};

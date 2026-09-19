@@ -107,8 +107,17 @@ export const useStats = () => {
         cardSeries.value = res.points;
     };
 
+    // GET /stats/performance is not implemented on the backend yet, so this
+    // rejects on every call. It used to do so inside an un-caught Promise.all,
+    // which took down the whole Statistics mount with an unhandled rejection.
+    // The panel already renders a "not enough learners yet" empty state for a
+    // null value, so degrade into that instead of throwing.
     const loadPerformance = async (range: StatsRange = '30') => {
-        performance.value = await statsApi.getPerformance(range);
+        try {
+            performance.value = await statsApi.getPerformance(range);
+        } catch {
+            performance.value = null;
+        }
     };
 
     const load = async (range: StatsRange = '30') => {
