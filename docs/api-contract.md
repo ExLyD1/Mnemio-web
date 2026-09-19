@@ -1,5 +1,12 @@
 # Mnemio Backend — API Contract for Frontend Integration
 
+> **⚠️ SUPERSEDED — do not trust this copy.**
+> The authoritative contract lives in the backend repo at `docs/api-contract.md`.
+> This fork has drifted from it and caused at least one shipped bug: it claimed
+> every token-issuing auth response returned `plan`, which the backend did not
+> do, so premium users were treated as free for a whole session. Read the
+> backend copy; this file is kept only so existing links resolve.
+
 > Audience: the frontend (`mnemio-frontend`) developer / AI replacing the
 > `localStorage`-backed mocks in `app/api/*.ts` with real HTTP calls.
 > Read [`backend-plan.md`](./backend-plan.md) for the _why_; this file is the _what_.

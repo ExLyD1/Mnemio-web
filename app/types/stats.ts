@@ -3,7 +3,9 @@ export type StatsRange = '7' | '30' | '90' | 'all';
 export interface StatsTrend {
     current: number;
     previous: number;
-    deltaPct: number;
+    // null when there is no comparison window (range 'all' has no previous
+    // period, so a percentage there would be fabricated).
+    deltaPct: number | null;
 }
 
 export interface StatsOverview {

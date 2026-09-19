@@ -155,7 +155,7 @@ Two mechanisms coexist:
 
 ## Docs
 
-- [`docs/api-contract.md`](./docs/api-contract.md) — **the** backend contract: every endpoint, payload, error code, and the invariants the FE must respect (refresh-cookie rules, SRS `rate` body, server-computed XP, list `{ items, nextCursor }` shape, ownership 404/403, etc.). Consult it before changing any `app/api/*` call.
+- `mnemio-backend/docs/api-contract.md` — **the** backend contract (the copy in this repo is a stale fork, kept only for old links): every endpoint, payload, error code, and the invariants the FE must respect (refresh-cookie rules, SRS `rate` body, server-computed XP, list `{ items, nextCursor }` shape, ownership 404/403, etc.). Consult it before changing any `app/api/*` call.
 
 ## Backend / demo data
 

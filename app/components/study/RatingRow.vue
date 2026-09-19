@@ -12,7 +12,6 @@
         >
             <StudyKeycap :label="g.hint" class="absolute right-2 top-2" />
             <span class="text-body font-semibold">{{ t(g.i18nKey) }}</span>
-            <span class="text-small opacity-70">{{ g.interval }}</span>
         </button>
     </div>
 </template>
