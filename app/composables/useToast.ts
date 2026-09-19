@@ -1,11 +1,12 @@
 import { ref } from 'vue';
 
-export type ToastVariant = 'info' | 'success' | 'error';
+export type ToastVariant = 'info' | 'success' | 'error' | 'achievement';
 
 export interface Toast {
     id: number;
     message: string;
     variant: ToastVariant;
+    title?: string;
 }
 
 const toasts = ref<Toast[]>([]);
@@ -13,7 +14,8 @@ const toasts = ref<Toast[]>([]);
 const timers = new Map<number, number>();
 let nextId = 1;
 const DEFAULT_TTL = 4000;
-const MAX_VISIBLE = 4;
+const ACHIEVEMENT_TTL = 6000;
+const MAX_VISIBLE = 3;
 
 /**
  * Auth-expiry error codes. These are handled centrally by `http.ts` (refresh +
@@ -53,7 +55,12 @@ const scheduleDismiss = (id: number, ttl: number) => {
     );
 };
 
-const push = (message: string, variant: ToastVariant = 'info', ttl = DEFAULT_TTL) => {
+const push = (
+    message: string,
+    variant: ToastVariant = 'info',
+    ttl = DEFAULT_TTL,
+    title?: string,
+) => {
     // Dedup: if an identical toast is already visible, just refresh its timer
     // instead of stacking a duplicate.
     const existing = toasts.value.find((t) => t.message === message && t.variant === variant);
@@ -63,7 +70,7 @@ const push = (message: string, variant: ToastVariant = 'info', ttl = DEFAULT_TTL
     }
 
     const id = nextId++;
-    let next = [...toasts.value, { id, message, variant }];
+    let next = [...toasts.value, { id, message, variant, ...(title ? { title } : {}) }];
     // Cap concurrent toasts — drop the oldest beyond the limit.
     if (next.length > MAX_VISIBLE) {
         const overflow = next.slice(0, next.length - MAX_VISIBLE);
@@ -87,4 +94,6 @@ export const useToast = () => ({
     info: (m: string, ttl?: number) => push(m, 'info', ttl),
     success: (m: string, ttl?: number) => push(m, 'success', ttl),
     error: (m: string, ttl?: number) => push(m, 'error', ttl),
+    achievement: (m: string, title: string, ttl = ACHIEVEMENT_TTL) =>
+        push(m, 'achievement', ttl, title),
 });

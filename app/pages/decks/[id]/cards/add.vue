@@ -279,7 +279,7 @@
 
 <script setup lang="ts">
 import { Volume2, Image as ImageIcon, Check, X, ArrowRight } from 'lucide-vue-next';
-import { useDecks, useCards, useToast, useT } from '#imports';
+import { useDecks, useCards, useToast, useT, useApiError } from '#imports';
 import { uploadMedia } from '@/api/media';
 import { useAnalytics } from '@/composables/useAnalytics';
 import * as aiApi from '@/api/ai';
@@ -295,6 +295,7 @@ const { store, fetchOne } = useDecks();
 const { addCard } = useCards();
 const toast = useToast();
 const { t } = useT();
+const { apiErrorText } = useApiError();
 const analytics = useAnalytics();
 
 // Whether AI enrichment touched the current card (drives card_added.method).
@@ -513,7 +514,7 @@ const save = async (): Promise<boolean> => {
         imageUrl: imageUrl.value,
     });
     if (addCard.error.value) {
-        toast.error(addCard.error.value.message);
+        toast.error(apiErrorText(addCard.error.value));
         return false;
     }
     analytics.track('card_added', {

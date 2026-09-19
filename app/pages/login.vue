@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAuth, useAuthStore, useToast, useT } from '#imports';
+import { useAuth, useAuthStore, useToast, useT, useApiError } from '#imports';
 import { setRemember } from '@/utils/authToken';
 import { rememberReturnTo, takeReturnTo } from '@/utils/returnTo';
 import { usernameErrorKey } from '@/utils/username';
@@ -53,6 +53,7 @@ const authStore = useAuthStore();
 const { login, register, verifyEmail, resendOtp, updateProfile } = useAuth();
 const toast = useToast();
 const { t } = useT();
+const { apiErrorText } = useApiError();
 const analytics = useAnalytics();
 
 useSeo({ title: t('seo.loginTitle'), description: t('seo.loginDesc'), noindex: true });
@@ -123,7 +124,7 @@ async function onAuthSubmit(payload: {
                 return;
             }
         }
-        if (err) showError(err.message);
+        if (err) toast.error(apiErrorText(err));
         return;
     }
 
@@ -131,7 +132,7 @@ async function onAuthSubmit(payload: {
     if (result) {
         step.value = 'verify';
     } else if (register.error.value) {
-        showError(register.error.value.message);
+        toast.error(apiErrorText(register.error.value));
     }
 }
 
@@ -143,7 +144,7 @@ async function onOtpSubmit(payload: { code: string }) {
         analytics.track('email_verification_failed', {
             error_code: verifyEmail.error.value.code ?? 'unknown',
         });
-        showError(verifyEmail.error.value.message);
+        toast.error(apiErrorText(verifyEmail.error.value));
     }
 }
 
@@ -152,7 +153,7 @@ async function onResend() {
     if (result) {
         toast.success(t('auth.otpResent', 'New code sent.'));
     } else if (resendOtp.error.value) {
-        showError(resendOtp.error.value.message);
+        toast.error(apiErrorText(resendOtp.error.value));
     }
 }
 
@@ -172,7 +173,7 @@ async function onDetailsSubmit(payload: { fullName: string; username: string; bi
     } else if (err.code === 'VALIDATION_ERROR' && /username/i.test(err.message)) {
         showError(usernameErrorKey('invalid_chars'));
     } else {
-        showError(err.message);
+        toast.error(apiErrorText(err));
     }
 }
 </script>

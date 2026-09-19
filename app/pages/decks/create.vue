@@ -551,10 +551,6 @@ const validate = (): boolean => {
         toast.error(t('deck.errors.title_too_short'));
         return false;
     }
-    if (sourceLanguage.value === targetLanguage.value) {
-        toast.error(t('deck.errors.languages_same'));
-        return false;
-    }
     return true;
 };
 

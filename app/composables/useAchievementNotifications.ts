@@ -15,6 +15,10 @@ const unseen = ref<Achievement[]>([]);
 // return an already-acked achievement again.
 const toastedThisSession = new Set<string>();
 
+const STAGGER_MS = 1200;
+// More than this many unlocks at once collapse into a single summary toast.
+const MAX_INDIVIDUAL_TOASTS = 2;
+
 const upsertUnseen = (items: Achievement[]) => {
     if (items.length === 0) {
         return;
@@ -48,7 +52,18 @@ export const useAchievementNotifications = () => {
         upsertUnseen(fresh);
         for (const a of fresh) {
             toastedThisSession.add(a.key);
-            toast.success(t('achievements.unlocked').replace('{name}', achName(a)));
+        }
+        const title = t('achievements.toastTitle');
+        if (fresh.length > MAX_INDIVIDUAL_TOASTS) {
+            toast.achievement(
+                t('achievements.unlockedManyHint'),
+                t('achievements.unlockedMany').replace('{count}', String(fresh.length)),
+            );
+        } else {
+            // Stagger so a double unlock reads as two small moments, not a wall.
+            fresh.forEach((a, i) => {
+                setTimeout(() => toast.achievement(achName(a), title), i * STAGGER_MS);
+            });
         }
         // The popup must only ever fire once. Ack server-side right away so
         // the next GET /achievements/unseen (next reload/boot/tab) doesn't

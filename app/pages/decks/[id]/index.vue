@@ -335,7 +335,7 @@ import {
     Share2,
     BookCopy,
 } from 'lucide-vue-next';
-import { useDecks, useCards, useSrsStore, useToast, useT } from '#imports';
+import { useDecks, useCards, useSrsStore, useToast, useT, useApiError } from '#imports';
 import { isAuthExpiry } from '@/composables/useToast';
 import { swatchFor } from '@/utils/coverSwatches';
 import { copyDeck } from '@/api/discover';
@@ -353,6 +353,7 @@ const { updateCard, deleteCard } = useCards();
 const srs = useSrsStore();
 const toast = useToast();
 const { t } = useT();
+const { apiErrorText } = useApiError();
 const auth = useAuthStore();
 const analytics = useAnalytics();
 
@@ -414,7 +415,7 @@ const saveEdit = async () => {
     });
     if (updateCard.error.value) {
         if (!isAuthExpiry(updateCard.error.value.code)) {
-            toast.error(updateCard.error.value.message);
+            toast.error(apiErrorText(updateCard.error.value));
         }
         return;
     }
@@ -433,7 +434,7 @@ const confirmDeleteCard = async () => {
     await deleteCard.execute(id.value, pendingCardId.value);
     if (deleteCard.error.value) {
         if (!isAuthExpiry(deleteCard.error.value.code)) {
-            toast.error(deleteCard.error.value.message);
+            toast.error(apiErrorText(deleteCard.error.value));
         }
     } else {
         toast.success(t('card.deleted'));
@@ -557,7 +558,7 @@ const onConfirmDelete = async () => {
     await remove.execute(id.value);
     if (remove.error.value) {
         if (!isAuthExpiry(remove.error.value.code)) {
-            toast.error(t(remove.error.value.message, remove.error.value.message));
+            toast.error(apiErrorText(remove.error.value));
         }
     } else {
         toast.success(t('deck.deleted'));

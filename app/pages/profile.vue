@@ -341,7 +341,7 @@
 
 <script setup lang="ts">
 import { Trophy, Lock, Camera, X, LogOut } from 'lucide-vue-next';
-import { useAuthStore, useAuth, useDecks, useToast, useT } from '#imports';
+import { useAuthStore, useAuth, useDecks, useToast, useT, useApiError } from '#imports';
 import { useBillingStore } from '@/stores/billing';
 import { useBilling } from '@/composables/useBilling';
 import { usePreferencesStore } from '@/stores/preferences';
@@ -370,6 +370,7 @@ const billing = useBilling();
 const toast = useToast();
 const { current: appLocale } = useAppLocale();
 const { t } = useT();
+const { apiErrorText } = useApiError();
 
 useSeo({ title: t('seo.profileTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -566,7 +567,7 @@ const onSave = async () => {
             toast.error(
                 err?.code === 'AUTH_USERNAME_TAKEN'
                     ? t(usernameErrorKey('taken'))
-                    : (err?.message ?? t('profile.saveError')),
+                    : apiErrorText(err, 'profile.saveError'),
             );
             return;
         }

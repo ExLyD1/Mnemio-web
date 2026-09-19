@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { useDecks, useToast, useT } from '#imports';
+import { useDecks, useToast, useT, useApiError } from '#imports';
 import { streamDeckFromImage, type DeckDraftHeader } from '@/api/ai';
 import type { StreamError } from '@/utils/sse';
 import { bulkAddCards } from '@/api/cards';
@@ -29,6 +29,7 @@ export const useImageDeck = (opts: { onCreated?: (deckId: string) => void } = {}
     const { create, store } = useDecks();
     const toast = useToast();
     const { t } = useT();
+    const { apiErrorText } = useApiError();
     const auth = useAuthStore();
     const premiumGate = usePremiumGateStore();
     const analytics = useAnalytics();
@@ -216,7 +217,7 @@ export const useImageDeck = (opts: { onCreated?: (deckId: string) => void } = {}
                 glyph: h.glyph ?? null,
             });
             if (!created) {
-                error.value = create.error.value?.message ?? t('image.errGeneric');
+                error.value = apiErrorText(create.error.value, 'image.errGeneric');
                 return;
             }
             const { newAchievements } = await bulkAddCards(created.id, cards);

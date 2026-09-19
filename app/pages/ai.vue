@@ -294,7 +294,7 @@
 
 <script setup lang="ts">
 import { Send, Menu, ImagePlus, X } from 'lucide-vue-next';
-import { useChat, useToast, useT } from '#imports';
+import { useChat, useToast, useT, useApiError } from '#imports';
 import { useAuthStore } from '@/stores/auth';
 import { usePremiumGateStore } from '@/stores/premiumGate';
 import { renderMarkdown } from '@/utils/markdown';
@@ -304,6 +304,7 @@ definePageMeta({ layout: 'default' });
 const chat = useChat();
 const toast = useToast();
 const { t } = useT();
+const { apiErrorText } = useApiError();
 const auth = useAuthStore();
 const premiumGate = usePremiumGateStore();
 
@@ -443,7 +444,7 @@ const onNew = () => {
     nextTick(() => inputEl.value?.focus());
 };
 
-const errText = (code: string) => t(`chat.err.${code}`, t('chat.err.generic'));
+const errText = (code: string) => t(`chat.err.${code}`, apiErrorText({ code }, 'chat.err.generic'));
 
 watch(
     () => chat.streamError.value,

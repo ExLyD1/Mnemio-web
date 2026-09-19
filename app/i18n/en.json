@@ -306,8 +306,7 @@
             "title_too_short": "Title must be at least 2 characters.",
             "title_too_long": "Title is too long (max 120).",
             "description_too_long": "Description is too long (max 500).",
-            "language_invalid": "Pick a valid language.",
-            "languages_same": "Source and target language must differ."
+            "language_invalid": "Pick a valid language."
         }
     },
     "dashboard": {
@@ -714,7 +713,6 @@
         "photoUnsupported": "This image format isn't supported. Use a JPG, PNG or WebP."
     },
     "achievements": {
-        "unlocked": "Achievement unlocked: {name} 🏆",
         "first_steps": {
             "name": "First steps",
             "description": "Complete your first study session."
@@ -742,7 +740,10 @@
         "polyglot": {
             "name": "Polyglot",
             "description": "Study decks in 3 different target languages."
-        }
+        },
+        "toastTitle": "New achievement!",
+        "unlockedMany": "{count} new achievements 🎉",
+        "unlockedManyHint": "Peek at them in your profile"
     },
     "ai": {
         "titleNew": "Import words with AI",
@@ -1287,5 +1288,80 @@
         "ko": "Korean",
         "zh": "Chinese",
         "ru": "Russian"
+    },
+    "errors": {
+        "generic": "Something went wrong. Please try again.",
+        "NETWORK_ERROR": "Couldn't reach the server — check your connection and try again.",
+        "RATE_LIMITED": "You're going a little fast — take a breath and try again in a moment.",
+        "INTERNAL": "Something went wrong on our side. Please try again.",
+        "UNKNOWN": "Something went wrong. Please try again.",
+        "BAD_REQUEST": "That request didn't look quite right. Please try again.",
+        "VALIDATION_ERROR": "Please check the fields and try again.",
+        "UNPROCESSABLE": "We couldn't process that. Please check and try again.",
+        "CONFLICT": "This already exists.",
+        "NOT_FOUND": "We couldn't find that.",
+        "NOT_READY": "That isn't ready yet — try again in a moment.",
+        "FORBIDDEN": "You don't have access to this.",
+        "UNAUTHORIZED": "Please sign in to continue.",
+        "AUTH_FORBIDDEN": "You don't have access to this.",
+        "AUTH_UNAUTHENTICATED": "Please sign in to continue.",
+        "AUTH_INVALID_TOKEN": "Your session has expired. Please sign in again.",
+        "AUTH_INVALID_REFRESH": "Your session has expired. Please sign in again.",
+        "AUTH_INVALID_CREDENTIALS": "Email or password is incorrect.",
+        "AUTH_EMAIL_TAKEN": "An account with this email already exists. Try logging in instead.",
+        "AUTH_EMAIL_UNVERIFIED_LINK": "An unverified account already exists for this email. Verify it first or use a different account.",
+        "AUTH_INVALID_CODE": "That code doesn't match. Check it and try again.",
+        "AUTH_OTP_COOLDOWN": "Please wait a moment before requesting a new code.",
+        "AUTH_OTP_EXHAUSTED": "Too many attempts. Request a new code.",
+        "AUTH_INVALID_USER": "We couldn't find this account.",
+        "AUTH_USERNAME_TAKEN": "This username is already taken.",
+        "EMAIL_NOT_VERIFIED": "Please verify your email first.",
+        "USER_NOT_FOUND": "We couldn't find this account.",
+        "OAUTH_BAD_EXCHANGE_CODE": "Sign-in link expired. Please try again.",
+        "OAUTH_EXCHANGE_EXPIRED": "Sign-in link expired. Please try again.",
+        "OAUTH_BAD_PROFILE": "We couldn't read your profile from that provider.",
+        "OAUTH_EMAIL_UNVERIFIED": "That account's email isn't verified with the provider.",
+        "OAUTH_NOT_CONFIGURED": "This sign-in option isn't available right now.",
+        "OAUTH_USERINFO_FAILED": "We couldn't reach the sign-in provider. Please try again.",
+        "DECK_NOT_FOUND": "This deck no longer exists.",
+        "DECK_EMPTY": "This deck has no cards yet — add a few first.",
+        "CARD_NOT_FOUND": "This card no longer exists.",
+        "CARD_FORBIDDEN": "You can't edit this card.",
+        "SESSION_NOT_FOUND": "This study session no longer exists.",
+        "SESSION_NOT_ACTIVE": "This study session has already ended.",
+        "CHAT_NOT_FOUND": "This conversation no longer exists.",
+        "CHAT_EMPTY_MESSAGE": "Write a message or attach an image.",
+        "MEDIA_NO_FILE": "Please choose a file.",
+        "MEDIA_BAD_MIME": "This file type isn't supported.",
+        "MEDIA_TOO_LARGE": "This file is too large.",
+        "AI_BUDGET_EXCEEDED": "You've used today's AI limit. It resets tomorrow.",
+        "AI_PROVIDER_ERROR": "AI is taking a little break. Please try again.",
+        "AI_VALIDATION_FAILED": "AI couldn't put that together. Try rephrasing.",
+        "AI_TOO_MANY_WORDS": "Too many words at once — try a shorter list.",
+        "AI_IMAGE_TOO_LARGE": "This image is too large.",
+        "AI_IMAGE_UNSUPPORTED_TYPE": "Please use a PNG, JPEG, WebP or GIF image.",
+        "IMPORT_BAD_URL": "That link doesn't look right.",
+        "IMPORT_NOT_FOUND": "We couldn't find a set at that link.",
+        "IMPORT_PARSE_FAILED": "We couldn't read that set.",
+        "IMPORT_UPSTREAM_ERROR": "The source site isn't responding. Please try again later.",
+        "IMPORT_BUDGET_EXCEEDED": "You've reached today's import limit. It resets tomorrow.",
+        "PREMIUM_REQUIRED": "This is a Premium feature.",
+        "BILLING_NOT_CONFIGURED": "Payments aren't available right now.",
+        "BILLING_PRICE_NOT_CONFIGURED": "Payments aren't available right now.",
+        "BILLING_SESSION_ERROR": "We couldn't open checkout. Please try again.",
+        "BILLING_NO_SUBSCRIPTION": "You don't have an active subscription.",
+        "INVALID_CURSOR": "Something went wrong while loading. Please refresh.",
+        "INVALID_LIMIT": "Something went wrong while loading. Please refresh."
+    },
+    "toast": {
+        "dismiss": "Dismiss"
+    },
+    "errorPage": {
+        "goHome": "Go home",
+        "browseDecks": "Browse decks",
+        "notFoundTitle": "You found nothing",
+        "notFoundBody": "This page wandered off. Let’s get you back to your decks.",
+        "genericTitle": "Something went wrong",
+        "genericBody": "Something unexpected happened. Let’s get you back on track."
     }
 }

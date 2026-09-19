@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between px-6 py-5">
             <NuxtLink to="/"><SharedBrandMark /></NuxtLink>
             <UiButton variant="ghost" class="!px-4 !py-2 text-small" @click="goHome">
-                Go home
+                {{ t('errorPage.goHome') }}
             </UiButton>
         </div>
 
@@ -15,22 +15,29 @@
             <h1 class="font-display text-display-sm text-cream">{{ title }}</h1>
             <p class="max-w-md text-body text-cream-dim">{{ message }}</p>
             <div class="flex flex-wrap justify-center gap-3">
-                <UiButton variant="primary" @click="goTo('/dashboard')">Browse decks</UiButton>
-                <UiButton variant="ghost" @click="goTo('/')">Go home</UiButton>
+                <UiButton variant="primary" @click="goTo('/dashboard')">
+                    {{ t('errorPage.browseDecks') }}
+                </UiButton>
+                <UiButton variant="ghost" @click="goTo('/')">{{ t('errorPage.goHome') }}</UiButton>
             </div>
         </main>
     </div>
 </template>
 
 <script setup lang="ts">
+import { useT } from '@/composables/useT';
+
 const props = defineProps<{ error: { statusCode?: number; message?: string } | null }>();
 
+const { t } = useT();
+
 const code = computed(() => props.error?.statusCode ?? 500);
-const title = computed(() => (code.value === 404 ? 'You found nothing' : 'Something went wrong'));
+const isNotFound = computed(() => code.value === 404);
+const title = computed(() =>
+    t(isNotFound.value ? 'errorPage.notFoundTitle' : 'errorPage.genericTitle'),
+);
 const message = computed(() =>
-    code.value === 404
-        ? 'This page wandered off. Let’s get you back to your decks.'
-        : (props.error?.message ?? 'An unexpected error occurred.'),
+    t(isNotFound.value ? 'errorPage.notFoundBody' : 'errorPage.genericBody'),
 );
 
 const goTo = (to: string) => clearError({ redirect: to });
