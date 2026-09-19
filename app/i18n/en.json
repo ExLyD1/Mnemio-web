@@ -852,6 +852,7 @@
         "openDeck": "Open",
         "partial": "Reply was interrupted.",
         "retry": "Retry",
+        "scrollToBottom": "Scroll to latest",
         "err": {
             "generic": "Something went wrong. Please try again.",
             "AI_BUDGET_EXCEEDED": "You've reached today's AI chat limit. Try again tomorrow.",
