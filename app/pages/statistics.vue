@@ -465,21 +465,25 @@ const insight = computed(() => {
 });
 
 watch(range, async (r) => {
+    // One token for the whole switch: these four must invalidate earlier
+    // switches, not one another.
+    const seq = stats.beginRange();
     await Promise.all([
-        stats.load(r),
-        stats.loadSeries(r),
-        stats.loadStudyTime(r),
-        stats.loadPerformance(r),
+        stats.load(r, seq),
+        stats.loadSeries(r, seq),
+        stats.loadStudyTime(r, seq),
+        stats.loadPerformance(r, seq),
     ]);
 });
 
 onMounted(async () => {
+    const seq = stats.beginRange();
     await Promise.all([
         fetchList.execute({ cursor: null, append: false }),
-        stats.load(range.value),
-        stats.loadSeries(range.value),
-        stats.loadStudyTime(range.value),
-        stats.loadPerformance(range.value),
+        stats.load(range.value, seq),
+        stats.loadSeries(range.value, seq),
+        stats.loadStudyTime(range.value, seq),
+        stats.loadPerformance(range.value, seq),
         achievements.load(),
         statsApi
             .getDeckPerformance()

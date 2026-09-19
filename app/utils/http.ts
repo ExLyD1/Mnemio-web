@@ -205,7 +205,15 @@ export const http = async <T>(path: string, options: HttpOptions = {}): Promise<
                     return await send();
                 } catch (retryErr) {
                     const retryNormalized = normalizeError(retryErr);
-                    if ((retryErr as { status?: number }).status === 401) {
+                    // Only a 401 that names the token as the problem means the
+                    // session is gone. A 401 for any other reason (a resource
+                    // the user may not touch, a backend guard) must not wipe a
+                    // session we just successfully refreshed a moment ago.
+                    if (
+                        (retryErr as { status?: number }).status === 401 &&
+                        (retryNormalized.code === 'AUTH_INVALID_TOKEN' ||
+                            retryNormalized.code === 'AUTH_INVALID_REFRESH')
+                    ) {
                         onAuthFailure();
                     }
                     // http normalizes every failure to an ApiError object (the app's error

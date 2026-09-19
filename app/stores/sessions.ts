@@ -29,6 +29,7 @@ export const useSessionsStore = defineStore('sessions', () => {
         const session = await sessionsApi.startSession({
             deckId: input.deckId,
             mode: input.mode,
+            cardIds: input.cardIds,
             srsEnabled: input.srsEnabled,
         });
         active.value = session;

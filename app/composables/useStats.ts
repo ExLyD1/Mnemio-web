@@ -78,6 +78,17 @@ export const useStats = () => {
     const performance = ref<StatsPerformance | null>(null);
     const loading = ref(false);
 
+    // Monotonic token shared by every range-scoped loader. Switching range
+    // fires several requests at once; without this a fast 7d response could
+    // land after a slow 90d one and leave the caption and the chart disagreeing.
+    let rangeSeq = 0;
+    // Callers that fire several loaders for ONE range switch should take a
+    // single token (`beginRange()`) and pass it to each, so they invalidate
+    // only earlier switches, never each other.
+    const nextRangeSeq = () => ++rangeSeq;
+    const beginRange = () => ++rangeSeq;
+    const isCurrent = (seq: number) => seq === rangeSeq;
+
     const reviewed = computed(() => overview.value?.reviewed ?? 0);
     const streak = computed(() => overview.value?.streak ?? 0);
     const retention = computed(() => overview.value?.retention ?? 0);
@@ -86,14 +97,18 @@ export const useStats = () => {
     const monthWeeks = computed(() => activity.value?.monthWeeks ?? []);
     const monthLabel = computed(() => activity.value?.monthLabel ?? '');
 
-    const loadSeries = async (range: StatsRange = '30') => {
+    const loadSeries = async (range: StatsRange = '30', seq = nextRangeSeq()) => {
         const res = await statsApi.getSeries(range);
-        series.value = res.points;
+        if (isCurrent(seq)) {
+            series.value = res.points;
+        }
     };
 
-    const loadStudyTime = async (range: StatsRange = '30') => {
+    const loadStudyTime = async (range: StatsRange = '30', seq = nextRangeSeq()) => {
         const res = await statsApi.getStudyTime(range);
-        studyTime.value = res.points;
+        if (isCurrent(seq)) {
+            studyTime.value = res.points;
+        }
     };
 
     const loadDecksStudied = async (range: StatsRange = '30') => {
@@ -107,17 +122,34 @@ export const useStats = () => {
         cardSeries.value = res.points;
     };
 
-    const loadPerformance = async (range: StatsRange = '30') => {
-        performance.value = await statsApi.getPerformance(range);
+    // GET /stats/performance is not implemented on the backend yet, so this
+    // rejects on every call. It used to do so inside an un-caught Promise.all,
+    // which took down the whole Statistics mount with an unhandled rejection.
+    // The panel already renders a "not enough learners yet" empty state for a
+    // null value, so degrade into that instead of throwing.
+    const loadPerformance = async (range: StatsRange = '30', seq = nextRangeSeq()) => {
+        try {
+            const res = await statsApi.getPerformance(range);
+            if (isCurrent(seq)) {
+                performance.value = res;
+            }
+        } catch {
+            if (isCurrent(seq)) {
+                performance.value = null;
+            }
+        }
     };
 
-    const load = async (range: StatsRange = '30') => {
+    const load = async (range: StatsRange = '30', seq = nextRangeSeq()) => {
         loading.value = true;
         try {
             const [ov, act] = await Promise.all([
                 statsApi.getOverview(range),
                 statsApi.getActivity(),
             ]);
+            if (!isCurrent(seq)) {
+                return;
+            }
             overview.value = ov;
             const month = buildMonth(act.monthCalendar);
             activity.value = {
@@ -126,7 +158,9 @@ export const useStats = () => {
                 monthLabel: month.label,
             };
         } finally {
-            loading.value = false;
+            if (isCurrent(seq)) {
+                loading.value = false;
+            }
         }
     };
 
@@ -153,5 +187,6 @@ export const useStats = () => {
         loadDecksStudied,
         loadCardSeries,
         loadPerformance,
+        beginRange,
     };
 };

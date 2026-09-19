@@ -79,12 +79,21 @@ export const useDecksStore = defineStore('decks', () => {
 
     const update = async (id: string, input: Partial<DeckInput>) => {
         const updated = await decksApi.updateDeck(id, input);
+        // PATCH /decks/:id returns the deck without viewer-scoped stats, so its
+        // `stats` is always zeroed. Spreading that over a loaded deck made
+        // renaming a deck instantly show 0% mastered and an all-grey progress
+        // bar until the next refetch. Keep the stats we already have.
+        const keepStats = <T extends { stats?: unknown }>(prev: T, next: T): T => ({
+            ...next,
+            stats: prev.stats ?? next.stats,
+        });
         if (deck.value?.id === id) {
-            deck.value = { ...deck.value, ...updated };
+            deck.value = keepStats(deck.value, { ...deck.value, ...updated });
         }
         const idx = summaries.value.findIndex((d) => d.id === id);
-        if (idx !== -1) {
-            summaries.value[idx] = updated;
+        const prev = idx === -1 ? undefined : summaries.value[idx];
+        if (idx !== -1 && prev) {
+            summaries.value[idx] = keepStats(prev, updated);
         }
         return updated;
     };

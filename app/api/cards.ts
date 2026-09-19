@@ -2,9 +2,20 @@ import { http } from '@/utils/http';
 import type { Card, CardInput } from '@/types/deck';
 import type { Achievement } from '@/types/achievement';
 
-/** Strip null/undefined so optional fields are omitted, not sent as null. */
+/**
+ * CREATE: strip null/undefined so optional fields are omitted and the server
+ * applies its own defaults.
+ */
 const clean = (input: Record<string, unknown>): Record<string, unknown> =>
     Object.fromEntries(Object.entries(input).filter(([, v]) => v !== null && v !== undefined));
+
+/**
+ * PATCH: strip only `undefined` ("leave this field alone") and keep `null`
+ * ("erase this field"). Stripping null here meant clearing an example or a
+ * phonetic silently did nothing — the field was simply omitted from the patch.
+ */
+const cleanPatch = (input: Record<string, unknown>): Record<string, unknown> =>
+    Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
 
 // POST /decks/:id/cards(/bulk) additionally report achievements unlocked by
 // this create — see docs/api-contract.md.
@@ -27,7 +38,7 @@ export const bulkAddCards = async (
     });
 
 export const updateCard = async (cardId: string, input: Partial<CardInput>): Promise<Card> =>
-    http<Card>(`/cards/${cardId}`, { method: 'PATCH', body: clean({ ...input }) });
+    http<Card>(`/cards/${cardId}`, { method: 'PATCH', body: cleanPatch({ ...input }) });
 
 export const deleteCard = async (cardId: string): Promise<void> => {
     await http<void>(`/cards/${cardId}`, { method: 'DELETE' });

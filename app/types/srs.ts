@@ -1,5 +1,3 @@
-export type SrsQuality = 0 | 1 | 2 | 3 | 4 | 5;
-
 export type SrsRating = 'again' | 'hard' | 'good' | 'easy';
 
 export interface CardProgress {
@@ -12,9 +10,8 @@ export interface CardProgress {
     lastReviewedAt: string | null;
 }
 
-export const RATING_TO_QUALITY: Record<SrsRating, SrsQuality> = {
-    again: 0,
-    hard: 3,
-    good: 4,
-    easy: 5,
-};
+// NOTE: rating -> SM-2 quality mapping is deliberately NOT defined here. The
+// server owns it (backend src/services/sm2.ts): again 0, hard 2, good 3,
+// easy 5 — `hard` counts as a FAILURE. A client-side copy used to live here
+// with hard:3/good:4, contradicting the server. It had no call sites; it was
+// removed rather than corrected so there is one source of truth.

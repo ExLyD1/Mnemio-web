@@ -23,7 +23,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     const isAuthenticated = computed(() => !!accessToken.value && !!user.value);
     const currentUser = computed(() => user.value);
-    const needsProfile = computed(() => !!user.value && !user.value.username);
+    // Must match the server's rule (backend shared/mappers.ts needsProfile):
+    // username OR fullName missing. This used to check username only, so a user
+    // with a username but no full name was sent past onboarding while every
+    // auth response said they still needed it.
+    const needsProfile = computed(
+        () => !!user.value && (!user.value.username || !user.value.fullName),
+    );
     const isPremium = computed(() => plan.value === 'premium');
 
     const setSession = (u: User, token: string, p: 'free' | 'premium' = 'free') => {

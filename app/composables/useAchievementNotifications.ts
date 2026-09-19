@@ -83,7 +83,12 @@ export const useAchievementNotifications = () => {
             return;
         }
         try {
-            await achievementsApi.ackAchievements(keys);
+            // `targets`, not `keys`: called with no argument this must ack the
+            // set we just computed and are about to clear locally. Sending the
+            // raw `keys` (undefined) made the server ack its own, possibly
+            // larger, unseen set — so an unlock could be marked seen without
+            // ever having been shown.
+            await achievementsApi.ackAchievements(targets);
             const targetSet = new Set(targets);
             unseen.value = unseen.value.filter((a) => !targetSet.has(a.key));
         } catch {

@@ -343,10 +343,16 @@ const finalize = () => {
     if (!store.deck) {
         return;
     }
+    const graded =
+        practice.counts.again + practice.counts.hard + practice.counts.good + practice.counts.easy;
     practiceStore.setResult({
         deckId: deckId.value,
         deckTitle: store.deck.title,
-        reviewed: practice.study.totalCount.value,
+        // `reviewed` must come from the same population as `correct`: grades
+        // actually given. Using the queue length instead let a re-graded card
+        // (ArrowLeft, then grade again) push correct above reviewed, so the
+        // results screen could show accuracy over 100% and a "perfect" heading.
+        reviewed: graded > 0 ? graded : practice.study.totalCount.value,
         correct: practice.counts.good + practice.counts.easy,
         streak: practice.streak.value,
         timeMs: practice.study.elapsedMs.value,

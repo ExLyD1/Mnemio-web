@@ -6,18 +6,25 @@ export interface GradeDef {
     label: string;
     /** i18n catalog key for the button label (localized via `useT`). */
     i18nKey: string;
-    interval: string;
     tone: 'ghost' | 'dark' | 'good' | 'easy';
     hint: string;
 }
 
-/** The four spaced-repetition grades shown in the practice RatingRow. */
+/**
+ * The four spaced-repetition grades shown in the practice RatingRow.
+ *
+ * These used to advertise a fixed next interval per grade (10m / 1d / 3d / 6d).
+ * Verified against the server's SM-2 (backend src/services/sm2.ts): on a first
+ * review EVERY grade schedules 1 day, and thereafter the interval depends on
+ * the card's own repetition count and ease factor. Only `hard` ever matched.
+ * A fixed label cannot be correct here, so the promise is gone rather than
+ * replaced with a different wrong number.
+ */
 export const GRADES: GradeDef[] = [
     {
         key: 'again',
         label: 'Forgot',
         i18nKey: 'study.gradeForgot',
-        interval: '10m',
         tone: 'ghost',
         hint: '1',
     },
@@ -25,7 +32,6 @@ export const GRADES: GradeDef[] = [
         key: 'hard',
         label: 'Hard',
         i18nKey: 'study.gradeHard',
-        interval: '1d',
         tone: 'dark',
         hint: '2',
     },
@@ -33,7 +39,6 @@ export const GRADES: GradeDef[] = [
         key: 'good',
         label: 'Good',
         i18nKey: 'study.gradeGood',
-        interval: '3d',
         tone: 'good',
         hint: '3',
     },
@@ -41,7 +46,6 @@ export const GRADES: GradeDef[] = [
         key: 'easy',
         label: 'Easy',
         i18nKey: 'study.gradeEasy',
-        interval: '6d',
         tone: 'easy',
         hint: '4',
     },
