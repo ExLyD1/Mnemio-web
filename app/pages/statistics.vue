@@ -71,17 +71,24 @@
                         }}</SharedPill>
                     </div>
                     <SharedProgressBar
-                        :value="d.masteredPct"
+                        :value="d.progressPct"
                         :class="
-                            d.masteredPct < 40
+                            d.progressPct < 40
                                 ? '[&_[data-fill]]:bg-error-soft'
-                                : d.masteredPct < 65
+                                : d.progressPct < 65
                                   ? '[&_[data-fill]]:bg-vib-amber'
                                   : '[&_[data-fill]]:bg-success'
                         "
                     />
-                    <div class="flex items-center justify-between">
-                        <span class="text-small text-brand-muted">{{ d.masteredPct }}%</span>
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-small text-brand-muted"
+                            >{{ d.progressPct }}% ·
+                            {{
+                                t('statistics.masteredOf')
+                                    .replace('{m}', String(d.mastered))
+                                    .replace('{n}', String(d.cardCount))
+                            }}</span
+                        >
                         <UiButton
                             variant="ghost"
                             class="!py-1 !text-small"
@@ -295,15 +302,20 @@ const wordsKnown = computed(() =>
     deckPerf.value.reduce((sum, d) => sum + Math.round((d.cardCount * d.masteryPct) / 100), 0),
 );
 
+// Ranked and drawn by graded progress, not strict mastery: mastery needs 3
+// successful reviews spaced over ~a week, so it sat at 0% right after studying a
+// deck end-to-end and read as broken. Strict mastery stays as the "x/y" caption.
 const weakestDecks = computed(() =>
     [...deckPerf.value]
         .filter((d) => d.cardCount > 0)
-        .sort((a, b) => a.masteryPct - b.masteryPct)
+        .sort((a, b) => a.progressPct - b.progressPct)
         .slice(0, 4)
         .map((d) => ({
             id: d.deckId,
             title: d.title,
-            masteredPct: d.masteryPct,
+            progressPct: d.progressPct,
+            mastered: Math.round((d.cardCount * d.masteryPct) / 100),
+            cardCount: d.cardCount,
             due: dueByDeck.value.get(d.deckId) ?? 0,
         })),
 );
@@ -448,7 +460,7 @@ const insight = computed(() => {
     return weakest
         ? t('statistics.insightLowest')
               .replace('{title}', weakest.title)
-              .replace('{pct}', String(weakest.masteredPct))
+              .replace('{pct}', String(weakest.progressPct))
         : t('statistics.insightEmpty');
 });
 

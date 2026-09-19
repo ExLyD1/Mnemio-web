@@ -47,6 +47,8 @@ export interface DeckPerformance {
     title: string;
     cardCount: number;
     masteryPct: number;
+    /** Graded progress: each card counts min(repetitions, 3)/3 toward the deck. */
+    progressPct: number;
     retention: number;
     reviewed: number;
 }
