@@ -153,7 +153,12 @@ export const useStudySession = () => {
         state.value = 'loading';
         error.value = null;
         try {
-            const created = await sessions.start({ deckId: deck.id, mode, srsEnabled });
+            const created = await sessions.start({
+                deckId: deck.id,
+                mode,
+                cardIds: cards.map((c) => c.id),
+                srsEnabled,
+            });
             session.value = created;
             queue.value = [...cards];
             elapsedMs.value = 0;
@@ -199,6 +204,16 @@ export const useStudySession = () => {
         }
         const xp = computeXp(correctCount.value, true);
         pauseTimer();
+        // Report the measured active study time before completing. The server
+        // prefers a client-reported duration and otherwise falls back to
+        // wall-clock elapsed — which counts pauses, interruptions and lunch
+        // breaks as study time in /stats/study-time. The timer is already
+        // paused above, so elapsedMs is final here.
+        if (elapsedMs.value > 0) {
+            await sessions
+                .updateActive({ durationMs: elapsedMs.value })
+                .catch(() => {});
+        }
         const ended = await sessions.complete(xp);
         session.value = ended;
         state.value = 'results';
