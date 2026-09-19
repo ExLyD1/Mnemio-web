@@ -210,9 +210,7 @@ export const useStudySession = () => {
         // breaks as study time in /stats/study-time. The timer is already
         // paused above, so elapsedMs is final here.
         if (elapsedMs.value > 0) {
-            await sessions
-                .updateActive({ durationMs: elapsedMs.value })
-                .catch(() => {});
+            await sessions.updateActive({ durationMs: elapsedMs.value }).catch(() => {});
         }
         const ended = await sessions.complete(xp);
         session.value = ended;

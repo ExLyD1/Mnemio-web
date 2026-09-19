@@ -39,8 +39,6 @@ export const getPublicCategories = (): Promise<{ items: DiscoverCategory[] }> =>
 // empty <h1>, empty <title>, and an "Open deck" link to /decks/undefined — while
 // `cards` resolved by coincidence and masked it.
 export const getPublicDeck = async (id: string): Promise<PublicDeckDetail> => {
-    const res = await publicGet<{ deck: DeckWithAuthor; cards: Card[] }>(
-        `/public/decks/${id}`,
-    );
+    const res = await publicGet<{ deck: DeckWithAuthor; cards: Card[] }>(`/public/decks/${id}`);
     return { ...res.deck, cards: res.cards };
 };
