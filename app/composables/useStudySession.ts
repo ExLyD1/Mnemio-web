@@ -5,6 +5,7 @@ import type { StudyMode, StudySession } from '@/types/session';
 import { useSessionsStore } from '@/stores/sessions';
 import { useAnalytics } from '@/composables/useAnalytics';
 import type { StudyModeProp } from '@/analytics/events';
+import { catalogs } from '@/i18n';
 
 export type StudyState = 'idle' | 'loading' | 'active' | 'paused' | 'results';
 
@@ -34,7 +35,19 @@ export const useStudySession = () => {
     const session = ref<StudySession | null>(null);
     const queue = ref<Card[]>([]);
     const elapsedMs = ref(0);
+    // Always a TRANSLATION KEY, never raw text. The backend answers in English,
+    // so storing `e.message` here rendered verbatim English to Ukrainian users
+    // (the template does t(error, error), so a non-key falls through as-is).
+    // Prefer a specific `errors.<CODE>` line when the catalog has one.
     const error = ref<string | null>(null);
+    const errorKeyFor = (e: unknown, fallbackKey: string): string => {
+        const code = (e as { code?: string } | null)?.code;
+        const hasLine =
+            typeof code === 'string' &&
+            code !== '' &&
+            Object.prototype.hasOwnProperty.call(catalogs.en.errors ?? {}, code);
+        return hasLine ? `errors.${code}` : fallbackKey;
+    };
 
     const startedAt = ref<number>(0);
 
@@ -96,7 +109,7 @@ export const useStudySession = () => {
             });
             return created;
         } catch (e) {
-            error.value = (e as { message?: string }).message ?? 'Could not start session.';
+            error.value = errorKeyFor(e, 'study.errors.startFailed');
             state.value = 'idle';
             return null;
         }
@@ -132,7 +145,7 @@ export const useStudySession = () => {
             resumeTimer();
             return session.value;
         } catch (e) {
-            error.value = (e as { message?: string }).message ?? 'Could not resume session.';
+            error.value = errorKeyFor(e, 'study.errors.resumeFailed');
             state.value = 'idle';
             return null;
         }
@@ -169,7 +182,7 @@ export const useStudySession = () => {
             resumeTimer();
             return created;
         } catch (e) {
-            error.value = (e as { message?: string }).message ?? 'Could not start session.';
+            error.value = errorKeyFor(e, 'study.errors.startFailed');
             state.value = 'idle';
             return null;
         }

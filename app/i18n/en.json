@@ -476,7 +476,9 @@
         "srsOnHint": "SRS on — your schedule updates after each answer.",
         "srsOffHint": "Browse mode — answers won't update your schedule.",
         "errors": {
-            "emptyDeck": "This deck has no cards to study."
+            "emptyDeck": "This deck has no cards to study.",
+            "startFailed": "Could not start the session. Please try again.",
+            "resumeFailed": "Could not resume the session. Please try again."
         }
     },
     "card": {
@@ -1092,7 +1094,8 @@
             "aiUnlimited": "Unlimited AI generator",
             "advancedStats": "Advanced statistics",
             "prioritySupport": "Priority support"
-        }
+        },
+        "toggleAria": "Toggle billing cycle"
     },
     "billing": {
         "success": {

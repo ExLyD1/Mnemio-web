@@ -33,7 +33,7 @@
                             v-if="dismissible"
                             type="button"
                             class="rounded-md p-1 text-brand-muted transition-colors hover:text-brand-pale"
-                            aria-label="Close"
+                            :aria-label="t('common.close')"
                             @click="close"
                         >
                             <X class="size-5" />
@@ -53,6 +53,9 @@
 
 <script setup lang="ts">
 import { X } from 'lucide-vue-next';
+import { useT } from '@/composables/useT';
+
+const { t } = useT();
 
 const props = withDefaults(
     defineProps<{

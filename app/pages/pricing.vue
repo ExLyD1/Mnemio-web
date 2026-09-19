@@ -21,7 +21,7 @@
                     type="button"
                     class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
                     :class="billingCycle === 'annual' ? 'bg-brand' : 'bg-bg-muted'"
-                    aria-label="Toggle billing cycle"
+                    :aria-label="t('pricing.toggleAria')"
                     @click="billingCycle = billingCycle === 'monthly' ? 'annual' : 'monthly'"
                 >
                     <span
