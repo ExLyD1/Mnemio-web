@@ -22,3 +22,6 @@ logs
 .env
 .env.*
 !.env.example
+
+# Local Claude Code settings (machine-specific, never shared)
+.claude/settings.local.json
