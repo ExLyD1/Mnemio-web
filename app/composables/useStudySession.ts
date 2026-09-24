@@ -5,6 +5,7 @@ import type { StudyMode, StudySession } from '@/types/session';
 import { useSessionsStore } from '@/stores/sessions';
 import { useAnalytics } from '@/composables/useAnalytics';
 import type { StudyModeProp } from '@/analytics/events';
+import { catalogs } from '@/i18n';
 
 export type StudyState = 'idle' | 'loading' | 'active' | 'paused' | 'results';
 
@@ -34,7 +35,19 @@ export const useStudySession = () => {
     const session = ref<StudySession | null>(null);
     const queue = ref<Card[]>([]);
     const elapsedMs = ref(0);
+    // Always a TRANSLATION KEY, never raw text. The backend answers in English,
+    // so storing `e.message` here rendered verbatim English to Ukrainian users
+    // (the template does t(error, error), so a non-key falls through as-is).
+    // Prefer a specific `errors.<CODE>` line when the catalog has one.
     const error = ref<string | null>(null);
+    const errorKeyFor = (e: unknown, fallbackKey: string): string => {
+        const code = (e as { code?: string } | null)?.code;
+        const hasLine =
+            typeof code === 'string' &&
+            code !== '' &&
+            Object.prototype.hasOwnProperty.call(catalogs.en.errors ?? {}, code);
+        return hasLine ? `errors.${code}` : fallbackKey;
+    };
 
     const startedAt = ref<number>(0);
 
@@ -65,7 +78,7 @@ export const useStudySession = () => {
     const accuracy = () =>
         totalCount.value ? Math.round((correctCount.value / totalCount.value) * 100) : 0;
 
-    const start = async (deck: Deck, mode: StudyMode) => {
+    const start = async (deck: Deck, mode: StudyMode, srsEnabled = true, shuffleCards = true) => {
         if (deck.cards.length === 0) {
             error.value = 'study.errors.emptyDeck';
             state.value = 'idle';
@@ -74,11 +87,12 @@ export const useStudySession = () => {
         state.value = 'loading';
         error.value = null;
         try {
-            const shuffled = shuffle(deck.cards);
+            const shuffled = shuffleCards ? shuffle(deck.cards) : [...deck.cards];
             const created = await sessions.start({
                 deckId: deck.id,
                 mode,
                 cardIds: shuffled.map((c) => c.id),
+                srsEnabled,
             });
             session.value = created;
             queue.value = shuffled;
@@ -95,7 +109,7 @@ export const useStudySession = () => {
             });
             return created;
         } catch (e) {
-            error.value = (e as { message?: string }).message ?? 'Could not start session.';
+            error.value = errorKeyFor(e, 'study.errors.startFailed');
             state.value = 'idle';
             return null;
         }
@@ -131,14 +145,19 @@ export const useStudySession = () => {
             resumeTimer();
             return session.value;
         } catch (e) {
-            error.value = (e as { message?: string }).message ?? 'Could not resume session.';
+            error.value = errorKeyFor(e, 'study.errors.resumeFailed');
             state.value = 'idle';
             return null;
         }
     };
 
     // Start a new session with a specific subset/order of cards (used by track-progress rounds).
-    const startWithCards = async (deck: Deck, mode: StudyMode, cards: Card[]) => {
+    const startWithCards = async (
+        deck: Deck,
+        mode: StudyMode,
+        cards: Card[],
+        srsEnabled = true,
+    ) => {
         if (cards.length === 0) {
             error.value = 'study.errors.emptyDeck';
             state.value = 'idle';
@@ -147,7 +166,12 @@ export const useStudySession = () => {
         state.value = 'loading';
         error.value = null;
         try {
-            const created = await sessions.start({ deckId: deck.id, mode });
+            const created = await sessions.start({
+                deckId: deck.id,
+                mode,
+                cardIds: cards.map((c) => c.id),
+                srsEnabled,
+            });
             session.value = created;
             queue.value = [...cards];
             elapsedMs.value = 0;
@@ -158,7 +182,7 @@ export const useStudySession = () => {
             resumeTimer();
             return created;
         } catch (e) {
-            error.value = (e as { message?: string }).message ?? 'Could not start session.';
+            error.value = errorKeyFor(e, 'study.errors.startFailed');
             state.value = 'idle';
             return null;
         }
@@ -174,12 +198,33 @@ export const useStudySession = () => {
         await sessions.updateActive({ index: 0 });
     };
 
+    // Reorder the current queue to a specific card order (e.g. the deck's
+    // original, unshuffled order) and restart from card 0 - the "off" side of
+    // the shuffle toggle. `cards` must be the same set of cards already in
+    // the queue; this only reorders, it doesn't change which cards are in play.
+    const reorder = async (cards: Card[]) => {
+        if (!session.value || cards.length === 0) {
+            return;
+        }
+        queue.value = [...cards];
+        session.value = { ...session.value, index: 0 };
+        await sessions.updateActive({ index: 0 });
+    };
+
     const finishComplete = async () => {
         if (!session.value) {
             return;
         }
         const xp = computeXp(correctCount.value, true);
         pauseTimer();
+        // Report the measured active study time before completing. The server
+        // prefers a client-reported duration and otherwise falls back to
+        // wall-clock elapsed — which counts pauses, interruptions and lunch
+        // breaks as study time in /stats/study-time. The timer is already
+        // paused above, so elapsedMs is final here.
+        if (elapsedMs.value > 0) {
+            await sessions.updateActive({ durationMs: elapsedMs.value }).catch(() => {});
+        }
         const ended = await sessions.complete(xp);
         session.value = ended;
         state.value = 'results';
@@ -287,6 +332,7 @@ export const useStudySession = () => {
         resume,
         startWithCards,
         reshuffle,
+        reorder,
         answer,
         goTo,
         goNext,

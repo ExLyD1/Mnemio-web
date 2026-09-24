@@ -29,6 +29,7 @@
                                 :key="studyCard.id"
                                 :card="studyCard"
                                 :revealed="revealed"
+                                reserve-top-right
                                 @flip="revealed = !revealed"
                             />
                         </Transition>
@@ -153,7 +154,7 @@
         </Transition>
         <div
             v-if="tipOpen"
-            class="fixed inset-0 z-20 bg-black/40 md:hidden"
+            class="fixed inset-0 z-20 bg-scrim md:hidden"
             @click="tipOpen = false"
         />
     </section>
@@ -161,8 +162,9 @@
 
 <script setup lang="ts">
 import { CheckCheck, Lightbulb, X } from 'lucide-vue-next';
-import { useSrsStore, useToast, useT } from '#imports';
+import { useSrsStore, useToast, useT, useApiError } from '#imports';
 import { useAnalytics } from '@/composables/useAnalytics';
+import type { ApiError } from '@/composables/useAsync';
 import * as aiApi from '@/api/ai';
 import type { SrsRating } from '@/types/srs';
 import type { StudyCard } from '@/utils/studyCard';
@@ -172,6 +174,7 @@ definePageMeta({ layout: 'study' });
 const srs = useSrsStore();
 const toast = useToast();
 const { t } = useT();
+const { apiErrorText } = useApiError();
 const analytics = useAnalytics();
 
 useSeo({ title: t('seo.reviewTitle'), description: t('seo.appDesc'), noindex: true });
@@ -215,6 +218,7 @@ const studyCard = computed<StudyCard | null>(() => {
         pos: d.card.partOfSpeech ?? '',
         example: d.card.example ?? '',
         exampleTranslation: d.card.exampleTranslation ?? '',
+        audioUrl: d.card.audioUrl ?? null,
     };
 });
 
@@ -246,8 +250,7 @@ const onRate = async (rating: SrsRating) => {
             analytics.track('review_due_cleared', { cards_reviewed: completedCount.value });
         }
     } catch (e) {
-        const err = e as { message?: string };
-        toast.error(err?.message ?? t('review.errors.rate_failed'));
+        toast.error(apiErrorText(e as ApiError, 'review.errors.rate_failed'));
     }
 };
 

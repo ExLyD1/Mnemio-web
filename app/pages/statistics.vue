@@ -11,14 +11,14 @@
         <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
             <SharedStatTile
                 :label="t('statistics.due')"
-                :value="dueTotal"
+                :value="stats.dueCount.value"
                 :sub="t('statistics.dueSub')"
                 tone="plum"
             />
             <SharedStatTile
                 :label="t('statistics.reviewed')"
                 :value="stats.reviewed.value"
-                :sub="t('statistics.reviewedSub')"
+                :sub="reviewedSub"
                 tone="blue"
             />
             <SharedStatTile
@@ -50,8 +50,13 @@
 
         <!-- Weakest decks -->
         <div v-if="weakestDecks.length" class="rounded-[20px] border border-line bg-bg-surface p-5">
-            <p class="mb-4 text-eyebrow uppercase text-brand-muted">
+            <p class="text-eyebrow uppercase text-brand-muted">
                 {{ t('statistics.weakestDecks') }}
+            </p>
+            <!-- QA (Mnemio правки #1, (3) #11): "why 0% even though I studied it?"
+                 Spell out what the % measures instead of leaving it implicit. -->
+            <p class="mb-4 mt-1 text-small text-brand-muted">
+                {{ t('statistics.weakestDecksHint') }}
             </p>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div
@@ -66,17 +71,24 @@
                         }}</SharedPill>
                     </div>
                     <SharedProgressBar
-                        :value="d.masteredPct"
+                        :value="d.progressPct"
                         :class="
-                            d.masteredPct < 40
+                            d.progressPct < 40
                                 ? '[&_[data-fill]]:bg-error-soft'
-                                : d.masteredPct < 65
+                                : d.progressPct < 65
                                   ? '[&_[data-fill]]:bg-vib-amber'
                                   : '[&_[data-fill]]:bg-success'
                         "
                     />
-                    <div class="flex items-center justify-between">
-                        <span class="text-small text-brand-muted">{{ d.masteredPct }}%</span>
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-small text-brand-muted"
+                            >{{ d.progressPct }}% ·
+                            {{
+                                t('statistics.masteredOf')
+                                    .replace('{m}', String(d.mastered))
+                                    .replace('{n}', String(d.cardCount))
+                            }}</span
+                        >
                         <UiButton
                             variant="ghost"
                             class="!py-1 !text-small"
@@ -90,7 +102,7 @@
         </div>
 
         <!-- Study trend + Performance (side by side on desktop, stacked on mobile) -->
-        <div class="grid gap-6 lg:grid-cols-2">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <!-- Study trend: reviews / time toggle -->
             <div class="rounded-[20px] border border-line bg-bg-surface p-5">
                 <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -125,7 +137,7 @@
                             <span
                                 class="block text-[10px] uppercase tracking-wide text-brand-muted"
                             >
-                                {{ formatBarLabel(d.label, trendPoints.length) }}
+                                {{ formatBarLabel(d.label, trendPoints.length, trendBucketed) }}
                             </span>
                             <span class="block text-small font-semibold text-cream">
                                 {{ trendTooltip(d) }}
@@ -135,10 +147,10 @@
                 </div>
                 <div class="relative mt-1 flex gap-1">
                     <div v-for="(d, i) in trendPoints" :key="i" class="flex-1">
-                        <template v-if="showBarLabel(i, trendPoints.length)">
+                        <template v-if="showBarLabel(i, trendPoints.length, trendBucketed)">
                             <div class="mx-auto h-1.5 w-px bg-line" />
                             <div class="text-center text-[10px] leading-tight text-brand-muted">
-                                {{ formatBarLabel(d.label, trendPoints.length) }}
+                                {{ formatBarLabel(d.label, trendPoints.length, trendBucketed) }}
                             </div>
                         </template>
                     </div>
@@ -230,8 +242,8 @@
                         class="size-6"
                         :class="a.earned ? 'text-vib-amber' : 'text-brand-muted'"
                     />
-                    <span class="text-small font-semibold text-cream">{{ a.name }}</span>
-                    <span class="text-small text-brand-muted">{{ a.description }}</span>
+                    <span class="text-small font-semibold text-cream">{{ achName(a) }}</span>
+                    <span class="text-small text-brand-muted">{{ achDesc(a) }}</span>
                 </div>
             </div>
         </div>
@@ -258,44 +270,68 @@ import { Trophy, Lock, Users } from 'lucide-vue-next';
 import { useDecks, useT } from '#imports';
 import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
-import type { StatsRange, StatsSeriesPoint } from '@/types/stats';
+import * as statsApi from '@/api/stats';
+import { dateLocaleFor, daysPracticedThisWeek, weekdayShort } from '@/utils/practiceWeek';
+import { useAppLocale } from '@/composables/useAppLocale';
+import type { DeckPerformance, StatsRange, StatsSeriesPoint } from '@/types/stats';
+import type { Achievement } from '@/types/achievement';
 
 definePageMeta({ layout: 'default' });
 
 const { store, fetchList } = useDecks();
 const { t } = useT();
+const { current: appLocale } = useAppLocale();
+const dateLocale = computed(() => dateLocaleFor(appLocale.value));
+
+// Backend ships English name/description; translate by the stable `key`
+// (mirrors profile.vue / Topbar.vue), falling back to the server text.
+const achName = (a: Achievement) => t(`achievements.${a.key}.name`, a.name);
+const achDesc = (a: Achievement) => t(`achievements.${a.key}.description`, a.description);
 const stats = useStats();
 
 useSeo({ title: t('seo.statisticsTitle'), description: t('seo.appDesc'), noindex: true });
 const achievements = useAchievements();
-const dueTotal = computed(() => store.summaries.reduce((sum, d) => sum + d.stats.due, 0));
+// Per-deck mastery for ALL of the user's decks. The deck store only holds the
+// first page (20) of the library, so deriving "words known" / "weakest decks"
+// from it silently ignored everything past deck #20.
+const deckPerf = ref<DeckPerformance[]>([]);
+const dueByDeck = computed(() => new Map(store.summaries.map((d) => [d.id, d.stats.due] as const)));
 
-// Words known ≈ cards mastered across all decks (mature cards).
+// Words known ≈ cards mastered across all decks (repetitions >= 3).
 const wordsKnown = computed(() =>
-    store.summaries.reduce(
-        (sum, d) => sum + Math.round((d.cardCount * d.stats.masteredPct) / 100),
-        0,
-    ),
+    deckPerf.value.reduce((sum, d) => sum + Math.round((d.cardCount * d.masteryPct) / 100), 0),
 );
 
+// Ranked and drawn by graded progress, not strict mastery: mastery needs 3
+// successful reviews spaced over ~a week, so it sat at 0% right after studying a
+// deck end-to-end and read as broken. Strict mastery stays as the "x/y" caption.
 const weakestDecks = computed(() =>
-    [...store.summaries]
-        .sort((a, b) => a.stats.masteredPct - b.stats.masteredPct)
+    [...deckPerf.value]
+        .filter((d) => d.cardCount > 0)
+        .sort((a, b) => a.progressPct - b.progressPct)
         .slice(0, 4)
         .map((d) => ({
-            id: d.id,
+            id: d.deckId,
             title: d.title,
-            masteredPct: d.stats.masteredPct,
-            due: d.stats.due,
+            progressPct: d.progressPct,
+            mastered: Math.round((d.cardCount * d.masteryPct) / 100),
+            cardCount: d.cardCount,
+            due: dueByDeck.value.get(d.deckId) ?? 0,
         })),
 );
 
-const daysPracticed = computed(() => {
-    const pts = stats.series.value;
-    return pts.filter((p) => p.value > 0).length;
-});
+// "Days practiced — this week": the current Mon..Sun week, independent of the
+// selected range (the tile's sub-label says "this week").
+const daysPracticed = computed(() => daysPracticedThisWeek(stats.series.value));
 
 const range = ref<StatsRange>('30');
+// The "Reviewed" tile shows the total for the selected range, so its caption
+// has to follow the range (it used to say "today" regardless).
+const reviewedSub = computed(() =>
+    range.value === 'all'
+        ? t('statistics.reviewedSubAll')
+        : t('statistics.reviewedSubRange').replace('{n}', range.value),
+);
 const rangeOptions = computed(() => [
     { value: '7', label: t('statistics.range7') },
     { value: '30', label: t('statistics.range30') },
@@ -312,8 +348,27 @@ const trendOptions = computed(() => [
     { value: 'cards', label: t('statistics.trendCards') },
     { value: 'time', label: t('statistics.trendTime') },
 ]);
-const trendPoints = computed<StatsSeriesPoint[]>(() =>
+// The backend caps 'all' at 365 daily points. Rendering that many flex-1 bars
+// with a gap each overflows the chart's width (BUG: bars can't shrink below
+// their own gap total) - bucket into monthly totals once the series gets long
+// so the bar count - and the x-axis - stays bounded regardless of range.
+const MAX_DAILY_BARS = 60;
+const bucketByMonth = (points: StatsSeriesPoint[]): StatsSeriesPoint[] => {
+    const byMonth = new Map<string, number>();
+    for (const p of points) {
+        const monthKey = p.label.slice(0, 7); // 'YYYY-MM'
+        byMonth.set(monthKey, (byMonth.get(monthKey) ?? 0) + p.value);
+    }
+    return [...byMonth.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, value]) => ({ label: `${month}-01`, value }));
+};
+const rawTrendPoints = computed<StatsSeriesPoint[]>(() =>
     trendMode.value === 'time' ? stats.studyTime.value : stats.series.value,
+);
+const trendBucketed = computed(() => rawTrendPoints.value.length > MAX_DAILY_BARS);
+const trendPoints = computed<StatsSeriesPoint[]>(() =>
+    trendBucketed.value ? bucketByMonth(rawTrendPoints.value) : rawTrendPoints.value,
 );
 const trendMax = computed(() => Math.max(1, ...trendPoints.value.map((d) => d.value)));
 // Keep any non-zero day visible with a small floor height.
@@ -367,8 +422,12 @@ const perfMarkerY = computed(() => {
 });
 
 // Shared bar-label helpers used by all bar charts.
-const DAY_ABBR = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
-const showBarLabel = (i: number, total: number): boolean => {
+const showBarLabel = (i: number, total: number, bucketed = false): boolean => {
+    if (bucketed) {
+        // Monthly buckets: label every 2nd-3rd month so text doesn't collide.
+        const step = total <= 12 ? 1 : total <= 24 ? 2 : 3;
+        return i % step === 0 || i === total - 1;
+    }
     if (total <= 14) return true;
     const step = total <= 31 ? 7 : 14;
     if (i % step === 0 || i === 0) return true;
@@ -378,43 +437,60 @@ const showBarLabel = (i: number, total: number): boolean => {
     }
     return false;
 };
-const formatBarLabel = (label: string, total: number): string => {
+const formatBarLabel = (label: string, total: number, bucketed = false): string => {
     const d = new Date(label + 'T00:00:00Z');
-    if (!isNaN(d.getTime())) {
-        if (total <= 14) return DAY_ABBR[d.getUTCDay()] ?? label;
-        return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+    if (isNaN(d.getTime())) return label;
+    if (bucketed) {
+        return d.toLocaleDateString(dateLocale.value, {
+            timeZone: 'UTC',
+            month: 'short',
+            year: '2-digit',
+        });
     }
-    return label;
+    if (total <= 14) return weekdayShort(label, appLocale.value);
+    return d.toLocaleDateString(dateLocale.value, {
+        timeZone: 'UTC',
+        month: 'short',
+        day: 'numeric',
+    });
 };
 
 const insight = computed(() => {
-    const weakest = store.summaries
-        .map((d) => ({ title: d.title, pct: d.stats.masteredPct }))
-        .sort((a, b) => a.pct - b.pct)[0];
+    const weakest = weakestDecks.value[0];
     return weakest
         ? t('statistics.insightLowest')
               .replace('{title}', weakest.title)
-              .replace('{pct}', String(weakest.pct))
+              .replace('{pct}', String(weakest.progressPct))
         : t('statistics.insightEmpty');
 });
 
 watch(range, async (r) => {
+    // One token for the whole switch: these four must invalidate earlier
+    // switches, not one another.
+    const seq = stats.beginRange();
     await Promise.all([
-        stats.load(r),
-        stats.loadSeries(r),
-        stats.loadStudyTime(r),
-        stats.loadPerformance(r),
+        stats.load(r, seq),
+        stats.loadSeries(r, seq),
+        stats.loadStudyTime(r, seq),
+        stats.loadPerformance(r, seq),
     ]);
 });
 
 onMounted(async () => {
+    const seq = stats.beginRange();
     await Promise.all([
         fetchList.execute({ cursor: null, append: false }),
-        stats.load(range.value),
-        stats.loadSeries(range.value),
-        stats.loadStudyTime(range.value),
-        stats.loadPerformance(range.value),
+        stats.load(range.value, seq),
+        stats.loadSeries(range.value, seq),
+        stats.loadStudyTime(range.value, seq),
+        stats.loadPerformance(range.value, seq),
         achievements.load(),
+        statsApi
+            .getDeckPerformance()
+            .then((r) => {
+                deckPerf.value = r.items;
+            })
+            .catch(() => {}),
     ]);
 });
 </script>

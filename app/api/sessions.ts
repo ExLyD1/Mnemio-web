@@ -14,6 +14,7 @@ interface WireSession {
     cardIndex: number;
     correct: number;
     xpAwarded: number;
+    srsEnabled: boolean;
     counts: SessionCounts;
     revisitCardIds: string[];
     durationMs: number;
@@ -40,6 +41,7 @@ const toSession = (s: WireSession): StudySession => ({
     correct: s.correct,
     xpAwarded: s.xpAwarded,
     status: s.status,
+    srsEnabled: s.srsEnabled,
     counts: s.counts,
     revisitCardIds: s.revisitCardIds,
     durationMs: s.durationMs,
@@ -63,10 +65,21 @@ export const listIncomplete = async (): Promise<StudySession[]> => {
 export const startSession = async (input: {
     deckId: string;
     mode: StudyMode;
+    cardIds?: string[];
+    srsEnabled?: boolean;
 }): Promise<StudySession> => {
     const s = await http<WireSession>('/sessions', {
         method: 'POST',
-        body: { deckId: input.deckId, mode: toWireMode(input.mode) },
+        body: {
+            deckId: input.deckId,
+            mode: toWireMode(input.mode),
+            srsEnabled: input.srsEnabled ?? true,
+            // Subset rounds ("study unknown") and shuffled orders must tell the
+            // server which cards they study — otherwise the session records the
+            // whole deck, and browse mode rolls that inflated number into the
+            // day's activity counters.
+            ...(input.cardIds?.length ? { cardIds: input.cardIds } : {}),
+        },
     });
     return toSession(s);
 };

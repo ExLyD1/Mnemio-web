@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { useDecks, useToast, useT } from '#imports';
+import { useDecks, useToast, useT, useApiError } from '#imports';
 import { enrichWords, type AiDraftCard, type EnrichWordsResult } from '@/api/ai';
 import { bulkAddCards } from '@/api/cards';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
@@ -31,6 +31,7 @@ export const useAiImport = (opts: UseAiImportOptions) => {
     const { create } = useDecks();
     const toast = useToast();
     const { t } = useT();
+    const { apiErrorText } = useApiError();
     const notifications = useAchievementNotifications();
 
     const step = ref<'input' | 'review'>('input');
@@ -172,7 +173,7 @@ export const useAiImport = (opts: UseAiImportOptions) => {
                 targetLanguage: newTgt.value,
             });
             if (!created) {
-                error.value = create.error.value?.message ?? t('ai.enrichError');
+                error.value = apiErrorText(create.error.value, 'ai.enrichError');
                 return;
             }
             const { newAchievements } = await bulkAddCards(created.id, cards);

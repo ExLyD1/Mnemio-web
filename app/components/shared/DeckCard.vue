@@ -7,11 +7,11 @@
                     class="relative flex h-16 w-[50px] shrink-0 items-end rounded-xl p-2"
                     :style="{ background: deck.swatch }"
                 >
-                    <Layers class="size-5 text-pink-soft/60" />
+                    <Layers class="size-5 text-purple/60" />
                     <button
                         v-if="favoritable"
                         type="button"
-                        class="absolute -right-1 -top-1 text-pink-soft transition-opacity"
+                        class="absolute -right-1 -top-1 text-purple transition-opacity"
                         :class="deck.favorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'"
                         :aria-label="
                             deck.favorite ? t('deck.removeFavorite') : t('deck.addFavorite')
@@ -22,8 +22,8 @@
                             class="size-[18px]"
                             :class="
                                 deck.favorite
-                                    ? 'fill-pink-soft stroke-pink-soft'
-                                    : 'fill-none stroke-pink-soft'
+                                    ? 'fill-purple stroke-purple'
+                                    : 'fill-none stroke-purple'
                             "
                         />
                     </button>
@@ -34,23 +34,23 @@
                 {{ deck.title }}
             </h3>
             <p class="mb-3.5 text-[12px] text-cream-faint">
-                <template v-if="deck.tag">{{ deck.tag }} · </template>{{ cardCountLabel }}
+                <template v-if="tagLabel">{{ tagLabel }} · </template>{{ cardCountLabel }}
             </p>
 
-            <div class="h-[5px] overflow-hidden rounded-sm dark:bg-white/5 bg-brand/10">
+            <div class="h-[5px] overflow-hidden rounded-sm bg-bg-muted">
                 <div
                     class="h-full rounded-sm"
                     :style="{
                         width: `${deck.masteredPct}%`,
-                        background: 'linear-gradient(90deg, #e3d2c8, #a98ee3)',
+                        background: 'var(--c-progress)',
                     }"
                 />
             </div>
-            <div class="mt-2 flex justify-between text-[11px] text-cream-faint">
-                <span>{{
+            <div class="mt-2 flex justify-between text-[11px]">
+                <span :class="masteryClass">{{
                     t('dashboard.mastered').replace('{pct}', String(deck.masteredPct))
                 }}</span>
-                <span v-if="deck.due > 0" class="text-pink-soft/80">
+                <span v-if="deck.due > 0" class="font-bold text-purple">
                     {{ deck.due }} {{ t('dashboard.dueShort') }}
                 </span>
             </div>
@@ -62,14 +62,11 @@
                 <button
                     v-if="favoritable"
                     type="button"
-                    class="absolute right-2.5 top-2.5 grid size-8 place-items-center rounded-full bg-black/30 text-on-color backdrop-blur transition-colors hover:bg-black/50"
+                    class="absolute right-2.5 top-2.5 grid size-8 place-items-center rounded-full bg-veil/30 text-on-color backdrop-blur transition-colors hover:bg-veil/50"
                     :aria-label="deck.favorite ? t('deck.removeFavorite') : t('deck.addFavorite')"
                     @click.prevent.stop="$emit('toggleFav', deck.id)"
                 >
-                    <Star
-                        class="size-4"
-                        :class="deck.favorite ? 'fill-pink-soft text-pink-soft' : ''"
-                    />
+                    <Star class="size-4" :class="deck.favorite ? 'fill-purple text-purple' : ''" />
                 </button>
                 <span
                     v-if="variant !== 'discover' && deck.due > 0"
@@ -85,15 +82,15 @@
                 <h3 class="line-clamp-1 font-display text-lg text-cream">{{ deck.title }}</h3>
                 <p class="flex items-center gap-2 text-small text-brand-muted">
                     <span>{{ cardCountLabel }}</span>
-                    <template v-if="deck.tag">
+                    <template v-if="tagLabel">
                         <span class="text-brand-muted/60">·</span>
-                        <span>{{ deck.tag }}</span>
+                        <span>{{ tagLabel }}</span>
                     </template>
                 </p>
 
                 <template v-if="variant !== 'discover'">
                     <SharedProgressBar :value="deck.masteredPct" class="mt-1" />
-                    <p class="text-small text-brand-muted">
+                    <p :class="['text-small', masteryClass]">
                         {{ t('dashboard.mastered').replace('{pct}', String(deck.masteredPct)) }}
                     </p>
                 </template>
@@ -148,8 +145,10 @@
 import { Star, Layers, Bookmark } from 'lucide-vue-next';
 import { useT } from '#imports';
 import type { DeckCardVM } from '@/types/deck';
+import { useLanguageName } from '@/composables/useLanguageName';
 
 const { t } = useT();
+const { name: langName } = useLanguageName();
 
 const props = withDefaults(
     defineProps<{
@@ -161,6 +160,9 @@ const props = withDefaults(
     { variant: 'library', favoritable: false },
 );
 
+// Language tag in the active UI language ("Англійська", not "English").
+const tagLabel = computed(() => (props.deck.lang ? langName(props.deck.lang) : props.deck.tag));
+
 defineEmits<{
     toggleFav: [id: string];
     practice: [id: string];
@@ -169,8 +171,20 @@ defineEmits<{
     copy: [id: string];
 }>();
 
+/*
+ * Mastery % is colour-coded against its own thresholds (specs §Decks):
+ * <40 → bad, 40–64 → warn, ≥65 → normal body ink.
+ */
+const masteryClass = computed(() =>
+    props.deck.masteredPct < 40
+        ? 'text-error-soft'
+        : props.deck.masteredPct < 65
+          ? 'text-warn'
+          : 'text-cream',
+);
+
 const cardClass = computed(() => [
-    'group rounded-[20px] border border-line bg-bg-surface transition-all hover:border-brand-bright/50 hover:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]',
+    'group rounded-[20px] border border-line bg-bg-surface transition-all hover:border-brand-bright/50 hover:shadow-deck-hover',
     props.variant === 'library'
         ? 'flex flex-col p-[22px]'
         : props.variant === 'recent'

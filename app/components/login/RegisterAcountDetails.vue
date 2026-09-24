@@ -1,13 +1,13 @@
 <template>
     <form class="w-full max-w-[500px]" novalidate @submit="onSubmit">
-        <div class="mb-5 h-[10px] w-full overflow-hidden rounded-[10px] bg-[#8E7592]">
-            <span class="block h-full w-1/2 rounded-[10px] bg-[#CEB2BE]" />
+        <div class="mb-5 h-[10px] w-full overflow-hidden rounded-[10px] bg-bg-muted">
+            <span class="block h-full w-1/2 rounded-[10px] bg-lavender" />
         </div>
 
-        <div class="flex flex-col items-center text-[#E3D2C8]">
+        <div class="flex flex-col items-center text-cream">
             <h2 class="mb-3 text-h2 font-bold">{{ t('auth.detailsTitle') }}</h2>
 
-            <div class="mb-5 size-10 rounded-full border-3 border-[#8E7592] bg-[#E3D2C8]" />
+            <div class="mb-5 size-10 rounded-full border-3 border-line-strong bg-bg-surface-2" />
 
             <div class="flex w-full flex-col gap-[20px]">
                 <div>
@@ -31,6 +31,9 @@
                     />
                     <p v-if="usernameError" class="mt-1.5 text-small text-error" aria-live="polite">
                         {{ t(usernameError) }}
+                    </p>
+                    <p v-else class="mt-1.5 text-small text-brand-muted">
+                        {{ t('username.hint') }}
                     </p>
                 </div>
 

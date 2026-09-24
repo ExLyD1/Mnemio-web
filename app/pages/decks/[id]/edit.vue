@@ -43,7 +43,7 @@
 
 <script setup lang="ts">
 import { ArrowLeft } from 'lucide-vue-next';
-import { useDecks, useToast, useT } from '#imports';
+import { useDecks, useToast, useT, useApiError } from '#imports';
 import { normCategory } from '@/utils/deckCategories';
 
 definePageMeta({ layout: 'default' });
@@ -54,6 +54,7 @@ const deckId = computed(() => String(route.params.id));
 const { store, fetchOne, update } = useDecks();
 const toast = useToast();
 const { t } = useT();
+const { apiErrorText } = useApiError();
 
 useSeo({ title: t('seo.deckEditTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -72,7 +73,7 @@ const onSubmit = async (payload: {
         toast.success(t('deck.updated'));
         await navigateTo(`/decks/${deckId.value}`);
     } else if (update.error.value) {
-        toast.error(t(update.error.value.message, update.error.value.message));
+        toast.error(apiErrorText(update.error.value));
     }
 };
 

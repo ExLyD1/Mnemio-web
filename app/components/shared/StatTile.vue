@@ -25,7 +25,7 @@
                 {{ trend.label }}
             </span>
         </div>
-        <p class="mt-2 font-display text-h1 leading-none text-cream">{{ value }}</p>
+        <p :class="['mt-2 font-display text-h1 leading-none', numerals[tone]]">{{ value }}</p>
         <p v-if="sub" class="mt-1 text-small text-cream-faint">{{ sub }}</p>
     </div>
 </template>
@@ -48,9 +48,24 @@ withDefaults(
 const tones = {
     plain: 'border-line-strong bg-bg-surface-2',
     plum: 'border-lavender/70 bg-lavender/30 dark:border-brand-bright/70 dark:bg-brand/45',
-    accent: 'border-accent-light/50 bg-accent/20',
-    blue: 'border-accent-light/70 bg-gradient-to-br from-accent-light/40 to-accent/25',
-    green: 'border-success/70 bg-gradient-to-br from-success-bright/40 to-success/25',
-    pink: 'border-pink-soft/70 bg-gradient-to-br from-pink-soft/40 to-error-soft/25',
+    accent: 'border-accent/50 bg-accent/20',
+    blue: 'border-accent/70 bg-gradient-to-br from-accent/40 to-accent/25',
+    green: 'border-success/70 bg-gradient-to-br from-success/40 to-success/25',
+    pink: 'border-pink/70 bg-gradient-to-br from-pink/40 to-error-soft/25',
+} as const;
+
+/*
+ * Numerals come from the stat palette (specs §Statistics: "stat-tile numerals use
+ * D.stat1..D.stat4 — never literal hexes. Order: blue, neutral, green, pink").
+ * Every tile background here is a translucent TINT over a card surface, so these
+ * are cream-side inks and darken correctly in light mode.
+ */
+const numerals = {
+    plain: 'text-stat-2',
+    plum: 'text-stat-2',
+    accent: 'text-stat-1',
+    blue: 'text-stat-1',
+    green: 'text-stat-3',
+    pink: 'text-stat-4',
 } as const;
 </script>

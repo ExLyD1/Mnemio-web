@@ -5,11 +5,14 @@
             sizes[size],
         ]"
         role="status"
-        aria-label="Loading"
+        :aria-label="t('common.loading')"
     />
 </template>
 
 <script setup lang="ts">
+import { useT } from '@/composables/useT';
+
+const { t } = useT();
 withDefaults(defineProps<{ size?: 'sm' | 'md' | 'lg' }>(), { size: 'md' });
 
 const sizes = {

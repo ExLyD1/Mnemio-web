@@ -13,12 +13,12 @@
                         {{ col.titleText ?? t(col.title) }}
                     </h5>
                     <ul class="space-y-2">
-                        <li v-for="l in col.links" :key="l.label">
+                        <li v-for="l in col.links" :key="l.to">
                             <NuxtLink
                                 :to="l.to"
                                 class="text-small text-cream-dim transition-colors hover:text-cream"
                             >
-                                {{ l.text ?? t(l.label) }}
+                                {{ l.text ?? t(l.label ?? '') }}
                             </NuxtLink>
                         </li>
                     </ul>
@@ -42,7 +42,20 @@ const { current: locale } = useAppLocale();
 
 const year = new Date().getFullYear();
 
-const columns = [
+// A link/column is either i18n-keyed (`label` / `title`) or carries literal
+// text (`text` / `titleText`, the Ukrainian-only keyword pages below).
+interface FooterLink {
+    to: string;
+    label?: string;
+    text?: string;
+}
+interface FooterColumn {
+    title: string;
+    titleText?: string;
+    links: FooterLink[];
+}
+
+const columns: FooterColumn[] = [
     {
         title: 'footer.colProduct',
         links: [
@@ -76,7 +89,7 @@ const columns = [
 // hardcoded Ukrainian copy — see those pages for why. Their footer link text is likewise
 // hardcoded (not run through t()) and only shown for uk-locale visitors, so the English footer
 // doesn't display Cyrillic-only page titles.
-const uaColumn = {
+const uaColumn: FooterColumn = {
     title: 'footer.colResources',
     titleText: 'Українською',
     links: [

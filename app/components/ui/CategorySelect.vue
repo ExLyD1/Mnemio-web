@@ -6,7 +6,7 @@
             role="combobox"
             :aria-expanded="open"
             aria-haspopup="listbox"
-            class="flex w-full items-center justify-between rounded-xl border border-line-strong bg-bg-well px-3.5 py-3 text-[14px] text-cream transition-colors hover:border-brand-muted focus:border-brand-muted focus:outline-none dark:bg-[rgba(255,255,255,.03)]"
+            class="flex w-full items-center justify-between rounded-xl border border-line-strong bg-bg-well px-3.5 py-3 text-[14px] text-cream transition-colors hover:border-brand-muted focus:border-brand-muted focus:outline-none"
             @click="toggle"
         >
             <span :class="modelValue ? 'text-cream' : 'text-cream-faint'">
@@ -174,8 +174,9 @@ const onKey = (e: KeyboardEvent) => {
         nextTick(scrollToFocused);
     } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (focused.value >= 0 && filtered.value[focused.value]) {
-            pick(filtered.value[focused.value].value);
+        const option = focused.value >= 0 ? filtered.value[focused.value] : undefined;
+        if (option) {
+            pick(option.value);
         }
     } else if (e.key === 'Escape') {
         close();

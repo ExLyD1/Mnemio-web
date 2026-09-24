@@ -16,7 +16,7 @@
         <Transition name="chat-drawer">
             <div v-if="sidebarOpen" class="fixed inset-0 z-40 md:hidden">
                 <div
-                    class="chat-drawer-backdrop absolute inset-0 bg-black/50"
+                    class="chat-drawer-backdrop absolute inset-0 bg-scrim"
                     @click="sidebarOpen = false"
                 />
                 <div
@@ -52,129 +52,158 @@
             </header>
 
             <!-- Thread -->
-            <div ref="threadEl" class="flex-1 overflow-y-auto px-4 py-6">
-                <div class="mx-auto flex max-w-3xl flex-col gap-4">
-                    <!-- Empty / greeting -->
-                    <div
-                        v-if="!chat.messages.value.length && !chat.loadingThread.value"
-                        class="flex flex-col items-center gap-4 py-12 text-center"
-                    >
-                        <SharedMimi :size="80" />
-                        <h2 class="font-display text-h2 text-cream">{{ t('chat.emptyTitle') }}</h2>
-                        <p class="max-w-[42ch] text-body text-cream-dim">
-                            {{ t('chat.emptyHint') }}
-                        </p>
-                        <!-- Quick-action pills -->
-                        <div class="mt-2 flex flex-wrap justify-center gap-2">
-                            <button
-                                v-for="q in quickActions"
-                                :key="q"
-                                type="button"
-                                class="rounded-full border border-line bg-bg-surface px-4 py-2 text-small text-cream-dim transition-colors hover:border-brand-bright/50 hover:text-cream"
-                                @click="sendQuick(q)"
-                            >
-                                {{ q }}
-                            </button>
+            <div class="relative flex min-h-0 flex-1 flex-col">
+                <div
+                    ref="threadEl"
+                    class="flex-1 overflow-y-auto px-4 py-6"
+                    @scroll.passive="onThreadScroll"
+                    @wheel.passive="onThreadWheel"
+                    @touchmove.passive="releasePin"
+                    @keydown="onThreadKeydown"
+                >
+                    <div class="mx-auto flex max-w-3xl flex-col gap-4">
+                        <!-- Empty / greeting -->
+                        <div
+                            v-if="!chat.messages.value.length && !chat.loadingThread.value"
+                            class="flex flex-col items-center gap-4 py-12 text-center"
+                        >
+                            <SharedMimi :size="80" />
+                            <h2 class="font-display text-h2 text-cream">
+                                {{ t('chat.emptyTitle') }}
+                            </h2>
+                            <p class="max-w-[42ch] text-body text-cream-dim">
+                                {{ t('chat.emptyHint') }}
+                            </p>
+                            <!-- Quick-action pills -->
+                            <div class="mt-2 flex flex-wrap justify-center gap-2">
+                                <button
+                                    v-for="q in quickActions"
+                                    :key="q"
+                                    type="button"
+                                    class="rounded-full border border-line bg-bg-surface px-4 py-2 text-small text-cream-dim transition-colors hover:border-brand-bright/50 hover:text-cream"
+                                    @click="sendQuick(q)"
+                                >
+                                    {{ q }}
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <div v-if="chat.loadingThread.value" class="flex justify-center py-8">
-                        <UiSpinner />
-                    </div>
-
-                    <div
-                        v-for="(m, i) in chat.messages.value"
-                        :key="m.id"
-                        class="flex gap-3"
-                        :class="m.role === 'user' ? 'flex-row-reverse' : ''"
-                    >
-                        <SharedMimi v-if="m.role === 'assistant'" :size="36" class="shrink-0" />
+                        <div v-if="chat.loadingThread.value" class="flex justify-center py-8">
+                            <UiSpinner />
+                        </div>
 
                         <div
-                            class="flex min-w-0 flex-col gap-1"
-                            :class="m.role === 'user' ? 'items-end' : 'items-start'"
+                            v-for="(m, i) in chat.messages.value"
+                            :key="m.id"
+                            class="flex gap-3"
+                            :class="m.role === 'user' ? 'flex-row-reverse' : ''"
                         >
-                            <!-- Attached image thumbnail (client-only; tap to zoom) -->
-                            <button
-                                v-if="m.localImageUrl"
-                                type="button"
-                                class="overflow-hidden rounded-2xl border border-line transition-opacity hover:opacity-90"
-                                :aria-label="t('image.viewImage')"
-                                @click="viewerUrl = m.localImageUrl ?? null"
-                            >
-                                <img
-                                    :src="m.localImageUrl"
-                                    :alt="t('image.previewAlt')"
-                                    class="max-h-48 max-w-[80%] object-cover"
-                                />
-                            </button>
+                            <SharedMimi v-if="m.role === 'assistant'" :size="36" class="shrink-0" />
 
-                            <!-- Typing dots: streaming assistant with no text yet -->
+                            <!-- The 80% cap lives on this column (a % of the definite row
+                             width), not on the bubble: a %-max-width on the bubble
+                             resolved against this content-sized column, which then
+                             shrank to min-content and broke short words mid-word
+                             ("При / віт", QA (3) #5). -->
                             <div
-                                v-if="isStreaming(i) && !m.content"
-                                class="flex items-center gap-1.5 rounded-2xl border border-line bg-bg-surface px-4 py-3"
+                                class="flex min-w-0 max-w-[85%] flex-col gap-1 sm:max-w-[80%]"
+                                :class="m.role === 'user' ? 'items-end' : 'items-start'"
                             >
-                                <span
-                                    class="size-1.5 animate-typing-dot rounded-full bg-brand-pale"
-                                />
-                                <span
-                                    class="size-1.5 animate-typing-dot rounded-full bg-brand-pale [animation-delay:0.2s]"
-                                />
-                                <span
-                                    class="size-1.5 animate-typing-dot rounded-full bg-brand-pale [animation-delay:0.4s]"
-                                />
-                            </div>
-
-                            <div
-                                v-else-if="m.content"
-                                class="max-w-[80%] break-words rounded-2xl px-4 py-2.5 text-body"
-                                :class="
-                                    m.role === 'user'
-                                        ? 'whitespace-pre-wrap bg-brand/90 text-on-color shadow-sm'
-                                        : 'border border-line bg-bg-surface text-cream'
-                                "
-                            >
-                                <template v-if="m.role === 'user'">{{ m.content }}</template>
-                                <span
-                                    v-else
-                                    class="chat-prose"
-                                    v-html="renderMarkdown(m.content)"
-                                />
-                                <span
-                                    v-if="isStreaming(i)"
-                                    class="ml-0.5 inline-block w-1.5 animate-pulse"
-                                    >▍</span
-                                >
-                            </div>
-
-                            <!-- Deck attachments -->
-                            <AiDeckCard
-                                v-for="(a, ai) in m.attachments ?? []"
-                                :key="ai"
-                                :deck-id="a.deckId"
-                                :title="a.title"
-                                :card-count="a.cardCount"
-                                class="w-full max-w-[80%]"
-                            />
-
-                            <!-- Partial + retry -->
-                            <div
-                                v-if="m.status === 'partial' && m.role === 'assistant'"
-                                class="flex items-center gap-2 text-small text-brand-muted"
-                            >
-                                <span>{{ t('chat.partial') }}</span>
+                                <!-- Attached image thumbnail (client-only; tap to zoom) -->
                                 <button
+                                    v-if="m.localImageUrl"
                                     type="button"
-                                    class="font-semibold text-brand-pale hover:text-cream"
-                                    :disabled="chat.streaming.value"
-                                    @click="chat.retry"
+                                    class="overflow-hidden rounded-2xl border border-line transition-opacity hover:opacity-90"
+                                    :aria-label="t('image.viewImage')"
+                                    @click="viewerUrl = m.localImageUrl ?? null"
                                 >
-                                    {{ t('chat.retry') }}
+                                    <img
+                                        :src="m.localImageUrl"
+                                        :alt="t('image.previewAlt')"
+                                        class="max-h-48 max-w-[80%] object-cover"
+                                    />
                                 </button>
+
+                                <!-- Typing dots: streaming assistant with no text yet -->
+                                <div
+                                    v-if="isStreaming(i) && !m.content"
+                                    class="flex items-center gap-1.5 rounded-2xl border border-line bg-bg-surface px-4 py-3"
+                                >
+                                    <span
+                                        class="size-1.5 animate-typing-dot rounded-full bg-brand-pale"
+                                    />
+                                    <span
+                                        class="size-1.5 animate-typing-dot rounded-full bg-brand-pale [animation-delay:0.2s]"
+                                    />
+                                    <span
+                                        class="size-1.5 animate-typing-dot rounded-full bg-brand-pale [animation-delay:0.4s]"
+                                    />
+                                </div>
+
+                                <div
+                                    v-else-if="m.content"
+                                    class="max-w-full break-words rounded-2xl px-4 py-2.5 text-body"
+                                    :class="
+                                        m.role === 'user'
+                                            ? 'whitespace-pre-wrap bg-brand/90 text-on-color shadow-sm'
+                                            : 'border border-line bg-bg-surface text-cream'
+                                    "
+                                >
+                                    <template v-if="m.role === 'user'">{{ m.content }}</template>
+                                    <!-- The streaming caret is injected inside the rendered
+                                     HTML (after the last character) — a sibling span
+                                     would fall below the last <p> on its own line. -->
+                                    <span
+                                        v-else
+                                        class="chat-prose"
+                                        v-html="
+                                            renderMarkdown(m.content, { caret: isStreaming(i) })
+                                        "
+                                    />
+                                </div>
+
+                                <!-- Deck attachments -->
+                                <AiDeckCard
+                                    v-for="(a, ai) in m.attachments ?? []"
+                                    :key="ai"
+                                    :deck-id="a.deckId"
+                                    :title="a.title"
+                                    :card-count="a.cardCount"
+                                    class="w-72 max-w-full"
+                                />
+
+                                <!-- Partial + retry -->
+                                <div
+                                    v-if="m.status === 'partial' && m.role === 'assistant'"
+                                    class="flex items-center gap-2 text-small text-brand-muted"
+                                >
+                                    <span>{{ t('chat.partial') }}</span>
+                                    <button
+                                        type="button"
+                                        class="font-semibold text-brand-pale hover:text-cream"
+                                        :disabled="chat.streaming.value"
+                                        @click="chat.retry"
+                                    >
+                                        {{ t('chat.retry') }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Jump back down after scrolling up (e.g. to re-read mid-stream) -->
+                <Transition name="chat-jump">
+                    <button
+                        v-if="showJump"
+                        type="button"
+                        class="absolute bottom-3 left-1/2 flex size-9 -translate-x-1/2 items-center justify-center rounded-full border border-line-strong bg-bg-surface text-cream shadow-md transition-colors hover:border-brand-bright/50"
+                        :aria-label="t('chat.scrollToBottom')"
+                        @click="jumpToBottom"
+                    >
+                        <ArrowDown class="size-4" />
+                    </button>
+                </Transition>
             </div>
 
             <!-- Composer -->
@@ -263,14 +292,14 @@
         <Teleport to="body">
             <div
                 v-if="viewerUrl"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-scrim p-6"
                 role="dialog"
                 aria-modal="true"
                 @click="viewerUrl = null"
             >
                 <button
                     type="button"
-                    class="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                    class="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-on-plum/10 text-on-plum transition-colors hover:bg-on-plum/20"
                     :aria-label="t('common.close')"
                     @click="viewerUrl = null"
                 >
@@ -288,8 +317,8 @@
 </template>
 
 <script setup lang="ts">
-import { Send, Menu, ImagePlus, X } from 'lucide-vue-next';
-import { useChat, useToast, useT } from '#imports';
+import { Send, Menu, ImagePlus, X, ArrowDown } from 'lucide-vue-next';
+import { useChat, useToast, useT, useApiError } from '#imports';
 import { useAuthStore } from '@/stores/auth';
 import { usePremiumGateStore } from '@/stores/premiumGate';
 import { renderMarkdown } from '@/utils/markdown';
@@ -299,6 +328,7 @@ definePageMeta({ layout: 'default' });
 const chat = useChat();
 const toast = useToast();
 const { t } = useT();
+const { apiErrorText } = useApiError();
 const auth = useAuthStore();
 const premiumGate = usePremiumGateStore();
 
@@ -377,13 +407,110 @@ const isStreaming = (i: number) =>
     i === chat.messages.value.length - 1 &&
     chat.messages.value[i]?.role === 'assistant';
 
-const scrollToBottom = () => {
+/*
+ * Auto-scroll. Streaming grows the thread a wrapped line at a time; setting
+ * scrollTop per chunk made the view sit still and then jump ~24px (one line). We
+ * instead ease toward the bottom from a rAF loop, decoupled from chunk timing, and
+ * only while the reader is "pinned" there — scrolling up releases the pin so a
+ * stream doesn't drag them back down, and a button offers the way back.
+ */
+const PIN_EASE = 0.18; // fraction of the remaining gap closed per frame
+const NEAR_BOTTOM_PX = 24; // re-pin once the reader scrolls back this close
+const JUMP_BUTTON_PX = 120; // show "scroll to bottom" beyond this distance
+
+const pinned = ref(true);
+const showJump = ref(false);
+let pinFrame = 0;
+let lastScrollTop = 0;
+
+const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight;
+
+const stopPinLoop = () => {
+    if (pinFrame) {
+        cancelAnimationFrame(pinFrame);
+        pinFrame = 0;
+    }
+};
+
+const pinStep = () => {
+    pinFrame = 0;
+    const el = threadEl.value;
+    if (!el || !pinned.value) {
+        return;
+    }
+    const gap = distanceFromBottom(el);
+    if (gap <= 0.5) {
+        return;
+    }
+    const before = el.scrollTop;
+    // At least 1px per frame so sub-pixel steps can't stall on integer scrollTop.
+    el.scrollTop = before + Math.min(gap, Math.max(1, gap * PIN_EASE));
+    lastScrollTop = el.scrollTop;
+    if (el.scrollTop !== before) {
+        pinFrame = requestAnimationFrame(pinStep);
+    }
+};
+
+/** Glide toward the bottom (if pinned); a no-op when a glide is already running. */
+const followBottom = () => {
+    if (import.meta.client && pinned.value && !pinFrame) {
+        pinFrame = requestAnimationFrame(pinStep);
+    }
+};
+
+/** Snap to the bottom instantly — for opening a thread, where gliding is noise. */
+const snapToBottom = () => {
     nextTick(() => {
         const el = threadEl.value;
-        if (el) {
-            el.scrollTop = el.scrollHeight;
+        if (!el) {
+            return;
         }
+        stopPinLoop();
+        pinned.value = true;
+        el.scrollTop = el.scrollHeight;
+        lastScrollTop = el.scrollTop;
+        showJump.value = false;
     });
+};
+
+const releasePin = () => {
+    pinned.value = false;
+    stopPinLoop();
+};
+
+const onThreadWheel = (e: WheelEvent) => {
+    if (e.deltaY < 0) {
+        releasePin();
+    }
+};
+
+const onThreadKeydown = (e: KeyboardEvent) => {
+    if (['ArrowUp', 'PageUp', 'Home'].includes(e.key)) {
+        releasePin();
+    }
+};
+
+const onThreadScroll = () => {
+    const el = threadEl.value;
+    if (!el) {
+        return;
+    }
+    const gap = distanceFromBottom(el);
+    if (gap <= NEAR_BOTTOM_PX) {
+        pinned.value = true;
+    } else if (el.scrollTop < lastScrollTop - 1) {
+        // Moved up while not near the bottom — a scrollbar drag. (Content shrinking
+        // also lowers scrollTop, but then the gap is ~0 and the branch above wins.)
+        releasePin();
+    }
+    lastScrollTop = el.scrollTop;
+    showJump.value = !pinned.value && gap > JUMP_BUTTON_PX;
+};
+
+const jumpToBottom = () => {
+    pinned.value = true;
+    showJump.value = false;
+    followBottom();
 };
 
 const autoGrow = () => {
@@ -438,7 +565,7 @@ const onNew = () => {
     nextTick(() => inputEl.value?.focus());
 };
 
-const errText = (code: string) => t(`chat.err.${code}`, t('chat.err.generic'));
+const errText = (code: string) => t(`chat.err.${code}`, apiErrorText({ code }, 'chat.err.generic'));
 
 watch(
     () => chat.streamError.value,
@@ -453,10 +580,22 @@ watch(
     },
 );
 
-watch(chat.messages, scrollToBottom, { deep: true, flush: 'post' });
+watch(chat.messages, followBottom, { deep: true, flush: 'post' });
+// Sending a message always brings the reader back down to follow the reply.
+watch(
+    () => chat.messages.value.length,
+    (n, prev) => {
+        if (n > (prev ?? 0) && chat.messages.value[n - 1]?.role === 'user') {
+            pinned.value = true;
+            showJump.value = false;
+            followBottom();
+        }
+    },
+    { flush: 'post' },
+);
 watch(chat.loadingThread, (l) => {
     if (!l) {
-        scrollToBottom();
+        snapToBottom();
     }
 });
 
@@ -476,6 +615,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
     window.removeEventListener('keydown', onKeydown);
+    stopPinLoop();
 });
 </script>
 
@@ -509,14 +649,45 @@ onBeforeUnmount(() => {
     margin: 0.15rem 0;
 }
 .chat-prose :deep(a) {
-    color: rgb(var(--c-brand-pale));
+    color: rgb(var(--c-purple));
     text-decoration: underline;
 }
 .chat-prose :deep(code) {
     border-radius: 0.3rem;
-    background: rgb(var(--c-bg-well));
+    background: rgb(var(--c-bg-surface-2));
     padding: 0.1rem 0.35rem;
     font-size: 0.9em;
+}
+/* Streaming caret, injected inline after the last character (see renderMarkdown).
+   Zero layout width via the negative margin, so the text never reflows when it
+   disappears at the end of the stream. */
+.chat-prose :deep(.chat-caret) {
+    display: inline-block;
+    width: 2px;
+    height: 1.1em;
+    margin-left: 2px;
+    margin-right: -4px;
+    vertical-align: text-bottom;
+    background: currentColor;
+    animation: chat-caret-blink 1s steps(1) infinite;
+}
+@keyframes chat-caret-blink {
+    50% {
+        opacity: 0;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .chat-prose :deep(.chat-caret) {
+        animation: none;
+    }
+}
+.chat-jump-enter-active,
+.chat-jump-leave-active {
+    transition: opacity 0.2s ease;
+}
+.chat-jump-enter-from,
+.chat-jump-leave-to {
+    opacity: 0;
 }
 /* Mobile chat sidebar drawer: panel slides from left, backdrop fades */
 .chat-drawer-enter-active .chat-drawer-panel,
@@ -538,7 +709,7 @@ onBeforeUnmount(() => {
 .chat-prose :deep(pre) {
     overflow-x: auto;
     border-radius: 0.6rem;
-    background: rgb(var(--c-bg-well));
+    background: rgb(var(--c-bg-surface-2));
     padding: 0.6rem 0.8rem;
 }
 .chat-prose :deep(pre code) {

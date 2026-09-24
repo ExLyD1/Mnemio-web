@@ -98,6 +98,8 @@ export interface DeckCardVM {
     id: string;
     title: string;
     tag?: string;
+    /** ISO code of the deck's target language — rendered as a localized name. */
+    lang?: string;
     glyph?: string;
     total: number;
     masteredPct: number;

@@ -19,6 +19,7 @@ export interface StudySession {
     correct: number;
     xpAwarded: number;
     status: SessionStatus;
+    srsEnabled: boolean;
     counts: SessionCounts;
     revisitCardIds: string[];
     durationMs: number;

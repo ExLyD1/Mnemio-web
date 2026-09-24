@@ -33,7 +33,7 @@
                 />
                 <X
                     v-if="picked === opt.id && picked !== question.correctId"
-                    class="ml-auto size-4 text-pink-soft"
+                    class="ml-auto size-4 text-purple"
                 />
             </button>
         </div>

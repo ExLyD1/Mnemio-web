@@ -18,7 +18,7 @@
             :width="size"
             :height="size"
             :style="{ width: `${size}px` }"
-            class="select-none drop-shadow-[0_18px_24px_rgba(0,0,0,0.45)]"
+            class="select-none drop-shadow-mimi"
             :class="popping ? 'mimi-pop' : bob ? 'mimi-bob' : ''"
             draggable="false"
         />

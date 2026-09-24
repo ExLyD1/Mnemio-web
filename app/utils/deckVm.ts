@@ -9,6 +9,7 @@ export const deckToCardVm = (deck: DeckSummary, favorite = false): DeckCardVM =>
     id: deck.id,
     title: deck.title,
     tag: LANG_LABELS.get(deck.targetLanguage) ?? deck.targetLanguage.toUpperCase(),
+    lang: deck.targetLanguage,
     glyph: deck.glyph ?? undefined,
     total: deck.cardCount,
     masteredPct: deck.stats.masteredPct,

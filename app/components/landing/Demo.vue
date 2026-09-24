@@ -25,9 +25,12 @@
                     <p class="font-display text-4xl text-cream">{{ current.front }}</p>
                     <span class="text-small text-brand-muted">{{ t('demo.tapToFlip') }}</span>
                 </div>
-                <div class="face back rounded-2xl border border-brand-bright bg-plum-card-back p-7">
-                    <SharedPill tone="muted">{{ current.tag }}</SharedPill>
-                    <p class="text-xl leading-snug text-cream">{{ current.back }}</p>
+                <!-- Plum gradient in both themes → on-plum ink. -->
+                <div
+                    class="face back rounded-2xl border border-on-plum/25 bg-plum-card-back p-7 text-on-plum"
+                >
+                    <SharedPill tone="on-plum">{{ current.tag }}</SharedPill>
+                    <p class="text-xl leading-snug text-on-plum">{{ current.back }}</p>
                 </div>
             </div>
 
@@ -41,7 +44,7 @@
                 </button>
                 <button
                     type="button"
-                    class="rounded-xl border border-line-strong py-2.5 text-small font-semibold text-brand-pale transition-colors hover:bg-white/[0.04]"
+                    class="rounded-xl border border-line-strong py-2.5 text-small font-semibold text-brand-pale transition-colors hover:bg-bg-well"
                     @click="rate(false)"
                 >
                     {{ t('demo.hard') }}

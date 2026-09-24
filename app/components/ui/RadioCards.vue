@@ -7,7 +7,7 @@
             :class="[
                 'flex items-start gap-3 rounded-2xl border p-4 text-left transition-colors',
                 modelValue === opt.value
-                    ? 'border-brand-bright bg-brand/25 shadow-[inset_0_0_0_1px_rgba(124,69,118,0.5)]'
+                    ? 'border-brand-bright bg-brand/25 shadow-radio-ring'
                     : 'border-line-strong bg-bg-surface-2 hover:border-brand-muted',
             ]"
             @click="$emit('update:modelValue', opt.value)"

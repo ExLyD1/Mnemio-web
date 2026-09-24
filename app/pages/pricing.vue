@@ -21,11 +21,11 @@
                     type="button"
                     class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
                     :class="billingCycle === 'annual' ? 'bg-brand' : 'bg-bg-muted'"
-                    aria-label="Toggle billing cycle"
+                    :aria-label="t('pricing.toggleAria')"
                     @click="billingCycle = billingCycle === 'monthly' ? 'annual' : 'monthly'"
                 >
                     <span
-                        class="inline-block size-4 rounded-full bg-white shadow transition-transform"
+                        class="inline-block size-4 rounded-full bg-on-plum shadow transition-transform"
                         :class="billingCycle === 'annual' ? 'translate-x-6' : 'translate-x-1'"
                     />
                 </button>
@@ -72,7 +72,7 @@
                         class="flex items-center gap-2 text-body"
                         :class="f.included ? 'text-cream' : 'text-cream-dim/60'"
                     >
-                        <Check v-if="f.included" class="size-4 shrink-0 text-brand" />
+                        <Check v-if="f.included" class="size-4 shrink-0 text-brand-bright" />
                         <X v-else class="size-4 shrink-0 text-cream-dim/40" />
                         {{ f.label }}
                     </li>
@@ -89,7 +89,7 @@
             <div
                 class="flex flex-col rounded-2xl border-2 border-brand bg-bg-surface p-6 shadow-lg"
             >
-                <p class="text-eyebrow text-brand">{{ t('pricing.premiumPlanName') }}</p>
+                <p class="text-eyebrow text-brand-bright">{{ t('pricing.premiumPlanName') }}</p>
                 <p class="mt-2 font-display text-h1 text-cream">
                     {{ billingCycle === 'annual' ? '$8' : '$10' }}
                 </p>
@@ -106,7 +106,7 @@
                         :key="f.label"
                         class="flex items-center gap-2 text-body text-cream"
                     >
-                        <Check class="size-4 shrink-0 text-brand" />
+                        <Check class="size-4 shrink-0 text-brand-bright" />
                         {{ f.label }}
                     </li>
                 </ul>
@@ -141,7 +141,7 @@
                             <UiSpinner v-if="billing.checkout.loading.value" size="sm" />
                             {{ t('pricing.ctaUpgrade') }}
                         </UiButton>
-                        <p v-if="priceError" class="text-center text-small text-red-400">
+                        <p v-if="priceError" class="text-center text-small text-error-soft">
                             {{ t('pricing.priceNotConfigured') }}
                         </p>
                     </div>

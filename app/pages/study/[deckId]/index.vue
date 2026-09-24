@@ -87,7 +87,7 @@
                         class="pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full transition-transform"
                         :class="
                             srsEnabled
-                                ? 'translate-x-[22px] bg-white'
+                                ? 'translate-x-[22px] bg-on-plum'
                                 : 'translate-x-0.5 bg-brand-muted'
                         "
                     />

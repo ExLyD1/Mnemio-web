@@ -28,21 +28,24 @@ withDefaults(
 
 defineEmits<{ 'update:modelValue': [value: string] }>();
 
+// `dark` sits on a page/card surface → cream ladder (specs §Global chrome:
+// bg well, border line-strong, text cream, placeholder cream-faint).
+// `light` and `brand` sit on a plum/colored fill → on-plum ladder.
 const wrappers = {
-    light: 'bg-brand-light text-brand border border-line-strong',
-    brand: 'bg-brand text-brand-pale',
-    dark: 'bg-bg-well text-brand-muted border border-line-strong',
+    light: 'bg-on-plum/10 border border-on-plum/25',
+    brand: 'bg-brand border border-on-plum/25',
+    dark: 'bg-bg-well text-cream border border-line-strong',
 } as const;
 
 const textColors = {
-    light: 'text-brand placeholder:opacity-60',
-    brand: 'text-brand-pale placeholder:opacity-70',
-    dark: 'text-brand-muted placeholder:opacity-70',
+    light: 'text-on-plum placeholder:text-on-plum-faint',
+    brand: 'text-on-plum placeholder:text-on-plum-faint',
+    dark: 'text-cream placeholder:text-cream-faint',
 } as const;
 
 const iconColors = {
-    light: 'text-brand opacity-60',
-    brand: 'text-brand-pale opacity-70',
-    dark: 'text-brand-muted opacity-70',
+    light: 'text-on-plum-dim',
+    brand: 'text-on-plum-dim',
+    dark: 'text-cream-faint',
 } as const;
 </script>

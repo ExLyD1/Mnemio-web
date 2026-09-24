@@ -1,4 +1,4 @@
-import { getApiBase, refreshAccessToken } from '@/utils/http';
+import { clientTimeZone, getApiBase, refreshAccessToken } from '@/utils/http';
 import { readAccessToken } from '@/utils/authToken';
 
 const API_PREFIX = '/api/v1';
@@ -42,12 +42,14 @@ export interface StreamError {
  */
 const buildSseInit = (token: string | null, body: BodyInit, signal?: AbortSignal): RequestInit => {
     const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+    const tz = clientTimeZone();
     return {
         method: 'POST',
         headers: {
             Accept: 'text/event-stream',
             ...(isForm ? {} : { 'Content-Type': 'application/json' }),
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(tz ? { 'X-Timezone': tz } : {}),
         },
         credentials: 'include',
         body,
@@ -87,9 +89,17 @@ export const runSse = async (opts: RunSseOptions): Promise<void> => {
     try {
         res = await fetch(url, buildSseInit(readAccessToken(), makeBody(), opts.signal));
         if (res.status === 401) {
-            const fresh = await refreshAccessToken();
+            const { token: fresh, wasInvalid } = await refreshAccessToken();
             if (!fresh) {
-                await navigateTo('/login?reason=session_expired');
+                // Only a confirmed-dead refresh token forces a re-login. A
+                // transient refresh failure (network blip, backend booting)
+                // must not log the user out of a session that may still be
+                // valid — surface it as a normal stream error instead.
+                if (wasInvalid) {
+                    await navigateTo('/login?reason=session_expired');
+                    return;
+                }
+                opts.onError({ code: 'NETWORK_ERROR', message: 'Request failed.' });
                 return;
             }
             res = await fetch(url, buildSseInit(fresh, makeBody(), opts.signal));

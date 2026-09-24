@@ -108,7 +108,7 @@
         "username": "Username*",
         "birthday": "Birthday*",
         "fullNamePlaceholder": "Dracula Alucard",
-        "usernamePlaceholder": "Dracula_Rules34",
+        "usernamePlaceholder": "maks_2008",
         "birthdayPlaceholder": "YYYY-MM-DD",
         "next": "Next",
         "welcomeSubtitle": "Welcome to your study companion",
@@ -126,7 +126,7 @@
             "password_too_short": "Password must be at least 8 characters.",
             "code_invalid": "Enter the 6-digit code.",
             "fullName_required": "Full name is required.",
-            "username_invalid": "Username must be 3–20 letters, numbers, or underscores.",
+            "username_invalid": "Use English letters for your username. Numbers and _ are fine too. For example: maks_2008",
             "birthday_invalid": "Use YYYY-MM-DD format.",
             "birthday_too_young": "You must be at least 13 years old."
         }
@@ -306,8 +306,7 @@
             "title_too_short": "Title must be at least 2 characters.",
             "title_too_long": "Title is too long (max 120).",
             "description_too_long": "Description is too long (max 500).",
-            "language_invalid": "Pick a valid language.",
-            "languages_same": "Source and target language must differ."
+            "language_invalid": "Pick a valid language."
         }
     },
     "dashboard": {
@@ -413,6 +412,8 @@
         "gradeHard": "Hard",
         "gradeGood": "Good",
         "gradeEasy": "Easy",
+        "simpleKnow": "I knew it",
+        "simpleForgot": "Forgot",
         "continue": "Continue",
         "cardOfN": "Card {i} of {n}",
         "modePickerHint": "Choose how you want to practice.",
@@ -475,12 +476,15 @@
         "srsOnHint": "SRS on — your schedule updates after each answer.",
         "srsOffHint": "Browse mode — answers won't update your schedule.",
         "errors": {
-            "emptyDeck": "This deck has no cards to study."
+            "emptyDeck": "This deck has no cards to study.",
+            "startFailed": "Could not start the session. Please try again.",
+            "resumeFailed": "Could not resume the session. Please try again."
         }
     },
     "card": {
         "word": "Word",
         "definition": "Definition",
+        "phonetic": "Phonetic (optional)",
         "wordPlaceholder": "hola",
         "definitionPlaceholder": "hello",
         "add": "Add card",
@@ -568,7 +572,7 @@
         "title": "Your statistics.",
         "subtitle": "How your memory is trending over time.",
         "reviewed": "Reviewed",
-        "reviewedSub": "cards studied today",
+        "reviewedSub": "cards reviewed",
         "retention": "Retention",
         "recallRate": "Recall rate",
         "recallRateSub": "of due cards remembered",
@@ -594,7 +598,7 @@
         "range90": "90 days",
         "rangeAll": "All time",
         "insightEyebrow": "Mimi noticed something",
-        "insightLowest": "“{title}” is your lowest deck at {pct}% mastered — a quick session would help.",
+        "insightLowest": "“{title}” is your lowest deck at {pct}% progress — a quick session would help.",
         "insightEmpty": "Create a deck and start studying to unlock insights.",
         "startHint": "Start a hint session",
         "studyTime": "Study time",
@@ -618,7 +622,11 @@
         "performancePeers": "{n} learners compared",
         "performanceEmpty": "Not enough learners have studied yet to compare — check back soon.",
         "performanceComingSoon": "Comparing your recall against other learners — coming soon.",
-        "comingSoon": "Coming soon"
+        "comingSoon": "Coming soon",
+        "reviewedSubRange": "cards in the last {n} days",
+        "reviewedSubAll": "cards, all time",
+        "weakestDecksHint": "% = progress toward mastery: every successful review with progress tracking (SRS) on moves it up. A card is fully mastered after 3 successful reviews in a row, spaced over several days; \"Forgot\" and \"Hard\" restart that count.",
+        "masteredOf": "{m}/{n} mastered"
     },
     "onboarding": {
         "stepOf": "Step {i} of 2",
@@ -629,7 +637,7 @@
         "fullName": "Full name",
         "fullNamePlaceholder": "Ada Lovelace",
         "username": "Username",
-        "usernamePlaceholder": "ada",
+        "usernamePlaceholder": "maks_2008",
         "birthday": "Birthday",
         "learnTitle": "What do you want to learn?",
         "learnSubtitle": "Pick a few interests and a daily goal.",
@@ -658,7 +666,8 @@
             "Geography": "Geography",
             "Art": "Art",
             "Music": "Music"
-        }
+        },
+        "errSave": "Couldn't save your profile. Please try again."
     },
     "profile": {
         "yourProfile": "Your profile",
@@ -674,7 +683,7 @@
         "fullName": "Full name",
         "fullNamePlaceholder": "Ada Lovelace",
         "username": "Username",
-        "usernamePlaceholder": "ada",
+        "usernamePlaceholder": "maks_2008",
         "birthday": "Birthday",
         "nativeLanguage": "Native language",
         "learning": "Learning",
@@ -691,7 +700,7 @@
         "saveChanges": "Save changes",
         "earned": "{x} of {y} earned",
         "statStreak": "Streak",
-        "statDaysPracticed": "Days practiced",
+        "statDaysPracticed": "Days practiced this week",
         "statReviewed": "Reviewed today",
         "statDecks": "Decks",
         "statRetention": "Retention",
@@ -699,10 +708,14 @@
         "photoUpdated": "Photo updated",
         "photoError": "Could not upload photo",
         "saved": "Profile saved",
-        "saveError": "Could not save profile"
+        "saveError": "Could not save profile",
+        "removePhoto": "Remove photo",
+        "photoRemoved": "Photo removed",
+        "photoRemoveError": "Couldn't remove the photo",
+        "photoTooLarge": "That photo is too large. Try a smaller one.",
+        "photoUnsupported": "This image format isn't supported. Use a JPG, PNG or WebP."
     },
     "achievements": {
-        "unlocked": "Achievement unlocked: {name} 🏆",
         "first_steps": {
             "name": "First steps",
             "description": "Complete your first study session."
@@ -730,7 +743,10 @@
         "polyglot": {
             "name": "Polyglot",
             "description": "Study decks in 3 different target languages."
-        }
+        },
+        "toastTitle": "New achievement!",
+        "unlockedMany": "{count} new achievements 🎉",
+        "unlockedManyHint": "Peek at them in your profile"
     },
     "ai": {
         "titleNew": "Import words with AI",
@@ -838,6 +854,7 @@
         "send": "Send",
         "openDeck": "Open",
         "partial": "Reply was interrupted.",
+        "scrollToBottom": "Scroll to latest",
         "retry": "Retry",
         "err": {
             "generic": "Something went wrong. Please try again.",
@@ -1077,7 +1094,8 @@
             "aiUnlimited": "Unlimited AI generator",
             "advancedStats": "Advanced statistics",
             "prioritySupport": "Priority support"
-        }
+        },
+        "toggleAria": "Toggle billing cycle"
     },
     "billing": {
         "success": {
@@ -1253,5 +1271,102 @@
         "row5Anki": "Power users who want full control over their review algorithm",
         "verdictTitle": "Which should you pick?",
         "verdictBody": "If you're starting from something you're already reading — an article, a textbook photo, a PDF — Mnemio builds the deck for you. If you want the biggest catalog of pre-made decks, Quizlet has more volume. If you want maximum control over the review algorithm and don't mind typing cards by hand, Anki is the most customizable."
+    },
+    "username": {
+        "hint": "English letters, numbers and _ only. For example: maks_2008",
+        "errTooShort": "Username is too short — use at least 3 characters.",
+        "errTooLong": "Username is too long — 24 characters max.",
+        "errInvalidChars": "Use English letters for your username. Numbers and _ are fine too. For example: maks_2008",
+        "errReserved": "That username isn't available — try another one.",
+        "errTaken": "That username is already taken — try another one."
+    },
+    "languages": {
+        "en": "English",
+        "es": "Spanish",
+        "fr": "French",
+        "de": "German",
+        "it": "Italian",
+        "pt": "Portuguese",
+        "uk": "Ukrainian",
+        "pl": "Polish",
+        "ja": "Japanese",
+        "ko": "Korean",
+        "zh": "Chinese",
+        "ru": "Russian"
+    },
+    "errors": {
+        "generic": "Something went wrong. Please try again.",
+        "NETWORK_ERROR": "Couldn't reach the server — check your connection and try again.",
+        "RATE_LIMITED": "You're going a little fast — take a breath and try again in a moment.",
+        "INTERNAL": "Something went wrong on our side. Please try again.",
+        "UNKNOWN": "Something went wrong. Please try again.",
+        "BAD_REQUEST": "That request didn't look quite right. Please try again.",
+        "VALIDATION_ERROR": "Please check the fields and try again.",
+        "UNPROCESSABLE": "We couldn't process that. Please check and try again.",
+        "CONFLICT": "This already exists.",
+        "NOT_FOUND": "We couldn't find that.",
+        "NOT_READY": "That isn't ready yet — try again in a moment.",
+        "FORBIDDEN": "You don't have access to this.",
+        "UNAUTHORIZED": "Please sign in to continue.",
+        "AUTH_FORBIDDEN": "You don't have access to this.",
+        "AUTH_UNAUTHENTICATED": "Please sign in to continue.",
+        "AUTH_INVALID_TOKEN": "Your session has expired. Please sign in again.",
+        "AUTH_INVALID_REFRESH": "Your session has expired. Please sign in again.",
+        "AUTH_INVALID_CREDENTIALS": "Email or password is incorrect.",
+        "AUTH_EMAIL_TAKEN": "An account with this email already exists. Try logging in instead.",
+        "AUTH_EMAIL_UNVERIFIED_LINK": "An unverified account already exists for this email. Verify it first or use a different account.",
+        "AUTH_INVALID_CODE": "That code doesn't match. Check it and try again.",
+        "AUTH_OTP_COOLDOWN": "Please wait a moment before requesting a new code.",
+        "AUTH_OTP_EXHAUSTED": "Too many attempts. Request a new code.",
+        "AUTH_INVALID_USER": "We couldn't find this account.",
+        "AUTH_USERNAME_TAKEN": "This username is already taken.",
+        "EMAIL_NOT_VERIFIED": "Please verify your email first.",
+        "USER_NOT_FOUND": "We couldn't find this account.",
+        "OAUTH_BAD_EXCHANGE_CODE": "Sign-in link expired. Please try again.",
+        "OAUTH_EXCHANGE_EXPIRED": "Sign-in link expired. Please try again.",
+        "OAUTH_BAD_PROFILE": "We couldn't read your profile from that provider.",
+        "OAUTH_EMAIL_UNVERIFIED": "That account's email isn't verified with the provider.",
+        "OAUTH_NOT_CONFIGURED": "This sign-in option isn't available right now.",
+        "OAUTH_USERINFO_FAILED": "We couldn't reach the sign-in provider. Please try again.",
+        "DECK_NOT_FOUND": "This deck no longer exists.",
+        "DECK_EMPTY": "This deck has no cards yet — add a few first.",
+        "CARD_NOT_FOUND": "This card no longer exists.",
+        "CARD_FORBIDDEN": "You can't edit this card.",
+        "SESSION_NOT_FOUND": "This study session no longer exists.",
+        "SESSION_NOT_ACTIVE": "This study session has already ended.",
+        "CHAT_NOT_FOUND": "This conversation no longer exists.",
+        "CHAT_EMPTY_MESSAGE": "Write a message or attach an image.",
+        "MEDIA_NO_FILE": "Please choose a file.",
+        "MEDIA_BAD_MIME": "This file type isn't supported.",
+        "MEDIA_TOO_LARGE": "This file is too large.",
+        "AI_BUDGET_EXCEEDED": "You've used today's AI limit. It resets tomorrow.",
+        "AI_PROVIDER_ERROR": "AI is taking a little break. Please try again.",
+        "AI_VALIDATION_FAILED": "AI couldn't put that together. Try rephrasing.",
+        "AI_TOO_MANY_WORDS": "Too many words at once — try a shorter list.",
+        "AI_IMAGE_TOO_LARGE": "This image is too large.",
+        "AI_IMAGE_UNSUPPORTED_TYPE": "Please use a PNG, JPEG, WebP or GIF image.",
+        "IMPORT_BAD_URL": "That link doesn't look right.",
+        "IMPORT_NOT_FOUND": "We couldn't find a set at that link.",
+        "IMPORT_PARSE_FAILED": "We couldn't read that set.",
+        "IMPORT_UPSTREAM_ERROR": "The source site isn't responding. Please try again later.",
+        "IMPORT_BUDGET_EXCEEDED": "You've reached today's import limit. It resets tomorrow.",
+        "PREMIUM_REQUIRED": "This is a Premium feature.",
+        "BILLING_NOT_CONFIGURED": "Payments aren't available right now.",
+        "BILLING_PRICE_NOT_CONFIGURED": "Payments aren't available right now.",
+        "BILLING_SESSION_ERROR": "We couldn't open checkout. Please try again.",
+        "BILLING_NO_SUBSCRIPTION": "You don't have an active subscription.",
+        "INVALID_CURSOR": "Something went wrong while loading. Please refresh.",
+        "INVALID_LIMIT": "Something went wrong while loading. Please refresh."
+    },
+    "toast": {
+        "dismiss": "Dismiss"
+    },
+    "errorPage": {
+        "goHome": "Go home",
+        "browseDecks": "Browse decks",
+        "notFoundTitle": "You found nothing",
+        "notFoundBody": "This page wandered off. Let’s get you back to your decks.",
+        "genericTitle": "Something went wrong",
+        "genericBody": "Something unexpected happened. Let’s get you back on track."
     }
 }

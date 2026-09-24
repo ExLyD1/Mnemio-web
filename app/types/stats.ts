@@ -3,7 +3,9 @@ export type StatsRange = '7' | '30' | '90' | 'all';
 export interface StatsTrend {
     current: number;
     previous: number;
-    deltaPct: number;
+    // null when there is no comparison window (range 'all' has no previous
+    // period, so a percentage there would be fabricated).
+    deltaPct: number | null;
 }
 
 export interface StatsOverview {
@@ -47,6 +49,8 @@ export interface DeckPerformance {
     title: string;
     cardCount: number;
     masteryPct: number;
+    /** Graded progress: each card counts min(repetitions, 3)/3 toward the deck. */
+    progressPct: number;
     retention: number;
     reviewed: number;
 }

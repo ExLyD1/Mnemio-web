@@ -4,6 +4,9 @@ import type { Achievement } from '@/types/achievement';
 
 interface WireProgress {
     cardId: string;
+    // GET /srs/progress reports the owning deck per row; POST /srs/rate does
+    // not (the caller already knows which deck it rated in).
+    deckId?: string;
     repetitions: number;
     interval: number;
     easeFactor: number;
@@ -31,7 +34,9 @@ export interface DueItem {
 
 const toProgress = (p: WireProgress, deckId = ''): CardProgress => ({
     cardId: p.cardId,
-    deckId,
+    // An explicit argument wins; otherwise take the server's value. Both may be
+    // empty strings, so this is an emptiness check, not a nullish one.
+    deckId: deckId !== '' ? deckId : (p.deckId ?? ''),
     easeFactor: p.easeFactor,
     intervalDays: p.interval,
     repetitions: p.repetitions,

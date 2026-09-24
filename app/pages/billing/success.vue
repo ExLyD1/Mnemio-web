@@ -41,7 +41,7 @@ const toast = useToast();
 const auth = useAuthStore();
 const billingStore = useBillingStore();
 
-useSeo({ title: t('billing.success.seoTitle'), noindex: true });
+useSeo({ title: t('billing.success.seoTitle'), description: t('seo.appDesc'), noindex: true });
 
 const MAX_ATTEMPTS = 10;
 const INTERVAL_MS = 3000;

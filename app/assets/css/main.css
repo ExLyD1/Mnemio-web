@@ -5,86 +5,229 @@
  */
 
 /*
- * Theme palette. Values are space-separated RGB channels so Tailwind's
- * `rgb(var(--x) / <alpha-value>)` tokens (see tailwind.config.ts) can apply
- * opacity modifiers. Dark is the default/main theme; .light flips surfaces to
- * cream and text to deep plum, on a lavender-tinted page.
+ * Theme palette — Mnemio "Green Accent" pair.
+ *
+ * Ported from the Green Combined desktop-screen spec (grna-dark / grna-light).
+ * The spec names its tokens `--d-*` and switches on `[data-dtheme]`; here the
+ * same values live under this repo's `--c-*` namespace and are switched by
+ * @nuxtjs/color-mode (`.dark` / `.light` on <html>). Solid colors are stored as
+ * space-separated RGB channels so Tailwind's `rgb(var(--x) / <alpha-value>)`
+ * tokens (see tailwind.config.ts) keep working; composites (washes, gradients,
+ * translucent bars) are stored as complete CSS values, verbatim from the spec.
+ *
+ * NAMING: the token names below (`--c-purple`, `--c-plum`, `--c-pink`) are held
+ * over from the previous Lavender palette and now carry GREEN values. The names
+ * are deliberately unchanged so the ~110 components that reference them keep
+ * working; read them by ROLE, not by hue:
+ *   --c-purple = the accent      --c-plum* = the deep fill ramp
+ *   --c-pink   = the soft tint   --c-cream = body ink on page/card surfaces
+ *
+ * INK-ON-SURFACE RULE (the whole point of this palette — see §2 of both specs):
+ *   page + card surfaces  → --c-cream / cream-dim / cream-faint
+ *   plum + gradient fills → --c-on-plum / on-plum-dim / on-plum-faint
+ *   solid --c-purple fill → --c-on-accent
+ * `--c-cream` is LIGHT in dark mode and DARK in light mode; `--c-on-plum` is the
+ * exact opposite. Mixing them up makes text invisible in one of the two themes.
+ *
+ * Intrinsic alphas (dim/faint/line/track/well/soft) are per-theme `--c-a-*` vars
+ * rather than baked into tailwind.config.ts, because the two themes need
+ * different opacities over the same base color.
  */
 :root,
 .dark {
     color-scheme: dark;
 
-    --c-bg-base: 18 15 26; /* page — dark plum (cooler, less warm) */
-    --c-bg-deep: 10 8 16; /* sunken pockets */
-    --c-bg-surface: 32 28 48; /* cards, rail — clearly elevated */
-    --c-bg-surface-2: 44 40 64; /* second-level surfaces */
-    --c-bg-well: 13 11 20; /* input wells */
-    --c-bg-muted: 66 62 82;
+    /* surfaces */
+    --c-bg-base: 21 23 26; /* #15171A */
+    --c-bg-base-2: 25 28 31; /* #191C1F */
+    --c-bg-surface: 30 33 36; /* #1E2124 — cards, rail */
+    --c-bg-surface-2: 40 44 48; /* #282C30 — second-level surfaces */
+    --c-bg-deep: 15 17 19; /* #0F1113 — sunken pockets */
+    --c-rail-bg: rgba(13, 15, 17, 0.6);
+    --c-top-bg: rgba(21, 23, 26, 0.6);
+    --c-panel-solid: rgba(15, 17, 19, 0.97);
 
-    --c-cream: 218 210 202; /* primary text — softer warm cream, ~13:1 on dark base */
-    --c-brand-muted: 142 118 146; /* secondary text */
-    --c-brand-pale: 206 178 189; /* tertiary text / chips */
-    --c-brand-light: 226 210 200;
+    /* input wells + progress/heatmap tracks */
+    --c-well: 255 255 255;
+    --c-a-well: 0.03;
+    --c-track: 255 255 255;
+    --c-a-track: 0.07;
 
-    --c-on-color: 244 238 248; /* light text on colored fills */
-    --c-line: 227 210 200; /* borders (alpha applied) */
+    /* hairlines */
+    --c-line: 236 239 236;
+    --c-a-line: 0.1;
+    --c-a-line-strong: 0.18;
+    --c-a-line-faint: 0.06;
 
-    /* cooler grape-purple gradient — no reddish warmth */
-    --c-fc-front: linear-gradient(160deg, #221c30 0%, #15112a 100%);
-    --c-fc-back: linear-gradient(160deg, #4a2c54 0%, #3d2758 100%);
+    /* ink on page + card surfaces */
+    --c-cream: 236 239 236; /* #ECEFEC */
+    --c-a-dim: 0.62;
+    --c-a-faint: 0.42;
 
-    /* Dashboard hero wash — cooled to match the palette shift away from warm wine. */
-    --c-hero: linear-gradient(160deg, #4a2c58 0%, #221c30 100%);
+    /* accents */
+    --c-purple: 122 201 142; /* #7AC98E — green accent */
+    --c-a-purple-soft: 0.18;
+    --c-plum: 51 56 60; /* #33383C */
+    --c-plum-2: 42 46 49; /* #2A2E31 */
+    --c-plum-deep: 25 28 30; /* #191C1E */
+    --c-pink: 201 232 184; /* #C9E8B8 */
+    --c-ok: 127 217 166; /* #7FD9A6 */
+    --c-bad: 227 125 136; /* #E37D88 */
+    --c-warn: oklch(0.82 0.14 75);
+    --c-error: 235 61 61; /* #EB3D3D — hard-fail red; not in the spec, added per Rule 0 */
+    --c-link-hover: 201 232 184; /* = --c-pink, per dark spec "links accent → pink" */
+    --c-shadow: 0 0 0; /* neutral drop-shadow base — never colored (both specs) */
 
-    /* Mimi coach panel wash — cool blue-purple so it reads calm, not warm wine. */
-    --c-mimi-ambient: radial-gradient(
+    /* CTA sitting ON the hero/plum fill. --c-hero is a DARK gradient in BOTH
+       themes, so a button on it gets the same treatment in both: a bright green
+       pill with dark ink. Hence identical values in the two blocks. */
+    --c-cta: 76 174 113; /* #4CAE71 — the bright stop; also the hover glow */
+    --c-cta-grad: linear-gradient(90deg, #4cae71, #4e9267);
+    --c-cta-grad-hover: linear-gradient(90deg, #57c47f, #57a374);
+    --c-on-cta: 15 32 22;
+
+    /* ink on accent/plum fills */
+    --c-on-accent: 15 32 22; /* #0F2016 */
+    --c-on-plum: 236 239 236; /* #ECEFEC */
+    --c-a-on-plum-dim: 0.74;
+    --c-a-on-plum-faint: 0.54;
+
+    /* composites — verbatim from the dark spec */
+    --c-wash: rgba(60, 60, 66, 0.35);
+    --c-scrim: rgba(10, 11, 13, 0.6);
+    --c-panel-wash: radial-gradient(
         130% 120% at 50% 0%,
-        rgba(72, 47, 100, 0.48),
-        rgba(12, 9, 18, 0.4)
+        rgba(122, 201, 142, 0.2),
+        rgba(15, 17, 19, 0.4)
     );
+    --c-card-dark: linear-gradient(160deg, #24272b, #15171a);
+    --c-card-plum: linear-gradient(160deg, #33383c, #212528);
+    --c-glow:
+        radial-gradient(900px 500px at 80% -10%, rgba(122, 201, 142, 0.14), transparent 60%),
+        radial-gradient(700px 400px at -10% 30%, rgba(60, 60, 66, 0.28), transparent 65%);
+
+    /* stat-tile numerals — order: blue, neutral, green, accent */
+    --c-stat-1: 156 200 240; /* #9CC8F0 */
+    --c-stat-2: 255 255 255; /* #FFFFFF */
+    --c-stat-3: 220 232 148; /* #DCE894 */
+    --c-stat-4: 122 201 142; /* #7AC98E */
+
+    /* legacy aliases — kept so existing class names resolve to the new palette */
+    --c-on-color: 236 239 236; /* = --c-on-plum */
+    --c-fc-front: var(--c-card-dark);
+    --c-fc-back: var(--c-card-plum);
+    --c-hero: linear-gradient(160deg, rgb(var(--c-plum)), rgb(var(--c-plum-deep)));
+    --c-mimi-ambient: var(--c-panel-wash);
+    --c-progress: linear-gradient(90deg, rgb(var(--c-purple)), rgb(var(--c-ok)));
+    --c-shadow-float: 0 30px 60px rgb(var(--c-shadow) / 0.35);
 }
 
 .light {
     color-scheme: light;
 
-    --c-bg-base: 251 249 253; /* near-white with barely-perceptible lavender whisper */
-    --c-bg-deep: 244 242 250; /* slightly recessed — lighter than before */
-    --c-bg-surface: 255 255 255;
-    --c-bg-surface-2: 250 248 253;
-    --c-bg-well: 253 252 254;
-    --c-bg-muted: 228 222 240;
+    /* surfaces */
+    --c-bg-base: 245 250 245; /* #F5FAF5 */
+    --c-bg-base-2: 234 244 234; /* #EAF4EA */
+    --c-bg-surface: 255 255 255; /* #FFFFFF */
+    --c-bg-surface-2: 238 246 238; /* #EEF6EE */
+    --c-bg-deep: 250 253 249; /* #FAFDF9 */
+    --c-rail-bg: rgba(255, 255, 255, 0.72);
+    --c-top-bg: rgba(255, 255, 255, 0.72);
+    --c-panel-solid: rgba(255, 255, 255, 0.97);
 
-    --c-cream: 45 28 43;
-    --c-brand-muted: 106 80 110;
-    --c-brand-pale: 90 63 88;
-    --c-brand-light: 87 46 84;
+    /* input wells + tracks — tinted, not white-on-white */
+    --c-well: 63 151 88;
+    --c-a-well: 0.05;
+    --c-track: 45 90 64;
+    --c-a-track: 0.14;
 
-    --c-on-color: 248 244 252;
-    --c-line: 75 45 73;
+    /* hairlines — darkened, white-on-white borders vanish */
+    --c-line: 45 90 64;
+    --c-a-line: 0.14;
+    --c-a-line-strong: 0.22;
+    --c-a-line-faint: 0.09;
 
-    --c-fc-front: linear-gradient(160deg, #ffffff 0%, #f6f1fa 100%);
-    --c-fc-back: linear-gradient(160deg, #f1e9fb 0%, #e7daf6 100%);
+    /* ink on page + card surfaces — DARK in this theme */
+    --c-cream: 32 50 31; /* #20321F */
+    --c-a-dim: 0.8;
+    --c-a-faint: 0.6;
 
-    --c-hero: linear-gradient(160deg, #ede4f8 0%, #d4b8f0 100%);
+    /* accents — darkened so they pass on white */
+    --c-purple: 63 151 88; /* #3F9758 — green accent */
+    --c-a-purple-soft: 0.14;
+    --c-plum: 45 90 64; /* #2D5A40 */
+    --c-plum-2: 37 74 52; /* #254A34 */
+    --c-plum-deep: 21 42 28; /* #152A1C */
+    --c-pink: 201 232 184; /* #C9E8B8 */
+    --c-ok: 63 151 88; /* #3F9758 */
+    --c-bad: 216 91 106; /* #D85B6A */
+    --c-warn: oklch(0.56 0.14 68);
+    --c-error: 196 43 43; /* #C42B2B — darkened to pass on white (see dark block note) */
+    /* --c-pink is a pale mint here and would fail on a white page, so the
+       link hover darkens to plum-2 instead. Own token, never inlined (Rule 0). */
+    --c-link-hover: 37 74 52; /* = --c-plum-2 */
+    --c-shadow: 0 0 0;
 
-    --c-mimi-ambient: radial-gradient(
+    /* CTA sitting ON the hero/plum fill. --c-hero is a DARK gradient in BOTH
+       themes, so a button on it gets the same treatment in both: a bright green
+       pill with dark ink. Hence identical values in the two blocks. */
+    --c-cta: 76 174 113; /* #4CAE71 — the bright stop; also the hover glow */
+    --c-cta-grad: linear-gradient(90deg, #4cae71, #4e9267);
+    --c-cta-grad-hover: linear-gradient(90deg, #57c47f, #57a374);
+    --c-on-cta: 15 32 22;
+
+    /* ink on accent/plum fills — LIGHT, opposite of --c-cream */
+    --c-on-accent: 255 255 255;
+    --c-on-plum: 255 255 255;
+    --c-a-on-plum-dim: 0.82;
+    --c-a-on-plum-faint: 0.64;
+
+    /* composites — verbatim from the light spec */
+    --c-wash: rgba(63, 151, 88, 0.12);
+    --c-scrim: rgba(20, 32, 20, 0.5);
+    --c-panel-wash: radial-gradient(
         130% 120% at 50% 0%,
-        rgba(169, 142, 227, 0.22),
-        rgba(252, 247, 242, 0.55)
+        rgba(63, 151, 88, 0.14),
+        rgba(198, 224, 196, 0.14)
     );
+    /* NOTE: "card-dark" is a light mint gradient here despite the name; its
+       ink stays --c-cream. Name kept for cross-theme parity (light spec §2). */
+    --c-card-dark: linear-gradient(160deg, #f1f8f0, #e5f0e3);
+    --c-card-plum: linear-gradient(160deg, #2d5a40, #204030);
+    --c-glow:
+        radial-gradient(900px 500px at 80% -10%, rgba(120, 190, 140, 0.2), transparent 60%),
+        radial-gradient(700px 400px at -10% 30%, rgba(198, 224, 196, 0.3), transparent 65%);
+
+    /* stat-tile numerals — dark variants */
+    --c-stat-1: 46 95 158; /* #2E5F9E */
+    --c-stat-2: 37 74 52; /* #254A34 */
+    --c-stat-3: 122 138 30; /* #7A8A1E */
+    --c-stat-4: 44 122 66; /* #2C7A42 */
+
+    /* legacy aliases */
+    --c-on-color: 255 255 255; /* = --c-on-plum */
+    --c-fc-front: var(--c-card-dark);
+    --c-fc-back: var(--c-card-plum);
+    --c-hero: linear-gradient(160deg, rgb(var(--c-plum)), rgb(var(--c-plum-deep)));
+    --c-mimi-ambient: var(--c-panel-wash);
+    --c-progress: linear-gradient(90deg, rgb(var(--c-purple)), rgb(var(--c-ok)));
+    --c-shadow-float: 0 30px 60px rgb(var(--c-shadow) / 0.35);
 }
 
-/* Plum-tinted shadow overrides for Bright mode — prevents grey halos on white. */
+/*
+ * Light mode has no ambient glow to separate cards, so elevation comes from
+ * hairlines plus soft neutral shadows — no colored shadows (light spec §3).
+ */
 .light .shadow-flash-card {
-    box-shadow: 0 24px 50px -28px rgba(60, 30, 58, 0.35);
+    box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.12);
 }
 .light .shadow-soft-elevation {
     box-shadow:
-        0 18px 44px -26px rgba(60, 30, 58, 0.28),
-        0 2px 8px -4px rgba(60, 30, 58, 0.12);
+        0 8px 24px -10px rgba(0, 0, 0, 0.12),
+        0 2px 8px -4px rgba(0, 0, 0, 0.08);
 }
 .light .shadow-card-preview {
-    box-shadow: 0 24px 50px -28px rgba(60, 30, 58, 0.3);
+    box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.12);
 }
 
 html {
@@ -94,6 +237,25 @@ html {
 body {
     background-color: rgb(var(--c-bg-base));
     color: rgb(var(--c-cream));
+}
+
+::selection {
+    background-color: rgb(var(--c-purple) / 0.4);
+    color: rgb(var(--c-cream));
+}
+
+/*
+ * Bare links must be declared from the palette or they fall back to the
+ * browser's default blue (both specs, §Global chrome + acceptance checklist).
+ * Tailwind's preflight sets `a { color: inherit }`, and utility classes still
+ * win on specificity, so this only affects links with no explicit color class.
+ */
+a:not([class*='text-']) {
+    color: rgb(var(--c-purple));
+}
+
+a:not([class*='text-']):hover {
+    color: rgb(var(--c-link-hover));
 }
 
 .page-enter-active {

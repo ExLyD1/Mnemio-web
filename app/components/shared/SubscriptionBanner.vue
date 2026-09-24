@@ -44,7 +44,7 @@ const banner = computed(() => {
         return {
             text: t('banner.pastDue'),
             cta: t('banner.pastDueCta'),
-            classes: 'bg-red-500/10 text-red-300 border-b border-red-500/20',
+            classes: 'bg-error/10 text-error-soft border-b border-error/20',
             action: () => billing.portal.execute(),
         };
     }
@@ -52,7 +52,7 @@ const banner = computed(() => {
         return {
             text: t('banner.canceled').replace('{date}', fmt(sub.currentPeriodEnd)),
             cta: t('banner.canceledCta'),
-            classes: 'bg-amber-500/10 text-amber-300 border-b border-amber-500/20',
+            classes: 'bg-warn/10 text-warn border-b border-warn/20',
             action: () => router.push('/pricing'),
         };
     }

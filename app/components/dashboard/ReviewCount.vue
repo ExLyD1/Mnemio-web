@@ -3,7 +3,7 @@
         class="flex items-center justify-between gap-4 rounded-2xl border border-line bg-bg-surface p-5"
     >
         <div class="flex items-center gap-3">
-            <div class="grid size-10 place-items-center rounded-xl bg-pink-soft/20 text-pink-soft">
+            <div class="grid size-10 place-items-center rounded-xl bg-purple-soft text-purple">
                 <Flame class="size-5" />
             </div>
             <div>

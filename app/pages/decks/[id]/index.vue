@@ -12,7 +12,7 @@
 
         <SharedPageLoader v-if="loading && !ready" />
 
-        <div v-else-if="ready" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div v-else-if="ready && store.deck" class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
             <div class="min-w-0 flex flex-col gap-5">
                 <div class="relative">
                     <SharedCoverArt :swatch="swatch" class="p-6">
@@ -65,7 +65,7 @@
                             <template #trigger="{ toggle }">
                                 <button
                                     type="button"
-                                    class="grid size-9 place-items-center rounded-full bg-black/20 text-on-color backdrop-blur transition-colors hover:bg-black/35"
+                                    class="grid size-9 place-items-center rounded-full bg-veil/20 text-on-color backdrop-blur transition-colors hover:bg-veil/35"
                                     :aria-label="t('deck.menuAria')"
                                     @click="toggle"
                                 >
@@ -91,7 +91,7 @@
                             class="text-small transition-colors"
                             :class="
                                 filter === 'all'
-                                    ? 'text-brand underline underline-offset-2'
+                                    ? 'text-brand-bright underline underline-offset-2'
                                     : 'text-brand-muted'
                             "
                             >{{ t('deck.statTotal') }}</span
@@ -109,7 +109,7 @@
                             class="text-small transition-colors"
                             :class="
                                 filter === 'practiced'
-                                    ? 'text-brand underline underline-offset-2'
+                                    ? 'text-brand-bright underline underline-offset-2'
                                     : 'text-brand-muted'
                             "
                             >{{ t('deck.statPracticed') }}</span
@@ -127,7 +127,7 @@
                             class="text-small transition-colors"
                             :class="
                                 filter === 'new'
-                                    ? 'text-brand underline underline-offset-2'
+                                    ? 'text-brand-bright underline underline-offset-2'
                                     : 'text-brand-muted'
                             "
                             >{{ t('deck.statNew') }}</span
@@ -213,7 +213,10 @@
             <aside class="flex flex-col gap-4 self-start lg:sticky lg:top-6">
                 <div class="rounded-[20px] border border-line bg-bg-surface-2 p-6">
                     <div class="grid place-items-center">
-                        <SharedProgressRing :pct="deckStat.masteredPct" label="mastered" />
+                        <SharedProgressRing
+                            :pct="deckStat.masteredPct"
+                            :label="t('deck.statMastered')"
+                        />
                     </div>
                     <div class="mt-4 w-full border-t border-line pt-4">
                         <SharedBreakdownBar :segments="breakdownSegments" />
@@ -280,7 +283,7 @@
             <div class="flex flex-col gap-4">
                 <UiInputField v-model="editWord" :label="t('card.word')" />
                 <UiTextarea v-model="editDefinition" :label="t('card.definition')" :rows="3" />
-                <UiInputField v-model="editPhonetic" label="Phonetic (optional)" />
+                <UiInputField v-model="editPhonetic" :label="t('card.phonetic')" />
             </div>
             <template #footer>
                 <UiButton variant="ghost" @click="editOpen = false">{{
@@ -332,7 +335,7 @@ import {
     Share2,
     BookCopy,
 } from 'lucide-vue-next';
-import { useDecks, useCards, useSrsStore, useToast, useT } from '#imports';
+import { useDecks, useCards, useSrsStore, useToast, useT, useApiError } from '#imports';
 import { isAuthExpiry } from '@/composables/useToast';
 import { swatchFor } from '@/utils/coverSwatches';
 import { copyDeck } from '@/api/discover';
@@ -350,6 +353,7 @@ const { updateCard, deleteCard } = useCards();
 const srs = useSrsStore();
 const toast = useToast();
 const { t } = useT();
+const { apiErrorText } = useApiError();
 const auth = useAuthStore();
 const analytics = useAnalytics();
 
@@ -411,7 +415,7 @@ const saveEdit = async () => {
     });
     if (updateCard.error.value) {
         if (!isAuthExpiry(updateCard.error.value.code)) {
-            toast.error(updateCard.error.value.message);
+            toast.error(apiErrorText(updateCard.error.value));
         }
         return;
     }
@@ -430,7 +434,7 @@ const confirmDeleteCard = async () => {
     await deleteCard.execute(id.value, pendingCardId.value);
     if (deleteCard.error.value) {
         if (!isAuthExpiry(deleteCard.error.value.code)) {
-            toast.error(deleteCard.error.value.message);
+            toast.error(apiErrorText(deleteCard.error.value));
         }
     } else {
         toast.success(t('card.deleted'));
@@ -554,7 +558,7 @@ const onConfirmDelete = async () => {
     await remove.execute(id.value);
     if (remove.error.value) {
         if (!isAuthExpiry(remove.error.value.code)) {
-            toast.error(t(remove.error.value.message, remove.error.value.message));
+            toast.error(apiErrorText(remove.error.value));
         }
     } else {
         toast.success(t('deck.deleted'));

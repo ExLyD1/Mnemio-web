@@ -124,7 +124,14 @@
                     </div>
                     <div class="flex min-h-[72px] w-full items-center justify-center">
                         <Transition name="rate" mode="out-in">
-                            <StudyRatingRow v-if="practice.revealed.value" @grade="onGrade" />
+                            <StudyRatingRow
+                                v-if="practice.revealed.value && srsEnabled"
+                                @grade="onGrade"
+                            />
+                            <StudySimpleRatingRow
+                                v-else-if="practice.revealed.value"
+                                @answer="onSimpleAnswer"
+                            />
                             <p v-else class="hidden text-small text-brand-muted sm:block">
                                 {{ t('study.revealHint') }}
                             </p>
@@ -133,14 +140,36 @@
 
                     <!-- Shuffle + Track-progress controls -->
                     <div class="flex items-center justify-center gap-4 sm:gap-6">
-                        <button
-                            type="button"
-                            class="flex items-center gap-1.5 text-small text-brand-muted transition-colors hover:text-cream"
-                            @click="onReshuffle"
+                        <label
+                            class="flex cursor-pointer items-center gap-2 text-small text-brand-muted"
                         >
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="shuffleEnabled"
+                                :aria-label="t('study.shuffleBtn')"
+                                class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                :class="
+                                    shuffleEnabled
+                                        ? 'border-brand bg-brand'
+                                        : 'border-line bg-bg-surface-2'
+                                "
+                                @click="onToggleShuffle"
+                            >
+                                <span
+                                    class="pointer-events-none inline-block h-3 w-3 transform rounded-full transition-transform"
+                                    :class="
+                                        shuffleEnabled
+                                            ? 'translate-x-[18px] bg-on-plum'
+                                            : 'translate-x-0.5 bg-brand-muted'
+                                    "
+                                />
+                            </button>
                             <Shuffle class="size-3.5" />
-                            {{ t('study.shuffleBtn') }}
-                        </button>
+                            <span :class="shuffleEnabled ? 'text-cream' : ''">
+                                {{ t('study.shuffleBtn') }}
+                            </span>
+                        </label>
                         <span class="h-3 w-px bg-line" aria-hidden="true" />
                         <label
                             class="flex cursor-pointer items-center gap-2 text-small text-brand-muted"
@@ -162,7 +191,7 @@
                                     class="pointer-events-none inline-block h-3 w-3 transform rounded-full transition-transform"
                                     :class="
                                         trackProgress
-                                            ? 'translate-x-[18px] bg-white'
+                                            ? 'translate-x-[18px] bg-on-plum'
                                             : 'translate-x-0.5 bg-brand-muted'
                                     "
                                 />
@@ -213,7 +242,7 @@
             :mood="practice.mimi.mood.value"
             placement="right"
             :size="92"
-            class="fixed bottom-6 right-6"
+            class="pointer-events-none fixed bottom-6 right-6"
         />
     </section>
 </template>
@@ -252,6 +281,11 @@ const loading = ref(true);
 // instead of going to the results page (if there are revisit cards left).
 const TRACK_KEY = 'mnemio_track_progress';
 const trackProgress = ref(false);
+// Shuffle toggle - persistent on/off, not a one-shot "shuffle now" action
+// (that was the old design: a button that reshuffled once and gave no
+// indication whether future cards would also be shuffled).
+const SHUFFLE_KEY = 'mnemio_shuffle_enabled';
+const shuffleEnabled = ref(true);
 // True when a round is done and we're waiting for the user to start the next.
 const roundDone = ref(false);
 
@@ -278,6 +312,14 @@ const onGrade = (rating: SrsRating) => {
     }
 };
 
+// Non-SRS (browse) mode: just two buttons, no SM-2 grading.
+const onSimpleAnswer = (correct: boolean) => {
+    const card = practice.study.currentCard.value;
+    if (card) {
+        practice.recordSimple(correct, card);
+    }
+};
+
 const mcPendingCorrect = ref<boolean | null>(null);
 
 const onMcPick = (correct: boolean) => {
@@ -301,10 +343,16 @@ const finalize = () => {
     if (!store.deck) {
         return;
     }
+    const graded =
+        practice.counts.again + practice.counts.hard + practice.counts.good + practice.counts.easy;
     practiceStore.setResult({
         deckId: deckId.value,
         deckTitle: store.deck.title,
-        reviewed: practice.study.totalCount.value,
+        // `reviewed` must come from the same population as `correct`: grades
+        // actually given. Using the queue length instead let a re-graded card
+        // (ArrowLeft, then grade again) push correct above reviewed, so the
+        // results screen could show accuracy over 100% and a "perfect" heading.
+        reviewed: graded > 0 ? graded : practice.study.totalCount.value,
         correct: practice.counts.good + practice.counts.easy,
         streak: practice.streak.value,
         timeMs: practice.study.elapsedMs.value,
@@ -321,13 +369,22 @@ const studyUnknown = async () => {
     const cards = [...practice.revisitCards.value];
     practice.resetCounts();
     roundDone.value = false;
-    await practice.study.startWithCards(store.deck, mode.value, cards);
+    await practice.study.startWithCards(store.deck, mode.value, cards, srsEnabled);
 };
 
-// Shuffle the current queue and jump back to card 0.
-const onReshuffle = async () => {
+// Toggle shuffle mode: turning it on re-shuffles immediately; turning it off
+// restores the deck's original card order. Either way, jump back to card 0
+// so the reorder is unambiguous rather than splicing mid-session.
+const onToggleShuffle = async () => {
+    shuffleEnabled.value = !shuffleEnabled.value;
     practice.revealed.value = false;
-    await practice.study.reshuffle();
+    if (shuffleEnabled.value) {
+        await practice.study.reshuffle();
+    } else if (store.deck) {
+        const inPlay = new Set(practice.study.queue.value.map((c) => c.id));
+        const original = store.deck.cards.filter((c) => inPlay.has(c.id));
+        await practice.study.reorder(original);
+    }
 };
 
 watch(
@@ -364,6 +421,16 @@ const onKey = (e: KeyboardEvent) => {
         return;
     }
     if (practice.revealed.value) {
+        if (!srsEnabled) {
+            if (e.key === '1') {
+                e.preventDefault();
+                onSimpleAnswer(false);
+            } else if (e.key === '2') {
+                e.preventDefault();
+                onSimpleAnswer(true);
+            }
+            return;
+        }
         const idx = ['1', '2', '3', '4'].indexOf(e.key);
         const grade = GRADES[idx];
         if (grade) {
@@ -395,20 +462,26 @@ const startSession = async () => {
         }
     }
 
-    await practice.study.start(deck, mode.value);
+    await practice.study.start(deck, mode.value, srsEnabled, shuffleEnabled.value);
     loading.value = false;
 };
 
 onMounted(() => {
-    // Restore track-progress preference from localStorage.
+    // Restore track-progress + shuffle preferences from localStorage.
     const saved = localStorage.getItem(TRACK_KEY);
     if (saved !== null) trackProgress.value = saved === 'true';
+    const savedShuffle = localStorage.getItem(SHUFFLE_KEY);
+    if (savedShuffle !== null) shuffleEnabled.value = savedShuffle === 'true';
     startSession();
     window.addEventListener('keydown', onKey);
 });
 
 watch(trackProgress, (val) => {
     localStorage.setItem(TRACK_KEY, String(val));
+});
+
+watch(shuffleEnabled, (val) => {
+    localStorage.setItem(SHUFFLE_KEY, String(val));
 });
 
 onBeforeUnmount(() => {

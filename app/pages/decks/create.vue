@@ -166,7 +166,7 @@
                                 }"
                                 @click="coverColor = swatch"
                             >
-                                <Layers class="size-3.5 text-white/70" />
+                                <Layers class="size-3.5 text-on-color/70" />
                             </button>
                         </div>
                     </div>
@@ -448,7 +448,7 @@ import { bulkAddCards } from '@/api/cards';
 import { useAnalytics } from '@/composables/useAnalytics';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import { useDecksStore } from '@/stores/decks';
-import { LANGUAGES } from '@/schemas/deck';
+import { useLanguageName } from '@/composables/useLanguageName';
 import type { DeckInput } from '@/types/deck';
 import { DECK_CATEGORIES, normCategory } from '@/utils/deckCategories';
 import type { DeckCategory } from '@/utils/deckCategories';
@@ -460,6 +460,12 @@ type MimiMsg = { role: 'mimi'; text: string };
 type DraftMsg = { role: 'draft'; data: AiDeckDraft };
 type ChatMsg = UserMsg | MimiMsg | DraftMsg;
 
+/*
+ * Deck cover art — user-selectable CONTENT colors, not theme chrome. Like
+ * COVER_GRADIENTS in @/utils/coverSwatches, these stay identical in both themes
+ * (a deck's cover shouldn't change color when the user flips the theme), and
+ * text on top of them uses `on-color`. Deliberately not tokenised.
+ */
 const COVER_SWATCHES = [
     '#7C5CBF',
     '#4A7FBD',
@@ -498,18 +504,17 @@ const categoryOptions = DECK_CATEGORIES.map((cat) => ({
     label: t(`deck.category.${cat}`),
 }));
 
-const languageOptions = LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
-
-const labelForLang = (code: string) =>
-    LANGUAGES.find((l) => l.code === code)?.label ?? code.toUpperCase();
+const { name: labelForLang, options: languageOptions } = useLanguageName();
 const frontLangLabel = computed(() => labelForLang(targetLanguage.value));
 const backLangLabel = computed(() => labelForLang(sourceLanguage.value));
 
-const cardTypes = computed(() => [
-    { value: 'basic', label: t('deck.cardTypeBasic'), hint: t('deck.cardTypeBasicHint') },
-    { value: 'cloze', label: t('deck.cardTypeCloze'), hint: t('deck.cardTypeClozeHint') },
-    { value: 'image', label: t('deck.cardTypeImage'), hint: t('deck.cardTypeImageHint') },
-]);
+const cardTypes = computed<{ value: 'basic' | 'cloze' | 'image'; label: string; hint: string }[]>(
+    () => [
+        { value: 'basic', label: t('deck.cardTypeBasic'), hint: t('deck.cardTypeBasicHint') },
+        { value: 'cloze', label: t('deck.cardTypeCloze'), hint: t('deck.cardTypeClozeHint') },
+        { value: 'image', label: t('deck.cardTypeImage'), hint: t('deck.cardTypeImageHint') },
+    ],
+);
 
 // Chat / panel state
 const mimiOpen = ref(false);
@@ -544,10 +549,6 @@ const buildInput = (): DeckInput => ({
 const validate = (): boolean => {
     if (!title.value.trim()) {
         toast.error(t('deck.errors.title_too_short'));
-        return false;
-    }
-    if (sourceLanguage.value === targetLanguage.value) {
-        toast.error(t('deck.errors.languages_same'));
         return false;
     }
     return true;

@@ -19,5 +19,5 @@ definePageMeta({ layout: 'marketing' });
 
 const { t } = useT();
 
-useSeo({ title: t('billing.cancel.seoTitle'), noindex: true });
+useSeo({ title: t('billing.cancel.seoTitle'), description: t('seo.appDesc'), noindex: true });
 </script>

@@ -2,7 +2,7 @@
     <form class="max-w-[500px] w-full" novalidate @submit="onSubmit">
         <UiTabs v-model="activeTab" :tabs="tabs" class="mb-[32px]" />
 
-        <div class="text-[#E3D2C8]">
+        <div class="text-cream">
             <!-- Social buttons -->
             <div class="mb-[28px] flex gap-3">
                 <button
@@ -203,7 +203,14 @@ const onSocial = async (social: Social) => {
         analytics.track('signup_started', { method: 'google', entry_point: entryPoint() });
     }
     const base = oauthBase.value;
-    const url = `${base}/api/v1/auth/oauth/google`;
+    // returnOrigin tells the backend which frontend to redirect back to once
+    // the OAuth round-trip completes (dev.mnemio.xyz, mnemio.xyz, localhost,
+    // whatever this page's own origin actually is) instead of it always
+    // falling back to the backend's single configured WEB_URL. The backend
+    // validates this against its WEB_URLS allowlist and ignores it if it's
+    // not on there, so there's nothing unsafe about always sending it.
+    const returnOrigin = encodeURIComponent(window.location.origin);
+    const url = `${base}/api/v1/auth/oauth/google?returnOrigin=${returnOrigin}`;
 
     // Cross-origin (configured backend) → go straight there; a CORS pre-flight probe
     // would be blocked and is pointless.

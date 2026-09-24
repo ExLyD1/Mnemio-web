@@ -52,13 +52,24 @@ export const listDecks = async (params: ListDecksParams = {}): Promise<ListDecks
 };
 
 export const getDeck = async (id: string): Promise<Deck> => {
-    const res = await http<{ deck: DeckSummary; cards: Card[] }>(`/decks/${id}`);
+    // `role`/`isOwner` sit alongside `deck` in the response, not inside it.
+    // They were being dropped here, leaving the deck page to fall back to
+    // comparing ownerId. Carry them through — the Deck type declares them and
+    // the server is the authority on who owns what.
+    const res = await http<{
+        deck: DeckSummary;
+        cards: Card[];
+        role?: 'owner' | 'viewer';
+        isOwner?: boolean;
+    }>(`/decks/${id}`);
     const { cardCount: _cardCount, ...deck } = res.deck;
     return {
         ...deck,
         sourceLanguage: normLang(deck.sourceLanguage),
         targetLanguage: normLang(deck.targetLanguage),
         cards: res.cards,
+        role: res.role,
+        isOwner: res.isOwner,
     };
 };
 

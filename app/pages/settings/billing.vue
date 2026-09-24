@@ -39,7 +39,7 @@
                 <!-- Past due warning -->
                 <div
                     v-if="sub.status === 'past_due'"
-                    class="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-small text-red-300"
+                    class="mt-4 rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-small text-error-soft"
                 >
                     {{ t('billing.settings.pastDueWarning') }}
                 </div>
@@ -65,7 +65,7 @@
                             )
                         }}
                     </p>
-                    <p v-if="sub.cancelAtPeriodEnd" class="text-amber-400">
+                    <p v-if="sub.cancelAtPeriodEnd" class="text-warn">
                         {{ t('billing.settings.cancelNote') }}
                     </p>
                 </div>
@@ -115,7 +115,7 @@ const { t } = useT();
 const billingStore = useBillingStore();
 const billing = useBilling();
 
-useSeo({ title: t('billing.settings.seoTitle'), noindex: true });
+useSeo({ title: t('billing.settings.seoTitle'), description: t('seo.appDesc'), noindex: true });
 
 onMounted(() => billingStore.load());
 
@@ -130,10 +130,10 @@ const fmt = (iso: string) =>
 
 const statusBadge = computed(() => {
     const status = sub.value?.status;
-    if (status === 'active') return { classes: 'bg-green-500/15 text-green-400' };
-    if (status === 'trialing') return { classes: 'bg-brand/15 text-brand' };
-    if (status === 'past_due') return { classes: 'bg-red-500/15 text-red-400' };
-    if (status === 'canceled') return { classes: 'bg-amber-500/15 text-amber-400' };
+    if (status === 'active') return { classes: 'bg-success/15 text-success' };
+    if (status === 'trialing') return { classes: 'bg-brand/15 text-brand-bright' };
+    if (status === 'past_due') return { classes: 'bg-error/15 text-error-soft' };
+    if (status === 'canceled') return { classes: 'bg-warn/15 text-warn' };
     return { classes: 'bg-bg-muted text-cream-dim' };
 });
 </script>

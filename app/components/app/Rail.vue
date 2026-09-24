@@ -12,7 +12,7 @@
         -->
         <div
             class="app-rail-inner absolute inset-y-0 left-0 z-50 flex flex-col items-stretch overflow-hidden border-r border-line bg-bg-surface px-3.5 py-[18px] transition-[width,box-shadow] duration-[240ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-            :class="expanded ? 'w-[240px] shadow-[8px_0_40px_-8px_rgba(0,0,0,0.6)]' : 'w-[76px]'"
+            :class="expanded ? 'w-[240px] shadow-rail' : 'w-[76px]'"
         >
             <!-- Brand -->
             <NuxtLink
@@ -49,7 +49,7 @@
                         <component
                             :is="link.icon"
                             class="size-5 shrink-0"
-                            :class="isActive(link.to) ? 'text-pink-soft' : ''"
+                            :class="isActive(link.to) ? 'text-on-plum' : ''"
                         />
                         <span
                             class="flex-1 whitespace-nowrap text-sm font-semibold leading-none transition-opacity duration-[160ms]"
@@ -63,7 +63,7 @@
                         <!-- Due badge on Dashboard link -->
                         <span
                             v-if="link.to === '/dashboard' && dueCount > 0"
-                            class="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-lavender px-1 text-[10px] font-bold text-plum-deep transition-opacity duration-[160ms]"
+                            class="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-lavender px-1 text-[10px] font-bold text-on-accent transition-opacity duration-[160ms]"
                             :class="expanded ? 'opacity-100 delay-[100ms]' : 'opacity-0 delay-0'"
                         >
                             {{ dueCount > 99 ? '99+' : dueCount }}
@@ -85,7 +85,7 @@
                         <Sparkles class="size-5" />
                         <span
                             v-if="dueCount > 0"
-                            class="absolute -right-2 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-bg-surface bg-lavender px-1 text-[10px] font-bold text-plum-deep"
+                            class="absolute -right-2 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-bg-surface bg-lavender px-1 text-[10px] font-bold text-on-accent"
                         >
                             {{ dueCount > 99 ? '99+' : dueCount }}
                         </span>
@@ -135,8 +135,7 @@
                             <img
                                 src="/images/mimi/axolotl.png"
                                 alt=""
-                                class="size-10 object-contain"
-                                style="filter: drop-shadow(0 4px 8px rgba(169, 142, 227, 0.4))"
+                                class="size-10 object-contain drop-shadow-rail-glyph"
                             />
                         </span>
                         <div

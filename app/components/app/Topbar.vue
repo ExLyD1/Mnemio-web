@@ -46,15 +46,7 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <button
-                type="button"
-                class="grid size-10 place-items-center rounded-full text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream"
-                :aria-label="t('topbar.toggleTheme')"
-                @click="toggleTheme"
-            >
-                <Moon v-if="colorMode.value === 'dark'" class="size-5" />
-                <Sun v-else class="size-5" />
-            </button>
+            <SharedThemeToggle />
 
             <UiPopover align="right">
                 <template #trigger="{ toggle }">
@@ -67,7 +59,7 @@
                         <Bell class="size-5" />
                         <span
                             v-if="unseenAchievements.length > 0"
-                            class="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-bg-surface bg-lavender px-1 text-[10px] font-bold text-plum-deep"
+                            class="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-bg-surface bg-lavender px-1 text-[10px] font-bold text-on-accent"
                         >
                             {{ unseenAchievements.length > 9 ? '9+' : unseenAchievements.length }}
                         </span>
@@ -158,16 +150,11 @@
 </template>
 
 <script setup lang="ts">
-import { Bell, Plus, User, LogOut, Sun, Moon, Trophy } from 'lucide-vue-next';
-import { useAuth, useAuthStore, useColorMode, useDecks, useToast, useT } from '#imports';
+import { Bell, Plus, User, LogOut, Trophy } from 'lucide-vue-next';
+import { useAuth, useAuthStore, useDecks, useToast, useT } from '#imports';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import { mediaUrl } from '@/utils/media';
 import type { Achievement } from '@/types/achievement';
-
-const colorMode = useColorMode();
-const toggleTheme = () => {
-    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark';
-};
 
 const search = ref('');
 const searchFocused = ref(false);

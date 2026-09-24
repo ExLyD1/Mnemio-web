@@ -1,4 +1,5 @@
-import { defineEventHandler, useRuntimeConfig } from '#imports';
+import { defineEventHandler } from 'h3';
+import { useRuntimeConfig } from '#imports';
 import { articles } from '../../../app/data/blog';
 
 interface SitemapDeck {
