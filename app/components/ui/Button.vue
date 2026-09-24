@@ -16,14 +16,7 @@ defineOptions({ inheritAttrs: false });
 
 withDefaults(
     defineProps<{
-        variant?:
-            | 'primary'
-            | 'accent'
-            | 'ghost'
-            | 'light'
-            | 'text'
-            | 'on-cover'
-            | 'on-cover-ghost';
+        variant?: 'primary' | 'accent' | 'ghost' | 'light' | 'text' | 'on-cover' | 'on-cover-ghost';
         disabled?: boolean;
     }>(),
     { variant: 'primary', disabled: false },

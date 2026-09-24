@@ -78,7 +78,6 @@
     --c-link-hover: 201 232 184; /* = --c-pink, per dark spec "links accent → pink" */
     --c-shadow: 0 0 0; /* neutral drop-shadow base — never colored (both specs) */
 
-
     /* CTA sitting ON the hero/plum fill. --c-hero is a DARK gradient in BOTH
        themes, so a button on it gets the same treatment in both: a bright green
        pill with dark ink. Hence identical values in the two blocks. */
@@ -168,7 +167,6 @@
        link hover darkens to plum-2 instead. Own token, never inlined (Rule 0). */
     --c-link-hover: 37 74 52; /* = --c-plum-2 */
     --c-shadow: 0 0 0;
-
 
     /* CTA sitting ON the hero/plum fill. --c-hero is a DARK gradient in BOTH
        themes, so a button on it gets the same treatment in both: a bright green
