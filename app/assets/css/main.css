@@ -78,6 +78,15 @@
     --c-link-hover: 201 232 184; /* = --c-pink, per dark spec "links accent → pink" */
     --c-shadow: 0 0 0; /* neutral drop-shadow base — never colored (both specs) */
 
+
+    /* CTA sitting ON the hero/plum fill. --c-hero is a DARK gradient in BOTH
+       themes, so a button on it gets the same treatment in both: a bright green
+       pill with dark ink. Hence identical values in the two blocks. */
+    --c-cta: 76 174 113; /* #4CAE71 — the bright stop; also the hover glow */
+    --c-cta-grad: linear-gradient(90deg, #4cae71, #4e9267);
+    --c-cta-grad-hover: linear-gradient(90deg, #57c47f, #57a374);
+    --c-on-cta: 15 32 22;
+
     /* ink on accent/plum fills */
     --c-on-accent: 15 32 22; /* #0F2016 */
     --c-on-plum: 236 239 236; /* #ECEFEC */
@@ -159,6 +168,15 @@
        link hover darkens to plum-2 instead. Own token, never inlined (Rule 0). */
     --c-link-hover: 37 74 52; /* = --c-plum-2 */
     --c-shadow: 0 0 0;
+
+
+    /* CTA sitting ON the hero/plum fill. --c-hero is a DARK gradient in BOTH
+       themes, so a button on it gets the same treatment in both: a bright green
+       pill with dark ink. Hence identical values in the two blocks. */
+    --c-cta: 76 174 113; /* #4CAE71 — the bright stop; also the hover glow */
+    --c-cta-grad: linear-gradient(90deg, #4cae71, #4e9267);
+    --c-cta-grad-hover: linear-gradient(90deg, #57c47f, #57a374);
+    --c-on-cta: 15 32 22;
 
     /* ink on accent/plum fills — LIGHT, opposite of --c-cream */
     --c-on-accent: 255 255 255;

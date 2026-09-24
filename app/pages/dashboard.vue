@@ -38,10 +38,13 @@
                             {{ t('dashboard.allCaughtUp') }}
                         </template>
                     </h2>
+                    <!-- `primary` is the plum fill, i.e. the SAME color as this
+                         hero card, so it disappeared into it (1.00:1). A CTA on a
+                         plum fill uses the light pill instead (both specs, §Home). -->
                     <div class="mt-5">
                         <UiButton
                             v-if="dueCount > 0"
-                            variant="primary"
+                            variant="accent"
                             class="gap-1.5"
                             @click="navigateTo(suggestAction?.href ?? '/review')"
                         >
@@ -50,7 +53,7 @@
                         </UiButton>
                         <UiButton
                             v-else
-                            variant="primary"
+                            variant="accent"
                             class="gap-1.5"
                             @click="navigateTo('/decks/create')"
                         >

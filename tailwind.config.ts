@@ -85,6 +85,10 @@ const config: Config = {
                 },
                 // Ink for a solid `purple` accent fill.
                 'on-accent': 'rgb(var(--c-on-accent) / <alpha-value>)',
+                // CTA on the hero/plum fill — bright green pill + dark ink, and
+                // identical in both themes because the hero fill is dark in both.
+                cta: 'rgb(var(--c-cta) / <alpha-value>)',
+                'on-cta': 'rgb(var(--c-on-cta) / <alpha-value>)',
                 // Legacy alias for on-plum — text that stays light on colored fills.
                 'on-color': 'rgb(var(--c-on-color) / <alpha-value>)',
                 // The UI accent.
@@ -188,6 +192,10 @@ const config: Config = {
                 'card-plum': 'var(--c-card-plum)',
                 'panel-wash': 'var(--c-panel-wash)',
                 hero: 'var(--c-hero)',
+                // CTA on the hero fill is a gradient, so it lives here rather
+                // than in `colors` (a bg-* name may not exist in both maps).
+                'cta-grad': 'var(--c-cta-grad)',
+                'cta-grad-hover': 'var(--c-cta-grad-hover)',
                 'progress-cream-lavender': 'var(--c-progress)',
                 'mimi-ambient': 'var(--c-mimi-ambient)',
             },

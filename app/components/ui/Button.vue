@@ -16,14 +16,29 @@ defineOptions({ inheritAttrs: false });
 
 withDefaults(
     defineProps<{
-        variant?: 'primary' | 'ghost' | 'light' | 'text' | 'on-cover' | 'on-cover-ghost';
+        variant?:
+            | 'primary'
+            | 'accent'
+            | 'ghost'
+            | 'light'
+            | 'text'
+            | 'on-cover'
+            | 'on-cover-ghost';
         disabled?: boolean;
     }>(),
     { variant: 'primary', disabled: false },
 );
 
 const variants = {
-    primary: 'bg-brand text-on-color hover:bg-brand-bright hover:shadow-md hover:shadow-brand/20',
+    // Light: the deep-fill ramp (`brand`) is already green there, so it stays and
+    // hover DARKENS to plum-2. Dark: that same ramp is a neutral grey that got lost
+    // against the grey cards, so the dark button uses the green ACCENT with
+    // on-accent ink, and hover BRIGHTENS to the soft mint tint.
+    primary:
+        'bg-brand text-on-color hover:bg-plum-2 hover:shadow-md hover:shadow-brand/20 dark:bg-purple dark:text-on-accent dark:hover:bg-pink',
+    // For a CTA sitting ON the hero/plum fill, where `primary` would be the very
+    // same color as the card. Bright green pill, dark ink, brightens on hover.
+    accent: 'bg-cta-grad text-on-cta hover:bg-cta-grad-hover hover:shadow-md hover:shadow-cta/25',
     ghost: 'bg-transparent text-cream border border-line-strong hover:border-cream-dim hover:bg-brand/15',
     // A light pill in BOTH themes (on-plum is light in dark mode and white in
     // light mode), so its ink is plum. `bg-brand-light` was the cream token,
