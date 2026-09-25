@@ -27,7 +27,11 @@
                                     >
                                         {{ store.deck.title }}
                                     </h1>
-                                    <p class="mt-1 text-small text-on-color/80">
+                                    <!-- words → definitions. The bare "UK → EN"
+                                     reads as a direction with no stated subject,
+                                     so QA reported it backwards; the title spells
+                                     out which side is which. -->
+                                    <p class="mt-1 text-small text-on-color/80" :title="langHint">
                                         {{ store.deck.targetLanguage.toUpperCase() }} →
                                         {{ store.deck.sourceLanguage.toUpperCase() }}
                                     </p>
@@ -231,6 +235,11 @@
 
                 <!-- Owner: authoring controls. Non-owner viewing a public deck: copy CTA. -->
                 <div v-if="isOwner" class="flex flex-col gap-2">
+                    <!-- Opens the chat with THIS deck attached — the only way
+                     Mimi can append to a specific deck. -->
+                    <UiButton variant="ghost" @click="navigateTo(`/ai?deckId=${id}`)">
+                        <MessageCircle class="size-4" /> {{ t('deck.askMimi') }}
+                    </UiButton>
                     <UiButton variant="ghost" @click="aiOpen = true">
                         <Sparkles class="size-4" /> {{ t('ai.launchAppend') }}
                     </UiButton>
@@ -334,6 +343,7 @@ import {
     Sparkles,
     Share2,
     BookCopy,
+    MessageCircle,
 } from 'lucide-vue-next';
 import { useDecks, useCards, useSrsStore, useToast, useT, useApiError } from '#imports';
 import { isAuthExpiry } from '@/composables/useToast';
@@ -456,6 +466,16 @@ const EMPTY_STATS: DeckStats = {
 const swatch = computed(() => store.deck?.coverColor ?? swatchFor(id.value));
 const deckStat = computed(() => store.deck?.stats ?? EMPTY_STATS);
 const eyebrow = computed(() => store.deck?.subject?.toUpperCase() || 'DECK');
+// Spells out the language pair the "XX → YY" line compresses.
+const langHint = computed(() => {
+    const d = store.deck;
+    if (!d) {
+        return '';
+    }
+    return t('deck.langHint')
+        .replace('{words}', d.targetLanguage.toUpperCase())
+        .replace('{definitions}', d.sourceLanguage.toUpperCase());
+});
 const coachTip = computed(() => {
     if (!store.deck?.cards.length) {
         return t('deck.coachEmpty');

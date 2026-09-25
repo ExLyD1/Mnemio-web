@@ -52,6 +52,14 @@ export default defineNuxtPlugin({
         // After hydration, so the switch doesn't fight the server-rendered HTML.
         nuxtApp.hook('app:mounted', async () => {
             pending.value = false;
+            // Re-check on the client: the cookie may have been written since the
+            // server rendered this page (another tab, or a choice made while
+            // this request was in flight). Flipping the language out from under
+            // a page the user is already reading is worse than guessing wrong
+            // once, and their explicit choice always wins.
+            if (new RegExp(`(?:^|;\\s*)${LOCALE_COOKIE}=`).test(document.cookie)) {
+                return;
+            }
             let tz: string | null = null;
             try {
                 tz = Intl.DateTimeFormat().resolvedOptions().timeZone;

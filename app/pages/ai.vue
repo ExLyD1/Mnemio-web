@@ -6,10 +6,13 @@
                 :conversations="chat.conversations.value"
                 :active-id="chat.activeId.value"
                 :loading="chat.loadingList.value"
+                :loading-more="chat.loadingMore.value"
+                :has-more="!!chat.nextCursor.value"
                 @new="onNew"
                 @select="onSelect"
-                @rename="chat.rename"
-                @delete="chat.remove"
+                @rename="onRename"
+                @delete="onDelete"
+                @load-more="chat.loadMoreConversations"
             />
         </div>
 
@@ -26,10 +29,13 @@
                         :conversations="chat.conversations.value"
                         :active-id="chat.activeId.value"
                         :loading="chat.loadingList.value"
+                        :loading-more="chat.loadingMore.value"
+                        :has-more="!!chat.nextCursor.value"
                         @new="onNew"
                         @select="onSelect"
-                        @rename="chat.rename"
-                        @delete="chat.remove"
+                        @rename="onRename"
+                        @delete="onDelete"
+                        @load-more="chat.loadMoreConversations"
                     />
                 </div>
             </div>
@@ -80,7 +86,8 @@
                                     v-for="q in quickActions"
                                     :key="q"
                                     type="button"
-                                    class="rounded-full border border-line bg-bg-surface px-4 py-2 text-small text-cream-dim transition-colors hover:border-brand-bright/50 hover:text-cream"
+                                    :disabled="!chat.canSend.value"
+                                    class="rounded-full border border-line bg-bg-surface px-4 py-2 text-small text-cream-dim transition-colors hover:border-brand-bright/50 hover:text-cream disabled:cursor-not-allowed disabled:opacity-50"
                                     @click="sendQuick(q)"
                                 >
                                     {{ q }}
@@ -169,25 +176,42 @@
                                     :deck-id="a.deckId"
                                     :title="a.title"
                                     :card-count="a.cardCount"
+                                    :action="a.action"
+                                    :added-count="a.addedCount"
+                                    :skipped-count="a.skippedCount"
+                                    :source-language="a.sourceLanguage"
+                                    :target-language="a.targetLanguage"
                                     class="w-72 max-w-full"
                                 />
 
-                                <!-- Partial + retry -->
+                                <!-- Partial: offer Retry only when re-sending is
+                                 safe. A partial that already carries a deck
+                                 would create that deck a second time. -->
                                 <div
                                     v-if="m.status === 'partial' && m.role === 'assistant'"
                                     class="flex items-center gap-2 text-small text-brand-muted"
                                 >
                                     <span>{{ t('chat.partial') }}</span>
                                     <button
+                                        v-if="chat.canRetry(m)"
                                         type="button"
                                         class="font-semibold text-brand-pale hover:text-cream"
                                         :disabled="chat.streaming.value"
-                                        @click="chat.retry"
+                                        @click="chat.retry(m.id)"
                                     >
                                         {{ t('chat.retry') }}
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                        <!-- A failure that retrying cannot fix (a daily cap, a
+                         rejected message). Explained inline with the real
+                         numbers instead of a generic "interrupted" bubble. -->
+                        <div
+                            v-if="terminalError"
+                            class="rounded-2xl border border-line bg-bg-surface px-4 py-3 text-small text-cream-dim"
+                        >
+                            {{ terminalError }}
                         </div>
                     </div>
                 </div>
@@ -209,6 +233,79 @@
             <!-- Composer -->
             <div class="border-t border-line px-4 py-3">
                 <div class="mx-auto max-w-3xl">
+                    <!-- Deck context: the ONLY way Mimi can append to a deck.
+                     Always visible while attached, so "added 2 cards" can never
+                     be ambiguous about which deck received them. -->
+                    <div class="mb-2 flex flex-wrap items-center gap-2">
+                        <div
+                            v-if="chat.contextDeck.value"
+                            class="flex items-center gap-2 rounded-full border border-brand-bright/40 bg-brand/10 py-1 pl-3 pr-1 text-small text-cream"
+                        >
+                            <BookOpen class="size-3.5 shrink-0 text-brand-pale" />
+                            <span class="max-w-[16rem] truncate">{{
+                                chat.contextDeck.value.title
+                            }}</span>
+                            <span v-if="contextPair" class="text-brand-muted">{{
+                                contextPair
+                            }}</span>
+                            <button
+                                type="button"
+                                class="flex size-5 items-center justify-center rounded-full text-brand-muted transition-colors hover:text-cream"
+                                :aria-label="t('chat.deckDetach')"
+                                @click="chat.setContextDeck(null)"
+                            >
+                                <X class="size-3" />
+                            </button>
+                        </div>
+
+                        <UiPopover v-model:open="deckPickerOpen">
+                            <template #trigger="{ toggle }">
+                                <button
+                                    type="button"
+                                    class="flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-small text-brand-muted transition-colors hover:border-brand-bright/50 hover:text-cream"
+                                    @click="onOpenDeckPicker(toggle)"
+                                >
+                                    <Plus class="size-3.5" />
+                                    {{
+                                        chat.contextDeck.value
+                                            ? t('chat.deckChange')
+                                            : t('chat.deckAttach')
+                                    }}
+                                </button>
+                            </template>
+                            <template #default="{ close }">
+                                <div class="w-64 p-1">
+                                    <input
+                                        v-model="deckQuery"
+                                        type="search"
+                                        :placeholder="t('chat.deckSearch')"
+                                        class="mb-1 w-full rounded-lg bg-bg-surface-2 px-3 py-2 text-small text-cream outline-none placeholder:text-brand-muted"
+                                    />
+                                    <p
+                                        v-if="!pickerDecks.length"
+                                        class="px-3 py-2 text-small text-brand-muted"
+                                    >
+                                        {{ t('chat.deckNone') }}
+                                    </p>
+                                    <div v-else class="max-h-64 overflow-y-auto">
+                                        <button
+                                            v-for="d in pickerDecks"
+                                            :key="d.id"
+                                            type="button"
+                                            class="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-small text-cream transition-colors hover:bg-brand/20"
+                                            @click="onPickDeck(d.id, close)"
+                                        >
+                                            <span class="truncate">{{ d.title }}</span>
+                                            <span class="shrink-0 text-brand-muted">{{
+                                                d.cardCount
+                                            }}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </UiPopover>
+                    </div>
+
                     <!-- Attached image preview + mode toggle -->
                     <div v-if="attachedImage" class="mb-2 flex items-center gap-3">
                         <div class="relative">
@@ -268,7 +365,8 @@
                             v-model="draft"
                             rows="1"
                             :placeholder="t('chat.placeholder')"
-                            class="max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-body text-cream outline-none placeholder:text-brand-muted"
+                            :disabled="!chat.initialized.value"
+                            class="max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-body text-cream outline-none placeholder:text-brand-muted disabled:opacity-60"
                             @input="autoGrow"
                             @keydown.enter="onEnterKey"
                             @paste="onPasteImage"
@@ -276,7 +374,7 @@
                         <UiButton
                             variant="primary"
                             class="shrink-0"
-                            :disabled="(!draft.trim() && !attachedImage) || chat.streaming.value"
+                            :disabled="!canSubmit"
                             :aria-label="t('chat.send')"
                             @click="onSend"
                         >
@@ -284,6 +382,19 @@
                             <Send v-else class="size-4" />
                         </UiButton>
                     </div>
+
+                    <!-- Footer: length counter (server rejects >4000, and the
+                     message used to be lost on rejection) + today's allowance,
+                     so a cap is visible before it's reached. -->
+                    <div class="mt-1.5 flex items-center gap-3 px-1 text-small text-brand-muted">
+                        <span v-if="usageLabel">{{ usageLabel }}</span>
+                        <span v-if="showCounter" class="ml-auto" :class="{ 'text-error': tooLong }">
+                            {{ draft.length }} / {{ MAX_MESSAGE_CHARS }}
+                        </span>
+                    </div>
+                    <p v-if="tooLong" class="px-1 text-small text-error" aria-live="polite">
+                        {{ t('chat.tooLong').replace('{n}', String(MAX_MESSAGE_CHARS)) }}
+                    </p>
                 </div>
             </div>
         </div>
@@ -317,9 +428,12 @@
 </template>
 
 <script setup lang="ts">
-import { Send, Menu, ImagePlus, X, ArrowDown } from 'lucide-vue-next';
+import { Send, Menu, ImagePlus, X, ArrowDown, BookOpen, Plus } from 'lucide-vue-next';
 import { useChat, useToast, useT, useApiError } from '#imports';
+import { useAppLocale } from '@/composables/useAppLocale';
+import { MAX_MESSAGE_CHARS, isTerminalChatError } from '@/composables/useChat';
 import { useAuthStore } from '@/stores/auth';
+import { useDecksStore } from '@/stores/decks';
 import { usePremiumGateStore } from '@/stores/premiumGate';
 import { renderMarkdown } from '@/utils/markdown';
 
@@ -328,9 +442,12 @@ definePageMeta({ layout: 'default' });
 const chat = useChat();
 const toast = useToast();
 const { t } = useT();
+const { current: locale } = useAppLocale();
 const { apiErrorText } = useApiError();
 const auth = useAuthStore();
+const decks = useDecksStore();
 const premiumGate = usePremiumGateStore();
+const route = useRoute();
 
 useSeo({ title: t('seo.aiTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -342,6 +459,55 @@ const imageInput = ref<HTMLInputElement | null>(null);
 const attachedImage = ref<File | null>(null);
 const attachedPreview = ref<string | null>(null);
 const viewerUrl = ref<string | null>(null);
+const deckPickerOpen = ref(false);
+const deckQuery = ref('');
+
+const tooLong = computed(() => draft.value.trim().length > MAX_MESSAGE_CHARS);
+// Only once it's worth watching — a counter on every short message is noise.
+const showCounter = computed(() => draft.value.length > MAX_MESSAGE_CHARS - 500);
+const canSubmit = computed(
+    () => (!!draft.value.trim() || !!attachedImage.value) && chat.canSend.value && !tooLong.value,
+);
+
+const contextPair = computed(() => {
+    const d = chat.contextDeck.value;
+    if (!d?.targetLanguage || !d.sourceLanguage) {
+        return '';
+    }
+    return `${d.targetLanguage.toUpperCase()} → ${d.sourceLanguage.toUpperCase()}`;
+});
+
+const pickerDecks = computed(() => {
+    const q = deckQuery.value.trim().toLowerCase();
+    const all = decks.summaries;
+    return (q ? all.filter((d) => d.title.toLowerCase().includes(q)) : all).slice(0, 50);
+});
+
+const onOpenDeckPicker = async (toggle: () => void) => {
+    toggle();
+    deckQuery.value = '';
+    if (!decks.summaries.length) {
+        await decks.fetchList();
+    }
+};
+
+const onPickDeck = async (id: string, close: () => void) => {
+    close();
+    await chat.setContextDeck(id);
+};
+
+/** Today's allowance, shown before the user runs into it. */
+const usageLabel = computed(() => {
+    const u = chat.usage.value;
+    if (!u) {
+        return '';
+    }
+    return t('chat.usage')
+        .replace('{decks}', String(u.kinds.enrich.remaining))
+        .replace('{deckCap}', String(u.kinds.enrich.cap))
+        .replace('{messages}', String(u.kinds.chat.remaining))
+        .replace('{messageCap}', String(u.kinds.chat.cap));
+});
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -541,7 +707,12 @@ const onEnterKey = (e: KeyboardEvent) => {
 const onSend = async () => {
     const text = draft.value.trim();
     const image = attachedImage.value;
-    if ((!text && !image) || chat.streaming.value) {
+    if ((!text && !image) || !chat.canSend.value) {
+        return;
+    }
+    if (text.length > MAX_MESSAGE_CHARS) {
+        // Keep what they typed — it used to be cleared, POSTed, rejected by the
+        // server and lost, with only a generic toast to explain it.
         return;
     }
     resetInput();
@@ -552,6 +723,24 @@ const onSend = async () => {
         attachedPreview.value = null;
     }
     await chat.send(text, image);
+};
+
+const onRename = async (id: string, title: string) => {
+    try {
+        await chat.rename(id, title);
+    } catch {
+        toast.error(t('chat.renameFailed'));
+    }
+};
+
+const onDelete = async (id: string) => {
+    try {
+        await chat.remove(id);
+        toast.success(t('chat.deleted'));
+    } catch {
+        // The row is restored by the composable; say so rather than looking dead.
+        toast.error(t('chat.deleteFailed'));
+    }
 };
 
 const onSelect = (id: string) => {
@@ -567,16 +756,65 @@ const onNew = () => {
 
 const errText = (code: string) => t(`chat.err.${code}`, apiErrorText({ code }, 'chat.err.generic'));
 
+/** "tomorrow at 03:00" in the reader's own timezone, from the server's ISO reset. */
+const resetLabel = (iso: unknown): string => {
+    if (typeof iso !== 'string') {
+        return '';
+    }
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) {
+        return '';
+    }
+    return d.toLocaleString(locale.value === 'uk' ? 'uk-UA' : 'en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: 'numeric',
+        month: 'short',
+    });
+};
+
+/**
+ * Message for a failure that retrying cannot fix. Uses the real cap and reset
+ * time the server sent — the chat used to show "Reply was interrupted. Retry"
+ * for a daily cap, and Retry just failed again.
+ */
+const terminalError = computed(() => {
+    const e = chat.streamError.value;
+    if (!e || !isTerminalChatError(e.code)) {
+        return '';
+    }
+    const details = (e.details ?? {}) as { capPerDay?: number; resetsAt?: string };
+    if (e.code === 'VALIDATION_ERROR') {
+        return t('chat.tooLong').replace('{n}', String(MAX_MESSAGE_CHARS));
+    }
+    if (e.code === 'AI_BUDGET_EXCEEDED') {
+        const reset = resetLabel(details.resetsAt);
+        const base = t('chat.err.AI_BUDGET_EXCEEDED');
+        return reset ? `${base} ${t('chat.resetsAt').replace('{time}', reset)}` : base;
+    }
+    return errText(e.code);
+});
+
 watch(
     () => chat.streamError.value,
     (e) => {
         if (!e) return;
-        if (e.code === 'AI_BUDGET_EXCEEDED' && !auth.isPremium) {
-            const cap = (e as { capPerDay?: number }).capPerDay;
-            premiumGate.show('ai_budget', cap !== undefined ? { capPerDay: cap } : undefined);
-        } else {
-            toast.error(errText(e.code));
+        // Terminal failures are explained inline (with the real numbers), so a
+        // toast on top would just repeat them.
+        if (terminalError.value) {
+            if (e.code === 'AI_BUDGET_EXCEEDED' && !auth.isPremium) {
+                // details.capPerDay — it is nested, and reading it from the top
+                // level always yielded undefined, so the paywall fell back to a
+                // hardcoded "10 free AI requests" that matched no real cap.
+                const details = (e.details ?? {}) as { capPerDay?: number; kind?: string };
+                premiumGate.show('ai_budget', {
+                    ...(details.capPerDay !== undefined ? { capPerDay: details.capPerDay } : {}),
+                    ...(details.kind ? { kind: details.kind } : {}),
+                });
+            }
+            return;
         }
+        toast.error(errText(e.code));
     },
 );
 
@@ -607,8 +845,20 @@ const onKeydown = (e: KeyboardEvent) => {
 
 onMounted(async () => {
     window.addEventListener('keydown', onKeydown);
+    void chat.refreshUsage();
+    // /ai?deckId=… — arriving from a deck page with that deck attached.
+    const deckId = typeof route.query.deckId === 'string' ? route.query.deckId : '';
     await chat.loadConversations();
-    if (chat.conversations.value.length && window.matchMedia('(min-width: 768px)').matches) {
+    if (deckId) {
+        // A deck was named explicitly: start a fresh chat on it rather than
+        // dropping the user into an unrelated older conversation.
+        await chat.setContextDeck(deckId);
+    } else if (
+        chat.conversations.value.length &&
+        !chat.activeId.value &&
+        !chat.streaming.value &&
+        window.matchMedia('(min-width: 768px)').matches
+    ) {
         await chat.openConversation(chat.conversations.value[0]!.id);
     }
 });

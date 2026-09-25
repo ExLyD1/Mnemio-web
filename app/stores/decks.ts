@@ -18,27 +18,64 @@ export const useDecksStore = defineStore('decks', () => {
 
     const byId = (id: string) => summaries.value.find((d) => d.id === id) ?? null;
 
+    // The deck list is requested by several independent components on one page
+    // load (the page itself, the topbar, the rail). Each used to fire its own
+    // identical GET /decks. Concurrent callers now share one request, and a
+    // repeat within FRESH_MS reuses what we already have.
+    const FRESH_MS = 30_000;
+    let listFetchedAt = 0;
+    let inflightList: Promise<void> | null = null;
+
     const fetchList = async (
-        opts: { cursor?: string | null; q?: string; append?: boolean } = {},
+        opts: { cursor?: string | null; q?: string; append?: boolean; force?: boolean } = {},
     ) => {
-        loadingList.value = true;
-        try {
-            const res = await decksApi.listDecks({
-                cursor: opts.cursor ?? null,
-                q: opts.q ?? search.value,
-                limit: 20,
-            });
-            summaries.value = opts.append ? [...summaries.value, ...res.items] : res.items;
-            nextCursor.value = res.nextCursor;
-            total.value = res.total;
-        } finally {
-            loadingList.value = false;
+        const isFirstPage = !opts.append && !opts.cursor;
+        const sameQuery = (opts.q ?? search.value) === search.value;
+        if (
+            isFirstPage &&
+            sameQuery &&
+            !opts.force &&
+            summaries.value.length > 0 &&
+            Date.now() - listFetchedAt < FRESH_MS
+        ) {
+            return;
         }
+        if (isFirstPage && sameQuery && inflightList) {
+            return inflightList;
+        }
+
+        const run = async () => {
+            loadingList.value = true;
+            try {
+                const res = await decksApi.listDecks({
+                    cursor: opts.cursor ?? null,
+                    q: opts.q ?? search.value,
+                    limit: 20,
+                });
+                summaries.value = opts.append ? [...summaries.value, ...res.items] : res.items;
+                nextCursor.value = res.nextCursor;
+                total.value = res.total;
+                if (isFirstPage) {
+                    listFetchedAt = Date.now();
+                }
+            } finally {
+                loadingList.value = false;
+            }
+        };
+
+        if (!isFirstPage || !sameQuery) {
+            await run();
+            return;
+        }
+        inflightList = run().finally(() => {
+            inflightList = null;
+        });
+        return inflightList;
     };
 
     const setSearch = async (q: string) => {
         search.value = q;
-        await fetchList({ q, cursor: null, append: false });
+        await fetchList({ q, cursor: null, append: false, force: true });
     };
 
     const loadMore = async () => {
@@ -157,6 +194,9 @@ export const useDecksStore = defineStore('decks', () => {
         total.value = 0;
         nextCursor.value = null;
         search.value = '';
+        // Otherwise the next user's first load would be served from the
+        // previous user's freshness window.
+        listFetchedAt = 0;
     };
 
     return {
