@@ -1,4 +1,4 @@
-import { defineNuxtPlugin, useRequestHeaders, useState } from '#imports';
+import { defineNuxtPlugin, useCookie, useRequestHeaders, useState } from '#imports';
 import {
     LOCALE_COOKIE,
     countryFromHeaders,
@@ -19,6 +19,12 @@ export default defineNuxtPlugin({
         // Set during SSR when the request had no locale cookie and no CDN
         // country header — the client then decides from the browser time zone.
         const pending = useState<boolean>('geo-locale-pending', () => false);
+        // Whether the REQUEST already carried a locale cookie. Checked instead
+        // of document.cookie at mount, because @nuxtjs/i18n's own browser
+        // detection writes that cookie during client boot — reading it later
+        // would look like a saved preference and silently disable the
+        // time-zone fallback below.
+        const hadCookieOnLoad = useState<boolean>('geo-locale-had-cookie', () => false);
         const i18n = nuxtApp.$i18n as {
             locale: { value: string };
             setLocale: (code: 'en' | 'uk') => Promise<void>;
@@ -34,12 +40,28 @@ export default defineNuxtPlugin({
             const hasLocaleCookie = new RegExp(`(?:^|;\\s*)${LOCALE_COOKIE}=`).test(
                 headers.cookie ?? '',
             );
+            hadCookieOnLoad.value = hasLocaleCookie;
             if (hasLocaleCookie) {
                 return;
             }
             const country = countryFromHeaders(headers);
             if (country) {
-                await i18n.setLocale(localeForCountry(country));
+                const chosen = localeForCountry(country);
+                await i18n.setLocale(chosen);
+                // Persist the server's choice in the SAME cookie the client
+                // reads on boot. Without this the two sides decide
+                // independently — the server from this header, the client from
+                // navigator.language / the time zone — and they disagree
+                // whenever those point different ways. Anything rendered after
+                // hydration (the account popover is teleported, so it only
+                // renders on click) then used the client's locale while the
+                // server-rendered page around it kept the server's: an English
+                // page with a Ukrainian menu in it.
+                useCookie<string>(LOCALE_COOKIE, {
+                    path: '/',
+                    sameSite: 'lax',
+                    maxAge: 60 * 60 * 24 * 365,
+                }).value = chosen;
                 return;
             }
             pending.value = true;
@@ -52,12 +74,9 @@ export default defineNuxtPlugin({
         // After hydration, so the switch doesn't fight the server-rendered HTML.
         nuxtApp.hook('app:mounted', async () => {
             pending.value = false;
-            // Re-check on the client: the cookie may have been written since the
-            // server rendered this page (another tab, or a choice made while
-            // this request was in flight). Flipping the language out from under
-            // a page the user is already reading is worse than guessing wrong
-            // once, and their explicit choice always wins.
-            if (new RegExp(`(?:^|;\\s*)${LOCALE_COOKIE}=`).test(document.cookie)) {
+            // An explicit saved choice always wins; only decide for a visitor
+            // who arrived without one.
+            if (hadCookieOnLoad.value) {
                 return;
             }
             let tz: string | null = null;

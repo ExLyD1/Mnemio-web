@@ -134,39 +134,92 @@ endpoint, and that the counter drops as decks are built.
 
 One line per bug from the audit. "Verify" is what a passing retest looks like.
 
-| #   | Reproduction                                             | Verify                                                                            |
-| --- | -------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| 1   | Attach deck A, ask to add words "to my B deck"           | Refused, names both decks, nothing written to either                              |
-| 2   | Open a deck → "Ask Mimi about this deck" → "add pear"    | Chip shows the deck; the card lands there; the receipt says "+1 added"            |
-| 3   | Create a deck via chat, check its stored languages       | Words language = `targetLanguage`, definitions = `sourceLanguage`                 |
-| 4   | Create a Ukrainian deck, read every card                 | No Russian words or letters (ы э ъ ё), correct agreement, «картки» not «карточки» |
-| 5   | Add a word the deck already has                          | Skipped, reported in the reply and on the card ("N already in this deck")         |
-| 6   | Send two messages to one conversation at once (two tabs) | The second is refused (`CHAT_BUSY`); the stored reply is not corrupted            |
-| 7   | Reload ~2 s into a long reply                            | Typing indicator, then the full reply. No false "interrupted"                     |
-| 8   | Paste 4614 characters                                    | Blocked before sending, draft kept, counter turns red                             |
-| 9   | Delete a conversation                                    | Confirm dialog → row gone, still gone after reload, toast shown                   |
-| 10  | Exhaust the daily chat cap                               | One consistent number everywhere + a real reset time; the paywall matches         |
-| 11  | Build decks until the word-list budget runs out          | Mimi states the real limit and reset time; never "try again in a moment"          |
-| 12  | Open a deck page                                         | The `XX → YY` line has a tooltip spelling out which side is which                 |
-| 13  | Ask "what tools do you have?"                            | Plain-language answer; no `create_deck` / `add_cards` / JSON                      |
-| 14  | Make a tool fail (cap reached)                           | No "queued", no "will be added later"                                             |
-| 15  | `Deck "QA-ES-PT": 5 Spanish words…`                      | The deck is named exactly `QA-ES-PT`                                              |
-| 16  | Enumerable request ("8 animals")                         | Every word in the reply matches a saved card exactly                              |
-| 17  | Ask about deck size limits                               | No invented cap; up to 20 cards per request, no deck limit                        |
-| 18  | Scroll the sidebar past 30 conversations                 | Older chats load                                                                  |
-| 19  | Set the UI to English, open the account menu             | All labels in English                                                             |
-| 20  | Chat in Ukrainian                                        | «картки»/«колода»; never «карточки» or «карти»                                    |
-| 21  | Make a first message fail                                | No empty "New chat" left behind                                                   |
-| 22  | Type into the composer immediately after load            | Disabled until ready; nothing is swallowed                                        |
-| 23  | "Who are you?"                                           | "Mimi" (the app is Mnemio)                                                        |
-| 24  | Ask for a deck two equivalent ways                       | Consistent: either both build, or both ask the same question                      |
-| 25  | Compare cards across two decks                           | Same style: sentence case, no trailing period, no headword restated               |
-| 26  | Load `/decks` with DevTools open                         | One `GET /decks`; no per-deck fan-out; no 404 on `billing/subscription`           |
-| 27  | Tab to a conversation's Options button                   | The accessible name includes the conversation title                               |
+| #   | Reproduction                                                                       | Verify                                                                                                              |
+| --- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 1   | Attach deck A, ask to add words "to my B deck"                                     | Refused, names both decks, nothing written to either                                                                |
+| 2   | Open a deck → "Ask Mimi about this deck" → "add pear"                              | Chip shows the deck; the card lands there; the receipt says "+1 added"                                              |
+| 3   | Create a deck via chat, check its stored languages                                 | Words language = `targetLanguage`, definitions = `sourceLanguage`. NOT a code bug — see "Deck language pairs" below |
+| 4   | Create a Ukrainian deck, read every card                                           | No Russian words or letters (ы э ъ ё), correct agreement, «картки» not «карточки»                                   |
+| 5   | Add a word the deck already has                                                    | Skipped, reported in the reply and on the card ("N already in this deck")                                           |
+| 6   | Send two messages to one conversation at once (two tabs)                           | The second is refused (`CHAT_BUSY`); the stored reply is not corrupted                                              |
+| 7   | Reload ~2 s into a long reply                                                      | Typing indicator, then the full reply. No false "interrupted"                                                       |
+| 8   | Paste 4614 characters                                                              | Blocked before sending, draft kept, counter turns red                                                               |
+| 9   | Delete a conversation                                                              | Confirm dialog → row gone, still gone after reload, toast shown                                                     |
+| 10  | Exhaust the daily chat cap                                                         | One consistent number everywhere + a real reset time; the paywall matches                                           |
+| 11  | Build decks until the word-list budget runs out                                    | Mimi states the real limit and reset time; never "try again in a moment"                                            |
+| 12  | Open a deck page                                                                   | The `XX → YY` line reads words → definitions and has a tooltip spelling that out                                    |
+| 13  | Ask "what tools do you have?"                                                      | Plain-language answer; no `create_deck` / `add_cards` / JSON                                                        |
+| 14  | Make a tool fail (cap reached)                                                     | No "queued", no "will be added later"                                                                               |
+| 15  | `Deck "QA-ES-PT": 5 Spanish words…`                                                | The deck is named exactly `QA-ES-PT`                                                                                |
+| 16  | Enumerable request ("8 animals")                                                   | Every word in the reply matches a saved card exactly                                                                |
+| 17  | Ask about deck size limits                                                         | No invented cap; up to 20 cards per request, no deck limit                                                          |
+| 18  | Scroll the sidebar past 30 conversations                                           | Older chats load                                                                                                    |
+| 19  | Load the site with a Ukrainian browser or from Ukraine, then open the account menu | Menu language matches the page around it — see "Locale split" below                                                 |
+| 20  | Chat in Ukrainian                                                                  | «картки»/«колода»; never «карточки» or «карти»                                                                      |
+| 21  | Make a first message fail                                                          | No empty "New chat" left behind                                                                                     |
+| 22  | Type into the composer immediately after load                                      | Disabled until ready; nothing is swallowed                                                                          |
+| 23  | "Who are you?"                                                                     | "Mimi" (the app is Mnemio)                                                                                          |
+| 24  | Ask for a deck two equivalent ways                                                 | Consistent: either both build, or both ask the same question                                                        |
+| 25  | Compare cards across two decks                                                     | Same style: sentence case, no trailing period, no headword restated                                                 |
+| 26  | Load `/decks` with DevTools open                                                   | One `GET /decks`; no per-deck fan-out; no 404 on `billing/subscription`                                             |
+| 27  | Tab to a conversation's Options button                                             | The accessible name includes the conversation title                                                                 |
 
 ---
 
-## 3. Notes for the next run
+## 3. Two findings that were not code bugs
+
+### Deck language pairs (BUG-3, BUG-12)
+
+The audit read the convention backwards. `targetLanguage` is the language of
+`card.word` (the front) and `sourceLanguage` is the language of
+`card.definition` (the back) — `docs/api-contract.md` and the deck create form
+say the same. The chat tool, the deck header and the attachment card all follow
+it, so QA-Fruits (`target: en`, `source: uk`, English words) was stored
+correctly, and the header's `EN → UK` means words → definitions.
+
+**Do not swap the mapping or the header.** They agree with each other; changing
+one alone would break the pair.
+
+What is real: some decks in the database have their two languages stored the
+wrong way round, written by some path other than chat. To find them, from
+`mnemio-backend`:
+
+```bash
+psql "$DATABASE_URL" -f scripts/sql/deck-language-audit.sql
+```
+
+It compares each deck's stored pair against the script its cards are actually
+written in (Cyrillic vs Latin) and lists only the decks where the two disagree,
+with `authorId`, `sourceDeckId` and `createdAt` so the originating path can be
+identified. It cannot judge same-script pairs (es/pt, en/de), and it cannot tell
+a genuine "learning Ukrainian from English" deck from an inverted one — its
+output is a shortlist to review, never a list to apply blindly.
+
+Then fix whichever creation path wrote them, and repair the confirmed ids with
+`scripts/sql/deck-language-repair.sql` (paste the ids, read the preview, switch
+`ROLLBACK` to `COMMIT`).
+
+### Locale split between page and menu (BUG-19)
+
+Every label in that menu already went through `t()`, so it could not be a
+missing translation. The cause was the server and the client deciding the
+initial locale independently: the server from a CDN country header, the client
+from `navigator.language` and the time zone. Nothing persisted the server's
+decision, so when the two signals disagreed the page kept the server's language
+while anything rendered after hydration used the client's — and the account menu
+is a teleported popover that only renders when clicked.
+
+The server now writes its choice into the same `i18n_locale` cookie the client
+reads on boot, so both sides start from one value. A saved preference still
+wins, and the first-visit time-zone fallback still runs (it keys off whether the
+_request_ carried a cookie, not off `document.cookie` at mount — @nuxtjs/i18n
+writes that cookie itself during boot).
+
+To retest: clear cookies, then load the site three ways — with
+`cf-ipcountry: UA`, with `cf-ipcountry: US`, and with neither — and each time
+open the account menu and compare it with the page around it.
+
+## 4. Notes for the next run
 
 - Use a dedicated test account and prefix every deck with `QA-`.
 - Budget: 50 chat messages, 5 word-list decks, 20 topic decks, 10 images per
