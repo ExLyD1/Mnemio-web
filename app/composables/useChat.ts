@@ -214,7 +214,7 @@ export const useChat = () => {
             streaming.value = false;
             return;
         }
-        pollTimer = setTimeout(async () => {
+        const tick = async () => {
             if (activeId.value !== convId) {
                 return;
             }
@@ -233,7 +233,11 @@ export const useChat = () => {
             } catch {
                 streaming.value = false;
             }
-        }, STREAM_POLL_MS);
+        };
+        // `void tick()` rather than an async callback: setTimeout discards the
+        // returned promise, so an async callback here would silently swallow a
+        // rejection instead of hitting the catch above.
+        pollTimer = setTimeout(() => void tick(), STREAM_POLL_MS);
     };
 
     /** Resolve a deck id into the chip's label; unknown/deleted decks detach. */
