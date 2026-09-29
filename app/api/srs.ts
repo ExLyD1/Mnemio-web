@@ -1,5 +1,6 @@
 import { http } from '@/utils/http';
 import type { CardProgress, SrsRating } from '@/types/srs';
+import type { Card } from '@/types/deck';
 import type { Achievement } from '@/types/achievement';
 
 interface WireProgress {
@@ -59,6 +60,23 @@ export const rateCard = async (
 export const listProgress = async (): Promise<CardProgress[]> => {
     const res = await http<{ items: WireProgress[] }>('/srs/progress');
     return res.items.map((p) => toProgress(p));
+};
+
+/**
+ * The whole review queue in one request: card + progress + deck title. The
+ * client used to assemble this by listing every deck and then fetching each one
+ * individually — 20+ requests on every /review and /dashboard mount.
+ */
+export interface QueueItem {
+    card: Card;
+    progress: WireProgress & { deckId: string };
+    deckId: string;
+    deckTitle: string;
+}
+
+export const listQueue = async (limit = 500): Promise<QueueItem[]> => {
+    const res = await http<{ items: QueueItem[] }>('/srs/queue', { query: { limit } });
+    return res.items;
 };
 
 export const listDue = async (limit = 50): Promise<DueItem[]> => {

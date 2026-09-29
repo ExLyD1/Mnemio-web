@@ -12,7 +12,12 @@ export interface Conversation {
 }
 
 export type ChatMessageRole = 'user' | 'assistant' | 'system';
-export type ChatMessageStatus = 'complete' | 'partial';
+/**
+ * 'streaming' = the backend is generating this reply right now (e.g. we
+ * reloaded mid-answer). Render the typing indicator and poll — rendering it as
+ * "interrupted" told users a completed, already-charged reply had failed.
+ */
+export type ChatMessageStatus = 'complete' | 'partial' | 'streaming';
 
 /**
  * Structured side-effect an assistant message performed. Currently only decks —
@@ -23,7 +28,17 @@ export interface DeckAttachment {
     type: 'deck';
     deckId: string;
     title: string;
+    /** The deck's total AFTER the tool ran. */
     cardCount: number;
+    action?: 'created' | 'appended';
+    /** Cards just appended (only on action: 'appended'). */
+    addedCount?: number;
+    /** Requested words already in the deck, so not duplicated. */
+    skippedCount?: number;
+    /** The deck's definitions language (ISO 639-1). */
+    sourceLanguage?: string;
+    /** The deck's words language (ISO 639-1). */
+    targetLanguage?: string;
 }
 export type ChatAttachment = DeckAttachment;
 
@@ -54,6 +69,19 @@ export const listConversations = (
     http<ConversationsPage>('/chat/conversations', {
         query: { cursor: params.cursor ?? undefined, limit: params.limit ?? 30 },
     });
+
+/** Today's AI allowance, so the composer can show a limit before it's hit. */
+export interface AiUsage {
+    plan: 'free' | 'premium';
+    /** ISO — next UTC midnight. */
+    resetsAt: string;
+    kinds: Record<
+        'enrich' | 'generate' | 'suggest' | 'import' | 'chat' | 'image',
+        { used: number; cap: number; remaining: number }
+    >;
+}
+
+export const getAiUsage = (): Promise<AiUsage> => http<AiUsage>('/ai/usage');
 
 export const createConversation = (title?: string): Promise<Conversation> =>
     http<Conversation>('/chat/conversations', {
@@ -90,9 +118,21 @@ export interface StreamError {
     message: string;
     details?: Record<string, unknown>;
 }
+/** A tool the assistant invoked mid-turn (e.g. create_deck). */
+export interface StreamToolUse {
+    name: string;
+    input?: Record<string, unknown>;
+}
+export interface StreamToolResult {
+    name: string;
+    ok: boolean;
+    data?: unknown;
+}
 export interface StreamHandlers {
     onStart?: (e: StreamStart) => void;
     onToken?: (delta: string) => void;
+    onToolUse?: (e: StreamToolUse) => void;
+    onToolResult?: (e: StreamToolResult) => void;
     onDone?: (e: StreamDone) => void;
     onError?: (e: StreamError) => void;
 }
@@ -111,6 +151,11 @@ export const streamMessage = (
     signal?: AbortSignal,
     locale = 'en',
     image?: File | null,
+    // `deckId` is the deck the user has open/attached: it is the ONLY way the
+    // add_cards tool becomes available, and the backend takes the target from
+    // it rather than from the model. `retryOf` replaces a failed turn instead
+    // of appending a second copy of it.
+    opts: { deckId?: string | null; retryOf?: string | null } = {},
 ): Promise<void> => {
     let body: FormData | Record<string, unknown>;
     if (image) {
@@ -120,9 +165,20 @@ export const streamMessage = (
             form.append('content', content);
         }
         form.append('locale', locale);
+        if (opts.deckId) {
+            form.append('deckId', opts.deckId);
+        }
+        if (opts.retryOf) {
+            form.append('retryOf', opts.retryOf);
+        }
         body = form;
     } else {
-        body = { content, locale };
+        body = {
+            content,
+            locale,
+            ...(opts.deckId ? { deckId: opts.deckId } : {}),
+            ...(opts.retryOf ? { retryOf: opts.retryOf } : {}),
+        };
     }
 
     return runSse({
@@ -138,6 +194,12 @@ export const streamMessage = (
                     break;
                 case 'token':
                     handlers.onToken?.((frame.data as { delta?: string }).delta ?? '');
+                    break;
+                case 'tool_use':
+                    handlers.onToolUse?.(frame.data as StreamToolUse);
+                    break;
+                case 'tool_result':
+                    handlers.onToolResult?.(frame.data as StreamToolResult);
                     break;
                 case 'done':
                     handlers.onDone?.(frame.data as StreamDone);

@@ -27,10 +27,20 @@
             </section>
             <section>
                 <h2 class="mb-3 font-display text-h3 text-cream">{{ t('terms.s5Title') }}</h2>
+                <p>{{ t('terms.s5Body') }}</p>
+                <p class="mt-3">
+                    <NuxtLink to="/refunds" class="text-accent hover:underline">{{
+                        t('terms.refundLink')
+                    }}</NuxtLink>
+                </p>
+            </section>
+            <section>
+                <h2 class="mb-3 font-display text-h3 text-cream">{{ t('terms.s6Title') }}</h2>
                 <p>
-                    {{ t('terms.s5Body') }}
-                    <a href="mailto:hello@mnemio.app" class="text-accent hover:underline"
-                        >hello@mnemio.app</a
+                    {{ t('terms.s6Body') }}
+                    <a :href="`mailto:${SUPPORT_EMAIL}`" class="text-accent hover:underline">{{
+                        SUPPORT_EMAIL
+                    }}</a
                     >.
                 </p>
             </section>
@@ -41,6 +51,7 @@
 <script setup lang="ts">
 import { ChevronLeft } from 'lucide-vue-next';
 import { useT } from '#imports';
+import { SUPPORT_EMAIL } from '@/utils/contact';
 
 definePageMeta({ layout: 'auth' });
 

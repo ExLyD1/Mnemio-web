@@ -81,6 +81,7 @@ const columns: FooterColumn[] = [
             { label: 'footer.linkCompare', to: '/mnemio-vs-quizlet-vs-anki' },
             { label: 'footer.linkPrivacy', to: '/privacy' },
             { label: 'footer.linkTerms', to: '/terms' },
+            { label: 'footer.linkRefunds', to: '/refunds' },
         ],
     },
 ];

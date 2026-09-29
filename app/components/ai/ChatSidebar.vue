@@ -48,7 +48,7 @@
                                         type="button"
                                         class="shrink-0 rounded-md p-1.5 text-brand-muted opacity-0 transition-opacity hover:text-cream group-hover:opacity-100"
                                         :class="{ 'opacity-100': c.id === activeId }"
-                                        :aria-label="t('chat.menu')"
+                                        :aria-label="t('chat.menuFor').replace('{title}', c.title)"
                                         @click="toggle"
                                     >
                                         <MoreVertical class="size-4" />
@@ -75,7 +75,30 @@
                     </div>
                 </li>
             </ul>
+
+            <!-- Older conversations were simply unreachable: the list stopped at
+             one page and nothing loaded the rest. -->
+            <div v-if="hasMore" ref="sentinel" class="py-3 text-center">
+                <UiSpinner v-if="loadingMore" size="sm" />
+                <button
+                    v-else
+                    type="button"
+                    class="text-small text-brand-muted transition-colors hover:text-cream"
+                    @click="$emit('loadMore')"
+                >
+                    {{ t('chat.loadMore') }}
+                </button>
+            </div>
         </div>
+
+        <UiConfirmDialog
+            v-model="confirmOpen"
+            :title="t('chat.deleteTitle')"
+            :message="t('chat.deleteConfirm')"
+            :confirm-label="t('chat.delete')"
+            destructive
+            @confirm="confirmDelete"
+        />
     </aside>
 </template>
 
@@ -88,6 +111,8 @@ const props = defineProps<{
     conversations: Conversation[];
     activeId: string | null;
     loading?: boolean;
+    loadingMore?: boolean;
+    hasMore?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -95,6 +120,7 @@ const emit = defineEmits<{
     select: [id: string];
     rename: [id: string, title: string];
     delete: [id: string];
+    loadMore: [];
 }>();
 
 const { t } = useT();
@@ -130,10 +156,45 @@ const cancelRename = () => {
     editingId.value = null;
 };
 
+// The app's own dialog, matching deck deletion. window.confirm blocks the page
+// and reads as a browser warning rather than part of the product.
+const confirmOpen = ref(false);
+const pendingDelete = ref<string | null>(null);
+
 const onDelete = (c: Conversation, close: () => void) => {
     close();
-    if (window.confirm(t('chat.deleteConfirm'))) {
-        emit('delete', c.id);
+    pendingDelete.value = c.id;
+    confirmOpen.value = true;
+};
+
+const confirmDelete = () => {
+    const id = pendingDelete.value;
+    confirmOpen.value = false;
+    pendingDelete.value = null;
+    if (id) {
+        emit('delete', id);
     }
 };
+
+// Auto-load the next page when the sentinel scrolls into view; the button
+// stays as the fallback (and for keyboard users).
+const sentinel = ref<HTMLElement | null>(null);
+let observer: IntersectionObserver | null = null;
+
+const observe = () => {
+    observer?.disconnect();
+    if (!sentinel.value || typeof IntersectionObserver === 'undefined') {
+        return;
+    }
+    observer = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting) && !props.loadingMore) {
+            emit('loadMore');
+        }
+    });
+    observer.observe(sentinel.value);
+};
+
+watch(sentinel, observe);
+onMounted(observe);
+onBeforeUnmount(() => observer?.disconnect());
 </script>

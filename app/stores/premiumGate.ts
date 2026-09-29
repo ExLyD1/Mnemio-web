@@ -4,9 +4,14 @@ import { useAnalytics } from '@/composables/useAnalytics';
 export const usePremiumGateStore = defineStore('premiumGate', () => {
     const open = ref(false);
     const context = ref<'ai_budget' | 'feature' | null>(null);
-    const details = ref<{ capPerDay?: number } | null>(null);
+    // `kind` says WHICH cap was hit ('chat', 'enrich', 'generate', 'image') so
+    // the modal names the real limit instead of one generic number.
+    const details = ref<{ capPerDay?: number; kind?: string } | null>(null);
 
-    const show = (ctx: 'ai_budget' | 'feature' = 'feature', extra?: { capPerDay?: number }) => {
+    const show = (
+        ctx: 'ai_budget' | 'feature' = 'feature',
+        extra?: { capPerDay?: number; kind?: string },
+    ) => {
         context.value = ctx;
         details.value = extra ?? null;
         open.value = true;
