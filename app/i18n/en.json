@@ -38,7 +38,9 @@
         "photoFlashcardsTitle": "Turn a Photo, PDF, or Article into Flashcards with AI",
         "photoFlashcardsDesc": "Upload a photo, PDF, or article and Mnemio's AI finds the words you don't know and builds a ready-to-study flashcard deck in seconds.",
         "compareTitle": "Mnemio vs. Quizlet vs. Anki",
-        "compareDesc": "How Mnemio compares to Quizlet and Anki on price, AI card generation, and spaced repetition — so you can pick the right flashcard app."
+        "compareDesc": "How Mnemio compares to Quizlet and Anki on price, AI card generation, and spaced repetition — so you can pick the right flashcard app.",
+        "refundsTitle": "Refund Policy",
+        "refundsDesc": "Mnemio's 14-day money-back guarantee, how to request a refund, and how to cancel a subscription."
     },
     "common": {
         "cancel": "Cancel",
@@ -1040,6 +1042,7 @@
         "colResources": "Resources",
         "linkPrivacy": "Privacy",
         "linkTerms": "Terms",
+        "linkRefunds": "Refunds",
         "linkHelp": "Help center",
         "linkFaq": "FAQ",
         "linkQuizletAlt": "Free Quizlet alternative",
@@ -1061,7 +1064,7 @@
     "privacy": {
         "backToLogin": "Back to login",
         "title": "Privacy Policy",
-        "updated": "Last updated: June 2025",
+        "updated": "Last updated: 29 September 2026",
         "s1Title": "1. Information we collect",
         "s1Body": "We collect the email address and password you provide when creating an account, along with usage data such as the decks you study and your session history. We do not sell your personal data to third parties.",
         "s2Title": "2. How we use it",
@@ -1070,23 +1073,28 @@
         "s3Body": "You can delete your account at any time from the Profile page. Upon deletion, all associated data is permanently removed within 30 days.",
         "s4Title": "4. Analytics & cookies",
         "s4Body": "We use Mixpanel and Google Analytics to understand how the app is used and improve it. These set cookies and collect anonymous usage events (for example, decks created, study sessions completed, and pages viewed). We never send your email, name, or the content of your cards. You can opt out by enabling “Do Not Track” in your browser or by using an ad/tracker blocker.",
-        "s5Title": "5. Contact",
-        "s5Body": "For privacy-related questions contact us at"
+        "s5Title": "5. Payments",
+        "s5Body": "Premium payments are processed by Stripe. We never see or store your card number — Stripe handles it directly. We keep only what we need to run your subscription: a Stripe customer and subscription id, the plan, its status and renewal date. Stripe processes this as an independent controller under its own privacy policy, and may hold billing details such as your name, billing address and the country used for tax.",
+        "s6Title": "6. Contact",
+        "s6Body": "For privacy-related questions contact us at"
     },
     "terms": {
         "backToLogin": "Back to login",
         "title": "Terms & Conditions",
-        "updated": "Last updated: June 2025",
+        "updated": "Last updated: 29 September 2026",
         "s1Title": "1. Acceptance",
         "s1Body": "By creating an account and using Mnemio, you agree to these Terms. If you do not agree, please do not use the service.",
         "s2Title": "2. Use of the service",
-        "s2Body": "Mnemio is provided for personal, non-commercial study purposes. You may not use the service to distribute harmful content or attempt to circumvent security measures.",
+        "s2Body": "Mnemio is provided for your own personal study. You may not resell access, distribute harmful content, or attempt to circumvent security measures or usage limits.",
         "s3Title": "3. Your content",
         "s3Body": "You retain ownership of the flashcard content you create. By using Mnemio, you grant us a limited licence to store and display that content to you within the app.",
         "s4Title": "4. Availability",
         "s4Body": "We aim for high availability but cannot guarantee uninterrupted access. The service may change or be discontinued with reasonable notice.",
-        "s5Title": "5. Contact",
-        "s5Body": "Questions about these Terms? Reach us at"
+        "s5Title": "5. Subscriptions and billing",
+        "s5Body": "Mnemio is free to use with daily limits. Mnemio Premium is a paid subscription billed monthly or annually through our payment processor, Stripe, at the price shown on the pricing page at the time of purchase, inclusive of any applicable taxes. Subscriptions renew automatically at the end of each period until cancelled. You can cancel at any time from Settings → Billing; cancelling stops future charges and Premium stays active until the end of the period you have paid for. Refunds are covered by our Refund Policy. We may change prices with at least 30 days' notice, and the new price applies from your next renewal.",
+        "s6Title": "6. Contact",
+        "s6Body": "Questions about these Terms? Reach us at",
+        "refundLink": "Read our Refund Policy"
     },
     "pricing": {
         "seoTitle": "Pricing — Mnemio Premium",
@@ -1392,5 +1400,21 @@
         "notFoundBody": "This page wandered off. Let’s get you back to your decks.",
         "genericTitle": "Something went wrong",
         "genericBody": "Something unexpected happened. Let’s get you back on track."
+    },
+    "refunds": {
+        "backToPricing": "Back to pricing",
+        "title": "Refund Policy",
+        "updated": "Last updated: 29 September 2026",
+        "s1Title": "1. 14-day money-back guarantee",
+        "s1Body": "If Mnemio Premium isn't right for you, email us within 14 days of a charge and we'll refund it in full — no questions asked. This applies to the first payment on a subscription and to each renewal, so an annual renewal you didn't expect is covered on the same terms.",
+        "s2Title": "2. How to request a refund",
+        "s2Body": "Write to us from the email address on the account, telling us which charge you'd like refunded. We reply within 2 business days and, once approved, issue the refund to the original payment method. Your bank usually shows it within 5–10 business days. We never need your card details to process a refund.",
+        "s3Title": "3. Cancelling your subscription",
+        "s3Body": "You can cancel at any time from Settings → Billing, which opens the Stripe customer portal. Cancelling stops all future charges. Your Premium features stay active until the end of the period you've already paid for, and no further payment is taken after that.",
+        "s4Title": "4. Your statutory rights",
+        "s4Body": "Nothing here limits the rights you have under consumer law. Customers in the EU, the UK and Ukraine have a statutory right to withdraw from a digital-services purchase within 14 days; where the law grants you more than this policy does, the law applies.",
+        "s5Title": "5. Contact",
+        "s5Body": "Refund requests and billing questions go to",
+        "s5Tail": ". We read every message."
     }
 }
