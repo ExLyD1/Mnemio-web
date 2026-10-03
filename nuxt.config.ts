@@ -90,7 +90,14 @@ export default defineNuxtConfig({
                 { property: 'og:type', content: 'website' },
             ],
             link: [
-                { rel: 'icon', href: '/images/logoico.ico', sizes: 'any' },
+                { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
+                {
+                    rel: 'icon',
+                    type: 'image/svg+xml',
+                    href: '/images/brand/mnemio-icon-green-dark.svg',
+                    sizes: 'any',
+                },
+                { rel: 'icon', type: 'image/png', href: '/images/favicon-48.png', sizes: '48x48' },
                 { rel: 'icon', type: 'image/png', href: '/images/icon-192.png', sizes: '192x192' },
                 { rel: 'apple-touch-icon', href: '/images/apple-touch-icon.png' },
                 { rel: 'manifest', href: '/manifest.webmanifest' },

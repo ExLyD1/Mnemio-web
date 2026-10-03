@@ -35,7 +35,7 @@ export default defineNuxtPlugin({
                     '@id': `${base}/#organization`,
                     name: 'Mnemio',
                     url: base,
-                    logo: `${base}/images/logo.svg`,
+                    logo: `${base}/images/icon-512.png`,
                     description:
                         'Mnemio is a flashcard and spaced-repetition learning app: build decks, study with an SRS scheduler, discover public decks, and generate cards with AI.',
                     knowsAbout: [

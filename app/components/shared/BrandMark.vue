@@ -1,7 +1,29 @@
 <template>
-    <component :is="as" class="inline-flex items-center gap-3">
-        <img src="/images/logo.svg" alt="Mnemio" :class="[sizes[size].tile, 'rounded-[10px]']" />
-        <span v-if="withWord" :class="[sizes[size].word, 'font-display text-cream']">Mnemio</span>
+    <component :is="as" class="inline-flex items-center">
+        <template v-if="withWord">
+            <img
+                src="/images/brand/mnemio-logo-green-dark.svg"
+                alt="Mnemio"
+                :class="[sizes[size].logo, 'hidden dark:block']"
+            />
+            <img
+                src="/images/brand/mnemio-logo-green-light.svg"
+                alt="Mnemio"
+                :class="[sizes[size].logo, 'dark:hidden']"
+            />
+        </template>
+        <template v-else>
+            <img
+                src="/images/brand/mnemio-icon-green-dark.svg"
+                alt="Mnemio"
+                :class="[sizes[size].icon, 'hidden dark:block']"
+            />
+            <img
+                src="/images/brand/mnemio-icon-green-light.svg"
+                alt="Mnemio"
+                :class="[sizes[size].icon, 'dark:hidden']"
+            />
+        </template>
     </component>
 </template>
 
@@ -16,7 +38,7 @@ withDefaults(
 );
 
 const sizes = {
-    sm: { tile: 'size-8', word: 'text-lg' },
-    md: { tile: 'size-9', word: 'text-[19px]' },
+    sm: { logo: 'h-8 w-auto', icon: 'size-8' },
+    md: { logo: 'h-10 w-auto', icon: 'size-9' },
 } as const;
 </script>
