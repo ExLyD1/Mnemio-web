@@ -28,7 +28,7 @@ export const useSeo = (opts: SeoOptions) => {
     const toAbsolute = (path: string) =>
         /^https?:\/\//.test(path) ? path : `${base}${path.startsWith('/') ? '' : '/'}${path}`;
 
-    const image = toAbsolute(opts.image ?? '/images/OGLogo.jpg');
+    const image = toAbsolute(opts.image ?? '/images/og-image.png');
     const canonical = toAbsolute(route.path);
 
     useSeoMeta({
