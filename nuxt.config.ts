@@ -186,6 +186,20 @@ export default defineNuxtConfig({
             // 0..1 sampling for the high-volume per-card event (off by default;
             // study_card_answered is otherwise aggregated into the session event).
             analyticsCardSampling: 0,
+
+            // ── Paddle (checkout + localized pricing) ───────────────────────
+            // Client-side token — safe to expose; it can only read prices and open
+            // checkouts. The SERVER-side Paddle API key must never appear here, as
+            // everything under `public` is shipped to the browser.
+            //
+            // Both are intentionally EMPTY by default and have no fallback:
+            // app/composables/usePaddle.ts refuses to initialise (and logs loudly)
+            // unless both are set and agree, so a build can never silently run
+            // against the wrong Paddle account. Sandbox tokens are `test_`-prefixed
+            // and only valid with paddleEnv="sandbox".
+            paddleClientToken: process.env.NUXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? '',
+            // "sandbox" | "production" — no default on purpose.
+            paddleEnv: process.env.NUXT_PUBLIC_PADDLE_ENV ?? '',
         },
     },
 

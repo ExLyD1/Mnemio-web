@@ -1105,6 +1105,8 @@
         "toggleAnnual": "Annual",
         "saveBadge": "Save 20%",
         "freePlanName": "Free",
+        "freePrice": "Free",
+        "trialNote": "Includes a {n}-day free trial",
         "premiumPlanName": "Premium",
         "ctaUpgrade": "Get Premium",
         "ctaSignIn": "Sign in to upgrade",

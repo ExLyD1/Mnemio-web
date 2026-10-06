@@ -46,10 +46,7 @@
         </section>
 
         <!-- Not configured notice -->
-        <section
-            v-if="billingStore.notConfigured"
-            class="mx-auto max-w-[880px] px-6 pb-16 text-center"
-        >
+        <section v-if="unavailable" class="mx-auto max-w-[880px] px-6 pb-16 text-center">
             <p
                 class="rounded-xl border border-line bg-bg-surface px-6 py-8 text-body text-cream-dim"
             >
@@ -59,62 +56,56 @@
 
         <!-- Plan cards -->
         <section v-else class="mx-auto grid max-w-[880px] gap-6 px-6 pb-20 sm:grid-cols-2">
-            <!-- Free plan -->
-            <div class="flex flex-col rounded-2xl border border-line bg-bg-surface p-6">
-                <p class="text-eyebrow text-cream-dim">{{ t('pricing.freePlanName') }}</p>
-                <p class="mt-2 font-display text-h1 text-cream">$0</p>
-                <p class="text-small text-cream-dim">/ {{ t('pricing.monthly') }}</p>
+            <div
+                v-for="plan in PLANS"
+                :key="plan.id"
+                class="flex flex-col rounded-2xl bg-bg-surface p-6"
+                :class="plan.featured ? 'border-2 border-brand shadow-lg' : 'border border-line'"
+            >
+                <p
+                    class="text-eyebrow"
+                    :class="plan.featured ? 'text-brand-bright' : 'text-cream-dim'"
+                >
+                    {{ t(plan.nameKey) }}
+                </p>
+
+                <!-- Price. For paid plans this is Paddle's own formatted total for
+                     the visitor's country — never reformatted, never recomputed. -->
+                <p class="mt-2 font-display text-h1 text-cream">
+                    <template v-if="!plan.priceId">{{ t('pricing.freePrice') }}</template>
+                    <span v-else-if="priceFor(plan)">{{ priceFor(plan) }}</span>
+                    <span v-else class="text-cream-dim/50">···</span>
+                </p>
+                <p class="text-small text-cream-dim">
+                    <template v-if="plan.priceId">
+                        /
+                        {{ billingCycle === 'annual' ? t('pricing.annual') : t('pricing.monthly') }}
+                    </template>
+                    <template v-else>&nbsp;</template>
+                </p>
 
                 <ul class="mt-6 flex flex-1 flex-col gap-3">
                     <li
-                        v-for="f in freeFeatures"
-                        :key="f.label"
+                        v-for="f in plan.features"
+                        :key="f.key"
                         class="flex items-center gap-2 text-body"
                         :class="f.included ? 'text-cream' : 'text-cream-dim/60'"
                     >
                         <Check v-if="f.included" class="size-4 shrink-0 text-brand-bright" />
                         <X v-else class="size-4 shrink-0 text-cream-dim/40" />
-                        {{ f.label }}
+                        {{ t(f.key) }}
                     </li>
                 </ul>
 
+                <!-- CTA -->
                 <div class="mt-8">
-                    <UiButton variant="ghost" class="w-full" disabled>
-                        {{ t('pricing.freePlanName') }}
+                    <!-- Free plan: nothing to buy -->
+                    <UiButton v-if="!plan.priceId" variant="ghost" class="w-full" disabled>
+                        {{ t(plan.nameKey) }}
                     </UiButton>
-                </div>
-            </div>
-
-            <!-- Premium plan -->
-            <div
-                class="flex flex-col rounded-2xl border-2 border-brand bg-bg-surface p-6 shadow-lg"
-            >
-                <p class="text-eyebrow text-brand-bright">{{ t('pricing.premiumPlanName') }}</p>
-                <p class="mt-2 font-display text-h1 text-cream">
-                    {{ billingCycle === 'annual' ? '$8' : '$10' }}
-                </p>
-                <p class="text-small text-cream-dim">
-                    / {{ t('pricing.monthly') }}
-                    <span v-if="billingCycle === 'annual'"
-                        >— {{ t('pricing.billedAnnually') }}</span
-                    >
-                </p>
-
-                <ul class="mt-6 flex flex-1 flex-col gap-3">
-                    <li
-                        v-for="f in premiumFeatures"
-                        :key="f.label"
-                        class="flex items-center gap-2 text-body text-cream"
-                    >
-                        <Check class="size-4 shrink-0 text-brand-bright" />
-                        {{ f.label }}
-                    </li>
-                </ul>
-
-                <div class="mt-8">
                     <!-- Already premium -->
                     <UiButton
-                        v-if="auth.isPremium"
+                        v-else-if="auth.isPremium"
                         variant="primary"
                         class="w-full"
                         @click="navigateTo('/settings/billing')"
@@ -135,12 +126,15 @@
                         <UiButton
                             variant="primary"
                             class="w-full"
-                            :disabled="billing.checkout.loading.value"
+                            :disabled="billing.checkout.loading.value || !paddle"
                             @click="onUpgrade"
                         >
                             <UiSpinner v-if="billing.checkout.loading.value" size="sm" />
                             {{ t('pricing.ctaUpgrade') }}
                         </UiButton>
+                        <p class="text-center text-small text-cream-dim">
+                            {{ trialNote }}
+                        </p>
                         <p v-if="priceError" class="text-center text-small text-error-soft">
                             {{ t('pricing.priceNotConfigured') }}
                         </p>
@@ -157,7 +151,11 @@ import { useHead, useSiteConfig } from '#imports';
 import { useBillingStore } from '@/stores/billing';
 import { useAuthStore } from '@/stores/auth';
 import { useBilling } from '@/composables/useBilling';
+import { usePaddle } from '@/composables/usePaddle';
+import { usePaddlePrices } from '@/composables/usePaddlePrices';
+import { useGeoCountry } from '@/composables/useGeoCountry';
 import { useT } from '@/composables/useT';
+import { PLANS, TRIAL_DAYS, type Plan } from '@/data/plans';
 
 definePageMeta({ layout: 'default' });
 
@@ -169,8 +167,22 @@ const site = useSiteConfig();
 
 useSeo({ title: t('pricing.seoTitle'), description: t('pricing.seoDesc') });
 
+// Resolved during the SSR pass from the CDN's geo header; `null` means "let
+// Paddle geolocate from the visitor's IP", which is also what checkout does — so
+// the previewed price and the charged price always agree.
+const country = useGeoCountry();
+
+const { paddle, load: loadPaddle, failed: paddleFailed } = usePaddle();
+const { prices, error: pricesError } = usePaddlePrices(paddle, country);
+
+onMounted(() => {
+    loadPaddle();
+});
+
 // Machine-readable pricing so rich results and AI engines can answer "how much is
-// Mnemio." Annual premium is $8/mo billed yearly → $96/yr. Prices mirror the cards above.
+// Mnemio." These stay in the catalog's base currency (USD) on purpose: the block
+// is server-rendered for crawlers, while PricePreview is client-only, so there is
+// no localized total available at render time. Keep in sync with app/data/plans.ts.
 const base = (site.url || 'https://mnemio.xyz').replace(/\/$/, '');
 useHead({
     script: [
@@ -218,22 +230,21 @@ useHead({
 const billingCycle = ref<'monthly' | 'annual'>('monthly');
 const priceError = ref(false);
 
-const freeFeatures = computed(() => [
-    { label: t('pricing.features.srs'), included: true },
-    { label: t('pricing.features.decksUnlimited'), included: true },
-    { label: t('pricing.features.aiLimited'), included: true },
-    { label: t('pricing.features.aiUnlimited'), included: false },
-    { label: t('pricing.features.advancedStats'), included: false },
-    { label: t('pricing.features.prioritySupport'), included: false },
-]);
+// Both intervals come back in one PricePreview call, so the toggle is a map
+// lookup — it never triggers a re-fetch.
+const priceFor = (plan: Plan): string | undefined =>
+    plan.priceId
+        ? prices.value[billingCycle.value === 'annual' ? plan.priceId.year : plan.priceId.month]
+        : undefined;
 
-const premiumFeatures = computed(() => [
-    { label: t('pricing.features.srs') },
-    { label: t('pricing.features.decksUnlimited') },
-    { label: t('pricing.features.aiUnlimited') },
-    { label: t('pricing.features.advancedStats') },
-    { label: t('pricing.features.prioritySupport') },
-]);
+const trialNote = computed(() => t('pricing.trialNote').replace('{n}', String(TRIAL_DAYS)));
+
+// Hide the cards entirely when billing can't work at all: the backend reports no
+// billing provider, Paddle.js refused to initialise (bad token/env), or the
+// price IDs don't resolve in this environment.
+const unavailable = computed(
+    () => billingStore.notConfigured || paddleFailed.value || pricesError.value,
+);
 
 const onUpgrade = async () => {
     priceError.value = false;

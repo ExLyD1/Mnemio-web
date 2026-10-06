@@ -1105,6 +1105,8 @@
         "toggleAnnual": "Щороку",
         "saveBadge": "Знижка 20%",
         "freePlanName": "Безкоштовно",
+        "freePrice": "Безкоштовно",
+        "trialNote": "Включає {n} днів безкоштовного пробного періоду",
         "premiumPlanName": "Premium",
         "ctaUpgrade": "Отримати Premium",
         "ctaSignIn": "Увійдіть, щоб оновити",
