@@ -49,8 +49,14 @@ export const useBilling = () => {
         const paddle = await loadPaddle();
         if (!paddle) {
             // Missing/mismatched token or env — usePaddle has already logged why.
-            billingStore.notConfigured = true;
-            return;
+            // Deliberately NOT `billingStore.notConfigured`: that flag means the
+            // BACKEND has no billing provider configured, which is a different
+            // failure with a different fix.
+            // eslint-disable-next-line no-throw-literal, @typescript-eslint/only-throw-error
+            throw {
+                code: 'BILLING_PADDLE_UNAVAILABLE',
+                message: 'Paddle.js is not configured — see the console for details',
+            } satisfies ApiError;
         }
 
         analytics.track('checkout_started', { billing_plan: plan });

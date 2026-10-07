@@ -33,8 +33,9 @@ export const usePaddle = () => {
             return inflight;
         }
 
-        const token = String(config.public.paddleClientToken ?? '');
-        const env = String(config.public.paddleEnv ?? '');
+        // Both are typed `string` and default to '' in nuxt.config.ts.
+        const token = config.public.paddleClientToken;
+        const env = config.public.paddleEnv;
 
         // Fail loudly rather than defaulting. A silent default here would point a
         // sandbox build at the live account (or vice versa) and take real money

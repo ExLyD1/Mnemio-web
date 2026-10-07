@@ -148,7 +148,6 @@
 <script setup lang="ts">
 import { Check, X } from 'lucide-vue-next';
 import { useHead, useSiteConfig } from '#imports';
-import { useBillingStore } from '@/stores/billing';
 import { useAuthStore } from '@/stores/auth';
 import { useBilling } from '@/composables/useBilling';
 import { usePaddle } from '@/composables/usePaddle';
@@ -161,7 +160,6 @@ definePageMeta({ layout: 'default' });
 
 const { t } = useT();
 const auth = useAuthStore();
-const billingStore = useBillingStore();
 const billing = useBilling();
 const site = useSiteConfig();
 
@@ -239,12 +237,16 @@ const priceFor = (plan: Plan): string | undefined =>
 
 const trialNote = computed(() => t('pricing.trialNote').replace('{n}', String(TRIAL_DAYS)));
 
-// Hide the cards entirely when billing can't work at all: the backend reports no
-// billing provider, Paddle.js refused to initialise (bad token/env), or the
-// price IDs don't resolve in this environment.
-const unavailable = computed(
-    () => billingStore.notConfigured || paddleFailed.value || pricesError.value,
-);
+// Hide the cards only when Paddle itself can't serve prices — it refused to
+// initialise (missing/mismatched token or env) or the price IDs don't resolve in
+// this environment.
+//
+// Deliberately NOT gated on `billingStore.notConfigured`. That flag means the
+// *backend* has no billing provider configured; checkout is now driven entirely
+// client-side by Paddle.js, so the backend's state says nothing about whether we
+// can render prices. Conflating the two blanked this page on any backend without
+// billing keys.
+const unavailable = computed(() => paddleFailed.value || pricesError.value);
 
 const onUpgrade = async () => {
     priceError.value = false;
