@@ -65,6 +65,12 @@ export const useBilling = () => {
             items: [{ priceId, quantity: 1 }],
             // Pre-fill the signed-in user so they don't retype their address.
             ...(auth.user?.email ? { customer: { email: auth.user.email } } : {}),
+            // Carries our user id through checkout onto the resulting
+            // transaction and subscription, so the backend webhook can attach
+            // the Paddle subscription to the right Mnemio account. Without it
+            // fulfillment can only guess by email. See resolveUserId() in
+            // mnemio-backend/src/services/billing.service.ts.
+            ...(auth.user?.id ? { customData: { userId: auth.user.id } } : {}),
             settings: {
                 displayMode: 'overlay',
                 variant: 'one-page',
