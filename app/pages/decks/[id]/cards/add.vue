@@ -18,15 +18,43 @@
                         }}
                     </p>
 
-                    <!-- Front field -->
+                    <!-- Front field — word completion suggestions while typing (#6) -->
                     <div class="card-field">
                         <p class="mb-1.5 text-[12px] text-cream-dim">{{ t('card.front') }}</p>
-                        <textarea
+                        <CardTermSuggestInput
                             v-model="front"
-                            class="block w-full resize-none bg-transparent font-display text-[28px] italic leading-snug text-cream-faint outline-none placeholder:text-cream-faint/60"
-                            rows="2"
-                            :placeholder="t('card.frontPlaceholder')"
-                        />
+                            :lang="store.deck?.targetLanguage ?? 'en'"
+                            :existing-words="existingWords"
+                            source="card_add"
+                        >
+                            <template
+                                #default="{
+                                    value,
+                                    onInput: onFrontInput,
+                                    onKeydown: onFrontKeydown,
+                                    onBlur: onFrontBlur,
+                                    ariaExpanded,
+                                }"
+                            >
+                                <textarea
+                                    :value="value"
+                                    role="combobox"
+                                    :aria-expanded="ariaExpanded"
+                                    aria-haspopup="listbox"
+                                    aria-autocomplete="list"
+                                    autocomplete="off"
+                                    autocapitalize="off"
+                                    spellcheck="false"
+                                    enterkeyhint="done"
+                                    class="block w-full resize-none bg-transparent font-display text-[28px] italic leading-snug text-cream-faint outline-none placeholder:text-cream-faint/60"
+                                    rows="2"
+                                    :placeholder="t('card.frontPlaceholder')"
+                                    @input="onFrontInput"
+                                    @keydown="onFrontKeydown"
+                                    @blur="onFrontBlur"
+                                />
+                            </template>
+                        </CardTermSuggestInput>
                     </div>
 
                     <!-- Audio / image chips -->
@@ -66,7 +94,7 @@
                         </button>
                     </div>
 
-                    <!-- Meaning field -->
+                    <!-- Meaning field — auto-suggested translation while empty (#7) -->
                     <div class="card-field mt-[18px]">
                         <p class="mb-1.5 text-[12px] text-cream-dim">{{ t('card.meaning') }}</p>
                         <textarea
@@ -79,6 +107,14 @@
                         <p class="mt-1 text-right text-[12px] text-cream-faint/60">
                             {{ back.length }}/200
                         </p>
+                        <CardTranslationSuggestion
+                            :term="front"
+                            :from="store.deck?.targetLanguage ?? 'en'"
+                            :to="store.deck?.sourceLanguage ?? 'en'"
+                            :definition-empty="back.trim().length === 0"
+                            source="card_add"
+                            @accept="back = $event"
+                        />
                     </div>
 
                     <!-- Tags -->
@@ -334,6 +370,7 @@ const difficultyOptions = computed<{ value: CardDifficulty; label: string }[]>((
 const deckTitle = computed(() => store.deck?.title ?? t('card.thisDeck'));
 const nextNumber = computed(() => (store.deck?.cards.length ?? 0) + 1);
 const canSubmit = computed(() => front.value.trim().length > 0 && back.value.trim().length > 0);
+const existingWords = computed(() => store.deck?.cards.map((c) => c.word) ?? []);
 
 const chipClass = (attached: boolean) => [
     'inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-[13px] font-semibold transition-colors',

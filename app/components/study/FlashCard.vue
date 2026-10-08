@@ -13,7 +13,7 @@
             <div
                 class="face front absolute inset-0 rounded-[24px] border border-line-strong bg-plum-card p-6 shadow-flash-card sm:p-10"
             >
-                <p class="fc-word break-words font-display text-cream">{{ card.word }}</p>
+                <p class="fc-word break-words font-display text-cream">{{ frontText }}</p>
             </div>
 
             <!-- The revealed face is the plum card gradient in BOTH themes, so all
@@ -30,7 +30,12 @@
                             class="flex flex-wrap items-baseline gap-2"
                             :class="reserveTopRight ? 'pr-28 sm:pr-0' : ''"
                         >
-                            <p class="break-words font-display text-2xl text-on-plum sm:text-4xl">
+                            <p
+                                class="break-words font-display text-on-plum"
+                                :class="
+                                    emphasizeWord ? 'text-2xl sm:text-4xl' : 'text-lg sm:text-xl'
+                                "
+                            >
                                 {{ card.word }}
                             </p>
                             <SharedPill v-if="card.pos" tone="on-plum">
@@ -56,7 +61,12 @@
                             <p class="text-eyebrow uppercase text-on-plum-faint">
                                 {{ t('study.meaning') }}
                             </p>
-                            <p class="mt-1 break-words text-lg text-on-plum sm:text-xl">
+                            <p
+                                class="mt-1 break-words font-display text-on-plum"
+                                :class="
+                                    emphasizeWord ? 'text-lg sm:text-xl' : 'text-2xl sm:text-4xl'
+                                "
+                            >
                                 {{ card.meaning }}
                             </p>
                         </div>
@@ -79,15 +89,28 @@
 <script setup lang="ts">
 import { Volume2 } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
-import type { StudyCard } from '@/utils/studyCard';
+import { computed } from 'vue';
+import { frontTextFor, type FrontSide, type StudyCard } from '@/utils/studyCard';
 
 // reserveTopRight: the parent overlays a button in the card's top-right corner
 // (the review page's "Tip" button) — keep the word / part-of-speech pill and
 // the meaning column clear of it (QA (1) #1: the "noun" pill sat under it).
-defineProps<{ card: StudyCard; revealed: boolean; reserveTopRight?: boolean }>();
+const props = defineProps<{
+    card: StudyCard;
+    revealed: boolean;
+    reserveTopRight?: boolean;
+    /** Which side shows on the unrevealed face. Defaults to the term (word). */
+    front?: FrontSide;
+}>();
 defineEmits<{ flip: [] }>();
 
 const { t } = useT();
+
+const frontText = computed(() => frontTextFor(props.card, props.front ?? 'term'));
+// Which side gets the big/prominent heading on the back face — the side
+// NOT shown on the front, so the reveal surfaces new information instead
+// of just repeating the prompt in a bigger font.
+const emphasizeWord = computed(() => (props.front ?? 'term') === 'definition');
 </script>
 
 <style scoped>

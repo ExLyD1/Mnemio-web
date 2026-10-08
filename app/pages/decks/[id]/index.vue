@@ -290,8 +290,37 @@
 
         <UiModal v-model="editOpen" :title="t('card.edit')">
             <div class="flex flex-col gap-4">
-                <UiInputField v-model="editWord" :label="t('card.word')" />
+                <CardTermSuggestInput
+                    v-model="editWord"
+                    :lang="store.deck?.targetLanguage ?? 'en'"
+                    :existing-words="existingWords"
+                    source="card_edit"
+                >
+                    <template #default="{ value, onInput, onKeydown, onBlur, ariaExpanded }">
+                        <UiInputField
+                            :model-value="value"
+                            :label="t('card.word')"
+                            :aria-expanded="ariaExpanded"
+                            aria-haspopup="listbox"
+                            aria-autocomplete="list"
+                            autocomplete="off"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            @input="onInput"
+                            @keydown="onKeydown"
+                            @blur="onBlur"
+                        />
+                    </template>
+                </CardTermSuggestInput>
                 <UiTextarea v-model="editDefinition" :label="t('card.definition')" :rows="3" />
+                <CardTranslationSuggestion
+                    :term="editWord"
+                    :from="store.deck?.targetLanguage ?? 'en'"
+                    :to="store.deck?.sourceLanguage ?? 'en'"
+                    :definition-empty="editDefinition.trim().length === 0"
+                    source="card_edit"
+                    @accept="editDefinition = $event"
+                />
                 <UiInputField v-model="editPhonetic" :label="t('card.phonetic')" />
             </div>
             <template #footer>
@@ -400,6 +429,13 @@ const onAiDone = () => fetchOne.execute(id.value);
 
 const editOpen = ref(false);
 const editCardId = ref<string | null>(null);
+// For the "already in deck" badge in CardTermSuggestInput — excludes the
+// card currently being edited, so the edit modal doesn't flag the card's
+// own existing word as a duplicate of itself.
+const existingWords = computed(() =>
+    (store.deck?.cards ?? []).filter((c) => c.id !== editCardId.value).map((c) => c.word),
+);
+
 const editWord = ref('');
 const editDefinition = ref('');
 const editPhonetic = ref('');

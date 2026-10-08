@@ -67,6 +67,8 @@ backend  /api/v1/*
 
 **Exception — public/SSR content:** `app/utils/publicHttp.ts` is a no-auth GET wrapper that works in both the Nitro server render pass and the browser. Use it (inside `useAsyncData`) for public discover, blog, and other crawler-facing content. Never use `http.ts` for SSR-rendered pages — it reads `localStorage` which doesn't exist on the server.
 
+**Exception — lexicon lookups:** `app/api/lexicon.ts` calls this app's own Nitro routes (`server/routes/_lex/*`) directly with `$fetch`, not `http.ts` — those routes aren't the backend (no `/api/v1` prefix, no auth) and proxy free third-party word-completion/translation services for the card editor. See `server/routes/_lex/` before touching it.
+
 ### `app/utils/http.ts` (read before touching networking)
 
 - Prefixes paths with `/api/v1` (unless they already start with `/api/` or `http`).
@@ -129,7 +131,7 @@ must be running on `:3001`** or every call 502s. In prod set `NUXT_PUBLIC_API_BA
 
 **`AppRail`** — expands 76 px → 240 px on `mouseenter` of the outer `<aside>`. The outer `<aside>` is always 76 px in the flex layout (no reflow); the inner panel is `position: absolute` and overlays page content when expanded. `dueCount` badge from `useSrsStore()`. Library rows from `useDecksStore().summaries` (top 3 by `updatedAt`). On mobile, `AppBottomTabBar` replaces the rail.
 
-**`SharedPremiumGate`** — modal that gates premium features. Trigger it by calling `usePremiumGateStore().open()`. The store in `app/stores/premiumGate.ts` controls visibility and the reason string shown in the modal.
+**`SharedPremiumGate`** — modal that gates premium features. Trigger it by calling `usePremiumGateStore().show(context, extra?)` (`open` is the store's boolean visibility ref, not a method). The store in `app/stores/premiumGate.ts` controls visibility and the reason string shown in the modal.
 
 **`AiImportDialog`** — floating dialog for importing words via AI into a deck. Controlled by a local `aiOpen` ref; always paired with a floating Mimi trigger button (`fixed bottom-[26px] right-[28px]`).
 

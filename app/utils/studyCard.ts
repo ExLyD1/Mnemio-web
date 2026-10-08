@@ -19,6 +19,12 @@ export interface StudyCard {
     audioUrl: string | null;
 }
 
+export type FrontSide = 'term' | 'definition';
+
+/** Which text the unrevealed face shows first; the back always shows both. */
+export const frontTextFor = (c: StudyCard, side: FrontSide): string =>
+    side === 'definition' ? c.meaning : c.word;
+
 export const toStudyCard = (card: Card, deck: Deck): StudyCard => {
     const lang =
         LANGUAGES.find((l) => l.code === deck.targetLanguage)?.label ??

@@ -94,6 +94,19 @@ export type AnalyticsEvent =
           };
       }
     | { name: 'review_due_cleared'; props: { cards_reviewed: number } }
+    | {
+          name: 'practice_decks_selected';
+          props: {
+              selection_mode: 'single' | 'multi' | 'all';
+              deck_count: number;
+              card_count: number;
+          };
+      }
+    | {
+          name: 'card_suggestion_accepted';
+          props: { kind: 'completion' | 'translation'; source: string };
+      }
+    | { name: 'study_front_side_changed'; props: { front_side: 'term' | 'definition' } }
     // ── AI features ───────────────────────────────────────────────────────────
     | { name: 'ai_feature_viewed'; props: { ai_feature: AiFeature; context: string } }
     | { name: 'ai_feature_started'; props: { ai_feature: AiFeature; context: string } }

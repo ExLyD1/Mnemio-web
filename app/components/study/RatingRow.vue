@@ -12,6 +12,9 @@
         >
             <StudyKeycap :label="g.hint" class="absolute right-2 top-2" />
             <span class="text-body font-semibold">{{ t(g.i18nKey) }}</span>
+            <span v-if="previews?.[g.key]" class="text-small tabular-nums opacity-70">
+                {{ previews[g.key] }}
+            </span>
         </button>
     </div>
 </template>
@@ -23,6 +26,10 @@ import type { SrsRating } from '@/types/srs';
 
 const { t } = useT();
 
+// Optional per-grade "next review in..." label (e.g. "1хв", "6д"). Omitted
+// entirely by any caller without progress data, so the row degrades to its
+// previous look rather than showing a wrong/empty number.
+defineProps<{ previews?: Partial<Record<SrsRating, string>> }>();
 defineEmits<{ grade: [rating: SrsRating] }>();
 
 // Light: border + text colour only. Dark: add a faint bg tint.
