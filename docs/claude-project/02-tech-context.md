@@ -32,22 +32,22 @@ back → XP, streak, achievements and stats close the loop.
 
 ## 2. Status snapshot (as of the date above)
 
-| Area | State |
-|---|---|
-| Backend API | Feature-complete per contract: **66 endpoints** under `/api/v1` + `/health` + `/ready` + static `/media/*`. |
-| Auth | Email + password with OTP email verification, Google OAuth, refresh-token rotation with reuse detection. No password reset / email change (deferred). |
-| Decks & cards | Full CRUD, bulk add (≤100), copy public deck, import/export. |
-| Study & SRS | Sessions with one-active-per-user invariant, server-computed XP, SM-2 (`again→0, hard→2, good→3, easy→5`, EF floor 1.3), review queue, local-day bucketing by user timezone. |
-| AI | Live **Anthropic** provider (Claude Haiku 4.5) with a mock provider for dev; enrich-words, generate-deck, deck-from-image, suggest (Mimi nudges), all SSE-streamable. Per-user daily caps. |
-| Chat (Mimi) | Persisted conversations + messages, SSE streaming, tool use (`create_deck`, `add_cards`), partial-reply recovery, per-day cap. |
-| Billing | **Paddle** (migrated off Stripe in Sep/Oct 2026): overlay checkout, localized price preview, webhook fulfillment with an idempotency ledger, customer portal, `plan: 'free' \| 'premium'` on every auth response. |
-| Gamification | XP, streaks, 7-entry achievement catalogue with unseen/ack endpoints. No leagues or leaderboards (deferred — needs a social graph). |
-| Stats | Overview with trends, daily series, 53-week heatmap + month calendar, per-deck retention/mastery, study-time, decks-studied, card series. |
-| Discover / SEO | Public no-auth endpoints, SSR public deck pages, sitemap source, robots allow-list, blog (static data in `app/data/blog.ts`), SEO landing pages. |
-| Analytics | Mixpanel + GA4 via `app/analytics/*`, typed event catalogue, paywall funnel events. |
-| i18n | EN + UK, parity enforced in CI (`npm run i18n:check`). |
-| Testing | Backend: Vitest (SM-2, XP, pagination, auth/OAuth integration, stats, ai-budget). Frontend: **no test runner** — verification is `npm run validate` + `npm run typecheck` + manual. |
-| Deployment | Backend: Railway (`railway.json`, Dockerfile, Postgres). Frontend: Dockerfile present; `site.url = https://mnemio.xyz`. ⚠️ confirm the current FE host (Vercel per old README). |
+| Area           | State                                                                                                                                                                                                             |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend API    | Feature-complete per contract: **66 endpoints** under `/api/v1` + `/health` + `/ready` + static `/media/*`.                                                                                                       |
+| Auth           | Email + password with OTP email verification, Google OAuth, refresh-token rotation with reuse detection. No password reset / email change (deferred).                                                             |
+| Decks & cards  | Full CRUD, bulk add (≤100), copy public deck, import/export.                                                                                                                                                      |
+| Study & SRS    | Sessions with one-active-per-user invariant, server-computed XP, SM-2 (`again→0, hard→2, good→3, easy→5`, EF floor 1.3), review queue, local-day bucketing by user timezone.                                      |
+| AI             | Live **Anthropic** provider (Claude Haiku 4.5) with a mock provider for dev; enrich-words, generate-deck, deck-from-image, suggest (Mimi nudges), all SSE-streamable. Per-user daily caps.                        |
+| Chat (Mimi)    | Persisted conversations + messages, SSE streaming, tool use (`create_deck`, `add_cards`), partial-reply recovery, per-day cap.                                                                                    |
+| Billing        | **Paddle** (migrated off Stripe in Sep/Oct 2026): overlay checkout, localized price preview, webhook fulfillment with an idempotency ledger, customer portal, `plan: 'free' \| 'premium'` on every auth response. |
+| Gamification   | XP, streaks, 7-entry achievement catalogue with unseen/ack endpoints. No leagues or leaderboards (deferred — needs a social graph).                                                                               |
+| Stats          | Overview with trends, daily series, 53-week heatmap + month calendar, per-deck retention/mastery, study-time, decks-studied, card series.                                                                         |
+| Discover / SEO | Public no-auth endpoints, SSR public deck pages, sitemap source, robots allow-list, blog (static data in `app/data/blog.ts`), SEO landing pages.                                                                  |
+| Analytics      | Mixpanel + GA4 via `app/analytics/*`, typed event catalogue, paywall funnel events.                                                                                                                               |
+| i18n           | EN + UK, parity enforced in CI (`npm run i18n:check`).                                                                                                                                                            |
+| Testing        | Backend: Vitest (SM-2, XP, pagination, auth/OAuth integration, stats, ai-budget). Frontend: **no test runner** — verification is `npm run validate` + `npm run typecheck` + manual.                               |
+| Deployment     | Backend: Railway (`railway.json`, Dockerfile, Postgres). Frontend: Dockerfile present; `site.url = https://mnemio.xyz`. ⚠️ confirm the current FE host (Vercel per old README).                                   |
 
 Recent direction (from git history, newest first): Paddle billing migration →
 brand refresh (logo/favicon/OG) → legal pages (refund policy, billing terms) →
@@ -59,12 +59,14 @@ stats consistency, auth stability and SRS queue performance.
 ## 3. Repos, stack, commands
 
 ### `mnemio-frontend`
+
 Nuxt 4 (`compatibilityDate 2025-07-15`) · Vue 3 `<script setup>` · TypeScript
 strict · Pinia (setup stores) · Tailwind + shadcn-vue (`new-york`, reka, lucide)
 · `@nuxtjs/i18n` (no_prefix, en/uk) · `@nuxtjs/color-mode` · `@nuxt/image` ·
 `@nuxtjs/sitemap` + `robots` · `@vueuse/nuxt` + `@vueuse/motion` · vee-validate
-+ zod · `@paddle/paddle-js` · mixpanel-browser · marked + dompurify.
-npm package name is still `quizlet` (legacy). Node ≥ 22.
+
+- zod · `@paddle/paddle-js` · mixpanel-browser · marked + dompurify.
+  npm package name is still `quizlet` (legacy). Node ≥ 22.
 
 ```bash
 npm run dev        # needs the backend on :3001
@@ -74,6 +76,7 @@ npm run ci         # i18n:check + build + validate
 ```
 
 ### `mnemio-backend`
+
 Fastify 5 · TypeScript · Prisma 7 (`@prisma/adapter-pg`) · PostgreSQL 17 ·
 Zod · `@fastify/jwt` (HS256, 15 min access) + `@fastify/cookie` (30-day
 rotating refresh) · argon2id · arctic (Google OAuth) · `@anthropic-ai/sdk` ·
@@ -116,13 +119,13 @@ error to `{ code, message, details? }`. Options: `skipAuth`, `skipRefresh`.
 1. `app/api/chat.ts` uses native `fetch` (ofetch can't stream SSE) and runs its
    own 401 → refresh → retry cycle.
 2. `app/utils/publicHttp.ts` — no-auth GET wrapper that works during the Nitro
-   server render *and* in the browser. All SSR/crawler-facing content (public
+   server render _and_ in the browser. All SSR/crawler-facing content (public
    discover, public deck pages, blog) goes through it inside `useAsyncData`.
    `http.ts` must never run on the server — it reads `localStorage`.
 
 **Dev proxy:** `routeRules['/api/**'] = { proxy: 'http://127.0.0.1:3001/api/**' }`
 and `runtimeConfig.public.apiBase` is empty in dev, so the browser issues
-*relative* `/api/v1/...` calls to its own origin and Nuxt proxies them. This
+_relative_ `/api/v1/...` calls to its own origin and Nuxt proxies them. This
 keeps the refresh cookie first-party. The backend **must** be on `:3001` or
 everything 502s. Prod: `NUXT_PUBLIC_API_BASE`, plus `NUXT_API_PROXY_TARGET` for
 server-side `publicHttp`.
@@ -190,8 +193,8 @@ response shapes — the FE never branches on provider. SSE when
 LLM call; `/ai/*` and `/imports/*` keep separate counters in `ai_usage` with
 distinct error codes (`AI_BUDGET_EXCEEDED` vs `IMPORT_BUDGET_EXCEEDED`).
 
-**Mimi chat.** Streamed tokens before a `tool_use` frame are a *neutral
-preamble*, not a result — the FE clears them on `tool_use` and renders the
+**Mimi chat.** Streamed tokens before a `tool_use` frame are a _neutral
+preamble_, not a result — the FE clears them on `tool_use` and renders the
 post-`tool_result` tokens, so "added it" can never appear without a successful
 tool result. A cut stream persists as `status: 'partial'`, is not charged
 against the daily cap, and the FE offers retry. `useChat()` is a composable, not
@@ -223,8 +226,22 @@ monetization decision, not an implementation detail). Enforcement details:
   numbers** — the product doc mirrors it in plain language.
 - Counted in the `ai_usage` table as a per-user daily rollup, with separate
   counters for `/ai/*` and `/imports/*` and distinct error codes.
-- `assertWithinBudget` runs before every LLM call; `entitlement.service.ts`
-  (`assertPremium` / `getPlan`) decides which cap applies.
+- Six counters: `generate`, `enrich`, `suggest`, `chat`, `import`, `image`.
+  Premium is a flat **10×** on each.
+- **Reset at UTC midnight** — note this differs from streaks/activity, which
+  bucket by the user's local day. Deliberate, but a user in UTC+3 sees their
+  caps reset at 03:00 local.
+- **Per call, not per token** — a 100-word enrich costs the same unit as a
+  5-word one.
+- **Only successful calls count:** `recordUse` runs _after_ the provider
+  returns (`ai.budget.service.ts:56-80`).
+- `assertWithinBudget` runs **before** the provider call, so a capped user
+  never burns API credits. `entitlement.service.ts` (`assertPremium` /
+  `getPlan`) decides which cap applies.
+- **Model routing** (`env.ts:59-65`): Claude Haiku 4.5 for everything, except
+  Ukrainian card content → Claude Sonnet 5. Ukrainian content therefore costs
+  ~2× English. (Worth knowing: Claude Sonnet 5.5 is the current Sonnet at the
+  same $2/$10 per MTok, so that swap is free if quality is equal or better.)
 - Max words per enrich call: 100. Study modes and SRS are uncapped and free.
 - Pricing: the `/pricing` page renders Paddle's localized `PricePreview`
   client-side; the JSON-LD fallback hard-codes $10/mo and $96/yr for crawlers,
@@ -238,23 +255,23 @@ and `/media/uploads`.
 
 ## 8. Frontend layout and non-obvious patterns
 
-| Dir | Purpose |
-|---|---|
-| `app/api/` | auth, decks, cards, sessions, srs, stats, discover, publicDiscover, achievements, preferences, ai, chat, billing, media |
-| `app/stores/` | auth, decks, sessions, srs, practice, preferences, billing, premiumGate |
+| Dir                | Purpose                                                                                                                                                                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/api/`         | auth, decks, cards, sessions, srs, stats, discover, publicDiscover, achievements, preferences, ai, chat, billing, media                                                                                                    |
+| `app/stores/`      | auth, decks, sessions, srs, practice, preferences, billing, premiumGate                                                                                                                                                    |
 | `app/composables/` | `useAsync` (the primitive), domain composables, plus `useT`, `useAppLocale`, `useToast`, `useMimi`, `useChat`, `useAnalytics`, `useStudySession`, `useImageDeck`, `usePaddle`/`usePaddlePrices`, `useSeo`, `useGeoCountry` |
-| `app/analytics/` | `client.ts` (Mixpanel/GA) + `events.ts` (typed catalogue) — always go through `useAnalytics()` |
-| `app/components/` | `ui/` = shadcn primitives, `shared/` = reusable widgets, rest by feature (study, deck, dashboard, login, marketing, landing, review, card, app, ai, layout) |
-| `app/pages/` | app routes + marketing/SEO pages (see §9) |
-| `app/i18n/` | `en.json`, `uk.json`, `index.ts` |
-| `app/data/blog.ts` | all blog content (no CMS) |
+| `app/analytics/`   | `client.ts` (Mixpanel/GA) + `events.ts` (typed catalogue) — always go through `useAnalytics()`                                                                                                                             |
+| `app/components/`  | `ui/` = shadcn primitives, `shared/` = reusable widgets, rest by feature (study, deck, dashboard, login, marketing, landing, review, card, app, ai, layout)                                                                |
+| `app/pages/`       | app routes + marketing/SEO pages (see §9)                                                                                                                                                                                  |
+| `app/i18n/`        | `en.json`, `uk.json`, `index.ts`                                                                                                                                                                                           |
+| `app/data/blog.ts` | all blog content (no CMS)                                                                                                                                                                                                  |
 
 - **Components auto-import with a path-derived prefix:**
   `components/shared/StatTile.vue` → `<SharedStatTile>`, `components/ai/ImportDialog.vue`
   → `<AiImportDialog>`.
 - **`SharedDeckCard`** has `variant: 'library' | 'recent' | 'discover'`.
 - **`DeckCardVM` / `deckToCardVm`** — all deck cards take a `DeckCardVM`; the
-  `swatch` field may be a hex colour *or* a CSS gradient, so always bind
+  `swatch` field may be a hex colour _or_ a CSS gradient, so always bind
   `:style="{ background: deck.swatch }"`, never `backgroundImage`.
 - **`AppRail`** expands 76 → 240 px on hover; the outer `<aside>` stays 76 px and
   the inner panel is absolutely positioned (no reflow). Mobile uses
@@ -341,14 +358,14 @@ deletion **is** shipped; the README's "out of scope" list is stale here).
 
 Do not quote these as current:
 
-| File | What's wrong |
-|---|---|
-| `mnemio-frontend/README.md` | Says pnpm (it's npm), "20+ language UI" (it's en/uk), leagues/badges as features (leagues deferred), Node 20 (it's ≥22), and the roadmap checklist is all-unchecked though most of it shipped. Project-structure tree doesn't match `app/`. |
-| `mnemio-backend/README.md` | Says AI is mocked and OAuth is "planned, no routes wired" — both wrong (Anthropic live, Google OAuth shipped). Its API overview omits chat, billing, imports and public/SEO routes. "Out of MVP scope" list includes things now shipped. |
-| `mnemio-backend/docs/paid-subscription-plan.md` | Recommends and designs for **Stripe**. The product migrated to **Paddle** (`feat(billing): migrate fulfillment from Stripe to Paddle`). Useful only for the state-machine and entitlement reasoning, which carried over. |
-| `mnemio-frontend/docs/api-contract.md` | A stale fork of the backend doc, kept for old links. **Always use `mnemio-backend/docs/api-contract.md`.** |
-| `mnemio-frontend/CLAUDE.md` | Accurate on conventions, but says "42 endpoints" — it's 66. |
-| `mnemio-frontend/FIXED.md` | Historical bug log (useful as a bug-pattern archive, not as current state). |
+| File                                            | What's wrong                                                                                                                                                                                                                                |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mnemio-frontend/README.md`                     | Says pnpm (it's npm), "20+ language UI" (it's en/uk), leagues/badges as features (leagues deferred), Node 20 (it's ≥22), and the roadmap checklist is all-unchecked though most of it shipped. Project-structure tree doesn't match `app/`. |
+| `mnemio-backend/README.md`                      | Says AI is mocked and OAuth is "planned, no routes wired" — both wrong (Anthropic live, Google OAuth shipped). Its API overview omits chat, billing, imports and public/SEO routes. "Out of MVP scope" list includes things now shipped.    |
+| `mnemio-backend/docs/paid-subscription-plan.md` | Recommends and designs for **Stripe**. The product migrated to **Paddle** (`feat(billing): migrate fulfillment from Stripe to Paddle`). Useful only for the state-machine and entitlement reasoning, which carried over.                    |
+| `mnemio-frontend/docs/api-contract.md`          | A stale fork of the backend doc, kept for old links. **Always use `mnemio-backend/docs/api-contract.md`.**                                                                                                                                  |
+| `mnemio-frontend/CLAUDE.md`                     | Accurate on conventions, but says "42 endpoints" — it's 66.                                                                                                                                                                                 |
+| `mnemio-frontend/FIXED.md`                      | Historical bug log (useful as a bug-pattern archive, not as current state).                                                                                                                                                                 |
 
 ---
 

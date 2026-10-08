@@ -18,8 +18,14 @@ part of speech, an example sentence. Then it schedules those cards so each one
 comes back just before you'd forget it, and tracks your progress so coming back
 tomorrow feels worth it.
 
-Site: **mnemio.xyz** · Interface: **English and Ukrainian** · Built and run by
-one person.
+Site: **mnemio.xyz** (live, publicly accessible) · staging: **dev.mnemio.xyz** ·
+Interface: **English and Ukrainian** · Built and run by one person.
+
+**Where we actually are:** publicly launched and working, but pre-traction.
+No real users yet beyond friends. Paddle is still in sandbox, so nobody has
+paid for anything — zero subscribers, zero conversion data, no measured
+retention. Every number in this file that isn't a cost or a cap is a guess, and
+is marked as one.
 
 ---
 
@@ -44,26 +50,35 @@ guesswork, and the learning itself stays free.**
 
 ## 3. Who it's for
 
-**Primary:** self-directed language learners, roughly 16–30, who already know
-they should be using flashcards and have tried Quizlet or Anki. They have a word
-list from somewhere — a textbook, a class, a film, a vocabulary minimum — and
-want it to become a deck without an hour of typing.
+**Decided focus: people learning English.** Not language learners in general —
+English specifically. Everything (copy, landing pages, example decks, defaults)
+aims there.
 
-**Beachhead:** Ukrainian students preparing for the **НМТ** exam. Specific,
-reachable, with a known word list ("лексичний мінімум"), currently served by
-Quizlet with an English-only interface. There are dedicated landing pages for
-this segment.
+**Beachhead:** Ukrainian students preparing for **НМТ English**. This is the
+sharp end of the same group, and it's coherent rather than a compromise: they
+are English learners, they have a fixed published word list ("лексичний
+мінімум"), they're reachable through Ukrainian-language search, and Quizlet
+serves them with an English-only interface. The Ukrainian interface and the UA
+landing pages are what make this beachhead winnable — they are not a second
+market, they're the way into the first one.
 
-**Secondary / later:** anyone memorising structured facts — medical and law
-students, certification exams. The product already supports it; nothing is
-aimed at them yet.
+**Primary, more broadly:** self-directed English learners, roughly 16–30, who
+already know they should be using flashcards and have tried Quizlet or Anki.
+They have a word list from somewhere — a textbook, a class, a film, an exam
+syllabus — and want it to become a deck without an hour of typing.
+
+**Secondary / later:** other languages (the product is language-agnostic
+already), then anyone memorising structured facts — medical and law students,
+certification exams. Nothing is aimed at them.
 
 **Not for (today):** classrooms and teachers (no groups, no assignments, no
 class dashboard), and anyone who wants a full language course — Mnemio does
 vocabulary and recall, not grammar or conversation.
 
-> ⚠️ **FILL IN:** has anyone from the beachhead segment actually used it? Any
-> real user you've talked to? One honest sentence beats a persona.
+**Real users so far:** friends only. Nobody from the beachhead has used it yet,
+so there is no feedback, no retention curve, and no evidence for any claim in
+this section. Treat all of it as a hypothesis to test, starting with ten real
+НМТ candidates.
 
 ---
 
@@ -132,15 +147,15 @@ subscriptions and a self-service billing portal.
 
 ## 6. What makes it different
 
-| | Mnemio | Quizlet | Anki |
-|---|---|---|---|
-| Making cards | AI does it — list, topic, or photo | You type them (AI behind paywall) | You type them |
-| Study modes | All six, free | Best ones behind Plus | One, plus add-ons |
-| Scheduling | SM-2, on by default | Weak unless you pay | Best in class |
-| Ads | None | Yes, on free | None |
-| Learning curve | Sign up and go | Easy | Steep |
-| Ukrainian interface | Yes | No | Partial |
-| AI tutor that edits your decks | Yes (Mimi) | No | No |
+|                                | Mnemio                             | Quizlet                           | Anki              |
+| ------------------------------ | ---------------------------------- | --------------------------------- | ----------------- |
+| Making cards                   | AI does it — list, topic, or photo | You type them (AI behind paywall) | You type them     |
+| Study modes                    | All six, free                      | Best ones behind Plus             | One, plus add-ons |
+| Scheduling                     | SM-2, on by default                | Weak unless you pay               | Best in class     |
+| Ads                            | None                               | Yes, on free                      | None              |
+| Learning curve                 | Sign up and go                     | Easy                              | Steep             |
+| Ukrainian interface            | Yes                                | No                                | Partial           |
+| AI tutor that edits your decks | Yes (Mimi)                         | No                                | No                |
 
 The honest one-line pitch: **the scheduling of Anki, the friendliness of
 Quizlet, and the card-writing done for you.**
@@ -155,7 +170,7 @@ This is positioning, not market research — worth a real pass later.
   monetised. Most Mnemio users will arrive from here. Main threat: they ship
   good AI card generation on the free tier.
 - **Anki** — the serious learners' choice. Free, powerful, ugly, hard. Not
-  really competing for the same person; competing for the same *job*.
+  really competing for the same person; competing for the same _job_.
 - **Memrise / Brainscape / Cram** — mid-sized flashcard apps, each with one
   strong idea (video, confidence-based repetition, simplicity).
 - **Knowunity / StudySmarter / Vaia** — student study apps with AI, strong in
@@ -164,7 +179,7 @@ This is positioning, not market research — worth a real pass later.
   the habit already live. It sets the expectation for what a learning streak
   should feel like.
 - **ChatGPT alone** — the real quiet competitor. Someone can ask it for twenty
-  words and their meanings for free. What they *can't* get is the schedule, the
+  words and their meanings for free. What they _can't_ get is the schedule, the
   progress, and the habit. That gap is the product.
 
 ---
@@ -175,83 +190,154 @@ This is positioning, not market research — worth a real pass later.
 record, so it deals with VAT and local currencies; prices are shown in the
 visitor's own currency.
 
-**Price:** $10 / month or $96 / year (annual ≈ 20% off).
+**Status: sandbox.** Paddle is not live yet, so there are no subscribers, no
+MRR and no conversion rate. Going live is a near-term task.
 
-**What's free, forever:** all study modes, spaced repetition, unlimited decks
-and cards, stats, streaks, achievements, the public catalogue, no ads.
+**Price: not decided.** The code and the pricing page's structured data
+currently carry $9.99–10 / month and $96 / year, but that's a placeholder, not
+a researched price. Pricing is an open question — see §14. Don't treat $10 as
+the plan.
 
-**What premium buys:** more AI. Everything AI-powered has a daily cap, and
-premium raises each one roughly 10×:
+**Free gets everything structurally.** No limit on decks, cards or folders
+anywhere. Full SRS scheduler, all study modes, practice and review, stats,
+discovery, Mimi chat, photo→cards, AI deck generation, imports. The _only_
+difference between free and premium is a **10× multiplier on six daily
+counters**:
 
-| AI action | Free / day | Premium / day |
-|---|---|---|
-| Fill in a word list | 5 | 50 |
-| Build a deck from a topic | 20 | 200 |
-| Deck from a photo | 10 | 100 |
-| Mimi chat messages | 50 | 500 |
-| Imports (Quizlet / text) | 20 | 200 |
-| Mimi nudges | 60 | 600 |
+| Counter                      | Free / day | Premium / day |
+| ---------------------------- | ---------- | ------------- |
+| Build a deck from a topic    | 20         | 200           |
+| Fill in a word list (enrich) | 5          | 50            |
+| Mimi nudges (suggest)        | 60         | 600           |
+| Mimi chat turns              | 50         | 500           |
+| Imports (Quizlet / text)     | 20         | 200           |
+| Photo → cards                | 10         | 100           |
 
-**Why gate volume and not features:** the learning loop is what creates the
-habit, and the habit is what creates a paying customer. Charging for study
-modes taxes the thing you want people doing. AI calls also cost real money per
-use, so the cap is both the paywall and the cost control.
+How the counters behave — worth knowing, because it shapes both the user
+experience and the cost ceiling:
 
-Hitting a cap opens a paywall dialog that names the limit you actually hit.
+- Reset at **UTC midnight** (not the user's local midnight, unlike streaks).
+- Counted **per call, not per token** — a 100-word enrich costs one unit, same
+  as a 5-word one. That rewards batching and punishes nobody for long input.
+- **Only successful calls count.** Usage is recorded after the provider
+  returns, so a failure doesn't burn a unit.
+- The cap is checked **before** the AI call, so a capped user never spends API
+  credits. The paywall is also the cost control.
 
-> ⚠️ **FILL IN:** paying customers, MRR, trial/conversion rate, and whether
-> Paddle is still in sandbox or live.
+Hitting a cap opens a paywall dialog naming the limit you actually hit.
+
+> ⚠️ **The caps are provisional and will be re-examined.** They were set by
+> judgement, not measurement — nobody has yet hit one in real use. Don't build
+> arguments on these exact numbers; treat the _shape_ (free is structurally
+> complete, premium is volume) as the decision and the numbers as a dial.
+
+**Why gate volume and not features:** the learning loop creates the habit and
+the habit creates a paying customer, so charging for study modes would tax the
+exact behaviour you want. AI calls also cost real money per call, so a volume
+cap is simultaneously the paywall and the spend limit. One mechanism, two jobs.
 
 ---
 
 ## 9. What Mnemio costs to run
 
-Per-service costs, with amounts to fill in from your bills:
+**Models:** Claude Haiku 4.5 ($1 / $5 per million tokens in/out) for
+everything, except Ukrainian card content, which routes to Claude Sonnet 5
+($2 / $10) for quality. So Ukrainian content costs roughly 2× English — which
+matters, because the beachhead is Ukrainian.
 
-| Service | What it's for | Cost shape | Amount |
-|---|---|---|---|
-| Anthropic (Claude Haiku) | every AI action | per use — the only cost that scales with usage | ⚠️ |
-| Railway | backend + PostgreSQL | monthly, flat-ish | ⚠️ |
-| Frontend hosting | the website | monthly | ⚠️ |
-| Paddle | payments, VAT, invoicing | ~5% + fee per transaction | — |
-| Domain `mnemio.xyz` | | yearly | ⚠️ |
-| Email sending | verification codes | monthly / per email | ⚠️ |
-| Mixpanel + GA4 | analytics | free tier today | ⚠️ |
-| Sentry | error tracking | free tier today | ⚠️ |
-| File storage | avatars, card images | local disk today → paid object storage later | ⚠️ |
+**Cost per AI call** (measured):
 
-**The only one that moves with growth is Anthropic.** Everything else is
-roughly flat until you're much bigger. So the unit economics question is
-narrow: *what does a heavy free user cost in AI per month, and how many of them
-does one subscriber pay for?*
+| Call                            | Cost                  |
+| ------------------------------- | --------------------- |
+| Mimi chat turn (text)           | $0.007                |
+| Mimi chat turn (with tool use)  | $0.014                |
+| Build a deck (8 cards)          | $0.010 EN · $0.021 UK |
+| Fill in a word list (~50 words) | $0.020 EN · $0.040 UK |
+| Nudge (suggest)                 | $0.001                |
+| Photo → cards                   | $0.012                |
+
+**Per-service bill:**
+
+| Service                  | What it's for            | Cost shape                           | Amount            |
+| ------------------------ | ------------------------ | ------------------------------------ | ----------------- |
+| Anthropic (Haiku/Sonnet) | every AI action          | **per use — the only variable cost** | see above         |
+| Railway                  | backend + Postgres + SSR | monthly, flat                        | part of $80–120   |
+| Resend                   | verification emails      | monthly                              | part of $80–120   |
+| Sentry                   | error tracking           | monthly                              | part of $80–120   |
+| **Infra subtotal**       |                          | **flat**                             | **$80–120 / mo**  |
+| Paddle                   | payments, VAT, invoicing | 5% + $0.50 per transaction           | ~$1.00 / sub / mo |
+| Domain `mnemio.xyz`      |                          | yearly                               | ⚠️ (small)        |
+| Mixpanel + GA4           | analytics                | free tier                            | $0                |
+| File storage             | avatars, card images     | on the Railway volume                | cents             |
+
+**Everything except AI is effectively fixed.** Per-user marginal infra (rows,
+egress, media) is cents. So the whole cost question reduces to one thing: _how
+much AI does a user consume per month?_
+
+**Cost per paying user, per month:**
+
+| Usage pattern                            | LLM   | Paddle | Infra  | Total  |
+| ---------------------------------------- | ----- | ------ | ------ | ------ |
+| Light                                    | $0.40 | ~$1.00 | ~$0.10 | ~$1.50 |
+| Typical (20 active days, 8 chat turns/d) | $1.90 | ~$1.00 | ~$0.10 | ~$3.00 |
+| Heavy (daily, 25 chat turns/d)           | $8.00 | ~$1.00 | ~$0.10 | ~$9.10 |
+| Maxing every premium cap, every day      | $270  | ~$1.00 | —      | ~$271  |
+
+Annual billing cuts the Paddle fee to ~$0.45/month equivalent.
+
+> ⚠️ Paddle's fee is assumed against a ~$9.99 price, which isn't a decided
+> price. The infra range is an estimate, not a read bill — worth confirming
+> once from the actual invoices.
 
 ---
 
-## 10. Unit economics — the skeleton
+## 10. Unit economics
 
-Fill the four unknowns and this answers itself:
+Now mostly knowable. At a placeholder $9.99/month:
 
 ```
-Revenue per subscriber (monthly)   = $10        (or $96/12 = $8 annual)
-  minus Paddle                     ≈ 5% + fee  → net ≈ $9.20 monthly
-  minus their own AI usage         = ⚠️ A
-  = gross margin per subscriber
+Revenue per subscriber              = $9.99
+  minus Paddle (5% + $0.50)         = −$1.00   → net ≈ $8.99
+  minus their own AI usage          = −$1.90   (typical)
+  = contribution per subscriber     ≈ $7.00    (≈ 70% margin)
 
-Cost of a free user                = ⚠️ B   (AI cost of an average free user/month)
-Free users per paying user         = ⚠️ C   (1 / conversion rate)
-
-Contribution per paying user = net revenue − A − (B × C)
-Payback = acquisition cost (⚠️ D) / contribution
+  light user                        ≈ $8.50    (85%)
+  heavy user                        ≈ $0.99    (10%)
+  cap-maxing user                   ≈ −$262    (catastrophic, see below)
 ```
 
-Two things to notice before measuring anything:
+Then the part that isn't known yet:
 
-- The daily caps put a **hard ceiling** on A and B. A free user physically
-  cannot cost more than their caps allow — that was the point of capping by
-  volume. Work out that worst-case number; it's your floor of safety.
-- With no paid acquisition, D ≈ 0 and the whole model only has to beat the flat
-  hosting bill. Organic-first makes the maths forgiving; it also makes growth
-  slow. That trade-off is the central business decision right now.
+```
+Free users carried per subscriber   = ⚠️ 1 / conversion rate (no data)
+Cost of an average free user        = ⚠️ (no data — but bounded, see below)
+Acquisition cost                    ≈ $0 today (all organic)
+Break-even                          ≈ $80–120 infra ÷ ~$7 = 12–17 subscribers
+```
+
+**Three things this says out loud:**
+
+1. **Break-even is ~12–17 subscribers.** That's the whole business goal right
+   now, and it's a small number. Reaching it needs maybe 1–2k engaged free
+   users at a plausible conversion rate.
+2. **A typical subscriber is comfortably profitable; a cap-maxing one is a
+   disaster.** $271/month of cost against $10 of revenue. The premium caps are
+   10× higher than the free ones, which means the _paid_ tier is where the real
+   cost risk lives — the opposite of the usual intuition. Premium caps are the
+   number to re-examine first, not free ones.
+3. **A free user is bounded but not cheap.** Multiplying the free caps by the
+   per-call costs: roughly **$1/day, so ~$30/month** for someone who maxes
+   every free counter every day (~$39 if their content is Ukrainian, since that
+   routes to Sonnet). One such user eats four subscribers' contribution. The
+   realistic average will be a small fraction of that — but the tail is what
+   bites, and that worst case is the number worth designing against.
+   _(This is arithmetic from the caps and the per-call costs above, not a
+   measurement.)_
+
+**Conclusion to carry into the pricing work:** the margin at typical usage is
+healthy enough that price can be set by what the market will bear, not by cost.
+Cost only constrains the _caps_. Those are two separate decisions and should be
+made separately.
 
 ---
 
@@ -271,10 +357,15 @@ No paid acquisition today. The channels that exist:
 - **Social** — ⚠️ nothing yet. See the Notion map.
 
 Measurement: Mixpanel + GA4 are wired, with a named event for every meaningful
-step including the paywall funnel.
+step including the paywall funnel. `dev.mnemio.xyz` is the staging environment —
+keep its analytics in a separate Mixpanel project so test traffic never lands
+in production numbers.
 
-> ⚠️ **FILL IN:** monthly visitors, where they come from, signup rate, and
-> which single page brings the most.
+> ⚠️ **No traffic data recorded yet.** Unknown: monthly visitors, where they
+> come from, signup rate, and which page pulls the most. Since the site is
+> live, this is readable from Search Console and Mixpanel today — doing that
+> once is the highest-value hour available right now, because every strategy
+> question below depends on it.
 
 ---
 
@@ -282,16 +373,16 @@ step including the paywall funnel.
 
 Say "decided against", not "missing". The reason is as important as the choice.
 
-| Not built | Why | Revisit when |
-|---|---|---|
-| Leaderboards, friends | Needs a social graph; adds abuse and privacy surface | Social features become a real direction |
-| Folders for decks | Nobody with under ~25 decks needs them | A power user passes 25 decks |
-| Shared / co-edited decks | Real-time co-editing is heavy | A user asks for it as a top-3 need |
-| Classrooms, teachers, assignments | A different product with a different sale | Deliberate decision to go after schools |
-| Mobile apps | The web app works on a phone | Retention on web proves the habit |
-| Password reset | Only real gap — support handles it by hand today | ⚠️ before any real launch push |
-| Streak freezes | A whole meta-system (buy? earn? gift?) | Streak loss shows up as churn |
-| Reminders / notifications | Nothing designed to send yet | A reminder UX is designed |
+| Not built                         | Why                                                  | Revisit when                            |
+| --------------------------------- | ---------------------------------------------------- | --------------------------------------- |
+| Leaderboards, friends             | Needs a social graph; adds abuse and privacy surface | Social features become a real direction |
+| Folders for decks                 | Nobody with under ~25 decks needs them               | A power user passes 25 decks            |
+| Shared / co-edited decks          | Real-time co-editing is heavy                        | A user asks for it as a top-3 need      |
+| Classrooms, teachers, assignments | A different product with a different sale            | Deliberate decision to go after schools |
+| Mobile apps                       | The web app works on a phone                         | Retention on web proves the habit       |
+| Password reset                    | Only real gap — support handles it by hand today     | ⚠️ before any real launch push          |
+| Streak freezes                    | A whole meta-system (buy? earn? gift?)               | Streak loss shows up as churn           |
+| Reminders / notifications         | Nothing designed to send yet                         | A reminder UX is designed               |
 
 ---
 
@@ -316,11 +407,33 @@ Say "decided against", not "missing". The reason is as important as the choice.
 > ⚠️ Answer these in the Notion workspace, not here — this file is a snapshot,
 > Notion is where thinking accumulates.
 
-1. Launch status: is Mnemio publicly launched, soft-launched, or still private?
-2. The one metric for this quarter.
-3. Beachhead: go all-in on НМТ students, or stay general?
-4. Is $10/month the right price for a Ukrainian student? (Paddle shows local
-   currency, but purchasing power is a pricing decision, not a currency one.)
-5. Free-tier caps: generous enough to build the habit, tight enough to convert?
-   Nothing has been measured yet.
-6. Password reset before or after the next growth push?
+**Settled** (as of this snapshot): publicly launched · focus is English
+learners, beachhead НМТ English · gate AI volume, not features.
+
+**Open, roughly in the order they matter:**
+
+1. **Get ten real users from the beachhead.** Nothing below can be answered
+   without them. This is the only item that unblocks the others.
+2. **Read the existing data.** The site is live and analytics are wired —
+   visitors, sources, signup rate and the paywall funnel are sitting there
+   unread.
+3. **Paddle sandbox → live.** Until this ships, the business cannot be tested
+   at all. Also decide: trial or no trial?
+4. **Price discovery.** $10 is a placeholder. The cost model says margin is
+   healthy at typical usage, so price on willingness to pay, not cost. Open
+   sub-questions: is there a separate, lower price for Ukraine (purchasing
+   power, not currency)? Monthly-only or keep annual? Is a cheaper tier
+   (~$3–4) with smaller caps a better fit for a student than $10?
+5. **Recalibrate the caps — premium first.** A premium user maxing every cap
+   costs ~$271/month against ~$10 of revenue. Premium caps at 10× free are the
+   larger exposure; a hard monthly ceiling or a soft-throttle above a threshold
+   is worth designing before anyone pays.
+6. **Free caps: habit vs conversion.** Currently judgement, not measurement.
+   Once there are users: what share ever hits a cap, and what do they do next?
+7. **Password reset.** The only real functional gap. Decide before or after the
+   first growth push — a lost account on a launch day is an expensive way to
+   learn this.
+8. **The one metric for this quarter.** Pick it. Given the stage, "engaged
+   users who come back for a second review session" beats any revenue number.
+9. **Does Ukrainian content need Sonnet?** It doubles the cost of exactly the
+   content the beachhead generates. Worth an A/B on quality before scaling.
