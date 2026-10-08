@@ -1,45 +1,32 @@
-# Mnemio — canonical context snapshot
+# Mnemio — technical context snapshot
 
 **Snapshot date:** 2026-10-08
-**Compiled from:** both repos' source, `docs/api-contract.md`, Prisma schema,
-env config, and git history. Where a repo doc is out of date it is called out in
-[§12 Known-stale documents](#12-known-stale-documents).
+**Scope:** engineering only — stack, architecture, data model, contracts,
+environments, gotchas. The product view (what it is, who for, pricing,
+competitors, unit economics) is in `01-product-context.md`; don't duplicate it
+here.
+**Compiled from:** both repos' source, `mnemio-backend/docs/api-contract.md`,
+the Prisma schema, env config, and git history. Where a repo doc is out of date
+it is called out in [§12 Known-stale documents](#12-known-stale-documents).
 
 ---
 
-## 1. Product
+## 1. What the system does (one paragraph)
 
-**Mnemio** (mnemio.xyz) is a flashcard and spaced-repetition learning app —
-positioned as a free, ad-free alternative to Quizlet and Anki, with AI doing the
-boring part (writing the cards).
+Mnemio is a flashcard / spaced-repetition app at mnemio.xyz: decks of cards,
+study sessions in six modes, an SM-2 scheduler driving a daily review queue, a
+public deck catalogue that is SSR-rendered for crawlers, XP / streaks /
+achievements / stats, AI card generation (word list, topic, photo), an AI chat
+tutor ("Mimi") with tool use, and Paddle subscriptions that gate AI volume.
+Two repos, one developer, EN + UK interface.
 
-Core loop: user creates or copies a **deck** → cards get enriched by AI →
-**study session** in one of several modes → each answer is graded → **SM-2
-scheduler** sets the next due date → **review** queue brings due cards back →
-XP, streaks, achievements and stats make the loop sticky.
+**Everything product-level — audience, competitors, monetization rationale,
+costs, unit economics, channels — is in `01-product-context.md`.**
 
-Differentiators as built today:
-
-- **AI deck creation** — paste up to 100 words and get full cards (definition,
-  translation, part of speech, example, reading); or generate a deck from a
-  topic; or from a photo of a textbook page (`/ai/deck-from-image`).
-- **Mimi** — an AI chat tutor (Claude) with *tool use*: it can create a deck and
-  add cards into a deck you own, directly from the conversation.
-- **Imports** — Quizlet set import (HTML parse) and plain-text import.
-- **All study modes free** — flashcards, true/false, multiple choice, matching,
-  written, advanced learning. The paywall is on AI volume, not on learning.
-- **Public deck catalogue** that is SSR-rendered for crawlers (an SEO channel,
-  not just an in-app feature).
-- **EN + UK interface**, with a deliberate Ukrainian-market play (landing pages
-  for `квізлет альтернатива`, `лексичний мінімум НМТ`).
-
-Primary audience: self-directed language learners; Ukrainian students preparing
-for НМТ are an explicit beachhead segment.
-
-> ⚠️ **FILL IN (only you know these):** current users/MAU, paying customers,
-> MRR, traffic, conversion, launch status (soft-launched? public?), top
-> complaint, and the single metric you're optimising this quarter. Add them here
-> before uploading — most product/growth answers hinge on them.
+The user-visible core loop, for grounding: create or copy a deck → AI fills in
+the cards → study session in a chosen mode → grade each answer (again / hard /
+good / easy) → SM-2 sets the next due date → the review queue brings the card
+back → XP, streak, achievements and stats close the loop.
 
 ---
 
@@ -225,22 +212,23 @@ feature.
 
 ---
 
-## 7. Free vs Premium (per-user daily caps, env-tunable)
+## 7. Caps, plans and rate limits
 
-| Operation | Free | Premium |
-|---|---|---|
-| AI enrich-words | 5 | 50 |
-| AI generate-deck | 20 | 200 |
-| AI suggest (Mimi nudges) | 60 | 600 |
-| Mimi chat messages | 50 | 500 |
-| Deck-from-image | 10 | 100 |
-| Imports (Quizlet / text) | 20 | 200 |
+**The free/premium daily-cap table lives in `01-product-context.md` §8** (it's a
+monetization decision, not an implementation detail). Enforcement details:
 
-Max words per enrich call: 100. Study modes and SRS are free for everyone.
-
-Pricing (structured data on `/pricing`, actual charge is Paddle's localized
-price): **$10/month** or **$96/year**; Paddle is the merchant of record, prices
-are previewed client-side per country via `PricePreview`.
+- Every cap is an env var with a default in `mnemio-backend/src/config/env.ts`
+  (`AI_DAILY_*_CAP_PER_USER` and `*_CAP_PREMIUM_PER_USER`,
+  `IMPORT_DAILY_CAP_PER_USER`). **That file is the source of truth for the
+  numbers** — the product doc mirrors it in plain language.
+- Counted in the `ai_usage` table as a per-user daily rollup, with separate
+  counters for `/ai/*` and `/imports/*` and distinct error codes.
+- `assertWithinBudget` runs before every LLM call; `entitlement.service.ts`
+  (`assertPremium` / `getPlan`) decides which cap applies.
+- Max words per enrich call: 100. Study modes and SRS are uncapped and free.
+- Pricing: the `/pricing` page renders Paddle's localized `PricePreview`
+  client-side; the JSON-LD fallback hard-codes $10/mo and $96/yr for crawlers,
+  so changing the real price means updating that structured data too.
 
 Rate limits (per IP unless noted): 120 req/min global · 10/min register+login ·
 5/min verify-email + resend-otp · 30/min refresh · 30/min per user on `/ai/*`
