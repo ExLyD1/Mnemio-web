@@ -28,7 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
     // with a username but no full name was sent past onboarding while every
     // auth response said they still needed it.
     const needsProfile = computed(
-        () => !!user.value && (!user.value.username || !user.value.fullName),
+        () => !!user.value && (!user.value.username || !user.value.displayName),
     );
     const isPremium = computed(() => plan.value === 'premium');
 

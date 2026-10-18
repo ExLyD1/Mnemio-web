@@ -77,6 +77,7 @@
 
             <!-- Edit -->
             <template v-if="tab === 'edit'">
+                <StudyModeSetting />
                 <div
                     class="flex flex-col gap-4 rounded-[20px] border border-line bg-bg-surface p-6"
                 >

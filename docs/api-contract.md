@@ -29,7 +29,7 @@ unless it says so explicitly.
 | Decks        | `GET /decks` · `POST /decks` · `GET /decks/:id` · `PATCH /decks/:id` · `DELETE /decks/:id` · `GET /decks/:id/export` · `POST /decks/:id/cards/import`                                                 |
 | Cards        | `POST /decks/:id/cards` · `POST /decks/:id/cards/bulk` · `PATCH /cards/:id` · `DELETE /cards/:id`                                                                                                     |
 | Sessions     | `POST /sessions` · `PATCH /sessions/:id` · `POST /sessions/:id/complete` · `POST /sessions/:id/exit` · `POST /sessions/:id/resume` · `GET /sessions/active` · `GET /sessions/incomplete`              |
-| SRS          | `POST /srs/rate` · `GET /srs/due` · `GET /srs/progress`                                                                                                                                               |
+| SRS          | `POST /srs/rate` · `GET /srs/queue` · `GET /srs/due` · `GET /srs/progress` (Anki scheduler — see § Anki scheduler & .apkg import)                                                                     |
 | Dashboard    | `GET /dashboard`                                                                                                                                                                                      |
 | Achievements | `GET /achievements`                                                                                                                                                                                   |
 | Stats        | `GET /stats/overview` · `GET /stats/series` · `GET /stats/activity` · `GET /stats/decks`                                                                                                              |
@@ -2348,3 +2348,91 @@ without breaking existing `/stats/*` shapes:
 - Folders, leagues (leaderboard).
 - WebSockets / push notifications.
 - Apple / Facebook / Microsoft OAuth (only Google ships at MVP).
+
+## Anki scheduler & .apkg import
+
+Mirrors the backend `docs/api-contract.md` (source of truth). The old SM-2
+quality table above no longer applies: `hard` is a pass.
+
+#### `POST /srs/rate` _(auth)_
+
+Rate a card. Server runs Anki's v3 scheduler (SM-2 path, ported in
+`services/anki-scheduler.ts`, verified against Anki's own output) and upserts
+the user's `CardProgress`.
+
+```ts
+// Request: { cardId: string; rating: 'again' | 'hard' | 'good' | 'easy'; tz?: string /* IANA, default 'UTC' */ }
+// 200 Response: CardProgress & {
+//   newAchievements: Achievement[];
+//   requeueAt: string | null;   // set while the card is in an intraday (re)learning step
+//   previews: Previews | null;  // button previews for that next appearance
+// }
+// Errors: 404 CARD_NOT_FOUND · 403 CARD_FORBIDDEN · 400 VALIDATION_ERROR (bad tz)
+```
+
+`CardProgress` additionally carries `state: 'new'|'learning'|'review'|'relearning'`,
+`lapses`, `leeched`, `remainingSteps`, `reps`.
+
+Anki defaults: learning steps 1m 10m, relearning 10m, graduating 1d / easy 4d,
+starting ease 2.5 (min 1.3; again −0.2, hard −0.15, easy +0.15), easy bonus 1.3,
+hard ×1.2, lapse multiplier 0, max interval 36500d, leech at 8 lapses, review
+fuzz and learning-step fuzz (deterministic per card + reps). `hard` is a pass.
+Review days roll over at 04:00 in `tz`. `repetitions` = consecutive passing
+answers (again → 0), which keeps the mastery rule (`repetitions >= 3`).
+
+```ts
+type Previews = Record<
+    'again' | 'hard' | 'good' | 'easy',
+    { kind: 'secs' | 'days'; value: number }
+>;
+```
+
+#### `GET /srs/queue` _(auth)_
+
+Anki-style study queue for "now".
+
+```ts
+// Query: ?deckId?=uuid &tz?=IANA &extraNew?=0..100
+// 200 Response
+{
+  items: { card: Card; state: SrsState; dueAt: string | null; previews: Previews }[];
+  counts: { new: number; learning: number; review: number };
+  nextDueAt: string | null;      // earliest future due beyond the returned items
+  newAvailable: number;          // new cards held back by the daily limit
+  limits: { newPerDay: number; newIntroducedToday: number };
+}
+// Errors: 404 DECK_NOT_FOUND · 403 CARD_FORBIDDEN · 400 VALIDATION_ERROR
+```
+
+With `deckId`: due (re)learning + due reviews (≤ 200) + new cards by
+`position` (20/day per deck, + `extraNew`). Without: due cards across all
+accessible decks, no new cards. Order: due learning, then reviews with new
+cards mixed in evenly, then learning cards due within 20 minutes (learn-ahead).
+
+#### `POST /imports/apkg` _(auth, multipart/form-data)_
+
+Imports an Anki package (`collection.anki21b` → `anki21` → `anki2`, zstd and
+legacy media maps). Unlike the other imports it **persists**: one deck per Anki
+deck that has cards. Only fields Mnemio cards already have are filled (front/
+back from the rendered templates, tags, cloze type, first image/audio, reading/
+example/part of speech by field name); everything else is kept in
+`Card.sourceData` / `Deck.sourceData` (never returned by the API).
+
+```ts
+// Fields: file (the .apkg) · sourceLanguage · targetLanguage (as in POST /decks)
+// 201 Response
+{
+  decks: { id: string; title: string; cardCount: number }[];
+  cardsImported: number; cardsSkipped: number; mediaImported: number;
+  warnings: string[]; newAchievements: Achievement[];
+}
+// Errors: 400 IMPORT_APKG_INVALID · 413 IMPORT_APKG_TOO_LARGE (IMPORT_APKG_MAX_BYTES, default 100 MB)
+//         422 IMPORT_APKG_EMPTY · 422 IMPORT_APKG_UNSUPPORTED · 429 import budget
+```
+
+Stateless: nothing is persisted by these endpoints. They return
+`AiCardDraft[]` in the same shape as `/ai/enrich-words` so the FE reuses
+the existing review/preview UI, then commits with `POST /decks` and
+`POST /decks/:id/cards/bulk`.
+
+Preferences also carry `defaultStudyMode: 'srs' | 'know' | null` (null = ask every time).

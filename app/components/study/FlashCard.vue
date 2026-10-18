@@ -7,13 +7,31 @@
             tabindex="0"
             :aria-label="revealed ? t('study.showFront') : t('study.revealAnswer')"
             @click="$emit('flip')"
+            @keydown.enter.prevent="$emit('flip')"
         >
             <!-- The unrevealed face is `card-dark`, which is a LIGHT lavender
                  gradient in light mode, so its ink stays on the cream ladder. -->
             <div
                 class="face front absolute inset-0 rounded-[24px] border border-line-strong bg-plum-card p-6 shadow-flash-card sm:p-10"
             >
-                <p class="fc-word break-words font-display text-cream">{{ card.word }}</p>
+                <img
+                    v-if="card.type === 'image' && card.imageUrl"
+                    :src="mediaUrl(card.imageUrl)"
+                    :alt="card.word"
+                    class="max-h-48 max-w-full object-contain"
+                />
+                <p
+                    class="fc-word w-full whitespace-pre-line break-words font-display text-cream"
+                    :class="
+                        card.word.length > 180
+                            ? 'fc-long'
+                            : card.word.length > 60
+                              ? 'fc-medium'
+                              : ''
+                    "
+                >
+                    {{ card.word }}
+                </p>
             </div>
 
             <!-- The revealed face is the plum card gradient in BOTH themes, so all
@@ -30,7 +48,14 @@
                             class="flex flex-wrap items-baseline gap-2"
                             :class="reserveTopRight ? 'pr-28 sm:pr-0' : ''"
                         >
-                            <p class="break-words font-display text-2xl text-on-plum sm:text-4xl">
+                            <p
+                                class="whitespace-pre-line break-words font-display text-on-plum"
+                                :class="
+                                    card.word.length > 60
+                                        ? 'text-base sm:text-lg'
+                                        : 'text-2xl sm:text-4xl'
+                                "
+                            >
                                 {{ card.word }}
                             </p>
                             <SharedPill v-if="card.pos" tone="on-plum">
@@ -43,6 +68,7 @@
                         <button
                             v-if="card.audioUrl"
                             type="button"
+                            @click.stop="playAudio"
                             class="inline-flex w-fit items-center gap-1.5 rounded-full border border-on-plum/25 px-3 py-1.5 text-small text-on-plum-dim transition-colors hover:border-on-plum/50 hover:text-on-plum"
                         >
                             <Volume2 class="size-4" /> {{ t('study.listen') }}
@@ -56,9 +82,20 @@
                             <p class="text-eyebrow uppercase text-on-plum-faint">
                                 {{ t('study.meaning') }}
                             </p>
-                            <p class="mt-1 break-words text-lg text-on-plum sm:text-xl">
+                            <p
+                                class="mt-1 whitespace-pre-line break-words text-on-plum"
+                                :class="
+                                    card.meaning.length > 300 ? 'text-base' : 'text-lg sm:text-xl'
+                                "
+                            >
                                 {{ card.meaning }}
                             </p>
+                            <img
+                                v-if="card.type !== 'image' && card.imageUrl"
+                                :src="mediaUrl(card.imageUrl)"
+                                :alt="card.word"
+                                class="mt-3 max-h-56 max-w-full object-contain"
+                            />
                         </div>
                         <div v-if="card.example">
                             <p class="text-eyebrow uppercase text-on-plum-faint">
@@ -80,20 +117,46 @@
 import { Volume2 } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
 import type { StudyCard } from '@/utils/studyCard';
+import { mediaUrl } from '@/utils/media';
 
 // reserveTopRight: the parent overlays a button in the card's top-right corner
 // (the review page's "Tip" button) — keep the word / part-of-speech pill and
 // the meaning column clear of it (QA (1) #1: the "noun" pill sat under it).
-defineProps<{ card: StudyCard; revealed: boolean; reserveTopRight?: boolean }>();
+const props = defineProps<{ card: StudyCard; revealed: boolean; reserveTopRight?: boolean }>();
 defineEmits<{ flip: [] }>();
 
 const { t } = useT();
+const toast = useToast();
+let audio: HTMLAudioElement | null = null;
+const playAudio = async () => {
+    const url = mediaUrl(props.card.audioUrl);
+    if (!url) return;
+    audio?.pause();
+    audio = new Audio(url);
+    try {
+        await audio.play();
+    } catch {
+        toast.error(t('practice.audioFailed'));
+    }
+};
+watch(
+    () => props.card.id,
+    () => {
+        audio?.pause();
+        audio = null;
+    },
+);
+onBeforeUnmount(() => audio?.pause());
 </script>
 
 <style scoped>
 .face {
     display: flex;
     flex-direction: column;
+    grid-area: 1 / 1;
+}
+.fc {
+    display: grid;
 }
 /*
  * The back is the in-flow height driver (position: relative) so the card grows
@@ -101,8 +164,8 @@ const { t } = useT();
  * overlay that fades out as the back's gradient mask sweeps in.
  */
 .front {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    inset: auto;
     align-items: center;
     justify-content: center;
     gap: 18px;
@@ -144,6 +207,28 @@ const { t } = useT();
     line-height: 1.05;
     overflow-wrap: anywhere;
     hyphens: auto;
+}
+.fc-medium {
+    font-size: clamp(22px, 4vw, 36px);
+    line-height: 1.2;
+}
+.fc-long {
+    font-size: clamp(16px, 2.5vw, 22px);
+    line-height: 1.35;
+}
+.front {
+    min-width: 0;
+}
+.back {
+    overflow-wrap: anywhere;
+    min-width: 0;
+    pointer-events: none;
+}
+.fc.flipped .back {
+    pointer-events: auto;
+}
+.fc.flipped .front {
+    pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -2,6 +2,7 @@
     <div class="grid w-full max-w-md grid-cols-2 gap-3">
         <button
             type="button"
+            :disabled="disabled"
             class="relative flex min-h-[44px] flex-col items-center gap-1 rounded-2xl border border-error bg-bg-surface px-4 py-3 text-error transition-all hover:shadow-md hover:shadow-brand/15 dark:bg-error/10"
             @click="$emit('answer', false)"
         >
@@ -11,6 +12,7 @@
         </button>
         <button
             type="button"
+            :disabled="disabled"
             class="relative flex min-h-[44px] flex-col items-center gap-1 rounded-2xl border border-success bg-bg-surface px-4 py-3 text-success transition-all hover:shadow-md hover:shadow-brand/15 dark:bg-success/10"
             @click="$emit('answer', true)"
         >
@@ -26,6 +28,7 @@ import { Check, X } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
 
 const { t } = useT();
+defineProps<{ disabled?: boolean }>();
 
 defineEmits<{ answer: [correct: boolean] }>();
 </script>

@@ -1,3 +1,5 @@
+import type { PracticeMode } from '@/types/srs';
+
 export interface User {
     id: string;
     email: string;
@@ -22,6 +24,7 @@ export type ProfileUpdate = Partial<ProfileDetails> & {
 };
 
 export interface Preference {
+    defaultStudyMode: PracticeMode | null;
     interests: string[];
     goal: string | null;
     nativeLanguage: string | null;

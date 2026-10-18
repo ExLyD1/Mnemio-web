@@ -11,8 +11,10 @@ export const usePreferencesStore = defineStore('preferences', () => {
     const mimiPlacement = ref<'left' | 'right' | null>(null);
     const favorites = ref<string[]>([]);
     const loaded = ref(false);
+    const defaultStudyMode = ref<Preference['defaultStudyMode']>(null);
 
     const apply = (p: Preference) => {
+        defaultStudyMode.value = p.defaultStudyMode ?? null;
         interests.value = p.interests;
         goal.value = p.goal;
         nativeLanguage.value = p.nativeLanguage;
@@ -22,15 +24,33 @@ export const usePreferencesStore = defineStore('preferences', () => {
         favorites.value = p.favorites;
     };
 
-    const hydrate = async () => {
-        const p = await prefsApi.getPreferences();
-        apply(p);
-        loaded.value = true;
+    let hydration: Promise<void> | null = null;
+    let generation = 0;
+    const hydrate = (): Promise<void> => {
+        if (hydration) {
+            return hydration;
+        }
+        const currentGeneration = generation;
+        hydration = prefsApi
+            .getPreferences()
+            .then((p) => {
+                if (currentGeneration !== generation) {
+                    return;
+                }
+                apply(p);
+                loaded.value = true;
+            })
+            .finally(() => {
+                hydration = null;
+            });
+        return hydration;
     };
 
     const update = async (patch: PreferenceInput) => {
         const p = await prefsApi.updatePreferences(patch);
+        generation += 1;
         apply(p);
+        loaded.value = true;
         return p;
     };
 
@@ -40,6 +60,8 @@ export const usePreferencesStore = defineStore('preferences', () => {
     // account switch (logout -> login as someone else, no full page reload)
     // and get treated as if they were the new user's already-loaded real data.
     const reset = () => {
+        generation += 1;
+        hydration = null;
         interests.value = [];
         goal.value = null;
         nativeLanguage.value = null;
@@ -48,6 +70,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
         mimiPlacement.value = null;
         favorites.value = [];
         loaded.value = false;
+        defaultStudyMode.value = null;
     };
 
     const isFavorite = (deckId: string): boolean => favorites.value.includes(deckId);
@@ -73,6 +96,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
         mimiPlacement,
         favorites,
         loaded,
+        defaultStudyMode,
         hydrate,
         update,
         reset,

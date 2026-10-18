@@ -1,4 +1,25 @@
+import type { Card } from '@/types/deck';
+
 export type SrsRating = 'again' | 'hard' | 'good' | 'easy';
+export type PracticeMode = 'srs' | 'know';
+export type SrsState = 'new' | 'learning' | 'review' | 'relearning';
+export type IntervalPreview = { kind: 'secs' | 'days'; value: number };
+export type Previews = Record<SrsRating, IntervalPreview>;
+
+export interface SrsQueueItem {
+    card: Card;
+    state: SrsState;
+    dueAt: string | null;
+    previews: Previews;
+}
+
+export interface SrsQueue {
+    items: SrsQueueItem[];
+    counts: { new: number; learning: number; review: number };
+    nextDueAt: string | null;
+    newAvailable: number;
+    limits: { newPerDay: number; newIntroducedToday: number };
+}
 
 export interface CardProgress {
     cardId: string;
@@ -8,10 +29,9 @@ export interface CardProgress {
     repetitions: number;
     nextReviewAt: string;
     lastReviewedAt: string | null;
+    state: SrsState;
+    lapses: number;
+    leeched: boolean;
+    remainingSteps: number;
+    reps: number;
 }
-
-// NOTE: rating -> SM-2 quality mapping is deliberately NOT defined here. The
-// server owns it (backend src/services/sm2.ts): again 0, hard 2, good 3,
-// easy 5 — `hard` counts as a FAILURE. A client-side copy used to live here
-// with hard:3/good:4, contradicting the server. It had no call sites; it was
-// removed rather than corrected so there is one source of truth.
