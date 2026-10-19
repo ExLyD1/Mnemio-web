@@ -22,6 +22,12 @@
                                     <p class="text-eyebrow uppercase text-on-color/70">
                                         {{ eyebrow }}
                                     </p>
+                                    <SharedPill
+                                        v-if="store.deck.importedFrom === 'anki'"
+                                        tone="on-plum"
+                                        class="mt-2"
+                                        >{{ t('deck.fromAnki') }}</SharedPill
+                                    >
                                     <h1
                                         class="mt-1 break-words font-display text-h1 leading-[1.1] text-on-color"
                                     >

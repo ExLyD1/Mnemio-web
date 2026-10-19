@@ -44,6 +44,8 @@ export interface Deck {
     featured: boolean;
     copyCount: number;
     sourceDeckId: string | null;
+    // Set for decks created by an .apkg import.
+    importedFrom?: 'anki' | null;
     stats: DeckStats;
     cards: Card[];
     createdAt: string;
@@ -109,4 +111,5 @@ export interface DeckCardVM {
     author?: string;
     copies?: number;
     reviewed?: number;
+    fromAnki?: boolean;
 }

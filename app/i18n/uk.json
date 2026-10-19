@@ -197,6 +197,7 @@
         }
     },
     "deck": {
+        "fromAnki": "з Anki",
         "myDecks": "Мої колоди",
         "libraryEyebrow": "Бібліотека",
         "allDecks": "Усі колоди",

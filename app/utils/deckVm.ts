@@ -16,4 +16,5 @@ export const deckToCardVm = (deck: DeckSummary, favorite = false): DeckCardVM =>
     due: deck.stats.due,
     swatch: deck.coverColor ?? swatchFor(deck.id),
     favorite,
+    fromAnki: deck.importedFrom === 'anki',
 });

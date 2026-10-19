@@ -197,6 +197,7 @@
         }
     },
     "deck": {
+        "fromAnki": "from Anki",
         "myDecks": "My Decks",
         "libraryEyebrow": "Library",
         "allDecks": "All decks",

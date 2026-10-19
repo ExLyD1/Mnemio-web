@@ -30,9 +30,14 @@
                 </div>
             </div>
 
-            <h3 class="mb-0.5 line-clamp-1 text-base font-bold leading-tight text-cream">
-                {{ deck.title }}
-            </h3>
+            <div class="mb-0.5 flex items-center gap-2">
+                <h3 class="line-clamp-1 text-base font-bold leading-tight text-cream">
+                    {{ deck.title }}
+                </h3>
+                <SharedPill v-if="deck.fromAnki" class="shrink-0">{{
+                    t('deck.fromAnki')
+                }}</SharedPill>
+            </div>
             <p class="mb-3.5 text-[12px] text-cream-faint">
                 <template v-if="tagLabel">{{ tagLabel }} · </template>{{ cardCountLabel }}
             </p>
@@ -79,7 +84,12 @@
             </SharedCoverArt>
 
             <div class="flex flex-col gap-2 px-2 pb-1">
-                <h3 class="line-clamp-1 font-display text-lg text-cream">{{ deck.title }}</h3>
+                <div class="flex items-center gap-2">
+                    <h3 class="line-clamp-1 font-display text-lg text-cream">{{ deck.title }}</h3>
+                    <SharedPill v-if="deck.fromAnki" class="shrink-0">{{
+                        t('deck.fromAnki')
+                    }}</SharedPill>
+                </div>
                 <p class="flex items-center gap-2 text-small text-brand-muted">
                     <span>{{ cardCountLabel }}</span>
                     <template v-if="tagLabel">
