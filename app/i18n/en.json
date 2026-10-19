@@ -33,6 +33,7 @@
     "anki": {
         "title": "Import from Anki",
         "aiImport": "Import with AI",
+        "createHint": "Already have decks in Anki? Bring them over with cards, images and audio.",
         "dropFile": "Drop an .apkg file here, or click to choose one",
         "file": "Anki package (.apkg)",
         "frontLanguage": "Front language",
