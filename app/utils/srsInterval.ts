@@ -1,7 +1,8 @@
 import type { IntervalPreview } from '@/types/srs';
 
 export const formatSrsInterval = (preview: IntervalPreview, t: (key: string) => string): string => {
-    const number = (n: number) => String(Math.round(n * 10) / 10);
+    // Whole units only: 10.6 months reads as "10mo".
+    const number = (n: number) => String(Math.floor(n));
     if (preview.kind === 'secs') {
         if (preview.value < 60) {
             return `<1${t('practice.units.minute')}`;

@@ -188,6 +188,8 @@ export const useQueuePractice = (options: {
             return;
         }
         locked.value = true;
+        // Hide the answer right away so the card flips back while the rating saves.
+        revealed.value = false;
         try {
             if (!(await ensureRecord(card))) {
                 return;
@@ -208,7 +210,6 @@ export const useQueuePractice = (options: {
             if (!isSrs) {
                 knowIndex.value += 1;
             }
-            revealed.value = false;
             // A successful rating must never be resubmitted if recording stats fails.
             await syncRecord();
             // Re-read after advance(): Vue computed refs change across the awaited rating.

@@ -287,7 +287,7 @@ test('a failed SRS request changes neither answers nor stats and can be retried'
     assert.equal(h.practice.finished.value, true);
 });
 
-test('interval formatting covers boundaries, fractional months/years, and Ukrainian units', () => {
+test('interval formatting covers boundaries, whole months/years, and Ukrainian units', () => {
     const { formatSrsInterval } = load('app/utils/srsInterval.ts');
     const en = { minute: 'm', hour: 'h', day: 'd', month: 'mo', year: 'y' };
     const t = (key) => en[key.split('.').at(-1)];
@@ -299,7 +299,9 @@ test('interval formatting covers boundaries, fractional months/years, and Ukrain
         ['days', 1, '1d'],
         ['days', 4, '4d'],
         ['days', 30, '1mo'],
-        ['days', 45, '1.5mo'],
+        ['days', 45, '1mo'],
+        ['days', 318, '10mo'],
+        ['days', 1000, '2y'],
         ['days', 730, '2y'],
     ])
         assert.equal(formatSrsInterval({ kind, value }, t), expected);
