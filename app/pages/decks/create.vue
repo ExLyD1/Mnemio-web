@@ -340,12 +340,7 @@
                                     </span>
                                 </div>
                                 <p class="mb-3 text-[11px] text-cream-faint">
-                                    {{
-                                        t('deck.cardCount').replace(
-                                            '{n}',
-                                            String(msg.data.cards.length),
-                                        )
-                                    }}
+                                    {{ t('deck.cardCount', msg.data.cards.length) }}
                                 </p>
                                 <ul class="mb-3 flex flex-col gap-1">
                                     <li

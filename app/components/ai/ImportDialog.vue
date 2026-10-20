@@ -58,14 +58,15 @@
             <div class="flex flex-wrap items-baseline gap-x-2">
                 <p class="text-small text-brand-muted">{{ t('ai.reviewHint') }}</p>
                 <span v-if="unfilledCount" class="text-small text-error-soft">
-                    {{ t('ai.unfilledCount').replace('{n}', String(unfilledCount)) }}
+                    {{ t('ai.unfilledCount', unfilledCount) }}
                 </span>
             </div>
             <p v-if="meta" class="text-small text-brand-muted">
                 {{
-                    t('ai.reviewSummary')
-                        .replace('{enriched}', String(meta.enriched))
-                        .replace('{requested}', String(meta.requested))
+                    t('ai.reviewSummary', meta.requested, {
+                        enriched: meta.enriched,
+                        requested: meta.requested,
+                    })
                 }}
             </p>
 
@@ -131,12 +132,7 @@
                     @click="onCommit"
                 >
                     <UiSpinner v-if="committing" size="sm" class="mr-2" />
-                    {{
-                        (props.deck ? t('ai.addN') : t('ai.createN')).replace(
-                            '{n}',
-                            String(committableCount),
-                        )
-                    }}
+                    {{ t(props.deck ? 'ai.addN' : 'ai.createN', committableCount) }}
                 </UiButton>
             </template>
         </template>

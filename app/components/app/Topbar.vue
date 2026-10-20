@@ -28,7 +28,7 @@
                     >
                         <span class="min-w-0 flex-1 truncate">{{ d.title }}</span>
                         <span class="shrink-0 text-small text-brand-muted">
-                            {{ t('deck.cardCount').replace('{n}', String(d.cardCount)) }}
+                            {{ t('deck.cardCount', d.cardCount) }}
                         </span>
                     </NuxtLink>
                     <p v-if="!suggestions.length" class="px-3 py-2 text-small text-brand-muted">

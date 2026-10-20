@@ -235,7 +235,7 @@ const priceFor = (plan: Plan): string | undefined =>
         ? prices.value[billingCycle.value === 'annual' ? plan.priceId.year : plan.priceId.month]
         : undefined;
 
-const trialNote = computed(() => t('pricing.trialNote').replace('{n}', String(TRIAL_DAYS)));
+const trialNote = computed(() => t('pricing.trialNote', TRIAL_DAYS));
 
 // Hide the cards only when Paddle itself can't serve prices — it refused to
 // initialise (missing/mismatched token or env) or the price IDs don't resolve in

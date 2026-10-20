@@ -10,9 +10,7 @@
             <template v-if="upload.data.value">
                 <p class="text-body font-semibold">
                     {{
-                        t('anki.success')
-                            .replace('{cards}', String(upload.data.value.cardsImported))
-                            .replace('{decks}', String(upload.data.value.decks.length))
+                        `${t('anki.importedCards', upload.data.value.cardsImported)} · ${t('anki.importedDecks', upload.data.value.decks.length)}`
                     }}
                 </p>
                 <ul class="space-y-2">
@@ -24,7 +22,7 @@
                 </ul>
                 <p>
                     {{ t('anki.skipped').replace('{n}', String(upload.data.value.cardsSkipped)) }} ·
-                    {{ t('anki.media').replace('{n}', String(upload.data.value.mediaImported)) }}
+                    {{ t('anki.media', upload.data.value.mediaImported) }}
                 </p>
                 <p v-if="store.refreshFailed" class="text-small">{{ t('anki.refreshFailed') }}</p>
                 <details

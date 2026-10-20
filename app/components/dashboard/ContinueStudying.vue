@@ -13,9 +13,9 @@
                 </p>
                 <p class="text-small text-cream-faint">
                     {{
-                        t('dashboard.continueProgress')
-                            .replace('{i}', String(session.index))
-                            .replace('{n}', String(session.cardIds.length))
+                        t('dashboard.continueProgress', session.cardIds.length, {
+                            i: session.index,
+                        })
                     }}
                 </p>
             </div>

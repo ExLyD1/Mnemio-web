@@ -17,11 +17,23 @@ const resolve = (obj: unknown, path: string): string | null => {
 };
 
 export const useT = () => {
-    const { locale } = useI18n({ useScope: 'global' });
-    const t = (key: string, fallback?: string): string => {
+    const { locale, t: pluralT } = useI18n({ useScope: 'global' });
+    const t = (
+        key: string,
+        countOrFallback?: number | string,
+        named: Record<string, string | number> = {},
+    ): string => {
         const code = isLocale(locale.value) ? locale.value : DEFAULT_LOCALE;
         const value = resolve(catalogs[code], key) ?? resolve(catalogs[DEFAULT_LOCALE], key);
-        return value ?? fallback ?? key;
+        if (typeof countOrFallback === 'number' && value) {
+            const args: Record<string, string | number> = { n: countOrFallback, ...named };
+            if (value.includes(' | ')) {
+                return pluralT(key, args, countOrFallback);
+            }
+            // Count-invariant wording (e.g. «Карток: {n}») still gets its placeholders.
+            return value.replace(/\{(\w+)\}/g, (m, k: string) => String(args[k] ?? m));
+        }
+        return value ?? (typeof countOrFallback === 'string' ? countOrFallback : key);
     };
     return { t };
 };

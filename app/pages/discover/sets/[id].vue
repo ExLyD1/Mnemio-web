@@ -21,10 +21,10 @@
                 {{ deck.description }}
             </p>
             <div class="flex flex-wrap items-center gap-3 text-small text-brand-muted">
-                <span>{{ t('deck.cardCount').replace('{n}', String(cardCount)) }}</span>
+                <span>{{ t('deck.cardCount', cardCount) }}</span>
                 <template v-if="copyCount > 0">
                     <span class="text-brand-muted/60">·</span>
-                    <span>{{ t('discover.copies').replace('{n}', String(copyCount)) }}</span>
+                    <span>{{ t('discover.copies', copyCount) }}</span>
                 </template>
                 <template v-if="authorName">
                     <span class="text-brand-muted/60">·</span>

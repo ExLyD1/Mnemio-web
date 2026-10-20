@@ -487,9 +487,9 @@ const coachTip = computed(() => {
         return t('deck.coachEmpty');
     }
     if (deckStat.value.due > 0) {
-        return t('deck.coachReview').replace('{n}', String(deckStat.value.due));
+        return t('deck.coachReview', deckStat.value.due);
     }
-    return t('deck.coachStudy').replace('{n}', String(store.deck.cards.length));
+    return t('deck.coachStudy', store.deck.cards.length);
 });
 
 const breakdownSegments = computed(() => [

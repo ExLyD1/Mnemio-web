@@ -127,7 +127,7 @@
                     class="mt-1 flex items-center justify-between"
                 >
                     <span class="text-small text-brand-muted">{{
-                        t('discover.copies').replace('{n}', String(deck.copies ?? 0))
+                        t('discover.copies', deck.copies ?? 0)
                     }}</span>
                     <span class="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
                         <UiButton
@@ -202,5 +202,5 @@ const cardClass = computed(() => [
           : 'flex flex-col gap-3 p-3',
 ]);
 
-const cardCountLabel = computed(() => t('deck.cardCount').replace('{n}', String(props.deck.total)));
+const cardCountLabel = computed(() => t('deck.cardCount', props.deck.total));
 </script>

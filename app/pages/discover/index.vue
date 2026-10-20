@@ -54,7 +54,7 @@
                             {{ cat.subject }}
                         </span>
                         <span class="text-small text-brand-muted">{{
-                            t('discover.categoryCount').replace('{n}', String(cat.count))
+                            t('discover.categoryCount', cat.count)
                         }}</span>
                     </span>
                     <ArrowRight class="size-4 text-brand-muted" />

@@ -51,7 +51,7 @@
                     <div class="flex flex-wrap items-baseline gap-x-2">
                         <p class="text-small text-brand-muted">{{ t('ai.reviewHint') }}</p>
                         <span v-if="unfilledCount" class="text-small text-error-soft">
-                            {{ t('ai.unfilledCount').replace('{n}', String(unfilledCount)) }}
+                            {{ t('ai.unfilledCount', unfilledCount) }}
                         </span>
                     </div>
 
@@ -118,7 +118,7 @@
                         @click="onCommit"
                     >
                         <UiSpinner v-if="committing" size="sm" class="mr-2" />
-                        {{ t('ai.addN').replace('{n}', String(committableCount)) }}
+                        {{ t('ai.addN', committableCount) }}
                     </UiButton>
                 </template>
             </div>

@@ -155,7 +155,7 @@ export const useAiImport = (opts: UseAiImportOptions) => {
             const deck = opts.deck();
             if (deck) {
                 const { newAchievements } = await bulkAddCards(deck.id, cards);
-                toast.success(t('ai.added').replace('{n}', String(cards.length)));
+                toast.success(t('ai.added', cards.length));
                 notifications.announce(newAchievements);
                 opts.onAppended?.();
                 reset();
@@ -177,7 +177,7 @@ export const useAiImport = (opts: UseAiImportOptions) => {
                 return;
             }
             const { newAchievements } = await bulkAddCards(created.id, cards);
-            toast.success(t('ai.added').replace('{n}', String(cards.length)));
+            toast.success(t('ai.added', cards.length));
             notifications.announce(newAchievements);
             reset();
             opts.onCreated?.(created.id);

@@ -12,9 +12,9 @@
             <div class="flex flex-1 items-center justify-center gap-3">
                 <span v-if="studyCard" class="text-small tabular-nums text-brand-muted">
                     {{
-                        t(mode === 'srs' ? 'review.dueLeft' : 'practice.remaining').replace(
-                            '{n}',
-                            String(practice.remaining.value),
+                        t(
+                            mode === 'srs' ? 'review.dueLeft' : 'practice.remaining',
+                            practice.remaining.value,
                         )
                     }}
                 </span>
@@ -48,10 +48,7 @@
                 <h1 class="font-display text-h2 text-cream">{{ t('study.roundComplete') }}</h1>
                 <p class="text-cream">
                     {{
-                        t('study.unknownCards').replace(
-                            '{n}',
-                            String(practice.unknown.value.length),
-                        )
+                        t('study.unknownCards', practice.unknown.value.length)
                     }}
                 </p>
                 <UiButton @click="practice.nextRound">{{ t('study.studyUnknown') }}</UiButton>
@@ -65,9 +62,7 @@
                 <h1 class="font-display text-h1 text-cream">{{ t('review.resultsTitle') }}</h1>
                 <p class="max-w-md text-body text-cream-dim">
                     {{
-                        t('review.resultsSummary')
-                            .replace('{n}', String(practice.answers.value))
-                            .replace('{pct}', String(accuracy))
+                        t('review.resultsSummary', practice.answers.value, { pct: accuracy })
                     }}
                 </p>
                 <div class="grid w-full max-w-md grid-cols-2 gap-3">
@@ -145,7 +140,7 @@
                     }}</UiButton>
                 </div>
                 <p v-if="practice.answers.value" class="text-small text-cream">
-                    {{ t('practice.answerCount').replace('{n}', String(practice.answers.value)) }}
+                    {{ t('practice.answerCount', practice.answers.value) }}
                 </p>
                 <UiButton
                     v-if="deckId && practice.answers.value"

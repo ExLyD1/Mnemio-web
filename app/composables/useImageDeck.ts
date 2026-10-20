@@ -230,7 +230,7 @@ export const useImageDeck = (opts: { onCreated?: (deckId: string) => void } = {}
                 is_first_deck: store.summaries.length === 0,
                 is_public: false,
             });
-            toast.success(t('ai.added').replace('{n}', String(cards.length)));
+            toast.success(t('ai.added', cards.length));
             notifications.announce(newAchievements);
             const id = created.id;
             reset();

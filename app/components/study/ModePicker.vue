@@ -98,9 +98,7 @@ const knowMeta = computed(() => {
         : (fetchQueue.data.value?.items.filter(
               (item) => !item.dueAt || Date.parse(item.dueAt) <= Date.now(),
           ).length ?? 0);
-    return t('practice.knowMeta')
-        .replace('{n}', String(n))
-        .replace('{min}', String(Math.max(1, Math.ceil(n / 6))));
+    return t('practice.knowMeta', n, { min: Math.max(1, Math.ceil(n / 6)) });
 });
 
 const go = (mode: PracticeMode, replace = false) =>

@@ -53,7 +53,7 @@ const pair = computed(() =>
 );
 
 const summary = computed(() => {
-    const total = t('deck.cardCount').replace('{n}', String(props.cardCount));
+    const total = t('deck.cardCount', props.cardCount);
     const added =
         props.action === 'appended' && props.addedCount
             ? t('chat.deckAdded').replace('{n}', String(props.addedCount))

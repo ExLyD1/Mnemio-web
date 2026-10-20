@@ -206,9 +206,7 @@
                         <span class="font-semibold text-cream">{{
                             t('statistics.performanceYou').replace('{n}', String(perf.userRecall))
                         }}</span>
-                        <span>{{
-                            t('statistics.performancePeers').replace('{n}', String(perf.sampleSize))
-                        }}</span>
+                        <span>{{ t('statistics.performancePeers', perf.sampleSize) }}</span>
                     </div>
                 </div>
 
@@ -330,7 +328,7 @@ const range = ref<StatsRange>('30');
 const reviewedSub = computed(() =>
     range.value === 'all'
         ? t('statistics.reviewedSubAll')
-        : t('statistics.reviewedSubRange').replace('{n}', range.value),
+        : t('statistics.reviewedSubRange', Number(range.value)),
 );
 const rangeOptions = computed(() => [
     { value: '7', label: t('statistics.range7') },
@@ -377,12 +375,12 @@ const barHeight = (v: number): string =>
 const trendTooltip = (d: StatsSeriesPoint): string =>
     trendMode.value === 'time'
         ? `${msToMin(d.value)} ${t('statistics.studyTimeUnit')}`
-        : t('statistics.dsCardsReviewed').replace('{n}', String(d.value));
+        : t('statistics.dsCardsReviewed', d.value);
 const trendTotal = computed(() => trendPoints.value.reduce((sum, d) => sum + d.value, 0));
 const trendSummary = computed(() =>
     trendMode.value === 'time'
         ? t('statistics.trendTotalTime').replace('{n}', String(msToMin(trendTotal.value)))
-        : t('statistics.trendTotalCards').replace('{n}', String(trendTotal.value)),
+        : t('statistics.trendTotalCards', trendTotal.value),
 );
 
 // Performance: build the recall-distribution curve from the backend buckets.

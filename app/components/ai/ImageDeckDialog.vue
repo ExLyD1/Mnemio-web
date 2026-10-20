@@ -69,11 +69,7 @@
         <div v-else-if="step === 'streaming'" class="flex flex-col gap-3">
             <div class="flex items-center gap-2 text-small text-brand-muted">
                 <UiSpinner size="sm" />
-                <span>{{
-                    header
-                        ? t('image.foundN').replace('{n}', String(rows.length))
-                        : t('image.reading')
-                }}</span>
+                <span>{{ header ? t('image.foundN', rows.length) : t('image.reading') }}</span>
             </div>
             <div v-if="header" class="rounded-xl border border-line bg-bg-surface-2 p-3">
                 <p class="font-display text-base text-cream">
@@ -125,7 +121,7 @@
                 <div class="flex flex-wrap items-baseline gap-x-2">
                     <p class="text-small text-brand-muted">{{ t('image.reviewHint') }}</p>
                     <span v-if="unfilledCount" class="text-small text-error-soft">
-                        {{ t('ai.unfilledCount').replace('{n}', String(unfilledCount)) }}
+                        {{ t('ai.unfilledCount', unfilledCount) }}
                     </span>
                 </div>
 

@@ -57,7 +57,7 @@ const poll = async () => {
     attempts++;
     try {
         const sub = await getSubscription();
-        if (ACTIVE_STATUSES.has(sub.status)) {
+        if (sub && ACTIVE_STATUSES.has(sub.status)) {
             await auth.hydrate();
             billingStore.resetCache();
             toast.success(t('billing.success.activated'));

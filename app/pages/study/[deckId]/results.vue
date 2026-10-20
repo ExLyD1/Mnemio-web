@@ -126,9 +126,10 @@ const summaryLine = computed(() => {
         return '';
     }
     const slipped = result.value.revisit.length;
-    const base = t('study.summaryRecalled')
-        .replace('{correct}', String(result.value.correct))
-        .replace('{total}', String(result.value.reviewed));
+    const base = t('study.summaryRecalled', result.value.reviewed, {
+        correct: result.value.correct,
+        total: result.value.reviewed,
+    });
     return slipped > 0
         ? base + t('study.summaryRevisit').replace('{n}', String(slipped))
         : base + t('study.summaryPerfect');
