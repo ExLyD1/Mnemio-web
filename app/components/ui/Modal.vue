@@ -24,7 +24,7 @@
                         class="mb-4 flex items-start justify-between gap-4"
                     >
                         <div>
-                            <h2 v-if="title" :id="titleId" class="text-h3 font-bold text-neutral-0">
+                            <h2 v-if="title" :id="titleId" class="text-h3 font-bold text-cream">
                                 {{ title }}
                             </h2>
                             <slot name="header" />
@@ -32,7 +32,7 @@
                         <button
                             v-if="dismissible"
                             type="button"
-                            class="rounded-md p-1 text-brand-muted transition-colors hover:text-brand-pale"
+                            class="rounded-md p-1 text-brand-muted transition-colors hover:text-brand-pale focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream focus-visible:ring-offset-2 focus-visible:ring-offset-bg-surface"
                             :aria-label="t('common.close')"
                             @click="close"
                         >
@@ -42,7 +42,7 @@
                     <div class="text-body">
                         <slot />
                     </div>
-                    <footer v-if="$slots.footer" class="mt-6 flex justify-end gap-2">
+                    <footer v-if="$slots.footer" class="mt-6 flex flex-wrap justify-end gap-2">
                         <slot name="footer" />
                     </footer>
                 </div>

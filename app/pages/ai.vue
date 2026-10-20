@@ -1,5 +1,5 @@
 <template>
-    <section class="flex h-full">
+    <section class="chat-page flex h-full min-h-0">
         <!-- Sidebar: static on md+, drawer on mobile -->
         <div class="hidden w-64 shrink-0 border-r border-line p-3 md:block">
             <AiChatSidebar
@@ -17,12 +17,18 @@
         </div>
 
         <Transition name="chat-drawer">
-            <div v-if="sidebarOpen" class="fixed inset-0 z-40 md:hidden">
+            <div v-if="sidebarOpen" class="fixed inset-0 z-[60] md:hidden">
                 <div
                     class="chat-drawer-backdrop absolute inset-0 bg-scrim"
                     @click="sidebarOpen = false"
                 />
                 <div
+                    ref="sidebarPanel"
+                    role="dialog"
+                    aria-modal="true"
+                    :aria-label="t('chat.menu')"
+                    tabindex="-1"
+                    @keydown.tab="onDrawerTab"
                     class="chat-drawer-panel absolute inset-y-0 left-0 w-72 max-w-[82%] border-r border-line bg-bg-base p-3"
                 >
                     <AiChatSidebar
@@ -68,9 +74,39 @@
                     @keydown="onThreadKeydown"
                 >
                     <div class="mx-auto flex max-w-3xl flex-col gap-4">
+                        <div
+                            v-if="chat.earlierCursor.value"
+                            class="flex flex-col items-center gap-2"
+                        >
+                            <UiButton
+                                variant="ghost"
+                                :disabled="chat.loadingEarlier.value"
+                                @click="loadEarlier"
+                            >
+                                <UiSpinner v-if="chat.loadingEarlier.value" size="sm" />
+                                {{
+                                    t(
+                                        chat.loadingEarlier.value
+                                            ? 'chat.loadingEarlier'
+                                            : 'chat.showEarlier',
+                                    )
+                                }}
+                            </UiButton>
+                            <p
+                                v-if="chat.earlierError.value"
+                                role="alert"
+                                class="text-small text-cream-dim"
+                            >
+                                {{ t('chat.earlierError') }}
+                            </p>
+                        </div>
                         <!-- Empty / greeting -->
                         <div
-                            v-if="!chat.messages.value.length && !chat.loadingThread.value"
+                            v-if="
+                                !chat.messages.value.length &&
+                                !chat.loadingThread.value &&
+                                !chat.streamError.value
+                            "
                             class="flex flex-col items-center gap-4 py-12 text-center"
                         >
                             <SharedMimi :size="80" />
@@ -131,24 +167,8 @@
                                     />
                                 </button>
 
-                                <!-- Typing dots: streaming assistant with no text yet -->
                                 <div
-                                    v-if="isStreaming(i) && !m.content"
-                                    class="flex items-center gap-1.5 rounded-2xl border border-line bg-bg-surface px-4 py-3"
-                                >
-                                    <span
-                                        class="size-1.5 animate-typing-dot rounded-full bg-brand-pale"
-                                    />
-                                    <span
-                                        class="size-1.5 animate-typing-dot rounded-full bg-brand-pale [animation-delay:0.2s]"
-                                    />
-                                    <span
-                                        class="size-1.5 animate-typing-dot rounded-full bg-brand-pale [animation-delay:0.4s]"
-                                    />
-                                </div>
-
-                                <div
-                                    v-else-if="m.content"
+                                    v-if="m.content"
                                     class="max-w-full break-words rounded-2xl px-4 py-2.5 text-body"
                                     :class="
                                         m.role === 'user'
@@ -197,21 +217,20 @@
                                         type="button"
                                         class="font-semibold text-brand-pale hover:text-cream"
                                         :disabled="chat.streaming.value"
-                                        @click="chat.retry(m.id)"
+                                        @click="onRetry(m.id)"
                                     >
                                         {{ t('chat.retry') }}
                                     </button>
                                 </div>
                             </div>
                         </div>
-                        <!-- A failure that retrying cannot fix (a daily cap, a
-                         rejected message). Explained inline with the real
-                         numbers instead of a generic "interrupted" bubble. -->
+                        <!-- Errors stay in the thread so the composer remains reachable. -->
                         <div
-                            v-if="terminalError"
+                            v-if="terminalError || chat.streamError.value"
+                            role="alert"
                             class="rounded-2xl border border-line bg-bg-surface px-4 py-3 text-small text-cream-dim"
                         >
-                            {{ terminalError }}
+                            {{ terminalError || errText(chat.streamError.value?.code ?? '') }}
                         </div>
                     </div>
                 </div>
@@ -233,19 +252,27 @@
             <!-- Composer -->
             <div class="border-t border-line px-4 py-3">
                 <div class="mx-auto max-w-3xl">
+                    <div
+                        v-if="chat.pendingReply.value"
+                        role="status"
+                        class="mb-2 flex items-center gap-2 text-small text-brand-muted"
+                    >
+                        <UiSpinner class="size-4" />
+                        {{ t(chat.toolRunning.value ? 'chat.working' : 'chat.thinking') }}
+                    </div>
                     <!-- Deck context: the ONLY way Mimi can append to a deck.
                      Always visible while attached, so "added 2 cards" can never
                      be ambiguous about which deck received them. -->
-                    <div class="mb-2 flex flex-wrap items-center gap-2">
+                    <div class="mb-2 flex min-w-0 flex-wrap items-center gap-2">
                         <div
                             v-if="chat.contextDeck.value"
-                            class="flex items-center gap-2 rounded-full border border-brand-bright/40 bg-brand/10 py-1 pl-3 pr-1 text-small text-cream"
+                            class="flex max-w-full items-center gap-2 rounded-full border border-brand-bright/40 bg-brand/10 py-1 pl-3 pr-1 text-small text-cream"
                         >
                             <BookOpen class="size-3.5 shrink-0 text-brand-pale" />
-                            <span class="max-w-[16rem] truncate">{{
+                            <span class="min-w-0 max-w-[16rem] truncate">{{
                                 chat.contextDeck.value.title
                             }}</span>
-                            <span v-if="contextPair" class="text-brand-muted">{{
+                            <span v-if="contextPair" class="shrink-0 text-brand-muted">{{
                                 contextPair
                             }}</span>
                             <button
@@ -353,7 +380,7 @@
                         />
                         <UiButton
                             variant="ghost"
-                            class="shrink-0"
+                            class="chat-composer-button shrink-0"
                             :disabled="chat.streaming.value"
                             :aria-label="t('image.attach')"
                             @click="imageInput?.click()"
@@ -365,35 +392,47 @@
                             v-model="draft"
                             rows="1"
                             :placeholder="t('chat.placeholder')"
+                            :aria-label="t('chat.placeholder')"
                             :disabled="!chat.initialized.value"
-                            class="max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-body text-cream outline-none placeholder:text-brand-muted disabled:opacity-60"
+                            class="w-0 max-h-40 min-h-[40px] min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-body text-cream outline-none placeholder:text-brand-muted disabled:opacity-60"
                             @input="autoGrow"
                             @keydown.enter="onEnterKey"
                             @paste="onPasteImage"
                         />
                         <UiButton
+                            v-if="chat.streaming.value"
                             variant="primary"
-                            class="shrink-0"
+                            class="chat-composer-button shrink-0"
+                            :aria-label="t('chat.stop')"
+                            @click="chat.stop"
+                        >
+                            <Square class="size-4" />
+                        </UiButton>
+                        <UiButton
+                            v-else
+                            variant="primary"
+                            class="chat-composer-button shrink-0"
                             :disabled="!canSubmit"
                             :aria-label="t('chat.send')"
                             @click="onSend"
                         >
-                            <UiSpinner v-if="chat.streaming.value" size="sm" />
-                            <Send v-else class="size-4" />
+                            <Send class="size-4" />
                         </UiButton>
                     </div>
 
                     <!-- Footer: length counter (server rejects >4000, and the
                      message used to be lost on rejection) + today's allowance,
                      so a cap is visible before it's reached. -->
-                    <div class="mt-1.5 flex items-center gap-3 px-1 text-small text-brand-muted">
+                    <div
+                        class="mt-1.5 flex flex-wrap items-center gap-3 px-1 text-small text-brand-muted"
+                    >
                         <span v-if="usageLabel">{{ usageLabel }}</span>
                         <span v-if="showCounter" class="ml-auto" :class="{ 'text-error': tooLong }">
                             {{ draft.length }} / {{ MAX_MESSAGE_CHARS }}
                         </span>
                     </div>
                     <p v-if="tooLong" class="px-1 text-small text-error" aria-live="polite">
-                        {{ t('chat.tooLong').replace('{n}', String(MAX_MESSAGE_CHARS)) }}
+                        {{ t('chat.tooLong', MAX_MESSAGE_CHARS) }}
                     </p>
                 </div>
             </div>
@@ -428,7 +467,7 @@
 </template>
 
 <script setup lang="ts">
-import { Send, Menu, ImagePlus, X, ArrowDown, BookOpen, Plus } from 'lucide-vue-next';
+import { Send, Square, Menu, ImagePlus, X, ArrowDown, BookOpen, Plus } from 'lucide-vue-next';
 import { useChat, useToast, useT, useApiError } from '#imports';
 import { useAppLocale } from '@/composables/useAppLocale';
 import { MAX_MESSAGE_CHARS, isTerminalChatError } from '@/composables/useChat';
@@ -452,7 +491,48 @@ const route = useRoute();
 useSeo({ title: t('seo.aiTitle'), description: t('seo.appDesc'), noindex: true });
 
 const draft = ref('');
+// Keep an unsent message through a reload or expired session, scoped to its
+// owner and this browser tab. Never persist image bytes or auth credentials.
+const draftKey = () => (auth.currentUser?.id ? `mnemio.chat.draft.${auth.currentUser.id}` : null);
+const saveDraft = (text: string) => {
+    const key = draftKey();
+    if (!key) {
+        return;
+    }
+    try {
+        if (text) {
+            sessionStorage.setItem(key, text);
+        } else {
+            sessionStorage.removeItem(key);
+        }
+    } catch {
+        // Storage can be disabled; sending still works.
+    }
+};
 const sidebarOpen = ref(false);
+const sidebarPanel = ref<HTMLElement | null>(null);
+const onDrawerTab = (event: KeyboardEvent) => {
+    const items = Array.from(
+        sidebarPanel.value?.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), input:not([disabled]), [tabindex="0"]',
+        ) ?? [],
+    ).filter((el) => el.getClientRects().length > 0);
+    const first = items[0];
+    const last = items.at(-1);
+    if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+    }
+};
+watch(sidebarOpen, async (open) => {
+    if (open) {
+        await nextTick();
+        sidebarPanel.value?.querySelector<HTMLButtonElement>('button')?.focus();
+    }
+});
 const threadEl = ref<HTMLElement | null>(null);
 const inputEl = ref<HTMLTextAreaElement | null>(null);
 const imageInput = ref<HTMLInputElement | null>(null);
@@ -551,9 +631,10 @@ const onPasteImage = (e: ClipboardEvent) => {
     }
 };
 
-const activeTitle = computed(
-    () => chat.conversations.value.find((c) => c.id === chat.activeId.value)?.title ?? '',
-);
+const activeTitle = computed(() => {
+    const title = chat.conversations.value.find((c) => c.id === chat.activeId.value)?.title ?? '';
+    return title === 'New chat' ? t('chat.newChat') : title;
+});
 
 const quickActions = computed(() => [
     t('chat.quickDeck'),
@@ -656,6 +737,23 @@ const onThreadKeydown = (e: KeyboardEvent) => {
     }
 };
 
+const loadEarlier = async () => {
+    const el = threadEl.value;
+    const id = chat.activeId.value;
+    if (!el) {
+        return;
+    }
+    releasePin();
+    const height = el.scrollHeight;
+    const top = el.scrollTop;
+    await chat.loadEarlierMessages();
+    await nextTick();
+    if (chat.activeId.value === id && threadEl.value === el) {
+        el.scrollTop = top + el.scrollHeight - height;
+        lastScrollTop = el.scrollTop;
+    }
+};
+
 const onThreadScroll = () => {
     const el = threadEl.value;
     if (!el) {
@@ -680,6 +778,7 @@ const jumpToBottom = () => {
 };
 
 const autoGrow = () => {
+    saveDraft(draft.value);
     const el = inputEl.value;
     if (!el) {
         return;
@@ -699,7 +798,7 @@ const resetInput = () => {
 };
 
 const onEnterKey = (e: KeyboardEvent) => {
-    if (e.shiftKey) return;
+    if (e.shiftKey || e.isComposing || e.keyCode === 229) return;
     e.preventDefault();
     onSend();
 };
@@ -715,6 +814,8 @@ const onSend = async () => {
         // server and lost, with only a generic toast to explain it.
         return;
     }
+    saveDraft(text);
+    jumpToBottom();
     resetInput();
     // Detach immediately — send() holds its own reference for retry.
     attachedImage.value = null;
@@ -722,7 +823,23 @@ const onSend = async () => {
         URL.revokeObjectURL(attachedPreview.value);
         attachedPreview.value = null;
     }
-    await chat.send(text, image);
+    const accepted = await chat.send(text, image);
+    if (accepted !== false) {
+        saveDraft(draft.value);
+    }
+    if (accepted === false && !draft.value && !attachedImage.value) {
+        draft.value = text;
+        if (image) {
+            stageImage(image);
+        }
+        nextTick(autoGrow);
+    }
+};
+
+const onRetry = async (id: string) => {
+    jumpToBottom();
+    await chat.retry(id);
+    inputEl.value?.focus();
 };
 
 const onRename = async (id: string, title: string) => {
@@ -785,7 +902,7 @@ const terminalError = computed(() => {
     }
     const details = (e.details ?? {}) as { capPerDay?: number; resetsAt?: string };
     if (e.code === 'VALIDATION_ERROR') {
-        return t('chat.tooLong').replace('{n}', String(MAX_MESSAGE_CHARS));
+        return t('chat.tooLong', MAX_MESSAGE_CHARS);
     }
     if (e.code === 'AI_BUDGET_EXCEEDED') {
         const reset = resetLabel(details.resetsAt);
@@ -814,23 +931,12 @@ watch(
             }
             return;
         }
-        toast.error(errText(e.code));
+        // Stream failures are explained in the thread so the composer stays reachable.
     },
 );
 
 watch(chat.messages, followBottom, { deep: true, flush: 'post' });
-// Sending a message always brings the reader back down to follow the reply.
-watch(
-    () => chat.messages.value.length,
-    (n, prev) => {
-        if (n > (prev ?? 0) && chat.messages.value[n - 1]?.role === 'user') {
-            pinned.value = true;
-            showJump.value = false;
-            followBottom();
-        }
-    },
-    { flush: 'post' },
-);
+watch(chat.streamError, followBottom, { flush: 'post' });
 watch(chat.loadingThread, (l) => {
     if (!l) {
         snapToBottom();
@@ -838,12 +944,34 @@ watch(chat.loadingThread, (l) => {
 });
 
 const onKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && sidebarOpen.value) {
+        sidebarOpen.value = false;
+        nextTick(() => inputEl.value?.focus());
+    }
     if (e.key === 'Escape' && viewerUrl.value) {
         viewerUrl.value = null;
     }
 };
 
+const fitViewport = () => {
+    document.documentElement.style.setProperty(
+        '--chat-viewport-height',
+        `${window.visualViewport?.height ?? window.innerHeight}px`,
+    );
+};
+
 onMounted(async () => {
+    try {
+        const key = draftKey();
+        if (key && !draft.value) {
+            draft.value = sessionStorage.getItem(key) ?? '';
+            nextTick(autoGrow);
+        }
+    } catch {
+        // Storage can be disabled.
+    }
+    fitViewport();
+    window.visualViewport?.addEventListener('resize', fitViewport);
     window.addEventListener('keydown', onKeydown);
     void chat.refreshUsage();
     // /ai?deckId=… — arriving from a deck page with that deck attached.
@@ -865,13 +993,44 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
     window.removeEventListener('keydown', onKeydown);
+    window.visualViewport?.removeEventListener('resize', fitViewport);
+    document.documentElement.style.removeProperty('--chat-viewport-height');
     stopPinLoop();
 });
 </script>
 
 <style scoped>
+.chat-composer-button {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+}
+
+:global(.app-shell:has(.chat-page)) {
+    height: var(--chat-viewport-height, 100dvh);
+}
+:global(.app-main:has(.chat-page)) {
+    min-width: 0;
+}
+.chat-prose {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+.chat-prose :deep(table) {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
 /* Markdown rendered from assistant replies (v-html). Kept minimal and inline-ish
    so a chat bubble reads naturally without a heavy prose framework. */
+.chat-prose :deep(th),
+.chat-prose :deep(td) {
+    min-width: 8rem;
+    padding: 0.3rem 0.5rem;
+    text-align: left;
+}
 .chat-prose :deep(p) {
     margin: 0;
 }
@@ -899,7 +1058,7 @@ onBeforeUnmount(() => {
     margin: 0.15rem 0;
 }
 .chat-prose :deep(a) {
-    color: rgb(var(--c-purple));
+    color: rgb(var(--c-cream));
     text-decoration: underline;
 }
 .chat-prose :deep(code) {

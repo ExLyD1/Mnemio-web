@@ -36,19 +36,21 @@
                                 type="button"
                                 class="min-w-0 flex-1 truncate px-2 py-2 text-left text-body"
                                 :class="c.id === activeId ? 'text-cream' : 'text-brand-pale'"
-                                :title="c.title"
+                                :title="displayTitle(c)"
                                 @click="$emit('select', c.id)"
                             >
-                                {{ c.title }}
+                                {{ displayTitle(c) }}
                             </button>
 
                             <UiPopover align="right">
                                 <template #trigger="{ toggle }">
                                     <button
                                         type="button"
-                                        class="shrink-0 rounded-md p-1.5 text-brand-muted opacity-0 transition-opacity hover:text-cream group-hover:opacity-100"
+                                        class="shrink-0 rounded-md p-1.5 text-brand-muted opacity-0 transition-opacity hover:text-cream group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
                                         :class="{ 'opacity-100': c.id === activeId }"
-                                        :aria-label="t('chat.menuFor').replace('{title}', c.title)"
+                                        :aria-label="
+                                            t('chat.menuFor').replace('{title}', displayTitle(c))
+                                        "
                                         @click="toggle"
                                     >
                                         <MoreVertical class="size-4" />
@@ -124,6 +126,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useT();
+const displayTitle = (c: Conversation) => (c.title === 'New chat' ? t('chat.newChat') : c.title);
 
 const editingId = ref<string | null>(null);
 const editTitle = ref('');

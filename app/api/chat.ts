@@ -91,8 +91,13 @@ export const createConversation = (title?: string): Promise<Conversation> =>
 
 export const getConversation = (
     id: string,
-): Promise<{ conversation: Conversation; messages: ChatMessage[] }> =>
-    http(`/chat/conversations/${id}`);
+    before?: string | null,
+): Promise<{
+    conversation: Conversation;
+    messages: ChatMessage[];
+    hasMore: boolean;
+    before: string | null;
+}> => http(`/chat/conversations/${id}`, { query: { before: before ?? undefined } });
 
 export const renameConversation = (id: string, title: string): Promise<Conversation> =>
     http<Conversation>(`/chat/conversations/${id}`, { method: 'PATCH', body: { title } });
@@ -100,6 +105,10 @@ export const renameConversation = (id: string, title: string): Promise<Conversat
 export const deleteConversation = async (id: string): Promise<void> => {
     await http<void>(`/chat/conversations/${id}`, { method: 'DELETE' });
 };
+
+/** Stop generation explicitly even if the reverse proxy keeps SSE connected. */
+export const cancelReply = (id: string): Promise<void> =>
+    http<void>(`/chat/conversations/${id}/cancel`, { method: 'POST', body: {} });
 
 // ─── Streaming send (native fetch + SSE; `http`/$fetch can't stream) ───────────
 
