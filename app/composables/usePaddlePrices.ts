@@ -1,6 +1,8 @@
 import type { Paddle, PricePreviewParams, PricePreviewResponse } from '@paddle/paddle-js';
 import { ref, watch, type Ref } from '#imports';
 import { ALL_PRICE_IDS } from '@/data/plans';
+import type { Money } from '@/types/billing';
+import { fromMinorUnits } from '@/utils/format';
 
 /** `priceId` → Paddle's already-formatted total, e.g. `"£8.00"`, `"149.00 ₴"`. */
 export type PaddlePrices = Record<string, string>;
@@ -28,6 +30,7 @@ export const usePaddlePrices = (
     country: Ref<string | null> | string | null,
 ) => {
     const prices = ref<PaddlePrices>({});
+    const amounts = ref<Record<string, Money>>({});
     const loading = ref(true);
     const error = ref(false);
 
@@ -50,6 +53,15 @@ export const usePaddlePrices = (
 
             const res = await instance.PricePreview(params);
             prices.value = { ...prices.value, ...toPriceMap(res) };
+            amounts.value = Object.fromEntries(
+                res.data.details.lineItems.map((item) => [
+                    item.price.id,
+                    {
+                        amount: fromMinorUnits(item.totals.total, res.data.currencyCode),
+                        currency: res.data.currencyCode,
+                    },
+                ]),
+            );
         } catch (e) {
             // A wrong-environment price ID lands here ("price not found").
             console.error('[paddle] PricePreview failed', e);
@@ -61,5 +73,5 @@ export const usePaddlePrices = (
 
     watch([paddle, countryRef], fetchPrices, { immediate: true });
 
-    return { prices, loading, error, refresh: fetchPrices };
+    return { prices, amounts, loading, error, refresh: fetchPrices };
 };

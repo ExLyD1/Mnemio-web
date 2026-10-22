@@ -55,6 +55,7 @@
                 </div>
             </div>
 
+            <BillingPlanBlock />
             <div class="rounded-[20px] border border-line bg-bg-surface p-5">
                 <p class="mb-3 text-eyebrow uppercase text-brand-muted">
                     {{ t('profile.atAGlance') }}
@@ -201,128 +202,8 @@
                 </div>
             </template>
 
-            <!-- Billing -->
             <template v-else-if="tab === 'billing'">
-                <div class="rounded-[20px] border border-line bg-bg-surface p-6">
-                    <div v-if="billingStore.loading" class="flex justify-center py-8">
-                        <UiSpinner />
-                    </div>
-
-                    <template v-else-if="!billingStore.subscription">
-                        <p class="text-eyebrow uppercase text-brand-muted">
-                            {{ t('billing.settings.freePlan') }}
-                        </p>
-                        <p class="mt-2 text-body text-cream-dim">
-                            {{ t('billing.settings.freeBody') }}
-                        </p>
-                        <div class="mt-6">
-                            <NuxtLink to="/pricing">
-                                <UiButton variant="primary">{{
-                                    t('billing.settings.upgradeCta')
-                                }}</UiButton>
-                            </NuxtLink>
-                        </div>
-                    </template>
-
-                    <template v-else>
-                        <div class="flex items-center gap-3">
-                            <span
-                                :class="[
-                                    'rounded-full px-3 py-1 text-small font-semibold',
-                                    subStatusClass,
-                                ]"
-                            >
-                                {{
-                                    t(`billing.settings.status.${billingStore.subscription.status}`)
-                                }}
-                            </span>
-                            <span class="text-body text-cream-dim">
-                                {{ t(`billing.settings.plan.${billingStore.subscription.plan}`) }}
-                            </span>
-                        </div>
-
-                        <div
-                            v-if="billingStore.subscription.status === 'past_due'"
-                            class="mt-4 rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-small text-error-soft"
-                        >
-                            {{ t('billing.settings.pastDueWarning') }}
-                        </div>
-
-                        <div class="mt-4 space-y-1 text-body text-cream-dim">
-                            <p
-                                v-if="
-                                    billingStore.subscription.status === 'trialing' &&
-                                    billingStore.subscription.trialEnd
-                                "
-                            >
-                                {{
-                                    t('billing.settings.trialEnds').replace(
-                                        '{date}',
-                                        fmtDate(billingStore.subscription.trialEnd),
-                                    )
-                                }}
-                            </p>
-                            <p
-                                v-if="
-                                    billingStore.subscription.status === 'active' ||
-                                    billingStore.subscription.status === 'trialing'
-                                "
-                            >
-                                {{
-                                    t('billing.settings.renewsOn').replace(
-                                        '{date}',
-                                        fmtDate(billingStore.subscription.currentPeriodEnd),
-                                    )
-                                }}
-                            </p>
-                            <p
-                                v-if="
-                                    billingStore.subscription.status === 'canceled' ||
-                                    billingStore.subscription.status === 'expired'
-                                "
-                            >
-                                {{
-                                    t('billing.settings.expiresOn').replace(
-                                        '{date}',
-                                        fmtDate(billingStore.subscription.currentPeriodEnd),
-                                    )
-                                }}
-                            </p>
-                            <p v-if="billingStore.subscription.cancelAtPeriodEnd" class="text-warn">
-                                {{ t('billing.settings.cancelNote') }}
-                            </p>
-                        </div>
-
-                        <div class="mt-6 flex flex-wrap gap-3">
-                            <NuxtLink
-                                v-if="
-                                    billingStore.subscription.status === 'canceled' ||
-                                    billingStore.subscription.status === 'expired'
-                                "
-                                to="/pricing"
-                            >
-                                <UiButton variant="primary">{{
-                                    t('billing.settings.upgradeCta')
-                                }}</UiButton>
-                            </NuxtLink>
-                            <template v-if="billingStore.notConfigured">
-                                <p class="text-small text-cream-dim">
-                                    {{ t('billing.settings.notConfigured') }}
-                                </p>
-                            </template>
-                            <template v-else>
-                                <UiButton
-                                    variant="ghost"
-                                    :disabled="billing.portal.loading.value"
-                                    @click="billing.portal.execute()"
-                                >
-                                    <UiSpinner v-if="billing.portal.loading.value" size="sm" />
-                                    {{ t('billing.settings.manageBilling') }}
-                                </UiButton>
-                            </template>
-                        </div>
-                    </template>
-                </div>
+                <BillingPlanBlock />
             </template>
 
             <!-- Sign out — bottom of the page (was previously only reachable from the
@@ -345,7 +226,6 @@
 import { Trophy, Lock, Camera, X, LogOut } from 'lucide-vue-next';
 import { useAuthStore, useAuth, useDecks, useToast, useT, useApiError } from '#imports';
 import { useBillingStore } from '@/stores/billing';
-import { useBilling } from '@/composables/useBilling';
 import { usePreferencesStore } from '@/stores/preferences';
 import { useStats } from '@/composables/useStats';
 import { useAchievements } from '@/composables/useAchievements';
@@ -368,7 +248,6 @@ const prefs = usePreferencesStore();
 const stats = useStats();
 const achievements = useAchievements();
 const billingStore = useBillingStore();
-const billing = useBilling();
 const toast = useToast();
 const { current: appLocale } = useAppLocale();
 const { t } = useT();
@@ -443,7 +322,9 @@ const tab = ref(initialTab);
 const tabs = computed(() => [
     { value: 'edit', label: t('profile.editProfile') },
     { value: 'achievements', label: t('profile.achievements') },
-    { value: 'billing', label: t('billing.settings.tabLabel') },
+    ...(!billingStore.notConfigured
+        ? [{ value: 'billing', label: t('billing.settings.tabLabel') }]
+        : []),
 ]);
 
 const { name: langName, options: languageOptions } = useLanguageName();
@@ -583,22 +464,6 @@ const onSave = async () => {
     toast.success(t('profile.saved'));
     syncDraft();
 };
-
-const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-
-const subStatusClass = computed(() => {
-    const s = billingStore.subscription?.status;
-    if (s === 'active') return 'bg-success/15 text-success';
-    if (s === 'trialing') return 'bg-brand/15 text-brand-bright';
-    if (s === 'past_due') return 'bg-error/15 text-error-soft';
-    if (s === 'canceled') return 'bg-warn/15 text-warn';
-    return 'bg-bg-muted text-cream-dim';
-});
 
 watch(() => auth.currentUser, syncDraft, { immediate: true });
 // Preferences can finish hydrating after this component's initial sync

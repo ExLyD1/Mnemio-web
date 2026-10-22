@@ -16,7 +16,7 @@
 **Contract is complete.** P0 + P1 + P2 from `backend-plan.md` are all shipped,
 plus the post-MVP additions (Google OAuth, account deletion, welcome flags,
 Quizlet/text imports, deck import/export, real-time AI chat, and paid
-subscriptions via Stripe). **65 endpoints under `/api/v1`** + `GET /health` +
+subscriptions via Paddle). **65 endpoints under `/api/v1`** + `GET /health` +
 `GET /ready` + static `/media/*`. Nothing in this document is "coming later"
 unless it says so explicitly.
 
@@ -168,7 +168,7 @@ type ApiError = {
 | `NOT_READY`                                               | `GET /ready`                                                                     | 503 — DB ping failed. Ops-only; FE doesn't call `/ready`.                                                                            |
 | `CHAT_NOT_FOUND`                                          | any `/chat/conversations/:id*`                                                   | 404 — conversation missing or owned by someone else.                                                                                 |
 | `PREMIUM_REQUIRED`                                        | any gated endpoint                                                               | 403 — feature requires an active subscription. Show paywall/upgrade modal.                                                           |
-| `BILLING_NOT_CONFIGURED`                                  | any `/billing/*`                                                                 | 400 — Stripe keys absent on this deployment. Hide billing UI entirely.                                                               |
+| `BILLING_NOT_CONFIGURED`                                  | any `/billing/*`                                                                 | 400 — Paddle keys absent on this deployment. Hide billing UI entirely.                                                               |
 | `BILLING_NO_SUBSCRIPTION`                                 | `GET /billing/subscription` · `POST /billing/portal`                             | 404 — user has no subscription row. Treat the same as `plan: 'free'`.                                                                |
 | `BILLING_PRICE_NOT_CONFIGURED`                            | `POST /billing/checkout`                                                         | 400 — specific plan price ID missing in env. Fall back to the other plan or show "unavailable".                                      |
 
@@ -1858,99 +1858,53 @@ attach. For avatars, the response already updated the user row.
 
 ### Billing
 
-Stripe-powered subscription management. Requires `STRIPE_SECRET_KEY`,
-`STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, and `STRIPE_PRICE_ANNUAL` to
-be set in the backend env. When any of these are absent, every `/billing/*`
-call returns `400 BILLING_NOT_CONFIGURED` — the FE should hide billing UI
-entirely in that case (useful for local dev without a Stripe account).
+Paddle is the merchant of record. The frontend opens Paddle.js v2 inline at
+/checkout?plan=annual|monthly&from=<same-origin-path>. No card fields pass through
+our backend. Paddle's webhook is the source of truth for activation.
 
-#### `POST /billing/checkout` _(auth)_
+All endpoints below are JWT-authenticated under /api/v1. Money amounts in the
+backend DTO use **major units**; PricePreview amounts use minor units, while
+Paddle checkout event totals use major units.
 
-Create a Stripe Checkout session and return the hosted-page URL. The FE
-redirects the user to that URL; Stripe handles card collection, then redirects
-back.
+| Endpoint                                | Request                                           | Response                                                             |
+| --------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------- |
+| GET /billing/subscription               | —                                                 | SubscriptionDto or null; tolerate legacy 404 BILLING_NO_SUBSCRIPTION |
+| POST /billing/cancel                    | { reason, feedback?: string (max 500) }           | SubscriptionDto                                                      |
+| POST /billing/pause                     | { months: 1, 2 or 3 }                             | SubscriptionDto; not allowed during trial                            |
+| POST /billing/resume                    | —                                                 | SubscriptionDto                                                      |
+| POST /billing/change-plan/preview       | { plan: monthly or annual, when: now or renewal } | { plan, when, newPrice, credit, dueToday, nextBilledAt }             |
+| POST /billing/change-plan               | same as preview                                   | SubscriptionDto                                                      |
+| GET /billing/payment-method-transaction | —                                                 | { transactionId } for inline Paddle checkout                         |
+| GET /billing/invoices                   | —                                                 | { items: Invoice[] }                                                 |
+| GET /billing/invoices/:id/pdf           | —                                                 | { url } (Paddle PDF in new tab)                                      |
+| POST /billing/portal                    | —                                                 | { url } for tax/address management                                   |
 
-```ts
-// Request
-{
-    plan: 'monthly' | 'annual';
-}
+SubscriptionDto includes id, status (trialing, active, past_due, paused, canceled),
+plan (monthly or annual), currentPeriodStart, currentPeriodEnd, cancelAtPeriodEnd,
+trialEnd, scheduledChange ({ action: cancel/pause/resume, effectiveAt, resumeAt }),
+price ({ amount, currency }), paymentMethod ({ brand, last4, expMonth, expYear,
+declineReason }), pastDue ({ amount, currency, failedAt, nextRetryAt, graceEndsAt }),
+and scheduledPlanChange (monthly, annual or null). All nullable fields must be
+handled defensively. A scheduled cancellation still has access; canceled/expired
+subscriptions render as Free. Missing nextRetryAt hides the retry sentence.
 
-// 201 Response
-{
-    url: string;
-} // redirect the user here (window.location = url)
+Invoice includes id, billedAt, plan (nullable), amount, currency, status
+(paid/failed/refunded/trial), hasPdf. Trial rows never offer a PDF download.
 
-// Errors:
-// 400 BILLING_NOT_CONFIGURED     — Stripe keys missing
-// 400 BILLING_PRICE_NOT_CONFIGURED — env missing STRIPE_PRICE_MONTHLY/ANNUAL
-```
+Cancel reasons: too_expensive, not_using, free_enough, missing_feature,
+not_working, other. Successful mutations replace the cached subscription directly.
 
-Stripe redirects back to:
+Errors: BILLING_NOT_CONFIGURED (hide billing UI), BILLING_NO_SUBSCRIPTION (404),
+BILLING_INVALID_STATE (409), BILLING_PROVIDER_ERROR (502),
+BILLING_INVOICE_NOT_FOUND (404). Keep failed actions open with an inline error.
 
-- Success: `${WEB_URL}/billing/success?session_id=<id>`
-- Cancel: `${WEB_URL}/billing/cancel`
+GET /ai/usage also returns freeCaps: Record<kind, number>; chat used/cap drives
+meters, freeCaps.chat drives cancellation and public FAQ copy when authenticated.
 
-On the success page, poll `GET /billing/subscription` until `status` becomes
-`active` or `trialing` (webhook fires within ~1 s in practice; 3 s poll is
-fine).
-
-#### `GET /billing/subscription` _(auth)_
-
-Current subscription details.
-
-```ts
-// 200 Response: Subscription
-// 404 BILLING_NO_SUBSCRIPTION — user has no subscription row (plan: 'free')
-```
-
-#### `POST /billing/portal` _(auth)_
-
-Create a Stripe Customer Portal session and return the URL. The portal lets
-the user cancel, change payment method, or download invoices — all without
-any custom UI.
-
-```ts
-// Request: (empty body)
-
-// 201 Response
-{
-    url: string;
-} // redirect the user here
-
-// Errors:
-// 400 BILLING_NOT_CONFIGURED
-// 404 BILLING_NO_SUBSCRIPTION — user has never subscribed
-```
-
-#### `POST /billing/webhook` _(public — Stripe-signed, **no** JWT)_
-
-Stripe event receiver. The FE **never calls this directly** — it is only for
-Stripe's servers. Listed here for completeness.
-
-The backend processes:
-
-| Stripe event                    | Effect                                           |
-| ------------------------------- | ------------------------------------------------ |
-| `customer.subscription.created` | Upsert subscription row (→ `trialing`/`active`)  |
-| `customer.subscription.updated` | Update status, plan, period, `cancelAtPeriodEnd` |
-| `customer.subscription.deleted` | Set status → `expired`                           |
-| `invoice.payment_succeeded`     | Set status → `active`, advance period dates      |
-| `invoice.payment_failed`        | Set status → `past_due`                          |
-
-All events are idempotent (duplicate delivery is a no-op). Unhandled event
-types return 200 silently.
-
-#### Subscription lifecycle UX
-
-| `status` from `GET /billing/subscription` | What the FE should show                                                   |
-| ----------------------------------------- | ------------------------------------------------------------------------- |
-| No subscription (404)                     | "Upgrade to Premium" CTAs; AI quota 429 → paywall modal                   |
-| `trialing`                                | "Trial ends on {trialEnd}" banner                                         |
-| `active`                                  | Normal premium experience                                                 |
-| `past_due`                                | "Payment failed — update card" banner (link to `POST /billing/portal`)    |
-| `canceled`                                | "Plan ends on {currentPeriodEnd}" banner + resubscribe CTA; access intact |
-| `expired`                                 | Reverts to free-tier; premium features gate with paywall                  |
+Paddle webhook events include subscription.created/updated/paused/resumed/canceled,
+transaction.completed/payment_failed, and adjustment.created. The frontend never
+calls the webhook endpoint. After checkout, /billing/success polls for active or
+trialing, hydrates auth, and presents Welcome with the validated return destination.
 
 ### Health (ops)
 
@@ -2160,24 +2114,17 @@ Important edge cases:
 ### Billing / subscription flow
 
 ```
-// Subscribe (pricing page CTA)
-POST /billing/checkout { plan: 'monthly' | 'annual' }
-  → { url }
-  → window.location = url                // Stripe-hosted Checkout
-     └─ success → ${WEB_URL}/billing/success?session_id=...
-          // poll GET /billing/subscription every ~3s until status ∈ {active, trialing}
-          // then refresh auth state (GET /auth/me) so plan flips to 'premium'
-     └─ cancel → ${WEB_URL}/billing/cancel
-          // no subscription was created; user stays free
+// Subscribe
+Navigate to /checkout?plan=annual|monthly&from=<validated internal path>
+  → Paddle inline checkout, updateItems for plan switches
+  → checkout.loaded/updated render totals; payment.failed stays on page
+  → checkout.completed navigates to /billing/success?from=...
+  → poll GET /billing/subscription, refresh auth, show Welcome
 
-// Manage / cancel (billing settings page)
-POST /billing/portal
-  → { url }
-  → window.location = url                // Stripe Customer Portal (cancel, card, invoices)
-
-// Read current state (billing settings page)
-GET /billing/subscription
-  → Subscription or 404 (= free)
+// Manage in-app
+POST /billing/cancel, /billing/pause, /billing/resume, /billing/change-plan
+GET /billing/payment-method-transaction, /billing/invoices, /billing/invoices/:id/pdf
+POST /billing/portal → fallback for tax/address details
 
 // Hard gate: server returns 403 PREMIUM_REQUIRED
 // → show paywall / upgrade modal regardless of FE plan state
@@ -2188,7 +2135,7 @@ it on every `GET /auth/me` call. The FE uses `plan === 'premium'` to show or
 hide UI elements, but always handles `403 PREMIUM_REQUIRED` from the server as
 the authoritative gate.
 
-**`BILLING_NOT_CONFIGURED`:** when the backend is running without Stripe keys
+**`BILLING_NOT_CONFIGURED`:** when the backend is running without Paddle keys
 (local dev, staging without billing), every `/billing/*` call returns this
 code. Guard: before rendering any billing UI, check that a prior call didn't
 return this error; if it did, hide all upgrade/subscription UI silently.

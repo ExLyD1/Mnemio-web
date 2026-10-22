@@ -13,6 +13,8 @@
  * (client) which is typed against this union.
  */
 
+import type { CancelReason } from '@/types/billing';
+
 export type Plan = 'free' | 'trial' | 'premium';
 export type StudyModeProp = 'flashcard' | 'multiple_choice' | 'srs';
 export type AiFeature = 'generate_deck' | 'enrich_words' | 'suggestion' | 'deck_from_image';
@@ -28,6 +30,17 @@ export type PaywallContext = 'ai_budget' | 'feature';
  * merged automatically by the client and must never be hand-set here.
  */
 export type AnalyticsEvent =
+    | { name: 'cancel_flow_started'; props: Record<string, never> }
+    | { name: 'cancel_reason_selected'; props: { reason: CancelReason } }
+    | { name: 'cancel_flow_abandoned'; props: { step: number } }
+    | { name: 'pause_offered'; props: Record<string, never> }
+    | { name: 'subscription_paused'; props: { months: number } }
+    | { name: 'subscription_resumed'; props: { from: 'cancelled' | 'paused' } }
+    | { name: 'plan_change_previewed'; props: { to: BillingPlanProp; when: 'now' | 'renewal' } }
+    | { name: 'plan_changed'; props: { to: BillingPlanProp; when: 'now' | 'renewal' } }
+    | { name: 'payment_method_updated'; props: { context: string } }
+    | { name: 'invoice_downloaded'; props: Record<string, never> }
+    | { name: 'checkout_payment_failed'; props: { code: string } }
     | { name: 'appearance_changed'; props: { setting: 'mascot' | 'palette'; value: string } }
     // ── Lifecycle / acquisition ───────────────────────────────────────────────
     | { name: 'app_opened'; props: { is_authenticated: boolean; entry_path: string } }

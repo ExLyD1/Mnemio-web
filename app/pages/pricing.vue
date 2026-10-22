@@ -38,8 +38,8 @@
                     @click="billingCycle = 'annual'"
                 >
                     {{ t('pricing.toggleAnnual') }}
-                    <SharedPill tone="plum" class="text-small">{{
-                        t('pricing.saveBadge')
+                    <SharedPill v-if="premiumPrices.saving.value" tone="plum" class="text-small">{{
+                        premiumPrices.saveLabel.value
                     }}</SharedPill>
                 </button>
             </div>
@@ -117,7 +117,7 @@
                         v-else-if="!auth.isAuthenticated"
                         variant="primary"
                         class="w-full"
-                        @click="navigateTo('/login?redirect=/pricing')"
+                        @click="onUpgrade"
                     >
                         {{ t('pricing.ctaSignIn') }}
                     </UiButton>
@@ -126,7 +126,7 @@
                         <UiButton
                             variant="primary"
                             class="w-full"
-                            :disabled="billing.checkout.loading.value || !paddle"
+                            :disabled="billing.checkout.loading.value"
                             @click="onUpgrade"
                         >
                             <UiSpinner v-if="billing.checkout.loading.value" size="sm" />
@@ -142,17 +142,53 @@
                 </div>
             </div>
         </section>
+        <section class="mx-auto max-w-[880px] px-5 pb-20 md:px-6">
+            <h2 class="font-display text-[36px] leading-tight text-cream md:text-[48px]">
+                {{ t('pricing.faq.title') }}
+            </h2>
+            <div class="mt-6">
+                <div v-for="n in 7" :key="n" class="border-b border-line py-5">
+                    <h3>
+                        <button
+                            :id="'premium-faq-question-' + n"
+                            type="button"
+                            class="flex min-h-11 w-full items-center justify-between gap-5 text-left text-[18px] font-bold text-cream"
+                            :aria-expanded="faqOpen === n"
+                            :aria-controls="'premium-faq-answer-' + n"
+                            @click="faqOpen = faqOpen === n ? null : n"
+                        >
+                            {{ t('pricing.faq.q' + n)
+                            }}<Minus v-if="faqOpen === n" class="size-5 shrink-0" /><Plus
+                                v-else
+                                class="size-5 shrink-0"
+                            />
+                        </button>
+                    </h3>
+                    <p
+                        v-show="faqOpen === n"
+                        :id="'premium-faq-answer-' + n"
+                        :aria-labelledby="'premium-faq-question-' + n"
+                        class="mt-3 max-w-[62ch] text-body text-cream-dim"
+                    >
+                        {{ faqAnswer(n) }}
+                    </p>
+                </div>
+            </div>
+            <p class="mt-6 text-body text-cream-dim">
+                {{ t('pricing.faq.contact') }}
+                <a href="mailto:hello@mnemio.xyz" class="font-bold text-cream underline"
+                    >hello@mnemio.xyz</a
+                >
+            </p>
+        </section>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Check, X } from 'lucide-vue-next';
+import { Check, X, Plus, Minus } from 'lucide-vue-next';
 import { useHead, useSiteConfig } from '#imports';
 import { useAuthStore } from '@/stores/auth';
 import { useBilling } from '@/composables/useBilling';
-import { usePaddle } from '@/composables/usePaddle';
-import { usePaddlePrices } from '@/composables/usePaddlePrices';
-import { useGeoCountry } from '@/composables/useGeoCountry';
 import { useT } from '@/composables/useT';
 import { PLANS, TRIAL_DAYS, type Plan } from '@/data/plans';
 
@@ -161,28 +197,22 @@ definePageMeta({ layout: 'default' });
 const { t } = useT();
 const auth = useAuthStore();
 const billing = useBilling();
+const premiumPrices = usePremiumPrices();
+const faqOpen = ref<number | null>(1);
 const site = useSiteConfig();
 
 useSeo({ title: t('pricing.seoTitle'), description: t('pricing.seoDesc') });
 
-// Resolved during the SSR pass from the CDN's geo header; `null` means "let
-// Paddle geolocate from the visitor's IP", which is also what checkout does — so
-// the previewed price and the charged price always agree.
-const country = useGeoCountry();
-
-const { paddle, load: loadPaddle, failed: paddleFailed } = usePaddle();
-const { prices, error: pricesError } = usePaddlePrices(paddle, country);
-
+const prices = premiumPrices.prices;
+const pricesError = premiumPrices.error;
+const paddleFailed = premiumPrices.failed;
 onMounted(() => {
-    loadPaddle();
+    if (auth.isAuthenticated) void billing.usage.execute();
 });
 
-// Machine-readable pricing so rich results and AI engines can answer "how much is
-// Mnemio." These stay in the catalog's base currency (USD) on purpose: the block
-// is server-rendered for crawlers, while PricePreview is client-only, so there is
-// no localized total available at render time. Keep in sync with app/data/plans.ts.
+// Paid offers are emitted only after a localized Paddle preview exists.
 const base = (site.url || 'https://mnemio.xyz').replace(/\/$/, '');
-useHead({
+useHead(() => ({
     script: [
         {
             type: 'application/ld+json',
@@ -192,38 +222,26 @@ useHead({
                 '@type': 'Product',
                 name: 'Mnemio Premium',
                 description: t('pricing.seoDesc'),
-                brand: { '@type': 'Brand', name: 'Mnemio' },
-                url: `${base}/pricing`,
-                offers: [
-                    {
-                        '@type': 'Offer',
-                        name: 'Free',
-                        price: '0',
-                        priceCurrency: 'USD',
-                        availability: 'https://schema.org/InStock',
-                        url: `${base}/pricing`,
-                    },
-                    {
-                        '@type': 'Offer',
-                        name: 'Premium (monthly)',
-                        price: '10',
-                        priceCurrency: 'USD',
-                        availability: 'https://schema.org/InStock',
-                        url: `${base}/pricing`,
-                    },
-                    {
-                        '@type': 'Offer',
-                        name: 'Premium (annual)',
-                        price: '96',
-                        priceCurrency: 'USD',
-                        availability: 'https://schema.org/InStock',
-                        url: `${base}/pricing`,
-                    },
-                ],
+                url: base + '/pricing',
+                offers: (['monthly', 'annual'] as const).flatMap((plan) => {
+                    const money = premiumPrices.amount(plan);
+                    return money
+                        ? [
+                              {
+                                  '@type': 'Offer',
+                                  name:
+                                      'Mnemio Premium (' + t('billing.settings.plan.' + plan) + ')',
+                                  price: money.amount,
+                                  priceCurrency: money.currency,
+                                  url: base + '/pricing',
+                              },
+                          ]
+                        : [];
+                }),
             }),
         },
     ],
-});
+}));
 
 const billingCycle = ref<'monthly' | 'annual'>('monthly');
 const priceError = ref(false);
@@ -254,5 +272,13 @@ const onUpgrade = async () => {
     if (billing.checkout.error.value?.code === 'BILLING_PRICE_NOT_CONFIGURED') {
         priceError.value = true;
     }
+};
+const faqAnswer = (n: number) => {
+    const cap = billing.billingStore.usage?.freeCaps?.chat;
+    if (n === 7)
+        return cap === undefined
+            ? t('pricing.faq.a7Generic')
+            : t('pricing.faq.a7').replace('{cap}', String(cap));
+    return t('pricing.faq.a' + n).replace('{days}', String(TRIAL_DAYS));
 };
 </script>

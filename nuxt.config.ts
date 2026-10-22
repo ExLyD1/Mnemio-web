@@ -244,6 +244,7 @@ export default defineNuxtConfig({
         '/onboarding': { ssr: false },
         '/ai': { ssr: false },
         '/settings/**': { ssr: false },
+        '/checkout': { ssr: false },
     },
 
     css: ['~/assets/css/main.css'],

@@ -2,9 +2,9 @@
     <header
         class="flex h-[68px] shrink-0 items-center gap-4 border-b border-line bg-bg-surface/80 px-6 backdrop-blur"
     >
-        <div class="flex flex-1 justify-center">
+        <div class="flex min-w-0 flex-1 justify-center">
             <div
-                class="relative w-full max-w-md"
+                class="relative min-w-0 w-full max-w-md"
                 @focusin="searchFocused = true"
                 @focusout="onSearchBlur"
             >
@@ -45,7 +45,7 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex shrink-0 items-center gap-2">
             <SharedThemeToggle />
 
             <UiPopover align="right">
@@ -110,58 +110,20 @@
                 {{ t('topbar.newDeck') }}
             </UiButton>
 
-            <UiPopover align="right">
-                <template #trigger="{ toggle }">
-                    <button
-                        type="button"
-                        class="rounded-full transition-transform hover:scale-105"
-                        :aria-label="t('topbar.account')"
-                        @click="toggle"
-                    >
-                        <UiAvatar
-                            :name="displayName"
-                            :src="mediaUrl(auth.currentUser?.avatarUrl)"
-                            :size="38"
-                        />
-                    </button>
-                </template>
-                <template #default="{ close }">
-                    <NuxtLink
-                        to="/profile"
-                        class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-body text-brand-pale transition-colors hover:bg-brand/20"
-                        @click="close"
-                    >
-                        <User class="size-4" />
-                        {{ t('topbar.profile') }}
-                    </NuxtLink>
-                    <SharedLanguageSwitcher variant="menu" />
-                    <button
-                        type="button"
-                        class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-body text-brand-pale transition-colors hover:bg-brand/20 disabled:opacity-40"
-                        @click="() => onLogout(close)"
-                    >
-                        <LogOut class="size-4" />
-                        {{ t('nav.signOut') }}
-                    </button>
-                </template>
-            </UiPopover>
+            <AppAccountMenu />
         </div>
     </header>
 </template>
 
 <script setup lang="ts">
-import { Bell, Plus, User, LogOut, Trophy } from 'lucide-vue-next';
-import { useAuth, useAuthStore, useDecks, useToast, useT } from '#imports';
+import { Bell, Plus, Trophy } from 'lucide-vue-next';
+import { useDecks, useT } from '#imports';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
-import { mediaUrl } from '@/utils/media';
 import type { Achievement } from '@/types/achievement';
 
 const search = ref('');
 const searchFocused = ref(false);
-const auth = useAuthStore();
 const { store, fetchList } = useDecks();
-const { logout } = useAuth();
-const toast = useToast();
 const { t } = useT();
 const notifications = useAchievementNotifications();
 const unseenAchievements = notifications.unseen;
@@ -216,15 +178,4 @@ onMounted(() => {
     // needs useT()/useI18n(), which requires a real component context.
     void notifications.fetchUnseen();
 });
-
-const displayName = computed(
-    () => auth.currentUser?.displayName ?? auth.currentUser?.username ?? '',
-);
-
-const onLogout = async (close: () => void) => {
-    close();
-    await logout.execute();
-    toast.success(t('auth.signedOut'));
-    await navigateTo('/login');
-};
 </script>

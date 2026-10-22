@@ -122,40 +122,21 @@
                 </NuxtLink>
             </template>
 
-            <!-- Mimi — bottom anchor -->
-            <div class="mt-auto">
-                <UiTooltip :content="expanded ? '' : 'Mimi'" side="right">
-                    <NuxtLink
-                        to="/profile"
-                        :aria-label="t('rail.profile')"
-                        class="flex w-full items-center gap-3 rounded-[13px] px-0 transition-colors hover:bg-brand/10"
-                        :class="expanded ? 'h-[54px]' : 'h-11'"
-                    >
-                        <span class="grid w-11 shrink-0 place-items-center">
-                            <img
-                                :src="`/images/mimi/${appearance.mascot}/neutral.svg`"
-                                alt=""
-                                class="mimi-img size-10 object-contain drop-shadow-rail-glyph"
-                            />
-                        </span>
-                        <div
-                            class="whitespace-nowrap transition-opacity duration-[160ms]"
-                            :class="expanded ? 'opacity-100 delay-[100ms]' : 'opacity-0 delay-0'"
-                        >
-                            <p class="text-[13px] font-bold leading-tight text-cream">Mimi</p>
-                            <p class="text-[11px] text-cream-dim">{{ t('rail.profile') }}</p>
-                        </div>
-                    </NuxtLink>
-                </UiTooltip>
+            <div class="mt-auto pt-4">
+                <BillingPlanBlock v-if="expanded" compact />
+                <NuxtLink
+                    v-else-if="!billingStore.notConfigured"
+                    to="/settings/billing"
+                    :aria-label="t('billing.subscription.nav')"
+                    class="grid size-11 place-items-center rounded-2xl hover:bg-bg-surface-2"
+                    ><SharedMimi pose="neutral" :size="40" :bob="false"
+                /></NuxtLink>
             </div>
         </div>
     </aside>
 </template>
 
 <script setup lang="ts">
-import { useAppearanceStore } from '@/stores/appearance';
-
-const appearance = useAppearanceStore();
 import { LayoutGrid, Library, Compass, BarChart3, Bot, Sparkles } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
 import { useSrsStore } from '@/stores/srs';
@@ -166,6 +147,7 @@ const srs = useSrsStore();
 const decksStore = useDecksStore();
 const route = useRoute();
 const expanded = ref(false);
+const billingStore = useBillingStore();
 
 const dueCount = computed(() => srs.dueCount);
 

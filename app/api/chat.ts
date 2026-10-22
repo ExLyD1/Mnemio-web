@@ -72,6 +72,7 @@ export const listConversations = (
 
 /** Today's AI allowance, so the composer can show a limit before it's hit. */
 export interface AiUsage {
+    freeCaps?: Record<string, number>;
     plan: 'free' | 'premium';
     /** ISO — next UTC midnight. */
     resetsAt: string;
