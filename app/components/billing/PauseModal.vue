@@ -24,7 +24,7 @@
                 @click="$emit('update:modelValue', false)"
                 >{{ t('billing.checkout.back') }}</BillingButton
             ><BillingButton :busy="billing.pause.loading.value" @click="submit">{{
-                text('billing.pause.action', { months })
+                t('billing.pause.action', months)
             }}</BillingButton></template
         >
     </UiModal>
@@ -49,7 +49,9 @@ const submit = async () => {
     if (result) {
         analytics.track('subscription_paused', { months: months.value });
         toast.success(
-            text('billing.pause.toast', { date: date(result.scheduledChange?.resumeAt) }),
+            text('billing.pause.toast', {
+                date: date(result.scheduledChange?.resumeAt ?? result.scheduledChange?.effectiveAt),
+            }),
         );
         emit('update:modelValue', false);
     }

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="flex items-start justify-between gap-4 py-2 text-[15px]">
         <span class="text-cream-dim">{{ label }}</span
         ><span class="text-right font-bold text-cream">{{ value }}</span>

@@ -96,16 +96,29 @@ const open = async () => {
         transactionId: transaction.transactionId,
         frameTarget,
         onComplete: async () => {
+            const before = JSON.stringify([sub.value?.paymentMethod, sub.value?.pastDue]);
             refreshing.value = true;
-            store.invalidate();
-            await billing.load.execute();
-            refreshing.value = false;
-            if (billing.load.error.value) {
-                refreshError.value = true;
-                return;
+            let changed = false;
+            const deadline = Date.now() + 15000;
+            while (id === generation && Date.now() < deadline) {
+                store.invalidate();
+                await billing.load.execute();
+                if (id !== generation) return;
+                if (
+                    !billing.load.error.value &&
+                    JSON.stringify([sub.value?.paymentMethod, sub.value?.pastDue]) !== before
+                ) {
+                    changed = true;
+                    break;
+                }
+                await new Promise((resolve) => setTimeout(resolve, 1500));
             }
+            if (id !== generation) return;
+            refreshing.value = false;
+            if (!changed) store.invalidate();
             analytics.track('payment_method_updated', { context });
-            toast.success(t('billing.card.toast'));
+            if (changed) toast.success(t('billing.card.toast'));
+            else toast.info(t('billing.card.pending'));
             emit('update:modelValue', false);
         },
     });

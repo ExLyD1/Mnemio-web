@@ -18,7 +18,7 @@
             :width="size"
             :height="size"
             :style="{ width: `${size}px` }"
-            class="mimi-img select-none drop-shadow-mimi"
+            class="mimi-img shrink-0 select-none drop-shadow-mimi"
             :class="
                 resolvedPose === 'peek-paws' ? '' : popping ? 'mimi-pop' : bob ? 'mimi-bob' : ''
             "

@@ -479,7 +479,7 @@ onMounted(async () => {
         stats.loadSeries('7'),
         achievements.load(),
         prefs.hydrate().catch(() => {}),
-        billingStore.load(),
+        billingStore.load().catch(() => {}),
     ]);
     syncDraft();
 });

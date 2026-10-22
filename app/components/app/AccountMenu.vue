@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <template v-if="mobile">
         <button
             type="button"

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div
         ref="group"
         role="radiogroup"

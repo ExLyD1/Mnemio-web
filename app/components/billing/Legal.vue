@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <p class="text-[13px] leading-relaxed text-cream-faint">
         {{ t('billing.checkout.legal') }}
         <NuxtLink to="/terms" class="underline">{{ t('billing.checkout.terms') }}</NuxtLink

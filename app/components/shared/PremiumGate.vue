@@ -28,7 +28,7 @@
                 >{{ t(selected === 'annual' ? 'premiumGate.ctaAnnual' : 'premiumGate.ctaMonthly')
                 }}{{
                     selected === 'annual' && prices.saveLabel.value
-                        ? ' ? ' + prices.saveLabel.value
+                        ? ' · ' + prices.saveLabel.value
                         : ''
                 }}</BillingButton
             >

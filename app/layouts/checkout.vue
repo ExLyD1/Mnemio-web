@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="min-h-screen bg-bg-base bg-page-glow text-cream">
         <header
             class="flex h-[68px] items-center justify-between gap-3 border-b border-line px-5 md:px-8"

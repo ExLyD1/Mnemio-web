@@ -140,12 +140,12 @@ onScopeDispose(() => {
 const submit = async () => {
     if (!preview.value || previewing.value || error.value || billing.changePlan.loading.value)
         return;
-    const result = await billing.changePlan.execute({ plan: props.target, when: when.value });
+    const plan = props.target;
+    const submittedWhen = when.value;
+    const result = await billing.changePlan.execute({ plan, when: submittedWhen });
     if (result) {
-        analytics.track('plan_changed', { to: props.target, when: when.value });
-        toast.success(
-            text('billing.switch.toast', { plan: t(`billing.settings.plan.${props.target}`) }),
-        );
+        analytics.track('plan_changed', { to: plan, when: submittedWhen });
+        toast.success(text('billing.switch.toast', { plan: t(`billing.settings.plan.${plan}`) }));
         emit('update:modelValue', false);
     }
 };

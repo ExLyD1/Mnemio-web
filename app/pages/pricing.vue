@@ -105,7 +105,7 @@
                     </UiButton>
                     <!-- Already premium -->
                     <UiButton
-                        v-else-if="auth.isPremium"
+                        v-else-if="auth.isPremium || hasSubscription"
                         variant="primary"
                         class="w-full"
                         @click="navigateTo('/settings/billing')"
@@ -198,6 +198,11 @@ const { t } = useT();
 const auth = useAuthStore();
 const billing = useBilling();
 const premiumPrices = usePremiumPrices();
+const hasSubscription = computed(
+    () =>
+        billing.billingStore.subscription &&
+        !['canceled', 'expired'].includes(billing.billingStore.subscription.status),
+);
 const faqOpen = ref<number | null>(1);
 const site = useSiteConfig();
 
@@ -207,7 +212,10 @@ const prices = premiumPrices.prices;
 const pricesError = premiumPrices.error;
 const paddleFailed = premiumPrices.failed;
 onMounted(() => {
-    if (auth.isAuthenticated) void billing.usage.execute();
+    if (auth.isAuthenticated) {
+        void billing.load.execute();
+        void billing.usage.execute();
+    }
 });
 
 // Paid offers are emitted only after a localized Paddle preview exists.

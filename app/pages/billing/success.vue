@@ -34,8 +34,12 @@
                         ? text('billing.success.trialBody', {
                               days: TRIAL_DAYS,
                               date: date(sub.trialEnd),
-                              price,
-                              plan,
+                              charge: text(
+                                  sub.plan === 'annual'
+                                      ? 'billing.success.perYear'
+                                      : 'billing.success.perMonth',
+                                  { price },
+                              ),
                           })
                         : t('billing.success.paidBody')
                 }}
@@ -47,11 +51,15 @@
                     >{{
                         from === '/dashboard'
                             ? t('billing.success.dashboard')
-                            : text('billing.success.back', { origin })
+                            : from.startsWith('/pricing')
+                              ? t('refunds.backToPricing')
+                              : origin
+                                ? text('billing.success.back', { origin })
+                                : t('common.back')
                     }}</NuxtLink
                 ><NuxtLink
                     to="/settings/billing"
-                    class="flex min-h-11 items-center justify-center rounded-[14px] border border-line-strong px-6 py-3.5 font-bold"
+                    class="flex min-h-11 items-center justify-center rounded-[14px] border border-line-strong px-6 py-3.5 font-bold text-cream transition-colors hover:bg-bg-surface-2 focus-visible:outline-none focus-visible:shadow-focus-ring"
                     >{{ t('billing.success.subscription') }}</NuxtLink
                 >
             </div>
@@ -65,22 +73,20 @@ definePageMeta({ layout: 'default' });
 const { t } = useT();
 const auth = useAuthStore();
 const route = useRoute();
-const { billing, sub, store, price, plan, date, text } = useSubscriptionView();
+const { billing, sub, store, price, date, text } = useSubscriptionView();
 const from = computed(() => sanitizeNext(route.query.from) || '/dashboard');
+// Page name for "Back to {origin}"; '' falls back to a plain "Back" (never a raw path).
+const ORIGINS: [string, string][] = [
+    ['/ai', 'rail.ai'],
+    ['/decks', 'rail.decks'],
+    ['/discover', 'rail.discover'],
+    ['/statistics', 'rail.statistics'],
+    ['/profile', 'rail.profile'],
+    ['/settings/billing', 'billing.subscription.nav'],
+];
 const origin = computed(() => {
-    const path = from.value.split('?')[0] ?? '/dashboard';
-    const key = path.startsWith('/ai')
-        ? 'rail.ai'
-        : path.startsWith('/decks')
-          ? 'rail.decks'
-          : path.startsWith('/pricing')
-            ? 'billing.subscription.yourPlan'
-            : path.startsWith('/profile')
-              ? 'topbar.profile'
-              : path.startsWith('/settings/billing')
-                ? 'billing.subscription.nav'
-                : '';
-    return key ? t(key) : path;
+    const key = ORIGINS.find(([prefix]) => from.value.startsWith(prefix))?.[1];
+    return key ? t(key) : '';
 });
 const state = ref<'polling' | 'timeout' | 'ready'>('polling');
 const polling = ref(false);

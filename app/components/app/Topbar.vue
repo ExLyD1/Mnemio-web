@@ -170,6 +170,7 @@ const goToDiscover = () => {
 };
 
 onMounted(() => {
+    if (!useAuthStore().isAuthenticated) return;
     if (!store.summaries.length) {
         fetchList.execute({ cursor: null, append: false });
     }

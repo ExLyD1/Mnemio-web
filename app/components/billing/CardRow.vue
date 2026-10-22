@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div v-if="method" class="flex min-w-0 items-center gap-3">
         <span
             class="grid h-8 min-w-12 shrink-0 place-items-center rounded-md bg-bg-surface-2 px-1 text-[11px] font-extrabold text-cream"

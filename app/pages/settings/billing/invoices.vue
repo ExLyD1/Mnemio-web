@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div
         v-if="!store.notConfigured"
         class="mx-auto max-w-[960px] px-5 py-8 text-cream md:px-12 md:py-12"

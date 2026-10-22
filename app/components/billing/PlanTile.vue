@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="rounded-2xl bg-bg-deep px-[22px] py-5">
         <p class="text-[11px] font-extrabold uppercase tracking-[.16em] text-cream-faint">
             {{ label }}

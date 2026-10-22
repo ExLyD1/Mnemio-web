@@ -1,4 +1,26 @@
-import type { Money } from '@/types/billing';
+import type { Money, Subscription } from '@/types/billing';
+
+const CARD_BRANDS: Record<string, string> = {
+    visa: 'Visa',
+    mastercard: 'Mastercard',
+    american_express: 'American Express',
+    amex: 'American Express',
+    discover: 'Discover',
+    jcb: 'JCB',
+    maestro: 'Maestro',
+    union_pay: 'UnionPay',
+    diners_club: 'Diners Club',
+};
+
+/** "Visa •••• 4242", or '' when no card is on file. Paddle sends lowercase brand keys. */
+export const formatCard = (method: Subscription['paymentMethod'] | undefined): string => {
+    if (!method) {
+        return '';
+    }
+    const key = method.brand.toLowerCase();
+    const name = CARD_BRANDS[key] ?? key.charAt(0).toUpperCase() + key.slice(1);
+    return `${name} •••• ${method.last4}`;
+};
 
 export const formatMoney = (money: Money | null | undefined, locale: string): string => {
     if (!money || !Number.isFinite(money.amount) || !money.currency) {

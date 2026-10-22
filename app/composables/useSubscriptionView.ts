@@ -1,5 +1,5 @@
 import { subscriptionState, daysUntil, ended } from '@/utils/subscriptionState';
-import { formatMoney, formatDate } from '@/utils/format';
+import { formatMoney, formatDate, formatCard } from '@/utils/format';
 
 export const useSubscriptionView = () => {
     const billing = useBilling();
@@ -35,11 +35,7 @@ export const useSubscriptionView = () => {
     );
     const price = computed(() => money(sub.value?.price));
     const plan = computed(() => t(`billing.settings.plan.${sub.value?.plan ?? 'monthly'}`));
-    const card = computed(() =>
-        sub.value?.paymentMethod
-            ? `${sub.value.paymentMethod.brand.toUpperCase()} •••• ${sub.value.paymentMethod.last4}`
-            : '—',
-    );
+    const card = computed(() => formatCard(sub.value?.paymentMethod) || '—');
     const stateLabel = computed(() => t(`billing.subscription.states.${state.value}`));
     const subline = computed(() => {
         const s = sub.value;
@@ -54,7 +50,11 @@ export const useSubscriptionView = () => {
         }
         if (state.value === 'paused' || state.value === 'pause_scheduled') {
             return text('billing.subscription.pausedFrom', {
-                date: date(s.scheduledChange?.effectiveAt ?? s.currentPeriodEnd),
+                date: date(
+                    s.scheduledChange?.action === 'pause'
+                        ? s.scheduledChange.effectiveAt
+                        : s.currentPeriodEnd,
+                ),
             });
         }
         return text(

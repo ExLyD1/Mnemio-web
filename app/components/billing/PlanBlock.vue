@@ -88,7 +88,7 @@
                                 ? 'wave'
                                 : 'neutral'
                     "
-                    :size="compact ? 44 : 56"
+                    :size="compact ? (state === 'past_due' ? 44 : 48) : 56"
                     :bob="false"
                 />
                 <div class="min-w-0">

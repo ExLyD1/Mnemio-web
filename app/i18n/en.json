@@ -1230,11 +1230,13 @@
             "welcome": "Welcome to Premium",
             "trialStarted": "Trial started",
             "paid": "Payment received",
-            "trialBody": "Your {days}-day free trial runs until {date}. After that it's {price} · {plan}. We'll email you two days before the first charge.",
+            "trialBody": "Your {days}-day free trial runs until {date}. After that it's {charge}. We'll email you two days before the first charge.",
             "paidBody": "Premium is ready. Unlimited AI, advanced statistics and priority support are yours.",
             "back": "Back to {origin}",
             "dashboard": "Go to dashboard",
-            "subscription": "See subscription"
+            "subscription": "See subscription",
+            "perMonth": "{price} a month",
+            "perYear": "{price} a year"
         },
         "cancel": {
             "seoTitle": "Checkout cancelled",
@@ -1263,7 +1265,7 @@
             "aiGeneric": "Daily AI limits apply",
             "stats": "Advanced statistics lock",
             "support": "Priority support ends",
-            "decks": "Your {count} decks and all progress stay",
+            "decks": "Your {n} deck and all progress stay | Your {n} decks and all progress stay",
             "action": "Cancel subscription",
             "doneTitle": "Your subscription is cancelled",
             "trialTitle": "Your trial is cancelled",
@@ -1335,7 +1337,7 @@
             "nextRetry": "Next retry",
             "decks": "Decks",
             "decksStay": "kept either way",
-            "days": "{n} days",
+            "days": "{n} day | {n} days",
             "daysLeft": "Days left",
             "periodDays": "of {n} this period",
             "none": "None",
@@ -1363,7 +1365,7 @@
                 "cancelled": "You won't be charged again. Premium stays on until {date}, then you move to the Free plan. Your decks stay.",
                 "pauseScheduled": "Premium is on until {date}, then paused. Billing restarts on {resume} at {price} · {plan}.",
                 "paused": "Your subscription is paused. Billing restarts on {resume} at {price} · {plan}. Your decks and progress stay.",
-                "pauseScheduledMonths": "Premium is on until {date}, then paused for {months} months. Billing restarts on {resume} at {price} · {plan}."
+                "pauseScheduledMonths": "Premium is on until {date}, then paused for {n} month. Billing restarts on {resume} at {price} · {plan}. | Premium is on until {date}, then paused for {n} months. Billing restarts on {resume} at {price} · {plan}."
             },
             "settings": "Settings",
             "keepToast": "Premium will continue on {date}. You can manage your subscription any time."
@@ -1403,7 +1405,7 @@
             "months3": "3 months",
             "restarts": "Billing restarts {date}",
             "note": "Premium stays on until {date}. While paused you're on the Free plan, and your decks stay. Resume any time.",
-            "action": "Pause for {months} months",
+            "action": "Pause for {n} month | Pause for {n} months",
             "toast": "Premium paused until {date}",
             "change": "Change pause"
         },
@@ -1448,7 +1450,9 @@
                 "funds": "Insufficient funds. Try another card.",
                 "authentication": "Card authentication failed. Confirm the payment with your bank.",
                 "blocked": "Your card cannot be used for this payment. Try another card."
-            }
+            },
+            "pending": "Card saved, it may take a minute to show",
+            "yourCard": "your card"
         },
         "invoices": {
             "title": "Invoices",

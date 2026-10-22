@@ -93,6 +93,10 @@ export const useBillingStore = defineStore('billing', () => {
         }
     };
     const loadInvoices = async () => {
+        if (loaded.value && !subscription.value) {
+            invoices.value = [];
+            return [];
+        }
         const ticket = generation;
         try {
             const result = (await api.getInvoices()).items;

@@ -143,6 +143,7 @@ const unavailable = computed(
     () =>
         billing.paddleFailed.value ||
         !!billing.inlineCheckout.error.value ||
+        !!billing.load.error.value ||
         billing.billingStore.notConfigured,
 );
 const options = computed(() => [
@@ -179,7 +180,14 @@ const selectPlan = async (value: BillingPlan) => {
 };
 onMounted(async () => {
     await billing.load.execute();
-    if (billing.billingStore.notConfigured) return;
+    if (billing.billingStore.notConfigured || billing.load.error.value) return;
+    if (
+        billing.billingStore.subscription &&
+        !['canceled', 'expired'].includes(billing.billingStore.subscription.status)
+    ) {
+        await navigateTo('/settings/billing', { replace: true });
+        return;
+    }
     await billing.inlineCheckout.execute({
         plan: plan.value,
         frameTarget: 'paddle-frame',

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <button
         type="button"
         :disabled="disabled || busy"

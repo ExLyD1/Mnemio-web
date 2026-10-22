@@ -1,7 +1,8 @@
 <template>
     <div
         v-if="!store.notConfigured"
-        class="mx-auto max-w-[1160px] px-5 py-8 text-cream md:px-12 md:pb-16 md:pt-[120px]"
+        class="mx-auto max-w-[1160px] px-5 py-8 text-cream md:px-12 md:pb-16 md:pt-[128px]"
+        :class="state === 'past_due' || state === 'trial_ending' ? 'md:!pt-[132px]' : ''"
     >
         <UiSpinner v-if="billing.load.loading.value && !sub" class="mx-auto" />
         <div v-else-if="billing.load.error.value" role="alert" class="rounded-2xl bg-error/10 p-6">
@@ -13,7 +14,7 @@
         <BillingPlanBlock v-else-if="state === 'free'" class="mx-auto max-w-md" />
         <div
             v-else
-            class="grid items-start gap-x-12 gap-y-6 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_500px]"
+            class="grid items-start gap-x-12 gap-y-6 md:grid-cols-2 md:grid-rows-[min-content_min-content_1fr] md:gap-y-4 xl:grid-cols-[minmax(0,1fr)_500px]"
         >
             <div class="md:pt-6">
                 <div class="flex items-end gap-4">
@@ -119,7 +120,7 @@
                     ><NuxtLink
                         v-else
                         to="/settings/billing/invoices"
-                        class="flex min-h-11 items-center justify-center rounded-[14px] border border-line-strong px-6 py-3.5 font-bold"
+                        class="flex min-h-11 items-center justify-center rounded-[14px] border border-line-strong px-6 py-3.5 font-bold text-cream transition-colors hover:bg-bg-surface-2 focus-visible:outline-none focus-visible:shadow-focus-ring"
                         >{{ t('billing.invoices.title') }}</NuxtLink
                     ></template
                 >
@@ -160,7 +161,7 @@
                     >{{ t('billing.subscription.history') }}<ArrowRight class="size-4" /></NuxtLink
                 ><BillingInvoiceList :items="store.invoices.slice(0, 3)" compact />
             </div>
-            <div v-if="canCancel" class="md:mt-4">
+            <div v-if="canCancel" class="md:mt-6">
                 <button
                     type="button"
                     class="min-h-11 text-[15px] font-bold underline underline-offset-4"
@@ -268,7 +269,9 @@ const lead = computed(() => {
                       : 'active';
     if (state.value === 'past_due') values.date = date(s?.pastDue?.failedAt);
     return (
-        text(`billing.subscription.lead.${key}`, values) +
+        (key === 'pauseScheduledMonths'
+            ? t(`billing.subscription.lead.${key}`, view.pauseMonths.value ?? 0, values)
+            : text(`billing.subscription.lead.${key}`, values)) +
         (state.value === 'past_due' && s?.pastDue?.nextRetryAt
             ? ` ${text('billing.subscription.retryNote', values)}`
             : '')
@@ -302,9 +305,10 @@ const tiles = computed(() => {
             },
             {
                 label: t('billing.subscription.premiumEnds'),
-                value: text('billing.subscription.days', {
-                    n: daysUntil(s?.pastDue?.graceEndsAt, now.value),
-                }),
+                value: t(
+                    'billing.subscription.days',
+                    daysUntil(s?.pastDue?.graceEndsAt, now.value),
+                ),
                 caption: date(s?.pastDue?.graceEndsAt),
             },
             { label: t('billing.subscription.nextRetry'), value: date(s?.pastDue?.nextRetryAt) },
@@ -314,7 +318,7 @@ const tiles = computed(() => {
         return [
             {
                 label: t('billing.subscription.premiumEnds'),
-                value: text('billing.subscription.days', { n: days.value }),
+                value: t('billing.subscription.days', days.value),
                 caption: date(boundary.value),
                 tone: 'warn' as const,
             },
@@ -326,7 +330,11 @@ const tiles = computed(() => {
         return [
             {
                 label: t('billing.subscription.pauseStarts'),
-                value: date(s?.scheduledChange?.effectiveAt ?? s?.currentPeriodEnd),
+                value: date(
+                    s?.scheduledChange?.action === 'pause'
+                        ? s.scheduledChange.effectiveAt
+                        : s?.currentPeriodEnd,
+                ),
             },
             {
                 label: t('billing.subscription.billingRestarts'),
@@ -339,7 +347,7 @@ const tiles = computed(() => {
         return [
             {
                 label: t('billing.subscription.trialEndsIn'),
-                value: text('billing.subscription.days', { n: days.value }),
+                value: t('billing.subscription.days', days.value),
                 caption: date(boundary.value),
                 tone: state.value === 'trial_ending' ? ('warn' as const) : undefined,
             },

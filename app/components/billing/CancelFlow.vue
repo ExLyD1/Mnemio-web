@@ -45,6 +45,7 @@
                     v-if="step === 2"
                     pose="sleepy"
                     :size="76"
+                    class="shrink-0"
                     :bob="false"
                 /><span>{{
                     step === 2 ? text('billing.cancel.changesDate', { date: date(endDate) }) : title
@@ -135,7 +136,7 @@
                             </li>
                             <li class="flex gap-3">
                                 <Check class="size-5 shrink-0 text-success" />{{
-                                    text('billing.cancel.decks', { count: decks.total })
+                                    t('billing.cancel.decks', decks.total)
                                 }}
                             </li>
                         </ul>
@@ -194,7 +195,7 @@
                     t('billing.checkout.back')
                 }}</BillingButton
                 ><BillingButton :busy="busy" @click="pause">{{
-                    text('billing.pause.action', { months })
+                    t('billing.pause.action', months)
                 }}</BillingButton></template
             >
         </template>

@@ -20,6 +20,7 @@
 import { useAuthStore } from '@/stores/auth';
 import { useBillingStore } from '@/stores/billing';
 
+const auth = useAuthStore();
 const billingStore = useBillingStore();
 const billing = useBilling();
 onMounted(() => {
@@ -37,7 +38,6 @@ watch(
 // footer for crawler-facing internal links — but only for logged-out visitors.
 // Authed users keep the clean app shell with no links back to marketing/blog/landing.
 const route = useRoute();
-const auth = useAuthStore();
 const showSeoFooter = computed(
     () =>
         !auth.isAuthenticated && (route.path === '/pricing' || route.path.startsWith('/discover')),

@@ -12,6 +12,11 @@
         </p>
         <div class="mt-5 rounded-2xl bg-bg-deep p-5">
             <BillingSummaryLine
+                v-if="sub?.status === 'paused'"
+                :label="t('billing.checkout.dueToday')"
+                :value="price"
+            />
+            <BillingSummaryLine
                 :label="
                     t(
                         sub?.status === 'paused'

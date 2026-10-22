@@ -1,4 +1,4 @@
-﻿import { useAsync } from '@/composables/useAsync';
+import { useAsync } from '@/composables/useAsync';
 import { useAnalytics } from '@/composables/useAnalytics';
 import { usePaddle } from '@/composables/usePaddle';
 import { useBillingStore } from '@/stores/billing';
@@ -83,6 +83,16 @@ export const useBilling = () => {
 
     // All acquisition entry points share a validated origin and the protected page.
     const checkout = useAsync(async (plan: BillingPlan) => {
+        if (auth.isAuthenticated) {
+            await billingStore.load();
+            if (
+                billingStore.subscription &&
+                !['canceled', 'expired'].includes(billingStore.subscription.status)
+            ) {
+                await navigateTo('/settings/billing');
+                return;
+            }
+        }
         const from = sanitizeNext(route.query.from) || sanitizeNext(route.fullPath) || '/dashboard';
         await navigateTo({ path: '/checkout', query: { plan, from } });
     });
@@ -154,9 +164,17 @@ export const useBilling = () => {
     const load = useAsync(billingStore.load);
     const invoices = useAsync(billingStore.loadInvoices);
     const usage = useAsync(billingStore.loadUsage);
-    const cancel = useAsync((input: CancelInput) => billingStore.cancel(input));
+    const cancel = useAsync(async (input: CancelInput) => {
+        const result = await billingStore.cancel(input);
+        await auth.hydrate();
+        return result;
+    });
     const pause = useAsync((months: 1 | 2 | 3) => billingStore.pause(months));
-    const resume = useAsync(billingStore.resume);
+    const resume = useAsync(async () => {
+        const result = await billingStore.resume();
+        await auth.hydrate();
+        return result;
+    });
     const previewChange = useAsync((input: ChangeInput) => billingStore.previewChange(input));
     const changePlan = useAsync((input: ChangeInput) => billingStore.changePlan(input));
     const paymentMethodTxn = useAsync(billingStore.paymentMethodTxn);
