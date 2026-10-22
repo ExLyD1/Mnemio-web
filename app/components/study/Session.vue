@@ -47,9 +47,7 @@
                 <SharedMimi mood="done" :size="110" />
                 <h1 class="font-display text-h2 text-cream">{{ t('study.roundComplete') }}</h1>
                 <p class="text-cream">
-                    {{
-                        t('study.unknownCards', practice.unknown.value.length)
-                    }}
+                    {{ t('study.unknownCards', practice.unknown.value.length) }}
                 </p>
                 <UiButton @click="practice.nextRound">{{ t('study.studyUnknown') }}</UiButton>
                 <UiButton variant="ghost" @click="showResults">{{
@@ -61,9 +59,7 @@
                 <SharedMimi mood="done" :size="120" />
                 <h1 class="font-display text-h1 text-cream">{{ t('review.resultsTitle') }}</h1>
                 <p class="max-w-md text-body text-cream-dim">
-                    {{
-                        t('review.resultsSummary', practice.answers.value, { pct: accuracy })
-                    }}
+                    {{ t('review.resultsSummary', practice.answers.value, { pct: accuracy }) }}
                 </p>
                 <div class="grid w-full max-w-md grid-cols-2 gap-3">
                     <SharedStatTile :label="t('study.reviewed')" :value="practice.answers.value" />
