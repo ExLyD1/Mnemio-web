@@ -1,34 +1,22 @@
 <template>
     <component :is="as" class="inline-flex items-center">
-        <template v-if="withWord">
-            <img
-                src="/images/brand/mnemio-logo-green-dark.svg"
-                alt="Mnemio"
-                :class="[sizes[size].logo, 'hidden dark:block']"
-            />
-            <img
-                src="/images/brand/mnemio-logo-green-light.svg"
-                alt="Mnemio"
-                :class="[sizes[size].logo, 'dark:hidden']"
-            />
-        </template>
-        <template v-else>
-            <img
-                src="/images/brand/mnemio-icon-green-dark.svg"
-                alt="Mnemio"
-                :class="[sizes[size].icon, 'hidden dark:block']"
-            />
-            <img
-                src="/images/brand/mnemio-icon-green-light.svg"
-                alt="Mnemio"
-                :class="[sizes[size].icon, 'dark:hidden']"
-            />
-        </template>
+        <img
+            :src="src('dark')"
+            alt="Mnemio"
+            :class="[withWord ? sizes[size].logo : sizes[size].icon, 'hidden dark:block']"
+        />
+        <img
+            :src="src('light')"
+            alt="Mnemio"
+            :class="[withWord ? sizes[size].logo : sizes[size].icon, 'dark:hidden']"
+        />
     </component>
 </template>
 
 <script setup lang="ts">
-withDefaults(
+import { useAppearanceStore } from '@/stores/appearance';
+
+const props = withDefaults(
     defineProps<{
         size?: 'sm' | 'md';
         withWord?: boolean;
@@ -36,6 +24,11 @@ withDefaults(
     }>(),
     { size: 'md', withWord: true, as: 'span' },
 );
+
+const appearance = useAppearanceStore();
+// The logo follows the colour palette (public/images/brand/mnemio-{logo,icon}-{palette}-{theme}.svg).
+const src = (theme: 'dark' | 'light') =>
+    `/images/brand/mnemio-${props.withWord ? 'logo' : 'icon'}-${appearance.palette}-${theme}.svg`;
 
 const sizes = {
     sm: { logo: 'h-8 w-auto', icon: 'size-8' },

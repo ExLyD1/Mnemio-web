@@ -104,6 +104,7 @@ export default defineNuxtConfig({
             link: [
                 { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
                 {
+                    key: 'favicon-svg',
                     rel: 'icon',
                     type: 'image/svg+xml',
                     href: '/images/brand/mnemio-icon-green-dark.svg',
