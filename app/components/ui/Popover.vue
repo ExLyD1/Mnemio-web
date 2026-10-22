@@ -6,7 +6,8 @@
                 <div
                     v-if="isOpen"
                     :style="panelStyle"
-                    class="fixed z-[200] min-w-[12rem] rounded-2xl border border-line-strong bg-bg-surface p-1.5 shadow-soft-elevation"
+                    :class="side === 'top' ? 'pop-up' : ''"
+                    class="fixed z-[200] min-w-[12rem] overflow-y-auto rounded-2xl border border-line-strong bg-bg-surface p-1.5 shadow-soft-elevation"
                     role="menu"
                 >
                     <slot :close="close" />
@@ -19,10 +20,14 @@
 <script setup lang="ts">
 import { onClickOutside } from '@vueuse/core';
 
-const props = withDefaults(defineProps<{ open?: boolean; align?: 'left' | 'right' }>(), {
-    open: undefined,
-    align: 'left',
-});
+const props = withDefaults(
+    defineProps<{ open?: boolean; align?: 'left' | 'right'; side?: 'bottom' | 'top' }>(),
+    {
+        open: undefined,
+        align: 'left',
+        side: 'bottom',
+    },
+);
 
 const emit = defineEmits<{ 'update:open': [value: boolean] }>();
 
@@ -35,12 +40,22 @@ const panelStyle = ref<Record<string, string>>({});
 const computePosition = () => {
     if (!root.value) return;
     const rect = root.value.getBoundingClientRect();
-    const top = `${rect.bottom + 8}px`;
-    if (props.align === 'right') {
-        panelStyle.value = { top, right: `${window.innerWidth - rect.right}px` };
-    } else {
-        panelStyle.value = { top, left: `${rect.left}px` };
-    }
+    // Opening upward anchors the panel's bottom edge above the trigger, so a trigger
+    // near the bottom of the screen (e.g. the chat composer) never pushes it off-screen.
+    const vertical =
+        props.side === 'top'
+            ? {
+                  bottom: `${window.innerHeight - rect.top + 8}px`,
+                  maxHeight: `${rect.top - 16}px`,
+              }
+            : {
+                  top: `${rect.bottom + 8}px`,
+                  maxHeight: `${window.innerHeight - rect.bottom - 16}px`,
+              };
+    panelStyle.value =
+        props.align === 'right'
+            ? { ...vertical, right: `${window.innerWidth - rect.right}px` }
+            : { ...vertical, left: `${rect.left}px` };
 };
 
 const setOpen = (value: boolean) => {
@@ -78,5 +93,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
 .pop-leave-to {
     opacity: 0;
     transform: translateY(-4px) scale(0.98);
+}
+.pop-up.pop-enter-from,
+.pop-up.pop-leave-to {
+    transform: translateY(4px) scale(0.98);
 }
 </style>

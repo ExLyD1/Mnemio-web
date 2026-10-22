@@ -285,7 +285,7 @@
                             </button>
                         </div>
 
-                        <UiPopover v-model:open="deckPickerOpen">
+                        <UiPopover v-model:open="deckPickerOpen" side="top">
                             <template #trigger="{ toggle }">
                                 <button
                                     type="button"

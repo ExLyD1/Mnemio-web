@@ -58,6 +58,9 @@ export default defineNuxtConfig({
 
     app: {
         pageTransition: { name: 'page', mode: 'out-in' },
+        // Nuxt skips the page transition when the layout changes (e.g. study → default),
+        // so the same fade is applied at the layout level too.
+        layoutTransition: { name: 'page', mode: 'out-in' },
         head: {
             script: [
                 {
