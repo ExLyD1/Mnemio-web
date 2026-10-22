@@ -42,7 +42,7 @@ const computePosition = () => {
     const rect = root.value.getBoundingClientRect();
     // Opening upward anchors the panel's bottom edge above the trigger, so a trigger
     // near the bottom of the screen (e.g. the chat composer) never pushes it off-screen.
-    const vertical =
+    const vertical: Record<string, string> =
         props.side === 'top'
             ? {
                   bottom: `${window.innerHeight - rect.top + 8}px`,
