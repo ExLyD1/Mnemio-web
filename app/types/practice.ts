@@ -16,3 +16,10 @@ export interface PracticeResult {
     counts: Record<SrsRating, number>;
     revisit: RevisitWord[];
 }
+
+export interface PracticeResultSummary extends Pick<
+    PracticeResult,
+    'reviewed' | 'correct' | 'timeMs'
+> {
+    timestamp: number;
+}
