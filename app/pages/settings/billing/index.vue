@@ -1,8 +1,8 @@
 <template>
     <div
         v-if="!store.notConfigured"
-        class="mx-auto max-w-[1160px] px-5 py-8 text-cream md:px-12 md:pb-16 md:pt-[128px]"
-        :class="state === 'past_due' || state === 'trial_ending' ? 'md:!pt-[132px]' : ''"
+        class="mx-auto max-w-[1160px] px-5 py-8 text-cream lg:px-12 lg:pb-16 lg:pt-[128px]"
+        :class="state === 'past_due' || state === 'trial_ending' ? 'lg:!pt-[132px]' : ''"
     >
         <UiSpinner v-if="billing.load.loading.value && !sub" class="mx-auto" />
         <div v-else-if="billing.load.error.value" role="alert" class="rounded-2xl bg-error/10 p-6">
@@ -14,15 +14,15 @@
         <BillingPlanBlock v-else-if="state === 'free'" class="mx-auto max-w-md" />
         <div
             v-else
-            class="grid items-start gap-x-12 gap-y-6 md:grid-cols-2 md:grid-rows-[min-content_min-content_1fr] md:gap-y-4 xl:grid-cols-[minmax(0,1fr)_500px]"
+            class="grid items-start gap-x-12 gap-y-6 lg:grid-cols-2 lg:grid-rows-[min-content_min-content_1fr] lg:gap-y-4 xl:grid-cols-[minmax(0,1fr)_500px]"
         >
-            <div class="md:pt-6">
+            <div class="lg:pt-6">
                 <div class="flex items-end gap-4">
-                    <SharedMimi :pose="pose" :size="84" :bob="false" class="md:hidden" />
+                    <SharedMimi :pose="pose" :size="84" :bob="false" class="lg:hidden" />
                     <div>
                         <p
                             :class="[
-                                'text-[11px] font-extrabold uppercase tracking-[.16em] md:text-[12px]',
+                                'text-[11px] font-extrabold uppercase tracking-[.16em] lg:text-[12px]',
                                 state === 'past_due'
                                     ? 'text-error-soft'
                                     : state === 'trial_ending' || state === 'cancelled'
@@ -33,14 +33,14 @@
                             {{ stateLabel }}
                         </p>
                         <h1
-                            class="mt-2 font-display text-[44px] leading-[.95] md:text-[56px] xl:text-[76px]"
+                            class="mt-2 font-display text-[44px] leading-[.95] lg:text-[56px] xl:text-[76px]"
                         >
                             {{ t('billing.subscription.premium') }}
                         </h1>
                     </div>
                 </div>
                 <p
-                    class="mt-3 max-w-[38ch] text-[15px] leading-relaxed text-cream-dim md:mt-4 md:text-[17px]"
+                    class="mt-3 max-w-[38ch] text-[15px] leading-relaxed text-cream-dim lg:mt-4 lg:text-[17px]"
                 >
                     {{ lead }}
                 </p>
@@ -54,20 +54,20 @@
                 </p>
             </div>
             <div
-                class="relative row-span-3 rounded-[22px] border border-line bg-bg-surface p-4 md:rounded-[24px] md:p-5 xl:p-8"
+                class="relative row-span-3 rounded-[22px] border border-line bg-bg-surface p-4 lg:rounded-[24px] lg:p-5 xl:p-8"
             >
                 <SharedMimi
                     pose="peek-paws"
                     :size="150"
                     :bob="false"
-                    class="pointer-events-none absolute bottom-full left-1/2 hidden -translate-x-1/2 translate-y-[14px] md:flex"
+                    class="pointer-events-none absolute bottom-full left-1/2 hidden -translate-x-1/2 translate-y-[14px] lg:flex"
                 />
-                <div class="grid grid-cols-2 gap-2.5 md:gap-3.5">
+                <div class="grid grid-cols-2 gap-2.5 lg:gap-3.5">
                     <BillingPlanTile
                         v-for="(tile, index) in tiles"
                         :key="tile.label"
                         v-bind="tile"
-                        :class="index > 1 ? 'hidden md:block' : ''"
+                        :class="index > 1 ? 'hidden lg:block' : ''"
                     />
                 </div>
                 <div v-if="sub?.paymentMethod" class="mt-6 border-t border-line pt-6">
@@ -77,7 +77,7 @@
                         @update="cardOpen = true"
                     />
                 </div>
-                <div class="mt-5 hidden md:block">
+                <div class="mt-5 hidden lg:block">
                     <div class="flex items-center justify-between gap-3">
                         <h2
                             class="text-[11px] font-extrabold uppercase tracking-[.16em] text-cream-faint"
@@ -100,7 +100,7 @@
                     </p>
                 </div>
             </div>
-            <div class="flex flex-col gap-3 md:mt-0 md:flex-row md:flex-wrap">
+            <div class="flex flex-col gap-3 lg:mt-0 lg:flex-row lg:flex-wrap">
                 <template
                     v-if="
                         state === 'cancelled' || state === 'paused' || state === 'pause_scheduled'
@@ -154,14 +154,14 @@
                     {{ t('billing.error') }}
                 </p>
             </div>
-            <div class="md:hidden">
+            <div class="lg:hidden">
                 <NuxtLink
                     to="/settings/billing/invoices"
                     class="flex min-h-11 items-center justify-between text-[11px] font-extrabold uppercase tracking-[.16em] text-cream-faint"
                     >{{ t('billing.subscription.history') }}<ArrowRight class="size-4" /></NuxtLink
                 ><BillingInvoiceList :items="store.invoices.slice(0, 3)" compact />
             </div>
-            <div v-if="canCancel" class="md:mt-6">
+            <div v-if="canCancel" class="lg:mt-6">
                 <button
                     type="button"
                     class="min-h-11 text-[15px] font-bold underline underline-offset-4"
