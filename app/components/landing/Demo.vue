@@ -63,7 +63,7 @@
             v-else
             class="flex flex-col items-center gap-4 rounded-2xl border border-line bg-bg-surface p-8 text-center"
         >
-            <SharedMimi :size="96" />
+            <SharedMimi mascot="panda" pose="neutral" :size="96" />
             <p class="font-display text-h2 text-cream">
                 {{ t('demo.recalled').replace('{score}', String(score)) }}
             </p>

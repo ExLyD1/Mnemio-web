@@ -1,5 +1,6 @@
 import { defineStore, ref } from '#imports';
 import * as prefsApi from '@/api/preferences';
+import { useAppearanceStore } from '@/stores/appearance';
 import type { Preference, PreferenceInput } from '@/types/user';
 
 export const usePreferencesStore = defineStore('preferences', () => {
@@ -38,6 +39,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
                     return;
                 }
                 apply(p);
+                useAppearanceStore().hydrate(p);
                 loaded.value = true;
             })
             .finally(() => {
@@ -60,6 +62,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
     // account switch (logout -> login as someone else, no full page reload)
     // and get treated as if they were the new user's already-loaded real data.
     const reset = () => {
+        useAppearanceStore().reset();
         generation += 1;
         hydration = null;
         interests.value = [];

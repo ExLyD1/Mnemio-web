@@ -236,7 +236,7 @@
                 <div
                     class="flex flex-col gap-3 rounded-[20px] border border-line bg-mimi-ambient p-[18px]"
                 >
-                    <SharedMimi :message="coachTip" placement="left" :size="64" />
+                    <SharedMimi pose="point" :message="coachTip" placement="left" :size="64" />
                 </div>
 
                 <!-- Owner: authoring controls. Non-owner viewing a public deck: copy CTA. -->

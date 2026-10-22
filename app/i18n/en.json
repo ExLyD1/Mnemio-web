@@ -776,7 +776,14 @@
         "photoRemoved": "Photo removed",
         "photoRemoveError": "Couldn't remove the photo",
         "photoTooLarge": "That photo is too large. Try a smaller one.",
-        "photoUnsupported": "This image format isn't supported. Use a JPG, PNG or WebP."
+        "photoUnsupported": "This image format isn't supported. Use a JPG, PNG or WebP.",
+        "appearance": {
+            "mascot": "Mascot",
+            "mascotHint": "Shows up across the whole app",
+            "palette": "Color palette",
+            "paletteHint": "Accent and surfaces, in light and dark",
+            "saveError": "Couldn't save. Try again."
+        }
     },
     "achievements": {
         "first_steps": {
@@ -1488,5 +1495,28 @@
         "s5Title": "5. Contact",
         "s5Body": "Refund requests and billing questions go to",
         "s5Tail": ". We read every message."
+    },
+    "mascots": {
+        "panda": {
+            "name": "Panda",
+            "note": "Mimi, the original"
+        },
+        "red": {
+            "name": "Red panda",
+            "note": "Warm and curious"
+        },
+        "pink": {
+            "name": "Pink panda",
+            "note": "Soft and sweet"
+        },
+        "axolotl": {
+            "name": "Axolotl",
+            "note": "Pixel classic"
+        }
+    },
+    "palettes": {
+        "green": "Green",
+        "violet": "Violet",
+        "pink": "Bubblegum pink"
     }
 }

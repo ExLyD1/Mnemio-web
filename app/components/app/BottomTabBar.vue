@@ -23,7 +23,11 @@
             <div
                 class="flex size-14 items-center justify-center rounded-full border-4 border-bg-base bg-brand shadow-soft-elevation transition-transform hover:scale-105 active:scale-95"
             >
-                <img src="/images/mimi/axolotl.png" alt="Mimi" class="size-9 object-contain" />
+                <img
+                    :src="`/images/mimi/${appearance.mascot}/neutral.svg`"
+                    alt="Mimi"
+                    class="mimi-img size-9 object-contain"
+                />
             </div>
             <span class="mt-1 text-[10px] leading-none text-brand-muted">{{ t('rail.ai') }}</span>
         </NuxtLink>
@@ -87,6 +91,9 @@
 </template>
 
 <script setup lang="ts">
+import { useAppearanceStore } from '@/stores/appearance';
+
+const appearance = useAppearanceStore();
 import { LayoutGrid, Library, Compass, BarChart3, Sparkles, User, Menu } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
 

@@ -66,9 +66,9 @@
                     class="relative min-w-0 rounded-3xl border border-line bg-bg-surface p-4 sm:p-8"
                 >
                     <img
-                        src="/images/mimi/mimi-panda-peek-paws.svg"
+                        :src="`/images/mimi/${appearance.mascot}/peek-paws.svg`"
                         alt=""
-                        class="pointer-events-none absolute left-[calc(50%-75px)] top-[-123px] z-[2] w-[150px] max-w-none drop-shadow-[0_6px_10px_rgba(0,0,0,.25)]"
+                        class="mimi-img pointer-events-none absolute left-[calc(50%-75px)] top-[-123px] z-[2] w-[150px] max-w-none drop-shadow-[0_6px_10px_rgba(0,0,0,.25)]"
                     />
                     <dl class="grid grid-cols-2 gap-3.5">
                         <div
@@ -153,6 +153,7 @@
 
 <script setup lang="ts">
 import { useAuthStore, useT } from '#imports';
+import { useAppearanceStore } from '@/stores/appearance';
 import { usePracticeStore } from '@/stores/practice';
 import type { PracticeResultSummary } from '@/types/practice';
 
@@ -162,6 +163,7 @@ const route = useRoute();
 const deckId = computed(() => String(route.params.deckId));
 
 const practiceStore = usePracticeStore();
+const appearance = useAppearanceStore();
 const auth = useAuthStore();
 const { t } = useT();
 

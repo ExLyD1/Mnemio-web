@@ -109,7 +109,7 @@
                             "
                             class="flex flex-col items-center gap-4 py-12 text-center"
                         >
-                            <SharedMimi :size="80" />
+                            <SharedMimi pose="wave" :size="80" />
                             <h2 class="font-display text-h2 text-cream">
                                 {{ t('chat.emptyTitle') }}
                             </h2>

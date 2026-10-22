@@ -14,20 +14,24 @@
         </Transition>
         <img
             :src="src"
-            alt="Mimi"
+            :alt="alt"
             :width="size"
             :height="size"
             :style="{ width: `${size}px` }"
-            class="select-none drop-shadow-mimi"
-            :class="popping ? 'mimi-pop' : bob ? 'mimi-bob' : ''"
+            class="mimi-img select-none drop-shadow-mimi"
+            :class="
+                resolvedPose === 'peek-paws' ? '' : popping ? 'mimi-pop' : bob ? 'mimi-bob' : ''
+            "
             draggable="false"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import type { MimiMood, MimiPlacement } from '@/types/mimi';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import type { Mascot, MimiMood, MimiPlacement, MimiPose } from '@/types/mimi';
+import { useAppearanceStore } from '@/stores/appearance';
+import { mimiSource, MOOD_POSE } from '@/utils/appearance';
 
 const props = withDefaults(
     defineProps<{
@@ -36,7 +40,9 @@ const props = withDefaults(
         placement?: MimiPlacement;
         size?: number;
         bob?: boolean;
-        src?: string;
+        pose?: MimiPose;
+        mascot?: Mascot;
+        alt?: string;
     }>(),
     {
         message: '',
@@ -44,12 +50,17 @@ const props = withDefaults(
         placement: 'right',
         size: 120,
         bob: true,
-        src: '/images/mimi/axolotl.png',
+        alt: 'Mimi',
     },
 );
 
+const appearance = useAppearanceStore();
+const resolvedPose = computed(() => props.pose ?? MOOD_POSE[props.mood]);
+const src = computed(() => mimiSource(props.mascot ?? appearance.mascot, resolvedPose.value));
+
 const popping = ref(false);
 let timer: ReturnType<typeof setTimeout> | undefined;
+onBeforeUnmount(() => clearTimeout(timer));
 
 watch(
     () => props.mood,

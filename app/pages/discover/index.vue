@@ -66,7 +66,7 @@
             v-if="!search.trim()"
             class="flex flex-col items-center gap-5 rounded-[20px] border border-line bg-mimi-ambient p-6 text-center sm:flex-row sm:text-left"
         >
-            <SharedMimi :size="96" placement="left" />
+            <SharedMimi pose="flashcard" :size="96" placement="left" />
             <div class="flex-1">
                 <p class="font-display text-h2 text-cream">{{ t('discover.ctaTitle') }}</p>
                 <p class="mt-1 text-body text-cream-dim">{{ t('discover.ctaSubtitle') }}</p>

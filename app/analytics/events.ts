@@ -28,6 +28,7 @@ export type PaywallContext = 'ai_budget' | 'feature';
  * merged automatically by the client and must never be hand-set here.
  */
 export type AnalyticsEvent =
+    | { name: 'appearance_changed'; props: { setting: 'mascot' | 'palette'; value: string } }
     // ── Lifecycle / acquisition ───────────────────────────────────────────────
     | { name: 'app_opened'; props: { is_authenticated: boolean; entry_path: string } }
     | { name: 'signup_started'; props: { method: 'email' | 'google'; entry_point: string } }

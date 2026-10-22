@@ -249,7 +249,7 @@
         <div
             class="flex flex-col items-center gap-5 rounded-[20px] border border-line bg-mimi-ambient p-6 text-center sm:flex-row sm:text-left"
         >
-            <SharedMimi :size="96" placement="left" />
+            <SharedMimi pose="point" :size="96" placement="left" />
             <div class="flex-1">
                 <p class="text-eyebrow uppercase text-brand-pale">
                     {{ t('statistics.insightEyebrow') }}

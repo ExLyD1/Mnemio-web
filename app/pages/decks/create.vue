@@ -300,7 +300,7 @@
                         v-if="!messages.length && !generating"
                         class="flex flex-col items-center gap-3 py-8 text-center"
                     >
-                        <SharedMimi :size="56" />
+                        <SharedMimi pose="wave" :size="72" />
                         <p class="text-small text-cream-dim">{{ t('deck.aiGreeting') }}</p>
                     </div>
 

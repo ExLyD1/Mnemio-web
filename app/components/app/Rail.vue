@@ -133,9 +133,9 @@
                     >
                         <span class="grid w-11 shrink-0 place-items-center">
                             <img
-                                src="/images/mimi/axolotl.png"
+                                :src="`/images/mimi/${appearance.mascot}/neutral.svg`"
                                 alt=""
-                                class="size-10 object-contain drop-shadow-rail-glyph"
+                                class="mimi-img size-10 object-contain drop-shadow-rail-glyph"
                             />
                         </span>
                         <div
@@ -153,6 +153,9 @@
 </template>
 
 <script setup lang="ts">
+import { useAppearanceStore } from '@/stores/appearance';
+
+const appearance = useAppearanceStore();
 import { LayoutGrid, Library, Compass, BarChart3, Bot, Sparkles } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
 import { useSrsStore } from '@/stores/srs';
