@@ -228,7 +228,8 @@
 
 <script setup lang="ts">
 import { ArrowRight, Settings } from 'lucide-vue-next';
-import { useAuthStore, useDecks, useT } from '#imports';
+import { useAuthStore, useT } from '#imports';
+import { useLibrary } from '@/composables/useLibrary';
 import { useStats } from '@/composables/useStats';
 import { useAppLocale } from '@/composables/useAppLocale';
 import { useSessionsStore } from '@/stores/sessions';
@@ -242,7 +243,9 @@ import { currentWeekSeries, weekdayShort } from '@/utils/practiceWeek';
 definePageMeta({ layout: 'default' });
 
 const auth = useAuthStore();
-const { store, fetchList } = useDecks();
+// Own decks plus the public decks the user is learning (spec 002).
+const { store: library, fetchAll: fetchLibrary } = useLibrary();
+const decks = computed(() => library.allDecks);
 const stats = useStats();
 const sessions = useSessionsStore();
 const srs = useSrsStore();
@@ -275,7 +278,7 @@ const todayLabel = computed(() =>
 const reviewMins = computed(() => Math.max(1, Math.ceil((dueCount.value * 35) / 60)));
 const topDueDeck = computed(
     () =>
-        store.summaries
+        [...decks.value]
             .filter((d) => d.stats.due > 0)
             .sort((a, b) => b.stats.due - a.stats.due)[0] ?? null,
 );
@@ -286,7 +289,7 @@ const heroSubtitle = computed(() => {
 
 // Up next: decks with due cards, sorted by due desc, max 5
 const upNextDecks = computed(() =>
-    store.summaries
+    [...decks.value]
         .filter((d) => d.stats.due > 0)
         .sort((a, b) => b.stats.due - a.stats.due)
         .slice(0, 5)
@@ -296,7 +299,7 @@ const upNextDecks = computed(() =>
 // Continue studying
 const resumeSession = computed(() => sessions.active ?? sessions.latestIncomplete);
 const resumeDeckTitle = computed(
-    () => store.summaries.find((d) => d.id === resumeSession.value?.deckId)?.title ?? null,
+    () => decks.value.find((d) => d.id === resumeSession.value?.deckId)?.title ?? null,
 );
 
 const onResume = () => {
@@ -325,7 +328,7 @@ const weekGoalPct = computed(() =>
 
 onMounted(async () => {
     await Promise.all([
-        fetchList.execute({ cursor: null, append: false }),
+        fetchLibrary.execute({ force: true }),
         stats.load(),
         stats.loadSeries('30'),
         sessions.hydrate().catch(() => {}),

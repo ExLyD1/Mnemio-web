@@ -117,13 +117,14 @@
 
 <script setup lang="ts">
 import { Bell, Plus, Trophy } from 'lucide-vue-next';
-import { useDecks, useT } from '#imports';
+import { useT } from '#imports';
+import { useLibrary } from '@/composables/useLibrary';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import type { Achievement } from '@/types/achievement';
 
 const search = ref('');
 const searchFocused = ref(false);
-const { store, fetchList } = useDecks();
+const { store: library, fetchAll: fetchLibrary } = useLibrary();
 const { t } = useT();
 const notifications = useAchievementNotifications();
 const unseenAchievements = notifications.unseen;
@@ -140,13 +141,14 @@ const onViewAll = async (close: () => void) => {
     await navigateTo('/profile?tab=achievements');
 };
 
-// Quick matches against the user's own decks; the full search lives on /discover.
+// Quick matches against the library (own + learning decks); the full search
+// lives on /discover.
 const suggestions = computed(() => {
     const q = search.value.trim().toLowerCase();
     if (!q) {
         return [];
     }
-    return store.summaries.filter((d) => d.title.toLowerCase().includes(q)).slice(0, 4);
+    return library.allDecks.filter((d) => d.title.toLowerCase().includes(q)).slice(0, 4);
 });
 const showSuggestions = computed(() => searchFocused.value && search.value.trim().length > 0);
 
@@ -171,9 +173,7 @@ const goToDiscover = () => {
 
 onMounted(() => {
     if (!useAuthStore().isAuthenticated) return;
-    if (!store.summaries.length) {
-        fetchList.execute({ cursor: null, append: false });
-    }
+    void fetchLibrary.execute();
     // Catch-up toast/bell for anything unlocked on another device/tab since
     // this device last acked. Done here (not the auth plugin) because it
     // needs useT()/useI18n(), which requires a real component context.

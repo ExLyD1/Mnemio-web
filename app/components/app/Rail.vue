@@ -99,29 +99,6 @@
                 </NuxtLink>
             </UiTooltip>
 
-            <!-- Library group (expanded only) -->
-            <template v-if="expanded && libraryDecks.length">
-                <p
-                    class="mt-3 px-3 pb-2 text-[11px] font-semibold uppercase tracking-[.18em] text-brand-muted dark:text-cream-faint"
-                >
-                    {{ t('deck.libraryEyebrow') }}
-                </p>
-                <NuxtLink
-                    v-for="deck in libraryDecks"
-                    :key="deck.id"
-                    :to="`/decks/${deck.id}`"
-                    class="flex items-center gap-2.5 rounded-lg px-3 py-2 transition-colors hover:bg-brand/15"
-                >
-                    <span class="size-1.5 shrink-0 rounded-full bg-lavender" />
-                    <span class="min-w-0 flex-1 truncate text-[13px] text-cream-dim">
-                        {{ deck.title }}
-                    </span>
-                    <span class="text-[11px] text-brand-muted dark:text-cream-faint"
-                        >{{ deck.masteredPct }}%</span
-                    >
-                </NuxtLink>
-            </template>
-
             <div class="mt-auto pt-4">
                 <BillingPlanBlock v-if="expanded" compact />
                 <NuxtLink
@@ -140,11 +117,9 @@
 import { LayoutGrid, Library, Compass, BarChart3, Bot, Sparkles } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
 import { useSrsStore } from '@/stores/srs';
-import { useDecksStore } from '@/stores/decks';
 
 const { t } = useT();
 const srs = useSrsStore();
-const decksStore = useDecksStore();
 const route = useRoute();
 const expanded = ref(false);
 const billingStore = useBillingStore();
@@ -161,11 +136,4 @@ const navLinks = computed(() => [
 
 const isActive = (to: string) =>
     to === '/dashboard' ? route.path === to : route.path === to || route.path.startsWith(to + '/');
-
-const libraryDecks = computed(() =>
-    [...decksStore.summaries]
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        .slice(0, 3)
-        .map((d) => ({ id: d.id, title: d.title, masteredPct: d.stats.masteredPct })),
-);
 </script>
