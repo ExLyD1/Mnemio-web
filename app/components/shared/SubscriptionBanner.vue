@@ -1,61 +1,52 @@
 <template>
-    <div v-if="banner" :class="['flex items-center gap-3 px-4 py-2 text-small', banner.classes]">
-        <span class="flex-1">{{ banner.text }}</span>
-        <button
-            type="button"
-            class="shrink-0 font-semibold underline-offset-2 hover:underline"
-            @click="banner.action"
+    <div
+        v-if="banner && !store.notConfigured"
+        :class="[
+            'flex items-center gap-3 border-b px-5 py-3 text-[14px] md:px-8 md:text-[15px]',
+            banner.bad ? 'border-error/20 bg-error/[.12] text-error-soft' : 'border-line text-warn',
+        ]"
+        :style="
+            !banner.bad
+                ? { backgroundColor: 'color-mix(in oklab, var(--c-warn) 14%, transparent)' }
+                : undefined
+        "
+    >
+        <TriangleAlert v-if="banner.bad" class="size-5 shrink-0" /><Clock
+            v-else
+            class="size-5 shrink-0"
+        />
+        <span class="flex-1">{{ banner.text }}</span
+        ><NuxtLink
+            :to="banner.to"
+            class="inline-flex min-h-11 shrink-0 items-center font-bold underline underline-offset-4 md:min-h-0"
+            >{{ banner.cta }}</NuxtLink
         >
-            {{ banner.cta }}
-        </button>
     </div>
 </template>
-
 <script setup lang="ts">
-import { useBillingStore } from '@/stores/billing';
-import { useBilling } from '@/composables/useBilling';
-import { useT } from '@/composables/useT';
-
-const billingStore = useBillingStore();
-const billing = useBilling();
+import { Clock, TriangleAlert } from 'lucide-vue-next';
+import { formatCard } from '@/utils/format';
 const { t } = useT();
-const router = useRouter();
-
-const fmt = (iso: string) =>
-    new Date(iso).toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-
+const { store, sub, state, date, text } = useSubscriptionView();
 const banner = computed(() => {
-    const sub = billingStore.subscription;
-    if (!sub) return null;
-
-    if (sub.status === 'trialing' && sub.trialEnd) {
+    if (state.value === 'trial_ending')
         return {
-            text: t('banner.trialing').replace('{date}', fmt(sub.trialEnd)),
+            bad: false,
+            text: text('banner.trialing', { date: date(sub.value?.trialEnd) }),
             cta: t('banner.trialCta'),
-            classes: 'bg-brand/10 text-cream border-b border-brand/20',
-            action: () => router.push('/pricing'),
+            to: '/settings/billing',
         };
-    }
-    if (sub.status === 'past_due') {
+    if (state.value === 'past_due')
         return {
-            text: t('banner.pastDue'),
-            cta: t('banner.pastDueCta'),
-            classes: 'bg-error/10 text-error-soft border-b border-error/20',
-            action: () => billing.portal.execute(),
+            bad: true,
+            text: text('billing.subscription.paymentBanner', {
+                card: formatCard(sub.value?.paymentMethod) || t('billing.card.yourCard'),
+                date: date(sub.value?.pastDue?.failedAt),
+                grace: date(sub.value?.pastDue?.graceEndsAt),
+            }),
+            cta: t('billing.card.title'),
+            to: '/settings/billing?action=update-card',
         };
-    }
-    if (sub.status === 'canceled') {
-        return {
-            text: t('banner.canceled').replace('{date}', fmt(sub.currentPeriodEnd)),
-            cta: t('banner.canceledCta'),
-            classes: 'bg-warn/10 text-warn border-b border-warn/20',
-            action: () => router.push('/pricing'),
-        };
-    }
     return null;
 });
 </script>

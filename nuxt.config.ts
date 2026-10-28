@@ -1,3 +1,5 @@
+import { APPEARANCE_INIT_SCRIPT } from './app/utils/appearance';
+
 export default defineNuxtConfig({
     compatibilityDate: '2025-07-15',
     devtools: { enabled: false },
@@ -56,7 +58,17 @@ export default defineNuxtConfig({
 
     app: {
         pageTransition: { name: 'page', mode: 'out-in' },
+        // Nuxt skips the page transition when the layout changes (e.g. study → default),
+        // so the same fade is applied at the layout level too.
+        layoutTransition: { name: 'page', mode: 'out-in' },
         head: {
+            script: [
+                {
+                    key: 'mnemio-appearance',
+                    innerHTML: APPEARANCE_INIT_SCRIPT,
+                    tagPriority: 'critical',
+                },
+            ],
             // `<html lang>` is set reactively from the active i18n locale in
             // app/plugins/02.schema.ts (so it switches to `uk`); no static lang here.
             // `%s` is the per-page title set via useSeo; the default title below fills
@@ -92,6 +104,7 @@ export default defineNuxtConfig({
             link: [
                 { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
                 {
+                    key: 'favicon-svg',
                     rel: 'icon',
                     type: 'image/svg+xml',
                     href: '/images/brand/mnemio-icon-green-dark.svg',
@@ -141,6 +154,7 @@ export default defineNuxtConfig({
     },
 
     i18n: {
+        vueI18n: './i18n.config.ts',
         defaultLocale: 'en',
         strategy: 'no_prefix',
         locales: [
@@ -234,6 +248,7 @@ export default defineNuxtConfig({
         '/onboarding': { ssr: false },
         '/ai': { ssr: false },
         '/settings/**': { ssr: false },
+        '/checkout': { ssr: false },
     },
 
     css: ['~/assets/css/main.css'],

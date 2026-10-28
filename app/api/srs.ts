@@ -1,6 +1,5 @@
 import { http } from '@/utils/http';
-import type { CardProgress, SrsRating } from '@/types/srs';
-import type { Card } from '@/types/deck';
+import type { CardProgress, SrsRating, SrsState, SrsQueue, Previews } from '@/types/srs';
 import type { Achievement } from '@/types/achievement';
 
 interface WireProgress {
@@ -13,12 +12,19 @@ interface WireProgress {
     easeFactor: number;
     nextReviewAt: string;
     lastReviewedAt: string | null;
+    state: SrsState;
+    lapses: number;
+    leeched: boolean;
+    remainingSteps: number;
+    reps: number;
 }
 
 // POST /srs/rate additionally reports achievements unlocked by this rating —
 // see docs/api-contract.md.
 interface WireRateResult extends WireProgress {
     newAchievements: Achievement[];
+    requeueAt: string | null;
+    previews: Previews | null;
 }
 
 export interface DueItem {
@@ -43,40 +49,45 @@ const toProgress = (p: WireProgress, deckId = ''): CardProgress => ({
     repetitions: p.repetitions,
     nextReviewAt: p.nextReviewAt,
     lastReviewedAt: p.lastReviewedAt,
+    state: p.state,
+    lapses: p.lapses,
+    leeched: p.leeched,
+    remainingSteps: p.remainingSteps,
+    reps: p.reps,
 });
 
 export const rateCard = async (
     cardId: string,
     deckId: string,
     rating: SrsRating,
-): Promise<{ progress: CardProgress; newAchievements: Achievement[] }> => {
+): Promise<{
+    progress: CardProgress;
+    newAchievements: Achievement[];
+    requeueAt: string | null;
+    previews: Previews | null;
+}> => {
     const p = await http<WireRateResult>('/srs/rate', {
         method: 'POST',
         body: { cardId, rating },
     });
-    return { progress: toProgress(p, deckId), newAchievements: p.newAchievements };
+    return {
+        progress: toProgress(p, deckId),
+        newAchievements: p.newAchievements,
+        requeueAt: p.requeueAt,
+        previews: p.previews,
+    };
 };
+
+/**
+ * The study queue in one request (the http util sends X-Timezone, which sets
+ * the server's day rollover). With a deck it also holds that deck's new cards.
+ */
+export const getQueue = (deckId?: string, extraNew = 0): Promise<SrsQueue> =>
+    http<SrsQueue>('/srs/queue', { query: { deckId, extraNew } });
 
 export const listProgress = async (): Promise<CardProgress[]> => {
     const res = await http<{ items: WireProgress[] }>('/srs/progress');
     return res.items.map((p) => toProgress(p));
-};
-
-/**
- * The whole review queue in one request: card + progress + deck title. The
- * client used to assemble this by listing every deck and then fetching each one
- * individually — 20+ requests on every /review and /dashboard mount.
- */
-export interface QueueItem {
-    card: Card;
-    progress: WireProgress & { deckId: string };
-    deckId: string;
-    deckTitle: string;
-}
-
-export const listQueue = async (limit = 500): Promise<QueueItem[]> => {
-    const res = await http<{ items: QueueItem[] }>('/srs/queue', { query: { limit } });
-    return res.items;
 };
 
 export const listDue = async (limit = 50): Promise<DueItem[]> => {

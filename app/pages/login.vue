@@ -6,6 +6,13 @@
             <SharedBrandMark />
             <p class="text-small text-brand-muted">{{ t('auth.welcomeSubtitle') }}</p>
         </div>
+        <p
+            v-if="route.query.reason === 'session_expired'"
+            class="mb-4 text-body text-cream"
+            role="status"
+        >
+            {{ apiErrorText({ code: 'AUTH_INVALID_REFRESH' }) }}
+        </p>
         <LoginAuthForm
             v-if="step === 'auth'"
             :initial-tab="initialTab"

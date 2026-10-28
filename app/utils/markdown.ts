@@ -3,9 +3,11 @@ import DOMPurify from 'dompurify';
 
 // GitHub-flavoured markdown with single-newline line breaks (chat-friendly).
 marked.setOptions({ breaks: true, gfm: true });
-
 const escapeHtml = (s: string): string =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+
+// Treat raw HTML as content; Markdown formatting remains available.
+marked.use({ renderer: { html: ({ text }) => escapeHtml(text) } });
 
 const CARET_HTML = '<span class="chat-caret" aria-hidden="true"></span>';
 

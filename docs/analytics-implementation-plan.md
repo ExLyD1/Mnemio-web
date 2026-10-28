@@ -9,7 +9,7 @@
 Wire the approved taxonomy in [analytics-strategy.md](./analytics-strategy.md) into the
 product. Mixpanel = product/conversion/retention source of truth; GA4 = acquisition only. The
 **frontend (this repo)** is Nuxt 4 + Vue 3 + Pinia setup-stores + VueUse + Zod 4. The **backend is a
-SEPARATE repo** (Fastify + Prisma + Stripe) — revenue events and the AI budget gate live there and
+SEPARATE repo** (Fastify + Prisma + Paddle) — revenue events and the AI budget gate live there and
 are specified here against [api-contract.md](./api-contract.md), not against local files.
 
 No analytics deps exist today (`mixpanel-browser`, `mixpanel` node SDK, GA4 are all **new**).
@@ -22,7 +22,7 @@ No analytics deps exist today (`mixpanel-browser`, `mixpanel` node SDK, GA4 are 
                           │  shared via npm pkg @mnemio/analytics-contract  (FE + BE both import)    │
                           └────────────────────────────────────────────────────────────────────────┘
    CLIENT (Nuxt)                                                  SERVER (Fastify, separate repo)
-   components/stores/composables                                  routes / Stripe webhook
+   components/stores/composables                                  routes / Paddle webhook
         │ (never call SDK directly)                                    │
         ▼                                                              ▼
    useAnalytics()  ──register/identify/track──►  mixpanel-browser     analytics.ts (mixpanel node)
@@ -31,7 +31,7 @@ No analytics deps exist today (`mixpanel-browser`, `mixpanel` node SDK, GA4 are 
         └── track() also → GA4 (nuxt-gtag)       Mixpanel  ◄──────────  Mixpanel HTTP (fire-and-forget)
             (page_view + conversions only)                              ▲
                                                                         │
-                                          Stripe ──webhook──► Fastify ──┘  subscription_started,
+                                          Paddle ──webhook──► Fastify ──┘  subscription_started,
                                                                             trial_*, *_canceled, ai_cap_reached
 ```
 
@@ -42,7 +42,7 @@ Rule enforced by lint/review: **no component or store imports `mixpanel-browser`
 
 | Event(s)                                                                                                    | Side                              | Why                                                                                                                                                                                                                   |
 | ----------------------------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `subscription_started`, `trial_started`, `trial_converted`, `subscription_renewed`, `subscription_canceled` | **Server (Stripe webhook)**       | [billing/success.vue](../app/pages/billing/success.vue) only _polls_ for an already-updated sub — the user may never return to it. Stripe webhook is the only reliable, authoritative revenue signal.                 |
+| `subscription_started`, `trial_started`, `trial_converted`, `subscription_renewed`, `subscription_canceled` | **Server (Paddle webhook)**       | [billing/success.vue](../app/pages/billing/success.vue) only _polls_ for an already-updated sub — the user may never return to it. Paddle webhook is the only reliable, authoritative revenue signal.                 |
 | `ai_cap_reached`                                                                                            | **Server (AI route budget gate)** | The cap is enforced server-side (`AI_BUDGET_EXCEEDED`); firing at the gate is authoritative, un-bypassable, and fires even when 3 different client call-sites swallow the error. Client still fires `paywall_viewed`. |
 | `account_created`, `first_value_reached`                                                                    | **Server**                        | verify-email / oauth-callback routes know _new vs returning_ (client can't reliably tell for OAuth); `welcome` flags flip server-side.                                                                                |
 | Everything else (funnel/engagement/UI)                                                                      | **Client**                        | Rich UI context (mode, duration, accuracy, entry_point, deck_source) only exists client-side.                                                                                                                         |
@@ -79,7 +79,7 @@ Rule enforced by lint/review: **no component or store imports `mixpanel-browser`
 | `account_created`                                                                                           | `/auth/verify-email`, `/auth/oauth/google/callback` (new-user branch)                                     |
 | `first_value_reached`                                                                                       | wherever `welcome.{hasDeck,hasSession,hasReviewed}` flips (deck create / session complete / first rating) |
 | `ai_cap_reached`                                                                                            | AI budget middleware/guard that throws `AI_BUDGET_EXCEEDED` (generate-deck, enrich-words, chat)           |
-| `subscription_started`, `trial_started`, `trial_converted`, `subscription_renewed`, `subscription_canceled` | Stripe webhook handler (`checkout.session.completed`, `customer.subscription.*`, `invoice.paid`)          |
+| `subscription_started`, `trial_started`, `trial_converted`, `subscription_renewed`, `subscription_canceled` | Paddle webhook handler (`checkout.session.completed`, `customer.subscription.*`, `invoice.paid`)          |
 
 ## Typed event contract (shape, not full code)
 
@@ -275,8 +275,8 @@ Analytics is a hard no-op unless `analyticsEnabled && consentGranted && token pr
   (if a session is active) then `mixpanel.flush()` (batch mode). Use `navigator.sendBeacon` path that
   `mixpanel-browser` uses on unload.
 - **Server events never block product:** in the backend, `analytics.track` is fire-and-forget wrapped
-  in try/catch with a short timeout; a Mixpanel outage must never fail a Stripe webhook ACK or a user
-  request. Webhook handler ACKs Stripe first, emits analytics after.
+  in try/catch with a short timeout; a Mixpanel outage must never fail a Paddle webhook ACK or a user
+  request. Webhook handler ACKs Paddle first, emits analytics after.
 - Client SDK errors are swallowed in `useAnalytics`.
 
 ## Phased implementation checklist
@@ -290,7 +290,7 @@ Analytics is a hard no-op unless `analyticsEnabled && consentGranted && token pr
 5. `useAnalytics.ts` + `app/plugins/03.analytics.client.ts` (init, super-props, identify on boot/login,
    reset on logout). Backend: thin `analytics.ts` module.
 
-**Phase 2 — P0 events** 6. Identity stitching end-to-end (anon → signup `identify`, first-touch attribution, deck_copy intent). 7. Client P0: `signup_started`, `deck_created`, `study_session_started/completed`, `ai_feature_started/completed`, `paywall_viewed`, `checkout_started`, `deck_copied_from_discover`. 8. Server P0 (backend repo): `account_created`, `first_value_reached`, `ai_cap_reached`, all Stripe-webhook revenue events. 9. `setUserProps` on signup/onboarding/plan-change.
+**Phase 2 — P0 events** 6. Identity stitching end-to-end (anon → signup `identify`, first-touch attribution, deck_copy intent). 7. Client P0: `signup_started`, `deck_created`, `study_session_started/completed`, `ai_feature_started/completed`, `paywall_viewed`, `checkout_started`, `deck_copied_from_discover`. 8. Server P0 (backend repo): `account_created`, `first_value_reached`, `ai_cap_reached`, all Paddle-webhook revenue events. 9. `setUserProps` on signup/onboarding/plan-change.
 
 **Phase 3 — P1/P2** 10. `email_verification_failed`, `onboarding_*`, `card_added`, `study_session_abandoned` (+ unload flush), `review_due_cleared`, `paywall_dismissed`, `checkout_abandoned`, `billing_portal_opened`, streak/goal/achievement, `app_opened`. 11. `study_card_answered` sampling harness (off by default).
 
@@ -304,7 +304,7 @@ Analytics is a hard no-op unless `analyticsEnabled && consentGranted && token pr
   each P0 funnel manually; confirm event name + every required prop + correct types.
 - **Identity:** in one browser, browse logged-out (fire anon events) → register → confirm in Mixpanel
   the user profile **inherits the pre-signup events** (merge worked) and `distinct_id` is the user id.
-- **Server events:** use Stripe CLI (`stripe trigger checkout.session.completed`,
+- **Server events:** use the Paddle webhook simulator in sandbox to exercise subscription and transaction events.
   `customer.subscription.deleted`) → confirm `subscription_started` / `subscription_canceled` land on
   the right user profile with `billing_plan`.
 - **`ai_cap_reached`:** force the free cap → confirm server event fires once and client `paywall_viewed`

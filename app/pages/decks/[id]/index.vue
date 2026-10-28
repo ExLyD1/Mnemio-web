@@ -22,6 +22,12 @@
                                     <p class="text-eyebrow uppercase text-on-color/70">
                                         {{ eyebrow }}
                                     </p>
+                                    <SharedPill
+                                        v-if="store.deck.importedFrom === 'anki'"
+                                        tone="on-plum"
+                                        class="mt-2"
+                                        >{{ t('deck.fromAnki') }}</SharedPill
+                                    >
                                     <h1
                                         class="mt-1 break-words font-display text-h1 leading-[1.1] text-on-color"
                                     >
@@ -230,7 +236,7 @@
                 <div
                     class="flex flex-col gap-3 rounded-[20px] border border-line bg-mimi-ambient p-[18px]"
                 >
-                    <SharedMimi :message="coachTip" placement="left" :size="64" />
+                    <SharedMimi pose="point" :message="coachTip" placement="left" :size="64" />
                 </div>
 
                 <!-- Owner: authoring controls. Non-owner viewing a public deck: copy CTA. -->
@@ -517,9 +523,9 @@ const coachTip = computed(() => {
         return t('deck.coachEmpty');
     }
     if (deckStat.value.due > 0) {
-        return t('deck.coachReview').replace('{n}', String(deckStat.value.due));
+        return t('deck.coachReview', deckStat.value.due);
     }
-    return t('deck.coachStudy').replace('{n}', String(store.deck.cards.length));
+    return t('deck.coachStudy', store.deck.cards.length);
 });
 
 const breakdownSegments = computed(() => [

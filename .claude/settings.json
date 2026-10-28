@@ -1,7 +1,5 @@
 {
-  "permissions": {
-    "allow": [
-      "mcp__plugin_paddle_paddle-sandbox__execute"
-    ]
-  }
+    "permissions": {
+        "allow": ["mcp__plugin_paddle_paddle-sandbox__execute"]
+    }
 }

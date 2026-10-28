@@ -20,6 +20,11 @@
             />
         </header>
 
+        <div class="flex flex-wrap gap-3">
+            <UiButton variant="ghost" @click="aiOpen = true">{{ t('anki.aiImport') }}</UiButton>
+            <UiButton variant="ghost" @click="ankiOpen = true">{{ t('anki.title') }}</UiButton>
+        </div>
+
         <!-- Skeleton -->
         <div
             v-if="loading && !store.summaries.length"
@@ -77,6 +82,7 @@
         </div>
 
         <AiImportDialog v-model="aiOpen" />
+        <DeckAnkiImportDialog v-model="ankiOpen" />
     </section>
 </template>
 
@@ -96,6 +102,7 @@ useSeo({ title: t('seo.decksTitle'), description: t('seo.appDesc'), noindex: tru
 
 const loading = ref(true);
 const aiOpen = ref(false);
+const ankiOpen = ref(false);
 const filter = ref('all');
 
 const favCount = computed(() => store.summaries.filter((d) => prefs.isFavorite(d.id)).length);

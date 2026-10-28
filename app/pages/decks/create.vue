@@ -199,6 +199,26 @@
 
                     <AiImageDeckDialog v-model="imageOpen" @created="onImageCreated" />
 
+                    <!-- Import from Anki -->
+                    <div class="rounded-[20px] border border-line bg-bg-surface p-[18px]">
+                        <div class="mb-2 flex items-center gap-2.5">
+                            <Upload class="size-4 text-lavender" />
+                            <p class="text-[14px] font-bold text-cream">{{ t('anki.title') }}</p>
+                        </div>
+                        <p class="mb-3 text-[13px] leading-[1.5] text-cream-dim">
+                            {{ t('anki.createHint') }}
+                        </p>
+                        <button
+                            type="button"
+                            class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-line px-[18px] py-3 text-[14px] font-semibold text-cream transition-colors hover:border-lavender hover:text-lavender"
+                            @click="ankiOpen = true"
+                        >
+                            {{ t('anki.file') }}
+                        </button>
+                    </div>
+
+                    <DeckAnkiImportDialog v-model="ankiOpen" />
+
                     <!-- Privacy -->
                     <div>
                         <p class="flabel">{{ t('deck.privacy') }}</p>
@@ -280,7 +300,7 @@
                         v-if="!messages.length && !generating"
                         class="flex flex-col items-center gap-3 py-8 text-center"
                     >
-                        <SharedMimi :size="56" />
+                        <SharedMimi pose="wave" :size="72" />
                         <p class="text-small text-cream-dim">{{ t('deck.aiGreeting') }}</p>
                     </div>
 
@@ -320,12 +340,7 @@
                                     </span>
                                 </div>
                                 <p class="mb-3 text-[11px] text-cream-faint">
-                                    {{
-                                        t('deck.cardCount').replace(
-                                            '{n}',
-                                            String(msg.data.cards.length),
-                                        )
-                                    }}
+                                    {{ t('deck.cardCount', msg.data.cards.length) }}
                                 </p>
                                 <ul class="mb-3 flex flex-col gap-1">
                                     <li
@@ -440,7 +455,7 @@
 </template>
 
 <script setup lang="ts">
-import { Sparkles, Layers, X, ArrowUp, ArrowRight, ImagePlus } from 'lucide-vue-next';
+import { Sparkles, Layers, X, ArrowUp, ArrowRight, ImagePlus, Upload } from 'lucide-vue-next';
 import { useDecks, useToast, useT } from '#imports';
 import * as aiApi from '@/api/ai';
 import type { AiDeckDraft } from '@/api/ai';
@@ -519,6 +534,7 @@ const cardTypes = computed<{ value: 'basic' | 'cloze' | 'image'; label: string; 
 // Chat / panel state
 const mimiOpen = ref(false);
 const imageOpen = ref(false);
+const ankiOpen = ref(false);
 const onImageCreated = (deckId: string) => navigateTo(`/decks/${deckId}`);
 const chatBodyEl = ref<HTMLElement | null>(null);
 const messages = ref<ChatMsg[]>([]);

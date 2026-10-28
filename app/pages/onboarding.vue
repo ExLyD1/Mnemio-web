@@ -149,7 +149,7 @@
         <SharedMimi
             v-if="mimi.message.value"
             :message="mimi.message.value"
-            :mood="mimi.mood.value"
+            pose="wave"
             placement="left"
             :size="84"
             class="pointer-events-none fixed bottom-6 left-6"

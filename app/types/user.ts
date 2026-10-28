@@ -1,3 +1,6 @@
+import type { PracticeMode } from '@/types/srs';
+import type { Mascot, Palette } from '@/types/mimi';
+
 export interface User {
     id: string;
     email: string;
@@ -22,6 +25,9 @@ export type ProfileUpdate = Partial<ProfileDetails> & {
 };
 
 export interface Preference {
+    mascot: Mascot;
+    palette: Palette;
+    defaultStudyMode: PracticeMode | null;
     interests: string[];
     goal: string | null;
     nativeLanguage: string | null;

@@ -17,6 +17,8 @@ export interface StudyCard {
     example: string;
     exampleTranslation: string;
     audioUrl: string | null;
+    imageUrl: string | null;
+    type: Card['type'];
 }
 
 export type FrontSide = 'term' | 'definition';
@@ -25,10 +27,11 @@ export type FrontSide = 'term' | 'definition';
 export const frontTextFor = (c: StudyCard, side: FrontSide): string =>
     side === 'definition' ? c.meaning : c.word;
 
-export const toStudyCard = (card: Card, deck: Deck): StudyCard => {
+export const toStudyCard = (card: Card, deck?: Deck | null): StudyCard => {
     const lang =
-        LANGUAGES.find((l) => l.code === deck.targetLanguage)?.label ??
-        deck.targetLanguage.toUpperCase();
+        LANGUAGES.find((l) => l.code === deck?.targetLanguage)?.label ??
+        deck?.targetLanguage.toUpperCase() ??
+        '';
     return {
         id: card.id,
         deckId: card.deckId,
@@ -36,10 +39,12 @@ export const toStudyCard = (card: Card, deck: Deck): StudyCard => {
         reading: card.phonetic,
         meaning: card.definition,
         lang,
-        region: deck.targetLanguage.toUpperCase(),
+        region: deck?.targetLanguage.toUpperCase() ?? '',
         pos: card.partOfSpeech ?? '',
         example: card.example ?? '',
         exampleTranslation: card.exampleTranslation ?? '',
         audioUrl: card.audioUrl,
+        imageUrl: card.imageUrl,
+        type: card.type,
     };
 };

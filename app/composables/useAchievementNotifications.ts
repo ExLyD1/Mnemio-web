@@ -57,7 +57,7 @@ export const useAchievementNotifications = () => {
         if (fresh.length > MAX_INDIVIDUAL_TOASTS) {
             toast.achievement(
                 t('achievements.unlockedManyHint'),
-                t('achievements.unlockedMany').replace('{count}', String(fresh.length)),
+                t('achievements.unlockedMany', fresh.length, { count: fresh.length }),
             );
         } else {
             // Stagger so a double unlock reads as two small moments, not a wall.

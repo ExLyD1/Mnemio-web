@@ -85,9 +85,11 @@ export const runSse = async (opts: RunSseOptions): Promise<void> => {
     const makeBody = (): BodyInit =>
         opts.body instanceof FormData ? opts.body : JSON.stringify(opts.body);
 
+    const timeout = AbortSignal.timeout(150_000);
+    const signal = opts.signal ? AbortSignal.any([opts.signal, timeout]) : timeout;
     let res: Response;
     try {
-        res = await fetch(url, buildSseInit(readAccessToken(), makeBody(), opts.signal));
+        res = await fetch(url, buildSseInit(readAccessToken(), makeBody(), signal));
         if (res.status === 401) {
             const { token: fresh, wasInvalid } = await refreshAccessToken();
             if (!fresh) {
@@ -96,16 +98,18 @@ export const runSse = async (opts: RunSseOptions): Promise<void> => {
                 // must not log the user out of a session that may still be
                 // valid — surface it as a normal stream error instead.
                 if (wasInvalid) {
-                    await navigateTo('/login?reason=session_expired');
+                    opts.onError({ code: 'AUTH_INVALID_REFRESH', message: 'Session expired.' });
+                    // A full navigation also clears the in-memory auth store.
+                    window.location.assign('/login?reason=session_expired');
                     return;
                 }
                 opts.onError({ code: 'NETWORK_ERROR', message: 'Request failed.' });
                 return;
             }
-            res = await fetch(url, buildSseInit(fresh, makeBody(), opts.signal));
+            res = await fetch(url, buildSseInit(fresh, makeBody(), signal));
         }
-    } catch (e) {
-        if (e instanceof Error && e.name === 'AbortError') {
+    } catch {
+        if (opts.signal?.aborted) {
             return;
         }
         opts.onError({ code: 'NETWORK_ERROR', message: 'Request failed.' });
@@ -129,26 +133,39 @@ export const runSse = async (opts: RunSseOptions): Promise<void> => {
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    const state = { terminal: false };
+    const dispatch = (raw: string) => {
+        const frame = parseSseFrame(raw);
+        if (frame) {
+            state.terminal ||= frame.event === 'done' || frame.event === 'error';
+            opts.onFrame(frame);
+        }
+    };
     try {
         for (;;) {
             const { value, done } = await reader.read();
             if (done) {
                 break;
             }
-            buffer += decoder.decode(value, { stream: true });
+            buffer = (buffer + decoder.decode(value, { stream: true })).replace(/\r\n/g, '\n');
             let idx: number;
             while ((idx = buffer.indexOf('\n\n')) !== -1) {
                 const raw = buffer.slice(0, idx);
                 buffer = buffer.slice(idx + 2);
-                const frame = parseSseFrame(raw);
-                if (frame) {
-                    opts.onFrame(frame);
-                }
+                dispatch(raw);
             }
         }
-    } catch (e) {
-        if (!(e instanceof Error) || e.name !== 'AbortError') {
+        if (buffer.trim()) {
+            dispatch(buffer);
+        }
+        if (!state.terminal && !opts.signal?.aborted) {
             opts.onError({ code: 'NETWORK_ERROR', message: 'Stream interrupted.' });
         }
+    } catch {
+        if (!opts.signal?.aborted) {
+            opts.onError({ code: 'NETWORK_ERROR', message: 'Stream interrupted.' });
+        }
+    } finally {
+        reader.releaseLock();
     }
 };

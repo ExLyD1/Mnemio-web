@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/stores/auth';
 import { usePreferencesStore } from '@/stores/preferences';
+import { useAppearanceStore } from '@/stores/appearance';
 
 export default defineNuxtPlugin(async () => {
     const auth = useAuthStore();
@@ -14,5 +15,7 @@ export default defineNuxtPlugin(async () => {
         // — a Nuxt plugin doesn't have one (see 02.schema.ts's note on the
         // same constraint). Done instead in Topbar.vue's onMounted, which is
         // only ever rendered for authenticated users anyway.
+    } else if (!auth.accessToken) {
+        useAppearanceStore().reset();
     }
 });

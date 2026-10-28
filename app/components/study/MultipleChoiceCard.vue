@@ -5,8 +5,17 @@
         >
             <div class="text-eyebrow uppercase text-cream-faint">{{ t('study.front') }}</div>
             <div
-                class="font-display text-cream"
-                style="font-size: clamp(28px, 5vw, 56px); line-height: 1.1; overflow-wrap: anywhere"
+                class="whitespace-pre-line font-display text-cream"
+                :style="{
+                    fontSize:
+                        question.prompt.length > 180
+                            ? 'clamp(16px, 2.5vw, 22px)'
+                            : question.prompt.length > 60
+                              ? 'clamp(22px, 4vw, 36px)'
+                              : 'clamp(28px, 5vw, 56px)',
+                    lineHeight: 1.2,
+                    overflowWrap: 'anywhere',
+                }"
             >
                 {{ question.prompt }}
             </div>
@@ -17,7 +26,7 @@
                 v-for="(opt, i) in question.options"
                 :key="opt.id"
                 type="button"
-                :disabled="picked !== null"
+                :disabled="disabled || picked !== null"
                 :class="optionClass(opt.id)"
                 @click="onPick(opt.id)"
             >
@@ -26,7 +35,7 @@
                 >
                     {{ i + 1 }}
                 </span>
-                <span class="text-left">{{ opt.text }}</span>
+                <span class="whitespace-pre-line break-words text-left">{{ opt.text }}</span>
                 <Check
                     v-if="picked !== null && opt.id === question.correctId"
                     class="ml-auto size-4 text-success"
@@ -41,6 +50,7 @@
         <button
             v-if="picked !== null"
             type="button"
+            :disabled="disabled"
             class="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-brand px-6 py-3 text-body font-semibold text-on-color shadow-lavender-cta transition-transform hover:brightness-110 active:scale-95 sm:w-auto"
             @click="$emit('next')"
         >
@@ -55,7 +65,7 @@ import { Check, X, ArrowRight } from 'lucide-vue-next';
 import type { MultipleChoiceQuestion } from '@/composables/useMultipleChoice';
 import { useT } from '@/composables/useT';
 
-const props = defineProps<{ question: MultipleChoiceQuestion }>();
+const props = defineProps<{ question: MultipleChoiceQuestion; disabled?: boolean }>();
 const emit = defineEmits<{ answer: [correct: boolean]; next: [] }>();
 
 const { t } = useT();
@@ -69,12 +79,20 @@ watch(
 );
 
 const onPick = (id: string) => {
-    if (picked.value !== null) return;
+    if (props.disabled || picked.value !== null) return;
     picked.value = id;
     emit('answer', id === props.question.correctId);
 };
 
 const handleKey = (e: KeyboardEvent) => {
+    if (
+        props.disabled ||
+        e.repeat ||
+        (e.target as HTMLElement | null)?.closest(
+            'input, select, textarea, button, a, [contenteditable="true"]',
+        )
+    )
+        return;
     if (picked.value !== null) {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();

@@ -1,4 +1,9 @@
-import { initializePaddle, type Paddle, type Environments } from '@paddle/paddle-js';
+import {
+    initializePaddle,
+    type Paddle,
+    type Environments,
+    type PaddleEventData,
+} from '@paddle/paddle-js';
 import { ref, shallowRef, useRuntimeConfig } from '#imports';
 
 /**
@@ -21,11 +26,15 @@ const loading = ref(false);
 /** Set when config is missing/invalid or the script fails — gates the UI. */
 const failed = ref(false);
 let inflight: Promise<Paddle | undefined> | null = null;
+const subscribers = new Set<(event: PaddleEventData) => void>();
 
 export const usePaddle = () => {
     const config = useRuntimeConfig();
 
     const load = async (): Promise<Paddle | undefined> => {
+        if (failed.value) {
+            return undefined;
+        }
         if (paddle.value) {
             return paddle.value;
         }
@@ -67,7 +76,15 @@ export const usePaddle = () => {
         }
 
         loading.value = true;
-        inflight = initializePaddle({ token, environment: env as Environments })
+        inflight = initializePaddle({
+            token,
+            environment: env as Environments,
+            eventCallback: (event) => {
+                for (const listener of subscribers) {
+                    listener(event);
+                }
+            },
+        })
             .then((instance) => {
                 if (!instance) {
                     failed.value = true;
@@ -89,5 +106,11 @@ export const usePaddle = () => {
         return inflight;
     };
 
-    return { paddle, load, loading, failed };
+    const subscribe = (listener: (event: PaddleEventData) => void) => {
+        subscribers.add(listener);
+        return () => {
+            subscribers.delete(listener);
+        };
+    };
+    return { paddle, load, loading, failed, subscribe };
 };

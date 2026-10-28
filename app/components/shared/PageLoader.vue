@@ -1,9 +1,9 @@
 <template>
     <div class="flex flex-col items-center justify-center gap-4 py-16 text-center">
         <img
-            src="/images/mimi/axolotl.png"
+            :src="`/images/mimi/${appearance.mascot}/neutral.svg`"
             alt=""
-            class="loader-bob size-16 select-none drop-shadow-loader"
+            class="mimi-img loader-bob size-16 select-none drop-shadow-loader"
             draggable="false"
         />
         <div class="flex items-center gap-1.5">
@@ -20,6 +20,9 @@
 </template>
 
 <script setup lang="ts">
+import { useAppearanceStore } from '@/stores/appearance';
+
+const appearance = useAppearanceStore();
 withDefaults(defineProps<{ label?: string }>(), { label: '' });
 </script>
 

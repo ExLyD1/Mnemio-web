@@ -15,6 +15,7 @@ const APP_PREFIXES = [
     '/onboarding',
     '/ai',
     '/settings',
+    '/checkout',
 ];
 
 const requiresAuth = (path: string): boolean =>

@@ -3,33 +3,33 @@
 ## The principle
 
 Project knowledge is retrieved, not free. More files ≠ more context — a project
-stuffed with stale READMEs makes answers *worse*, because the model can't tell
+stuffed with stale READMEs makes answers _worse_, because the model can't tell
 which version of reality it's looking at. So: **a few curated, dated,
 non-contradictory documents**, plus live connectors for what changes daily.
 
-| Tier | What | Why |
-|---|---|---|
-| **A — upload** | Curated docs that rarely change and are known-true | Cheap, high signal |
-| **B — connect** | Notion, and the GitHub repos if your plan offers it | Always current, no manual refresh |
+| Tier                    | What                                                        | Why                                      |
+| ----------------------- | ----------------------------------------------------------- | ---------------------------------------- |
+| **A — upload**          | Curated docs that rarely change and are known-true          | Cheap, high signal                       |
+| **B — connect**         | Notion, and the GitHub repos if your plan offers it         | Always current, no manual refresh        |
 | **C — paste on demand** | Specific source files, for the one question that needs them | Don't permanently budget tokens for code |
 
 ---
 
 ## Tier A — upload these
 
-| # | File | Where | Why |
-|---|---|---|---|
-| 1 | `01-product-context.md` | `mnemio-frontend/docs/claude-project/` | The product snapshot. Fuels every product, pricing and growth conversation. |
-| 2 | `02-tech-context.md` | same folder | The engineering snapshot. |
-| 3 | `03-notion-map.md` | same folder | So Claude knows which Notion page a fact belongs on. |
-| 4 | `api-contract.md` | **`mnemio-backend/docs/`** ⚠️ not the frontend copy | 2 350 lines, authoritative, current: every endpoint, payload, error code, invariant. |
-| 5 | `CLAUDE.md` | `mnemio-frontend/` | Frontend conventions, layering, component patterns, styling. |
-| 6 | `AGENTS.md` | `mnemio-backend/` | Backend conventions. |
-| 7 | `backlog.md` | `mnemio-backend/docs/` | The deliberately-deferred list with revisit triggers — stops Claude proposing "missing" features you already decided against. |
-| 8 | `deployment.md` | `mnemio-backend/docs/` | Railway, migrations, envs. |
-| 9 | `analytics-strategy.md` + `analytics-implementation-plan.md` | `mnemio-frontend/docs/` | Needed for any metrics or growth work. |
-| 10 | `schema.txt` | generate (below) | The data model in one file. |
-| 11 | `tree.txt` | generate (below) | File map of both repos, so Claude can name the file to paste. |
+| #   | File                                                         | Where                                               | Why                                                                                                                           |
+| --- | ------------------------------------------------------------ | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `01-product-context.md`                                      | `mnemio-frontend/docs/claude-project/`              | The product snapshot. Fuels every product, pricing and growth conversation.                                                   |
+| 2   | `02-tech-context.md`                                         | same folder                                         | The engineering snapshot.                                                                                                     |
+| 3   | `03-notion-map.md`                                           | same folder                                         | So Claude knows which Notion page a fact belongs on.                                                                          |
+| 4   | `api-contract.md`                                            | **`mnemio-backend/docs/`** ⚠️ not the frontend copy | 2 350 lines, authoritative, current: every endpoint, payload, error code, invariant.                                          |
+| 5   | `CLAUDE.md`                                                  | `mnemio-frontend/`                                  | Frontend conventions, layering, component patterns, styling.                                                                  |
+| 6   | `AGENTS.md`                                                  | `mnemio-backend/`                                   | Backend conventions.                                                                                                          |
+| 7   | `backlog.md`                                                 | `mnemio-backend/docs/`                              | The deliberately-deferred list with revisit triggers — stops Claude proposing "missing" features you already decided against. |
+| 8   | `deployment.md`                                              | `mnemio-backend/docs/`                              | Railway, migrations, envs.                                                                                                    |
+| 9   | `analytics-strategy.md` + `analytics-implementation-plan.md` | `mnemio-frontend/docs/`                             | Needed for any metrics or growth work.                                                                                        |
+| 10  | `schema.txt`                                                 | generate (below)                                    | The data model in one file.                                                                                                   |
+| 11  | `tree.txt`                                                   | generate (below)                                    | File map of both repos, so Claude can name the file to paste.                                                                 |
 
 If you only ever upload three: **1, 2, 4.**
 
@@ -69,8 +69,8 @@ cat mnemio-backend/prisma/*.prisma > /tmp/mnemio-schema.txt
   `03-notion-map.md`.
 - **GitHub** — if the knowledge panel offers "Add from GitHub" on your plan,
   connect both repos. Strictly better than uploading code: current, searched on
-  demand. Still upload the two context files — the repos say what the code *is*,
-  the snapshots say what's *true, stale, and already decided*.
+  demand. Still upload the two context files — the repos say what the code _is_,
+  the snapshots say what's _true, stale, and already decided_.
 - **Google Drive** — only if designs or spreadsheets live there.
 
 ---
@@ -78,6 +78,7 @@ cat mnemio-backend/prisma/*.prisma > /tmp/mnemio-schema.txt
 ## Tier C — paste on demand
 
 For a question that needs real code:
+
 > Per `tree.txt`, tell me which files you need and I'll paste them.
 
 Don't pre-upload code "just in case" — it ages badly and you'll forget which
@@ -136,11 +137,11 @@ fold it into the next refresh. One file, one truth.
 6. Turn on the Notion connector (+ GitHub if available).
 7. Sanity-check with three questions — a wrong answer means the context is
    wrong, not the model:
-   - *"What does premium actually buy, and why is it gated that way?"* → higher
-     daily AI caps, ~10×; the learning loop stays free because the habit is what
-     creates a paying customer.
-   - *"How many AI word-list fills does a free user get per day, and what
-     happens on the 6th?"* → 5; a paywall dialog naming that limit.
-   - *"Can I use `http.ts` on a server-rendered discover page?"* → No; it reads
-     `localStorage`. Use `publicHttp.ts` inside `useAsyncData`.
+    - _"What does premium actually buy, and why is it gated that way?"_ → higher
+      daily AI caps, ~10×; the learning loop stays free because the habit is what
+      creates a paying customer.
+    - _"How many AI word-list fills does a free user get per day, and what
+      happens on the 6th?"_ → 5; a paywall dialog naming that limit.
+    - _"Can I use `http.ts` on a server-rendered discover page?"_ → No; it reads
+      `localStorage`. Use `publicHttp.ts` inside `useAsyncData`.
 8. Run the Notion prompts from `03-notion-map.md`, starting with the skeleton.

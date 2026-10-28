@@ -105,7 +105,7 @@ Watch the steepest drops: OTP verification (4) and first-deck (6). The **OTP gat
 2. `ai_feature_used` (used any AI action at least once)
 3. `ai_cap_reached` _(or)_ `premium_feature_blocked` (paywall trigger fired)
 4. `paywall_viewed`
-5. `checkout_started` (Stripe session created)
+5. `checkout_started` (Paddle session created)
 6. `subscription_started` (active or trialing) ← **Conversion**
 7. _(trial branch)_ `trial_started` → `subscription_renewed`/`trial_converted`
 
@@ -201,7 +201,7 @@ Properties are deliberate: each one exists so a growth analyst can **segment a f
 | ------------------------------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `paywall_viewed`                           | Saw the upgrade modal                                         | `trigger_context` (ai_budget/feature), `ai_feature`, `cap_per_day`, `days_since_signup`, `lifetime_ai_caps_hit`                          | **P0**   |
 | `paywall_dismissed`                        | Rejected the offer (objection signal)                         | `trigger_context`, `time_on_modal_sec`                                                                                                   | P1       |
-| `checkout_started`                         | Entered Stripe checkout                                       | `billing_plan` (monthly/annual), `trigger_context`, `price`                                                                              | **P0**   |
+| `checkout_started`                         | Entered Paddle checkout                                       | `billing_plan` (monthly/annual), `trigger_context`, `price`                                                                              | **P0**   |
 | `checkout_abandoned`                       | Started but didn't pay                                        | `billing_plan`, `trigger_context`                                                                                                        | P1       |
 | `trial_started`                            | Began a free trial                                            | `billing_plan`, `trial_end`, `trigger_context`                                                                                           | **P0**   |
 | `subscription_started`                     | **Became a paying/trialing customer** (primary revenue event) | `billing_plan`, `status` (trialing/active), `price`, `days_since_signup`, `trigger_context`, `lifetime_sessions`, `lifetime_ai_caps_hit` | **P0**   |

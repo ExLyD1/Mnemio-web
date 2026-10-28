@@ -7,13 +7,31 @@
             tabindex="0"
             :aria-label="revealed ? t('study.showFront') : t('study.revealAnswer')"
             @click="$emit('flip')"
+            @keydown.enter.prevent="$emit('flip')"
         >
             <!-- The unrevealed face is `card-dark`, which is a LIGHT lavender
                  gradient in light mode, so its ink stays on the cream ladder. -->
             <div
                 class="face front absolute inset-0 rounded-[24px] border border-line-strong bg-plum-card p-6 shadow-flash-card sm:p-10"
             >
-                <p class="fc-word break-words font-display text-cream">{{ frontText }}</p>
+                <img
+                    v-if="card.type === 'image' && card.imageUrl"
+                    :src="mediaUrl(card.imageUrl)"
+                    :alt="card.word"
+                    class="max-h-48 max-w-full object-contain"
+                />
+                <p
+                    class="fc-word w-full whitespace-pre-line break-words font-display text-cream"
+                    :class="
+                        frontText.length > 180
+                            ? 'fc-long'
+                            : frontText.length > 60
+                              ? 'fc-medium'
+                              : ''
+                    "
+                >
+                    {{ frontText }}
+                </p>
             </div>
 
             <!-- The revealed face is the plum card gradient in BOTH themes, so all
@@ -31,9 +49,11 @@
                             :class="reserveTopRight ? 'pr-28 sm:pr-0' : ''"
                         >
                             <p
-                                class="break-words font-display text-on-plum"
+                                class="whitespace-pre-line break-words font-display text-on-plum"
                                 :class="
-                                    emphasizeWord ? 'text-2xl sm:text-4xl' : 'text-lg sm:text-xl'
+                                    card.word.length > 60 || !emphasizeWord
+                                        ? 'text-base sm:text-lg'
+                                        : 'text-2xl sm:text-4xl'
                                 "
                             >
                                 {{ card.word }}
@@ -48,6 +68,7 @@
                         <button
                             v-if="card.audioUrl"
                             type="button"
+                            @click.stop="playAudio"
                             class="inline-flex w-fit items-center gap-1.5 rounded-full border border-on-plum/25 px-3 py-1.5 text-small text-on-plum-dim transition-colors hover:border-on-plum/50 hover:text-on-plum"
                         >
                             <Volume2 class="size-4" /> {{ t('study.listen') }}
@@ -62,13 +83,23 @@
                                 {{ t('study.meaning') }}
                             </p>
                             <p
-                                class="mt-1 break-words font-display text-on-plum"
+                                class="mt-1 whitespace-pre-line break-words text-on-plum"
                                 :class="
-                                    emphasizeWord ? 'text-lg sm:text-xl' : 'text-2xl sm:text-4xl'
+                                    card.meaning.length > 300
+                                        ? 'text-base'
+                                        : emphasizeWord
+                                          ? 'text-lg sm:text-xl'
+                                          : 'font-display text-2xl sm:text-4xl'
                                 "
                             >
                                 {{ card.meaning }}
                             </p>
+                            <img
+                                v-if="card.type !== 'image' && card.imageUrl"
+                                :src="mediaUrl(card.imageUrl)"
+                                :alt="card.word"
+                                class="mt-3 max-h-56 max-w-full object-contain"
+                            />
                         </div>
                         <div v-if="card.example">
                             <p class="text-eyebrow uppercase text-on-plum-faint">
@@ -89,34 +120,53 @@
 <script setup lang="ts">
 import { Volume2 } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
-import { computed } from 'vue';
-import { frontTextFor, type FrontSide, type StudyCard } from '@/utils/studyCard';
+import { frontTextFor, type StudyCard } from '@/utils/studyCard';
+import { mediaUrl } from '@/utils/media';
+import { useFrontSide } from '@/composables/usePracticePreferences';
 
 // reserveTopRight: the parent overlays a button in the card's top-right corner
 // (the review page's "Tip" button) — keep the word / part-of-speech pill and
 // the meaning column clear of it (QA (1) #1: the "noun" pill sat under it).
-const props = defineProps<{
-    card: StudyCard;
-    revealed: boolean;
-    reserveTopRight?: boolean;
-    /** Which side shows on the unrevealed face. Defaults to the term (word). */
-    front?: FrontSide;
-}>();
+const props = defineProps<{ card: StudyCard; revealed: boolean; reserveTopRight?: boolean }>();
 defineEmits<{ flip: [] }>();
 
 const { t } = useT();
-
-const frontText = computed(() => frontTextFor(props.card, props.front ?? 'term'));
-// Which side gets the big/prominent heading on the back face — the side
-// NOT shown on the front, so the reveal surfaces new information instead
-// of just repeating the prompt in a bigger font.
-const emphasizeWord = computed(() => (props.front ?? 'term') === 'definition');
+const { side } = useFrontSide();
+const frontText = computed(() => frontTextFor(props.card, side.value));
+// The back face makes the side NOT shown on the front the big heading, so the
+// reveal surfaces the answer instead of repeating the prompt in a bigger font.
+const emphasizeWord = computed(() => side.value === 'term');
+const toast = useToast();
+let audio: HTMLAudioElement | null = null;
+const playAudio = async () => {
+    const url = mediaUrl(props.card.audioUrl);
+    if (!url) return;
+    audio?.pause();
+    audio = new Audio(url);
+    try {
+        await audio.play();
+    } catch {
+        toast.error(t('practice.audioFailed'));
+    }
+};
+watch(
+    () => props.card.id,
+    () => {
+        audio?.pause();
+        audio = null;
+    },
+);
+onBeforeUnmount(() => audio?.pause());
 </script>
 
 <style scoped>
 .face {
     display: flex;
     flex-direction: column;
+    grid-area: 1 / 1;
+}
+.fc {
+    display: grid;
 }
 /*
  * The back is the in-flow height driver (position: relative) so the card grows
@@ -124,8 +174,8 @@ const emphasizeWord = computed(() => (props.front ?? 'term') === 'definition');
  * overlay that fades out as the back's gradient mask sweeps in.
  */
 .front {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    inset: auto;
     align-items: center;
     justify-content: center;
     gap: 18px;
@@ -167,6 +217,28 @@ const emphasizeWord = computed(() => (props.front ?? 'term') === 'definition');
     line-height: 1.05;
     overflow-wrap: anywhere;
     hyphens: auto;
+}
+.fc-medium {
+    font-size: clamp(22px, 4vw, 36px);
+    line-height: 1.2;
+}
+.fc-long {
+    font-size: clamp(16px, 2.5vw, 22px);
+    line-height: 1.35;
+}
+.front {
+    min-width: 0;
+}
+.back {
+    overflow-wrap: anywhere;
+    min-width: 0;
+    pointer-events: none;
+}
+.fc.flipped .back {
+    pointer-events: auto;
+}
+.fc.flipped .front {
+    pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -4,6 +4,7 @@
             v-for="g in GRADES"
             :key="g.key"
             type="button"
+            :disabled="disabled"
             :class="[
                 'relative flex min-h-[44px] flex-col items-center gap-1 rounded-2xl border bg-bg-surface px-4 py-3 transition-all hover:shadow-md hover:shadow-brand/15',
                 toneClass[g.tone],
@@ -12,9 +13,9 @@
         >
             <StudyKeycap :label="g.hint" class="absolute right-2 top-2" />
             <span class="text-body font-semibold">{{ t(g.i18nKey) }}</span>
-            <span v-if="previews?.[g.key]" class="text-small tabular-nums opacity-70">
-                {{ previews[g.key] }}
-            </span>
+            <span v-if="previews" class="text-small">{{
+                formatSrsInterval(previews[g.key], t)
+            }}</span>
         </button>
     </div>
 </template>
@@ -22,14 +23,13 @@
 <script setup lang="ts">
 import { GRADES } from '@/utils/grades';
 import { useT } from '@/composables/useT';
-import type { SrsRating } from '@/types/srs';
+import type { SrsRating, Previews } from '@/types/srs';
+import { formatSrsInterval } from '@/utils/srsInterval';
+
+defineProps<{ previews?: Previews; disabled?: boolean }>();
 
 const { t } = useT();
 
-// Optional per-grade "next review in..." label (e.g. "1хв", "6д"). Omitted
-// entirely by any caller without progress data, so the row degrades to its
-// previous look rather than showing a wrong/empty number.
-defineProps<{ previews?: Partial<Record<SrsRating, string>> }>();
 defineEmits<{ grade: [rating: SrsRating] }>();
 
 // Light: border + text colour only. Dark: add a faint bg tint.

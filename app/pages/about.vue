@@ -13,7 +13,7 @@
                         {{ t('about.subtitle') }}
                     </p>
                 </div>
-                <SharedMimi :size="150" />
+                <SharedMimi mascot="panda" pose="wave" :size="150" />
             </div>
         </section>
 

@@ -34,7 +34,12 @@
                         <span class="text-small text-brand-muted">{{ c.tag }}</span>
                     </div>
                 </div>
-                <SharedMimi :size="120" class="absolute -bottom-2 -right-2" />
+                <SharedMimi
+                    mascot="panda"
+                    pose="wave"
+                    :size="120"
+                    class="absolute -bottom-2 -right-2"
+                />
             </div>
         </section>
 

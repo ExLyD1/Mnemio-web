@@ -14,12 +14,7 @@
                     <SharedCoverArt :swatch="deck.swatch" :glyph="deck.glyph" class="aspect-[16/9]">
                         <span v-if="deck.reviewed" class="absolute bottom-2.5 left-2.5">
                             <SharedPill tone="plum">
-                                {{
-                                    t('dashboard.reviewsCount').replace(
-                                        '{n}',
-                                        String(deck.reviewed),
-                                    )
-                                }}
+                                {{ t('dashboard.reviewsCount', deck.reviewed) }}
                             </SharedPill>
                         </span>
                     </SharedCoverArt>
@@ -32,7 +27,7 @@
                         </h3>
                     </NuxtLink>
                     <p class="text-small text-brand-muted">
-                        {{ t('deck.cardCount').replace('{n}', String(deck.total)) }}
+                        {{ t('deck.cardCount', deck.total) }}
                     </p>
                     <SharedProgressBar :value="deck.masteredPct" class="mt-1" />
                     <p class="text-small text-brand-muted">

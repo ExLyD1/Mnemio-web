@@ -22,11 +22,21 @@ export const buildMultipleChoice = (
     pool: Card[],
     optionCount = 4,
 ): MultipleChoiceQuestion => {
-    const distractors = shuffle(
-        pool.filter((c) => c.id !== card.id && c.definition !== card.definition),
-    )
-        .slice(0, optionCount - 1)
-        .map((c) => ({ id: c.id, text: c.definition }));
+    // Imported Anki decks often hold reversed cards (whose definition is this
+    // card's prompt) and sibling clozes sharing one definition, so skip the
+    // prompt itself and keep each option text unique.
+    const seen = new Set([card.definition, card.word]);
+    const distractors: { id: string; text: string }[] = [];
+    for (const c of shuffle(pool)) {
+        if (distractors.length >= optionCount - 1) {
+            break;
+        }
+        if (c.id === card.id || seen.has(c.definition)) {
+            continue;
+        }
+        seen.add(c.definition);
+        distractors.push({ id: c.id, text: c.definition });
+    }
 
     const options = shuffle([{ id: card.id, text: card.definition }, ...distractors]);
 

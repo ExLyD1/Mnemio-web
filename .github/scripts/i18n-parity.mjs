@@ -31,7 +31,7 @@ const ukKeys = new Set(ukLeaves.map(([k]) => k));
 const missingInUk = [...enKeys].filter((k) => !ukKeys.has(k));
 const missingInEn = [...ukKeys].filter((k) => !enKeys.has(k));
 
-const tokens = (s) => (s.match(/\{[a-zA-Z0-9_]+\}/g) ?? []).sort().join(',');
+const tokens = (s) => [...new Set(s.match(/\{[a-zA-Z0-9_]+\}/g) ?? [])].sort().join(',');
 const ukMap = new Map(ukLeaves);
 const tokenMismatches = [];
 for (const [k, v] of enLeaves) {
