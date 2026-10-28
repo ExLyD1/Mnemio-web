@@ -10,7 +10,7 @@
         />
         <SharedPageLoader v-else />
     </template>
-    <StudyModePicker v-else :key="String(route.query.pick)" />
+    <ReviewHub v-else />
 </template>
 <script setup lang="ts">
 import { parseReviewScope, reviewScopeQuery } from '@/utils/reviewScope';

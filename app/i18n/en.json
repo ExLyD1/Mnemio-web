@@ -456,7 +456,21 @@
         "errors": {
             "rate_failed": "Could not save your rating. Try again."
         },
-        "saveFailed": "Couldn't save your session stats — your card ratings are saved."
+        "saveFailed": "Couldn't save your session stats — your card ratings are saved.",
+        "hubHint": "Tap a deck to review just that deck, or tick several to review them together.",
+        "reviewAll": "Review all · {n}",
+        "reviewDecks": "Review {n} deck | Review {n} decks",
+        "orderLabel": "Order",
+        "orderMixed": "Mixed",
+        "orderByDeck": "Deck by deck",
+        "modeLabel": "Practice mode",
+        "modeSrs": "SRS",
+        "modeKnow": "Know / Don't know",
+        "selectDeck": "Select {title}",
+        "selectionCap": "You can review up to {n} decks at once.",
+        "clearSelection": "Clear selection",
+        "dueCount": "{n} due",
+        "loadFailed": "Couldn't load your review queue"
     },
     "study": {
         "start": "Start",
