@@ -474,7 +474,9 @@
         "backToReview": "Back to review",
         "perDeckTitle": "By deck",
         "perDeckRow": "{n} reviewed · {pct}% recalled",
-        "retrySave": "Retry saving"
+        "retrySave": "Retry saving",
+        "reviewDueShortcut": "Review due ({n})",
+        "reviewDueHint": "Review only this deck's due cards"
     },
     "study": {
         "start": "Start",

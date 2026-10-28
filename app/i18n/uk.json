@@ -474,7 +474,9 @@
         "backToReview": "До повторення",
         "perDeckTitle": "За колодами",
         "perDeckRow": "Повторено: {n} · згадано {pct}%",
-        "retrySave": "Зберегти ще раз"
+        "retrySave": "Зберегти ще раз",
+        "reviewDueShortcut": "Повторити ({n})",
+        "reviewDueHint": "Повторити лише картки цієї колоди, яким настав час"
     },
     "study": {
         "start": "Почати",

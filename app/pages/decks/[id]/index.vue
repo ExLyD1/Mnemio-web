@@ -53,6 +53,19 @@
                                     {{ t('deck.studyNow') }}
                                 </UiButton>
                                 <UiButton
+                                    v-if="deckStat.due > 0"
+                                    variant="on-cover-ghost"
+                                    :title="t('review.reviewDueHint')"
+                                    @click="navigateTo({ path: '/review', query: { decks: id } })"
+                                >
+                                    {{
+                                        t('review.reviewDueShortcut').replace(
+                                            '{n}',
+                                            String(deckStat.due),
+                                        )
+                                    }}
+                                </UiButton>
+                                <UiButton
                                     v-if="!isOwner"
                                     variant="on-cover-ghost"
                                     :title="t('deck.copyToLibrary')"
