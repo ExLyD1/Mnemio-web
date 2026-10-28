@@ -470,7 +470,11 @@
         "selectionCap": "You can review up to {n} decks at once.",
         "clearSelection": "Clear selection",
         "dueCount": "{n} due",
-        "loadFailed": "Couldn't load your review queue"
+        "loadFailed": "Couldn't load your review queue",
+        "backToReview": "Back to review",
+        "perDeckTitle": "By deck",
+        "perDeckRow": "{n} reviewed · {pct}% recalled",
+        "retrySave": "Retry saving"
     },
     "study": {
         "start": "Start",

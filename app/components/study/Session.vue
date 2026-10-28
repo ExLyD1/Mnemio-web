@@ -6,7 +6,7 @@
             <div class="flex min-w-0 items-center gap-3">
                 <SharedBrandMark :with-word="false" size="sm" />
                 <p class="truncate font-display text-base leading-none text-cream">
-                    {{ deckId ? practice.deck.value?.title : t('review.heading') }}
+                    {{ headerTitle }}
                 </p>
             </div>
             <div class="flex flex-1 items-center justify-center gap-3">
@@ -23,7 +23,7 @@
                 variant="ghost"
                 class="!py-2 !text-small"
                 :disabled="practice.locked.value"
-                @click="navigateTo(deckId ? backPath : '/dashboard')"
+                @click="navigateTo(deckId ? backPath : '/review')"
             >
                 {{ t('study.endSession') }}
             </UiButton>
@@ -37,11 +37,16 @@
                 :title="t('study.couldNotStartTitle')"
                 :message="practice.error.value"
             >
-                <template #action
-                    ><UiButton @click="practice.initialize()">{{
-                        t('practice.retry')
-                    }}</UiButton></template
-                >
+                <template #action>
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <UiButton @click="practice.initialize()">{{
+                            t('practice.retry')
+                        }}</UiButton>
+                        <UiButton v-if="!deckId" variant="ghost" @click="navigateTo('/review')">
+                            {{ t('review.backToReview') }}
+                        </UiButton>
+                    </div>
+                </template>
             </UiEmptyState>
             <template v-else-if="practice.roundDone.value">
                 <SharedMimi mood="done" :size="110" />
@@ -79,19 +84,13 @@
                         <SharedBreakdownBar :segments="segments" />
                     </div>
                 </div>
+                <ReviewDeckBreakdown v-if="deckRows.length > 1" :rows="deckRows" />
                 <div class="flex flex-wrap items-center justify-center gap-3">
-                    <UiButton
-                        v-if="practice.srs.metadata.value?.newAvailable"
-                        variant="ghost"
-                        :disabled="practice.locked.value"
-                        @click="practice.initialize(20)"
-                        >{{ t('practice.extraNew') }}</UiButton
-                    >
-                    <UiButton variant="ghost" @click="navigateTo('/decks')">
-                        {{ t('review.browseDecks') }}
-                    </UiButton>
-                    <UiButton variant="primary" @click="navigateTo('/dashboard')">
+                    <UiButton variant="ghost" @click="navigateTo('/dashboard')">
                         {{ t('review.backToDashboard') }}
+                    </UiButton>
+                    <UiButton variant="primary" @click="navigateTo('/review')">
+                        {{ t('review.backToReview') }}
                     </UiButton>
                 </div>
             </template>
@@ -106,16 +105,14 @@
                 "
             >
                 <template #action>
-                    <UiButton
-                        v-if="practice.srs.metadata.value?.newAvailable"
-                        variant="ghost"
-                        :disabled="practice.locked.value"
-                        @click="practice.initialize(20)"
-                        >{{ t('practice.extraNew') }}</UiButton
-                    >
-                    <UiButton variant="primary" @click="navigateTo('/decks')">
-                        {{ t('review.browseDecks') }}
-                    </UiButton>
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <UiButton variant="ghost" @click="navigateTo('/decks')">
+                            {{ t('review.browseDecks') }}
+                        </UiButton>
+                        <UiButton variant="primary" @click="navigateTo('/review')">
+                            {{ t('review.backToReview') }}
+                        </UiButton>
+                    </div>
                 </template>
             </UiEmptyState>
             <template v-else-if="practice.finished.value || !practice.current.value">
@@ -147,8 +144,8 @@
                 <UiButton v-if="!practice.finished.value" @click="practice.finish">{{
                     t('practice.retry')
                 }}</UiButton>
-                <UiButton @click="navigateTo(backPath)">{{
-                    t(deckId ? 'study.backToDeck' : 'practice.backToDecks')
+                <UiButton @click="navigateTo(deckId ? backPath : '/review')">{{
+                    t(deckId ? 'study.backToDeck' : 'review.backToReview')
                 }}</UiButton>
             </template>
             <template v-else-if="studyCard">
@@ -226,6 +223,17 @@
                     >
                 </div>
             </template>
+            <!-- Review session stats save at the end; ratings are already safe. -->
+            <div
+                v-if="practice.saveFailed.value"
+                role="alert"
+                class="flex w-full max-w-md flex-wrap items-center justify-between gap-3 rounded-2xl border border-error-soft/50 bg-bg-surface p-4 text-small text-cream"
+            >
+                <span class="min-w-0 flex-1">{{ t('review.saveFailed') }}</span>
+                <UiButton variant="ghost" class="!py-1.5" @click="practice.flush()">
+                    {{ t('review.retrySave') }}
+                </UiButton>
+            </div>
         </main>
 
         <!-- Docked tip panel: right drawer on desktop, bottom sheet on mobile -->
@@ -314,6 +322,32 @@ const nextReview = computed(() => {
               : Math.ceil(minutes / 1440);
     return new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' }).format(amount, unit);
 });
+// Review: the deck being served (by_deck / single deck), else the generic heading.
+const headerTitle = computed(() => {
+    if (props.deckId) return practice.deck.value?.title ?? '';
+    const deckId =
+        props.deckIds?.length === 1
+            ? props.deckIds[0]
+            : props.order === 'by_deck'
+              ? (practice.current.value?.deckId ?? null)
+              : null;
+    return (deckId && practice.deckTitles.value[deckId]) || t('review.heading');
+});
+// Per-deck results, in the order the decks were first reviewed.
+const deckRows = computed(() =>
+    Object.values(practice.tallies.value)
+        .sort((a, b) => a.order - b.order)
+        .map((tally) => {
+            const c = tally.counts;
+            const reviewed = c.again + c.hard + c.good + c.easy;
+            return {
+                deckId: tally.deckId,
+                title: practice.deckTitles.value[tally.deckId] ?? '',
+                reviewed,
+                pct: reviewed ? Math.round((tally.correct / reviewed) * 100) : 0,
+            };
+        }),
+);
 const reviewDone = computed(
     () =>
         !props.deckId &&
@@ -380,7 +414,7 @@ const saveTrack = () =>
     localStorage.setItem('mnemio_track_progress', String(practice.trackProgress.value));
 const showResults = () => {
     practice.saveResult();
-    navigateTo(props.deckId ? `/study/${props.deckId}/results` : '/decks');
+    navigateTo(props.deckId ? `/study/${props.deckId}/results` : '/review');
 };
 const onKey = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement | null;

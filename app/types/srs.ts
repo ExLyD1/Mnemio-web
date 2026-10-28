@@ -11,6 +11,8 @@ export interface SrsQueueItem {
     state: SrsState;
     dueAt: string | null;
     previews: Previews;
+    // Sent by GET /srs/queue; absent on items the client requeues itself.
+    deckTitle?: string;
 }
 
 /** One deck's due count in a queue's scope (powers the /review hub). */

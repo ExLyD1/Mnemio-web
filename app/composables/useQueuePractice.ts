@@ -127,6 +127,19 @@ export const useQueuePractice = (options: {
     const deck = computed(() =>
         options.deckId && decks.store.deck?.id === options.deckId ? decks.store.deck : null,
     );
+    // Deck titles for the review header and per-deck results (the queue carries them).
+    const deckTitles = computed(() => {
+        const titles: Record<string, string> = {};
+        for (const item of srs.metadata.value?.items ?? []) {
+            if (item.deckTitle) {
+                titles[item.card.deckId] = item.deckTitle;
+            }
+        }
+        for (const due of srs.metadata.value?.byDeck ?? []) {
+            titles[due.deckId] = due.deckTitle;
+        }
+        return titles;
+    });
 
     const report = (err: { code?: string; message?: string } | null) =>
         toast.error(apiErrorText(err));
@@ -540,6 +553,7 @@ export const useQueuePractice = (options: {
         toggleShuffle,
         saveResult,
         tallies,
+        deckTitles,
         saveFailed,
         flush,
     };
