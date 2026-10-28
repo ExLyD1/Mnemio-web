@@ -14,9 +14,14 @@
         />
 
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <SharedFilterChips v-model="filter" :options="filters" />
+            <SharedFilterChips v-model="subject" :options="subjectChips" />
             <SharedSortMenu v-model="sort" :options="sorts" />
         </div>
+        <SharedFilterChips
+            v-if="subject === 'languages' && languageChips.length > 1"
+            v-model="lang"
+            :options="languageChips"
+        />
 
         <div v-if="decks.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <SharedDeckCard
@@ -40,18 +45,18 @@
             </UiButton>
         </div>
 
-        <div v-if="categories.length && !search.trim()">
+        <div v-if="tiles.length && !search.trim()">
             <h2 class="mb-3 font-display text-h2 text-cream">{{ t('discover.categories') }}</h2>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <NuxtLink
-                    v-for="cat in categories"
+                    v-for="cat in tiles"
                     :key="cat.subject"
-                    :to="`/discover/${slugify(cat.subject)}`"
+                    :to="`/discover/${cat.subject}`"
                     class="flex items-center justify-between rounded-2xl border border-line border-l-2 border-l-brand-bright bg-bg-surface px-5 py-4 text-left transition-all hover:shadow-md hover:shadow-brand/10"
                 >
                     <span>
-                        <span class="block font-display text-h3 capitalize text-cream">
-                            {{ cat.subject }}
+                        <span class="block font-display text-h3 text-cream">
+                            {{ subjectLabel(t, cat.subject) }}
                         </span>
                         <span class="text-small text-brand-muted">{{
                             t('discover.categoryCount', cat.count)
@@ -89,6 +94,8 @@ import { useAuthStore } from '@/stores/auth';
 import { useAnalytics } from '@/composables/useAnalytics';
 import { useDiscoverMore, discoverToVm } from '@/composables/useDiscoverMore';
 import type { DeckCardVM, DeckWithAuthor } from '@/types/deck';
+import type { DiscoverCategories } from '@/types/discover';
+import { langLabel, subjectLabel, type Subject } from '@/utils/subjects';
 
 definePageMeta({ layout: 'default' });
 
@@ -101,26 +108,14 @@ const site = useSiteConfig();
 
 useSeo({ title: t('seo.discoverTitle'), description: t('seo.discoverDesc') });
 
-const slugify = (s: string): string =>
-    s
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-
 const search = ref(typeof route.query.q === 'string' ? route.query.q : '');
-const filter = ref('all');
+// 'all' or a Subject; `lang` (a targetLanguage code) only applies under Languages.
+const subject = ref<'all' | Subject>('all');
+const lang = ref('all');
 const sort = ref<'recent' | 'popular'>('recent');
-
-const filters = [
-    { key: 'all', label: t('discover.filterAll') },
-    { key: 'ja', label: 'Japanese' },
-    { key: 'es', label: 'Spanish' },
-    { key: 'en', label: 'English' },
-    { key: 'fr', label: 'French' },
-    { key: 'de', label: 'German' },
-    { key: 'ko', label: 'Korean' },
-    { key: 'zh', label: 'Mandarin' },
-];
+watch(subject, () => {
+    lang.value = 'all';
+});
 const sorts = [
     { key: 'recent', label: t('discover.sortNewest') },
     { key: 'popular', label: t('discover.sortPopular') },
@@ -128,18 +123,25 @@ const sorts = [
 
 // SSR fetch so the catalog ships in the initial HTML (crawler-visible). Public,
 // no-auth endpoints — works for logged-out crawlers and signed-in users alike.
+const deckQuery = () => ({
+    q: search.value.trim() || undefined,
+    subject: subject.value === 'all' ? undefined : subject.value,
+    lang: subject.value === 'languages' && lang.value !== 'all' ? lang.value : undefined,
+    sort: sort.value,
+});
+
 const { data, pending } = await useAsyncData(
     'discover-catalog',
     () =>
         Promise.all([
-            listPublicDecks({
-                q: search.value.trim() || undefined,
-                lang: filter.value === 'all' ? undefined : filter.value,
-                sort: sort.value,
-            }).catch(() => ({ items: [] as DeckWithAuthor[], nextCursor: null, total: 0 })),
-            getPublicCategories().catch(() => ({ items: [] })),
+            listPublicDecks(deckQuery()).catch(() => ({
+                items: [] as DeckWithAuthor[],
+                nextCursor: null,
+                total: 0,
+            })),
+            getPublicCategories().catch((): DiscoverCategories => ({ items: [], languages: [] })),
         ]),
-    { watch: [filter, sort] },
+    { watch: [subject, lang, sort] },
 );
 
 const more = useDiscoverMore();
@@ -151,17 +153,23 @@ const decks = computed<DeckCardVM[]>(() => [
     ...(data.value?.[0].items ?? []).map(discoverToVm),
     ...more.extra.value,
 ]);
-const categories = computed(() => data.value?.[1].items ?? []);
+// Zero-count subjects are hidden everywhere.
+const tiles = computed(() => (data.value?.[1].items ?? []).filter((c) => c.count > 0));
+const subjectChips = computed(() => [
+    { key: 'all', label: t('discover.filterAll') },
+    ...tiles.value.map((c) => ({ key: c.subject, label: subjectLabel(t, c.subject) })),
+]);
+const languageChips = computed(() => [
+    { key: 'all', label: t('discover.filterAll') },
+    ...(data.value?.[1].languages ?? []).map((l) => ({
+        key: l.lang,
+        label: langLabel(t, l.lang),
+        count: l.count,
+    })),
+]);
 
 const onLoadMore = () =>
-    more.loadMore(() =>
-        listPublicDecks({
-            q: search.value.trim() || undefined,
-            lang: filter.value === 'all' ? undefined : filter.value,
-            sort: sort.value,
-            cursor: more.cursor.value!,
-        }),
-    );
+    more.loadMore(() => listPublicDecks({ ...deckQuery(), cursor: more.cursor.value! }));
 
 // Debounced refetch as the user types (re-runs the same useAsyncData handler).
 const debouncedRefresh = useDebounceFn(() => refreshNuxtData('discover-catalog'), 150);

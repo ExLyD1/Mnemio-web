@@ -1,6 +1,7 @@
 import { defineEventHandler } from 'h3';
 import { useRuntimeConfig } from '#imports';
 import { articles } from '../../../app/data/blog';
+import { SUBJECTS } from '../../../app/utils/subjects';
 
 interface SitemapDeck {
     id: string;
@@ -14,12 +15,6 @@ interface Category {
     subject: string;
     count: number;
 }
-
-const slugify = (s: string): string =>
-    s
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
 
 /**
  * Dynamic sitemap source for @nuxtjs/sitemap (wired via `sitemap.sources` in
@@ -59,15 +54,31 @@ export default defineEventHandler(async (event) => {
         // Backend public endpoints not available yet — skip deck URLs.
     }
 
+    // Topic pages: the fixed subject slugs only (never DB values or legacy
+    // slugs, which 301), minus subjects with no public decks when the counts
+    // are available.
+    let subjects: readonly string[] = SUBJECTS;
+    try {
+        const taxonomy: { subjects: string[] } = await $fetch('/api/v1/public/taxonomy', {
+            baseURL: base,
+        });
+        if (taxonomy.subjects.length) {
+            subjects = taxonomy.subjects;
+        }
+    } catch {
+        // Fall back to the compiled list.
+    }
     try {
         const cats: { items: Category[] } = await $fetch('/api/v1/public/discover/categories', {
             baseURL: base,
         });
-        for (const c of cats.items) {
-            urls.push({ loc: `/discover/${slugify(c.subject)}` });
-        }
+        const empty = new Set(cats.items.filter((c) => c.count === 0).map((c) => c.subject));
+        subjects = subjects.filter((s) => !empty.has(s));
     } catch {
-        // Skip topic URLs if categories aren't available.
+        // No counts: list every subject.
+    }
+    for (const s of subjects) {
+        urls.push({ loc: `/discover/${s}` });
     }
 
     // Static blog articles (hand-authored, always available — no backend dependency).

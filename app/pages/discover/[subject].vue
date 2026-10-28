@@ -3,17 +3,23 @@
         <nav class="flex items-center gap-2 text-small text-brand-muted">
             <NuxtLink to="/discover" class="hover:text-cream">{{ t('discover.title') }}</NuxtLink>
             <span>/</span>
-            <span class="capitalize text-cream">{{ subjectName }}</span>
+            <span class="text-cream">{{ subjectName }}</span>
         </nav>
 
         <header>
-            <h1 class="font-display text-display-sm capitalize text-cream">
+            <h1 class="font-display text-display-sm text-cream">
                 {{ t('discover.topicTitle').replace('{subject}', subjectName) }}
             </h1>
             <p class="mt-1 max-w-[60ch] text-body text-cream-dim">
                 {{ t('discover.topicSubtitle').replace('{subject}', subjectName) }}
             </p>
         </header>
+
+        <SharedFilterChips
+            v-if="slug === 'languages' && languageChips.length > 1"
+            v-model="lang"
+            :options="languageChips"
+        />
 
         <div v-if="decks.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <SharedDeckCard
@@ -38,14 +44,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { createError, useHead, useRoute, useSiteConfig, useToast, useT } from '#imports';
 import { listPublicDecks, getPublicCategories } from '@/api/publicDiscover';
 import { copyDeck } from '@/api/discover';
 import { useAuthStore } from '@/stores/auth';
 import { useAnalytics } from '@/composables/useAnalytics';
 import { useDiscoverMore, discoverToVm } from '@/composables/useDiscoverMore';
+import { useTaxonomy } from '@/composables/useTaxonomy';
 import type { DeckCardVM } from '@/types/deck';
+import { isSubject, langLabel, subjectLabel } from '@/utils/subjects';
 
 definePageMeta({ layout: 'default' });
 
@@ -56,43 +64,65 @@ const auth = useAuthStore();
 const analytics = useAnalytics();
 const site = useSiteConfig();
 
-const slug = computed(() => String(route.params.subject ?? ''));
-const slugify = (s: string): string =>
-    s
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+const rawSlug = computed(() => String(route.params.subject ?? ''));
+const slug = computed(() => rawSlug.value.toLowerCase());
 
-// Resolve the slug back to a real `subject` via the category list, then fetch its
-// decks. Unknown subject (or categories endpoint unavailable) → no match → we
-// re-throw at setup level for a real 404 (don't render an empty SEO page for a
-// non-topic).
-const { data, error } = await useAsyncData(
-    () => `topic-${slug.value}`,
-    async () => {
-        const cats = await getPublicCategories();
-        const match = cats.items.find((c) => slugify(c.subject) === slug.value);
-        if (!match) {
-            return null;
-        }
-        const res = await listPublicDecks({ subject: match.subject, sort: 'popular' }).catch(
-            () => ({
-                items: [],
-                nextCursor: null as string | null,
-                total: 0,
-            }),
-        );
-        return { subject: match.subject, items: res.items, nextCursor: res.nextCursor };
-    },
-);
-if (error.value || !data.value) {
+// Only the 12 subjects are topics. A pre-002 slug (/discover/biology), or a
+// subject in odd casing, is a permanent move: a real 301 during SSR so
+// crawlers update. Anything else is a 404.
+const taxonomy = useTaxonomy();
+await useAsyncData('taxonomy', () => taxonomy.ensure());
+const movedTo = (): string | null => {
+    if (isSubject(slug.value)) {
+        return slug.value === rawSlug.value ? null : slug.value;
+    }
+    return taxonomy.legacySubjects.value[slug.value] ?? null;
+};
+const moved = movedTo();
+if (moved) {
+    await navigateTo(`/discover/${moved}`, { redirectCode: 301 });
+} else if (!isSubject(slug.value) || !taxonomy.subjects.value.includes(slug.value)) {
     throw createError({ statusCode: 404, statusMessage: 'Topic not found' });
 }
 
-const subjectName = computed(() => data.value?.subject ?? slug.value.replace(/-/g, ' '));
+// Language decks filter by their target language (Languages only).
+const lang = ref(typeof route.query.lang === 'string' ? route.query.lang : 'all');
+const deckQuery = () => ({
+    subject: isSubject(slug.value) ? slug.value : undefined,
+    lang: slug.value === 'languages' && lang.value !== 'all' ? lang.value : undefined,
+    sort: 'popular' as const,
+});
+
+const { data } = await useAsyncData(
+    () => `topic-${slug.value}`,
+    async () => {
+        const [res, cats] = await Promise.all([
+            listPublicDecks(deckQuery()).catch(() => ({
+                items: [],
+                nextCursor: null as string | null,
+                total: 0,
+            })),
+            slug.value === 'languages'
+                ? getPublicCategories().catch(() => null)
+                : Promise.resolve(null),
+        ]);
+        return { items: res.items, nextCursor: res.nextCursor, languages: cats?.languages ?? [] };
+    },
+    { watch: [lang] },
+);
+
+const subjectName = computed(() => subjectLabel(t, slug.value));
+const languageChips = computed(() => [
+    { key: 'all', label: t('discover.filterAll') },
+    ...(data.value?.languages ?? []).map((l) => ({
+        key: l.lang,
+        label: langLabel(t, l.lang),
+        count: l.count,
+    })),
+]);
 
 const more = useDiscoverMore();
-more.init(data.value?.nextCursor ?? null);
+watch(data, (d) => more.init(d?.nextCursor ?? null), { immediate: true });
 
 const decks = computed<DeckCardVM[]>(() => [
     ...(data.value?.items ?? []).map(discoverToVm),
@@ -100,13 +130,7 @@ const decks = computed<DeckCardVM[]>(() => [
 ]);
 
 const onLoadMore = () =>
-    more.loadMore(() =>
-        listPublicDecks({
-            subject: subjectName.value,
-            sort: 'popular',
-            cursor: more.cursor.value!,
-        }),
-    );
+    more.loadMore(() => listPublicDecks({ ...deckQuery(), cursor: more.cursor.value! }));
 
 useSeo({
     title: t('seo.topicTitle').replace('{subject}', subjectName.value),

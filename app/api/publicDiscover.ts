@@ -1,12 +1,14 @@
 import { publicGet } from '@/utils/publicHttp';
 import type { Card, DeckWithAuthor } from '@/types/deck';
-import type { DiscoverCategory } from '@/types/discover';
+import type { DiscoverCategories } from '@/types/discover';
+import type { Subject } from '@/utils/subjects';
 
 export interface PublicDiscoverParams {
     cursor?: string | null;
     q?: string;
+    /** ISO 639-1; matches the deck's targetLanguage. */
     lang?: string;
-    subject?: string;
+    subject?: Subject;
     sort?: 'popular' | 'recent';
 }
 
@@ -31,8 +33,10 @@ export const listPublicDecks = (
         },
     });
 
-export const getPublicCategories = (): Promise<{ items: DiscoverCategory[] }> =>
-    publicGet('/public/discover/categories');
+export const getPublicCategories = async (): Promise<DiscoverCategories> => {
+    const res = await publicGet<Partial<DiscoverCategories>>('/public/discover/categories');
+    return { items: res.items ?? [], languages: res.languages ?? [] };
+};
 
 // The backend returns `{ deck, cards }` (mirroring GET /decks/:id). Typing that
 // response as a flat deck made every field on the public SEO page `undefined` —

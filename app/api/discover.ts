@@ -1,13 +1,15 @@
 import { http } from '@/utils/http';
 import { normLang } from '@/api/decks';
 import type { DeckSummary, DeckWithAuthor } from '@/types/deck';
-import type { DiscoverCategory } from '@/types/discover';
+import type { DiscoverCategories } from '@/types/discover';
+import type { Subject } from '@/utils/subjects';
 
 export interface DiscoverParams {
     cursor?: string | null;
     q?: string;
+    /** ISO 639-1; matches the deck's targetLanguage. */
     lang?: string;
-    subject?: string;
+    subject?: Subject;
     sort?: 'popular' | 'recent';
 }
 
@@ -40,8 +42,10 @@ export const getFeatured = async (): Promise<{ items: DeckWithAuthor[] }> => {
     return { items: res.items.map(normDeck) };
 };
 
-export const getCategories = (): Promise<{ items: DiscoverCategory[] }> =>
-    http('/discover/categories');
+export const getCategories = async (): Promise<DiscoverCategories> => {
+    const res = await http<Partial<DiscoverCategories>>('/discover/categories');
+    return { items: res.items ?? [], languages: res.languages ?? [] };
+};
 
 export const copyDeck = async (deckId: string): Promise<DeckSummary> => {
     const res = await http<DeckSummary>(`/decks/${deckId}/copy`, { method: 'POST' });
