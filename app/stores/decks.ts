@@ -2,6 +2,7 @@ import { defineStore, ref } from '#imports';
 import * as decksApi from '@/api/decks';
 import * as cardsApi from '@/api/cards';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
+import { useLibraryStore } from '@/stores/library';
 import type { Card, Deck, DeckInput, DeckSummary, CardInput } from '@/types/deck';
 
 export const useDecksStore = defineStore('decks', () => {
@@ -12,6 +13,7 @@ export const useDecksStore = defineStore('decks', () => {
     // Grabbed once at store setup (valid Vue/i18n context) and reused inside
     // `addCard()` after its await — see useAchievementNotifications.ts.
     const notifications = useAchievementNotifications();
+    const library = useLibraryStore();
     const search = ref('');
     const loadingList = ref(false);
     const loadingDeck = ref(false);
@@ -110,12 +112,14 @@ export const useDecksStore = defineStore('decks', () => {
 
     const create = async (input: DeckInput) => {
         const created = await decksApi.createDeck(input);
+        library.invalidate();
         await fetchList({ cursor: null, append: false });
         return created;
     };
 
     const update = async (id: string, input: Partial<DeckInput>) => {
         const updated = await decksApi.updateDeck(id, input);
+        library.invalidate();
         // PATCH /decks/:id returns the deck without viewer-scoped stats, so its
         // `stats` is always zeroed. Spreading that over a loaded deck made
         // renaming a deck instantly show 0% mastered and an all-grey progress
@@ -137,6 +141,7 @@ export const useDecksStore = defineStore('decks', () => {
 
     const remove = async (id: string) => {
         await decksApi.deleteDeck(id);
+        library.invalidate();
         summaries.value = summaries.value.filter((d) => d.id !== id);
         total.value = Math.max(0, total.value - 1);
         if (deck.value?.id === id) {

@@ -209,7 +209,6 @@
         "myDecks": "My Decks",
         "libraryEyebrow": "Library",
         "allDecks": "All decks",
-        "filterMine": "Mine",
         "create": "Create deck",
         "createFirst": "Create your first deck",
         "createTitle": "Create a new deck",
@@ -338,6 +337,24 @@
         },
         "deckCount": "{n} deck | {n} decks",
         "subjectAuto": "Auto-detect"
+    },
+    "library": {
+        "title": "Library",
+        "tabAll": "All",
+        "tabMy": "My decks",
+        "tabLearning": "Learning",
+        "byAuthor": "by {name}",
+        "bySomeone": "by someone",
+        "emptyLearningTitle": "Nothing in Learning yet",
+        "emptyLearningMsg": "Study 5 cards of any deck to see it here.",
+        "browseDiscover": "Browse Discover",
+        "emptyFiltered": "Nothing here",
+        "emptyFilteredMsg": "No decks match these filters.",
+        "clearFilters": "Clear filters",
+        "loadError": "Couldn’t load your library.",
+        "tabsLabel": "Library view",
+        "subjectsLabel": "Subjects",
+        "languagesLabel": "Languages"
     },
     "dashboard": {
         "greetingMorning": "Good morning",

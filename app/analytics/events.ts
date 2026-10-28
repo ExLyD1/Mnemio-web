@@ -130,6 +130,15 @@ export type AnalyticsEvent =
           };
       }
     | {
+          // A library tab / subject / language chip changed (spec 002).
+          name: 'library_filter_changed';
+          props: {
+              scope: 'all' | 'my' | 'learning';
+              subject: Subject | null;
+              lang: string | null;
+          };
+      }
+    | {
           name: 'card_suggestion_accepted';
           props: { kind: 'completion' | 'translation'; source: string };
       }

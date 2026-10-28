@@ -38,6 +38,9 @@
                     t('deck.fromAnki')
                 }}</SharedPill>
             </div>
+            <p v-if="deck.isOwner === false" class="line-clamp-1 text-[12px] text-brand-muted">
+                {{ byLabel }}
+            </p>
             <p class="mb-3.5 text-[12px] text-cream-faint">
                 <template v-if="tagLabel">{{ tagLabel }} · </template>{{ cardCountLabel }}
             </p>
@@ -203,4 +206,10 @@ const cardClass = computed(() => [
 ]);
 
 const cardCountLabel = computed(() => t('deck.cardCount', props.deck.total));
+// Someone else's deck the user is learning (library).
+const byLabel = computed(() =>
+    props.deck.author
+        ? t('library.byAuthor').replace('{name}', props.deck.author)
+        : t('library.bySomeone'),
+);
 </script>

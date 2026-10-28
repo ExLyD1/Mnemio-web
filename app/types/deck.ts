@@ -112,6 +112,8 @@ export interface DeckCardVM {
     swatch: string;
     favorite?: boolean;
     author?: string;
+    /** false = someone else's deck the user is learning (library). */
+    isOwner?: boolean;
     copies?: number;
     reviewed?: number;
     fromAnki?: boolean;

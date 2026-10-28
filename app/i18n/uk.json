@@ -209,7 +209,6 @@
         "myDecks": "Мої колоди",
         "libraryEyebrow": "Бібліотека",
         "allDecks": "Усі колоди",
-        "filterMine": "Моє",
         "create": "Створити колоду",
         "createFirst": "Створіть свою першу колоду",
         "createTitle": "Створити нову колоду",
@@ -338,6 +337,24 @@
         },
         "deckCount": "{n} колода | {n} колоди | {n} колод",
         "subjectAuto": "Визначити автоматично"
+    },
+    "library": {
+        "title": "Бібліотека",
+        "tabAll": "Усі",
+        "tabMy": "Мої колоди",
+        "tabLearning": "Вивчаю",
+        "byAuthor": "від {name}",
+        "bySomeone": "від когось",
+        "emptyLearningTitle": "У «Вивчаю» поки порожньо",
+        "emptyLearningMsg": "Вивчіть 5 карток будь-якої колоди, і вона з’явиться тут.",
+        "browseDiscover": "Перейти до огляду",
+        "emptyFiltered": "Тут нічого немає",
+        "emptyFilteredMsg": "Жодна колода не відповідає цим фільтрам.",
+        "clearFilters": "Скинути фільтри",
+        "loadError": "Не вдалося завантажити бібліотеку.",
+        "tabsLabel": "Розділ бібліотеки",
+        "subjectsLabel": "Категорії",
+        "languagesLabel": "Мови"
     },
     "dashboard": {
         "greetingMorning": "Доброго ранку",

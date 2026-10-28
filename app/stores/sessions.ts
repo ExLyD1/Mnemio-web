@@ -2,6 +2,7 @@ import { defineStore, ref, computed } from '#imports';
 import * as sessionsApi from '@/api/sessions';
 import type { SessionPatch, SessionSnapshot } from '@/api/sessions';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
+import { useLibraryStore } from '@/stores/library';
 import type { StudyMode, StudySession } from '@/types/session';
 
 export const useSessionsStore = defineStore('sessions', () => {
@@ -11,6 +12,7 @@ export const useSessionsStore = defineStore('sessions', () => {
     // Grabbed once at store setup (valid Vue/i18n context) and reused inside
     // `complete()` after its await — see useAchievementNotifications.ts.
     const notifications = useAchievementNotifications();
+    const library = useLibraryStore();
 
     const latestIncomplete = computed(() => incomplete.value[0] ?? null);
 
@@ -61,6 +63,8 @@ export const useSessionsStore = defineStore('sessions', () => {
         );
         active.value = null;
         lastCompleted.value = ended;
+        // Studying re-sorts the library (and may add a Learning deck).
+        library.invalidate();
         notifications.announce(newAchievements);
         return ended;
     };

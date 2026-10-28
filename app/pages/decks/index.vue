@@ -1,34 +1,68 @@
 <template>
-    <section class="mx-auto flex max-w-6xl flex-col gap-6 p-6 lg:p-8">
-        <!-- Header: eyebrow + "All decks · N" (left) | filter chips (right) -->
+    <section class="mx-auto flex max-w-6xl flex-col gap-5 p-6 lg:p-8">
+        <!-- Header: "Library · N" (left) | import actions (right) -->
         <header class="flex flex-wrap items-end justify-between gap-4">
-            <div>
-                <p class="text-eyebrow uppercase text-brand-muted">
-                    {{ t('deck.libraryEyebrow') }}
-                </p>
-                <h1 class="mt-1 font-display text-[40px] leading-[1.05] text-cream">
-                    {{ t('deck.allDecks') }}
-                    <span class="font-sans text-[22px] font-normal text-cream-faint">
-                        · {{ store.summaries.length }}
-                    </span>
-                </h1>
+            <h1 class="font-display text-[40px] leading-[1.05] text-cream">
+                {{ t('library.title') }}
+                <span
+                    v-if="ready"
+                    class="font-sans text-[22px] font-normal tabular-nums text-cream-faint"
+                >
+                    · {{ store.total }}
+                </span>
+            </h1>
+            <div class="flex flex-wrap gap-3">
+                <UiButton variant="ghost" @click="aiOpen = true">{{ t('anki.aiImport') }}</UiButton>
+                <UiButton variant="ghost" @click="ankiOpen = true">{{ t('anki.title') }}</UiButton>
             </div>
-            <SharedFilterChips
-                v-if="store.summaries.length"
-                v-model="filter"
-                :options="filterOptions"
-            />
         </header>
 
-        <div class="flex flex-wrap gap-3">
-            <UiButton variant="ghost" @click="aiOpen = true">{{ t('anki.aiImport') }}</UiButton>
-            <UiButton variant="ghost" @click="ankiOpen = true">{{ t('anki.title') }}</UiButton>
+        <!-- Tabs + subject chips (+ language chips under Languages) -->
+        <div v-if="store.facets" class="flex min-w-0 flex-col gap-3">
+            <SharedFilterChips
+                :model-value="filters.scope"
+                :options="scopeChips"
+                :label="t('library.tabsLabel')"
+                scroll
+                @update:model-value="(v) => setFilters({ scope: v as LibraryScope })"
+            />
+            <SharedFilterChips
+                v-if="subjectChips.length > 1"
+                :model-value="filters.subject ?? 'all'"
+                :options="subjectChips"
+                :label="t('library.subjectsLabel')"
+                scroll
+                @update:model-value="
+                    (v) => setFilters({ subject: v === 'all' ? null : (v as Subject), lang: null })
+                "
+            />
+            <SharedFilterChips
+                v-if="filters.subject === 'languages' && languageChips.length > 1"
+                :model-value="filters.lang ?? 'all'"
+                :options="languageChips"
+                :label="t('library.languagesLabel')"
+                scroll
+                @update:model-value="(v) => setFilters({ lang: v === 'all' ? null : v })"
+            />
+        </div>
+
+        <!-- Inline fetch error: previously loaded decks stay on screen -->
+        <div
+            v-if="errorText"
+            role="alert"
+            class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-error-soft/40 bg-error-soft/5 px-4 py-3"
+        >
+            <p class="text-small text-error-soft">{{ t('library.loadError') }} {{ errorText }}</p>
+            <UiButton variant="ghost" :disabled="fetch.loading.value" @click="load">
+                {{ t('practice.retry') }}
+            </UiButton>
         </div>
 
         <!-- Skeleton -->
         <div
-            v-if="loading && !store.summaries.length"
+            v-if="!ready && !errorText"
             class="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4"
+            aria-busy="true"
         >
             <div
                 v-for="i in 8"
@@ -37,32 +71,62 @@
             />
         </div>
 
-        <!-- Empty state -->
-        <UiEmptyState
-            v-else-if="!store.summaries.length"
-            :icon="Library"
-            :title="t('deck.emptyTitle')"
-            :message="t('deck.emptyMessage')"
-        >
-            <template #action>
-                <UiButton variant="primary" @click="navigateTo('/decks/create')">
-                    {{ t('deck.createFirst') }}
-                </UiButton>
-            </template>
-        </UiEmptyState>
+        <template v-else-if="ready && !store.items.length && !errorText">
+            <!-- No decks at all -->
+            <UiEmptyState
+                v-if="emptyKind === 'none'"
+                :icon="Library"
+                :title="t('deck.emptyTitle')"
+                :message="t('deck.emptyMessage')"
+            >
+                <template #action>
+                    <UiButton variant="primary" @click="navigateTo('/decks/create')">
+                        {{ t('deck.createFirst') }}
+                    </UiButton>
+                </template>
+            </UiEmptyState>
+            <!-- Learning is empty -->
+            <UiEmptyState
+                v-else-if="emptyKind === 'learning'"
+                :icon="Library"
+                :title="t('library.emptyLearningTitle')"
+                :message="t('library.emptyLearningMsg')"
+            >
+                <template #action>
+                    <UiButton variant="primary" @click="navigateTo('/discover')">
+                        {{ t('library.browseDiscover') }}
+                    </UiButton>
+                </template>
+            </UiEmptyState>
+            <!-- A filter with no results -->
+            <UiEmptyState
+                v-else
+                :title="t('library.emptyFiltered')"
+                :message="t('library.emptyFilteredMsg')"
+            >
+                <template #action>
+                    <UiButton @click="setFilters({ subject: null, lang: null })">
+                        {{ t('library.clearFilters') }}
+                    </UiButton>
+                </template>
+            </UiEmptyState>
+        </template>
 
         <!-- 4-column deck grid -->
-        <div v-else class="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
+        <div
+            v-else-if="store.items.length"
+            class="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4"
+            :aria-busy="fetch.loading.value"
+        >
             <SharedDeckCard
                 v-for="vm in deckVms"
                 :key="vm.id"
                 :deck="vm"
                 favoritable
                 @toggle-fav="prefs.toggleFavorite"
-                @practice="(id) => navigateTo(`/study/${id}`)"
-                @add-cards="(id) => navigateTo(`/decks/${id}/cards/add`)"
             />
             <NuxtLink
+                v-if="filters.scope !== 'learning' && !filters.subject"
                 to="/decks/create"
                 class="grid min-h-[220px] place-items-center rounded-[20px] border border-dashed border-line-strong text-brand-muted transition-colors hover:border-brand-bright hover:text-cream"
             >
@@ -74,9 +138,9 @@
         </div>
 
         <!-- Load more -->
-        <div v-if="store.nextCursor" class="flex justify-center">
-            <UiButton variant="ghost" :disabled="store.loadingList" @click="store.loadMore()">
-                <UiSpinner v-if="store.loadingList" size="sm" class="mr-2" />
+        <div v-if="store.nextCursor && store.items.length" class="flex justify-center">
+            <UiButton variant="ghost" :disabled="more.loading.value" @click="onLoadMore">
+                <UiSpinner v-if="more.loading.value" size="sm" class="mr-2" />
                 {{ t('common.loadMore') }}
             </UiButton>
         </div>
@@ -88,61 +152,115 @@
 
 <script setup lang="ts">
 import { Plus, Library } from 'lucide-vue-next';
-import { useDecks, usePreferencesStore, useT } from '#imports';
+import { usePreferencesStore, useT } from '#imports';
+import { useLibrary } from '@/composables/useLibrary';
+import { useAnalytics } from '@/composables/useAnalytics';
+import { LIBRARY_SCOPES, type LibraryScope } from '@/api/library';
+import type { LibraryFilters } from '@/stores/library';
 import { deckToCardVm } from '@/utils/deckVm';
-import { SUBJECTS, subjectLabel } from '@/utils/subjects';
+import { isSubject, langLabel, subjectLabel, type Subject } from '@/utils/subjects';
 
 definePageMeta({ layout: 'default' });
 
-const { store, fetchList } = useDecks();
+const { store, fetch, loadMore: more } = useLibrary();
 const prefs = usePreferencesStore();
 const { t } = useT();
+const { apiErrorText } = useApiError();
+const analytics = useAnalytics();
+const route = useRoute();
+const router = useRouter();
 
 useSeo({ title: t('seo.decksTitle'), description: t('seo.appDesc'), noindex: true });
 
-const loading = ref(true);
 const aiOpen = ref(false);
 const ankiOpen = ref(false);
-const filter = ref('all');
+const ready = ref(false);
 
-const favCount = computed(() => store.summaries.filter((d) => prefs.isFavorite(d.id)).length);
-
-const filterOptions = computed(() => {
-    const catCount = new Map<string, number>();
-    for (const d of store.summaries) {
-        const cat = d.subject;
-        catCount.set(cat, (catCount.get(cat) ?? 0) + 1);
-    }
-    const base = [{ key: 'all', label: t('deck.filterAll'), count: store.summaries.length }];
-    if (favCount.value > 0) {
-        base.push({ key: 'mine', label: t('deck.filterMine'), count: favCount.value });
-    }
-    const cats = SUBJECTS.filter((cat) => catCount.has(cat)).map((cat) => ({
-        key: `cat:${cat}`,
-        label: subjectLabel(t, cat),
-        count: catCount.get(cat) ?? 0,
-    }));
-    return [...base, ...cats];
+// Filter state lives in the URL (?scope=&subject=&lang=) so back/refresh keep it.
+const filters = computed<LibraryFilters>(() => {
+    const q = route.query;
+    const scope = LIBRARY_SCOPES.find((s) => s === q.scope) ?? 'all';
+    const subject = isSubject(q.subject) ? q.subject : null;
+    const lang = subject === 'languages' && typeof q.lang === 'string' && q.lang ? q.lang : null;
+    return { scope, subject, lang };
 });
 
-const deckVms = computed(() => {
-    const list = store.summaries.filter((d) => {
-        if (filter.value === 'all') return true;
-        if (filter.value === 'mine') return prefs.isFavorite(d.id);
-        if (filter.value.startsWith('cat:')) {
-            return d.subject === filter.value.slice('cat:'.length);
-        }
-        return true;
+const setFilters = (patch: Partial<LibraryFilters>) => {
+    const next = { ...filters.value, ...patch };
+    if (next.subject !== 'languages') {
+        next.lang = null;
+    }
+    analytics.track('library_filter_changed', {
+        scope: next.scope,
+        subject: next.subject,
+        lang: next.lang,
     });
-    return list
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        .map((d) => deckToCardVm(d, prefs.isFavorite(d.id)));
+    return router.replace({
+        query: {
+            ...(next.scope !== 'all' ? { scope: next.scope } : {}),
+            ...(next.subject ? { subject: next.subject } : {}),
+            ...(next.lang ? { lang: next.lang } : {}),
+        },
+    });
+};
+
+const load = async () => {
+    await fetch.execute(filters.value);
+    if (!fetch.error.value) {
+        ready.value = true;
+    }
+};
+const onLoadMore = () => more.execute();
+
+const errorText = computed(() => {
+    const err = fetch.error.value ?? more.error.value;
+    return err ? apiErrorText(err) : '';
 });
 
-onMounted(async () => {
-    loading.value = true;
+const scopeChips = computed(() => {
+    const counts = store.facets?.scopes;
+    return [
+        { key: 'all', label: t('library.tabAll'), count: counts?.all },
+        { key: 'my', label: t('library.tabMy'), count: counts?.my },
+        { key: 'learning', label: t('library.tabLearning'), count: counts?.learning },
+    ];
+});
+const subjectChips = computed(() => [
+    { key: 'all', label: t('deck.filterAll') },
+    ...(store.facets?.subjects ?? [])
+        .filter((s) => s.count > 0)
+        .map((s) => ({ key: s.subject, label: subjectLabel(t, s.subject), count: s.count })),
+]);
+const languageChips = computed(() => [
+    { key: 'all', label: t('deck.filterAll') },
+    ...(store.facets?.languages ?? [])
+        .filter((l) => l.count > 0)
+        .map((l) => ({ key: l.lang, label: langLabel(t, l.lang), count: l.count })),
+]);
+
+// Which empty state an empty list shows (L8).
+const emptyKind = computed<'none' | 'learning' | 'filtered'>(() => {
+    if (filters.value.subject) {
+        return 'filtered';
+    }
+    if (filters.value.scope === 'learning') {
+        return 'learning';
+    }
+    return 'none';
+});
+
+const deckVms = computed(() => store.items.map((d) => deckToCardVm(d, prefs.isFavorite(d.id))));
+
+watch(() => JSON.stringify(filters.value), load);
+// An Anki import adds decks while the page stays open.
+watch(ankiOpen, (open) => {
+    if (!open) {
+        void load();
+    }
+});
+
+onMounted(() => {
     prefs.hydrate().catch(() => {});
-    await fetchList.execute({ cursor: null, append: false });
-    loading.value = false;
+    void load();
 });
 </script>
