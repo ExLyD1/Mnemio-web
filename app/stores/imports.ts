@@ -2,13 +2,19 @@ import { defineStore, ref } from '#imports';
 import { importApkg } from '@/api/imports';
 import { useDecksStore } from '@/stores/decks';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
+import type { Subject } from '@/utils/subjects';
 
 export const useImportsStore = defineStore('imports', () => {
     const decks = useDecksStore();
     const notifications = useAchievementNotifications();
     const refreshFailed = ref(false);
-    const importFile = async (file: File, sourceLanguage: string, targetLanguage: string) => {
-        const result = await importApkg(file, sourceLanguage, targetLanguage);
+    const importFile = async (
+        file: File,
+        sourceLanguage: string,
+        targetLanguage: string,
+        subject?: Subject,
+    ) => {
+        const result = await importApkg(file, sourceLanguage, targetLanguage, subject);
         notifications.announce(result.newAchievements);
         refreshFailed.value = false;
         try {

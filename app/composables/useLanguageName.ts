@@ -1,22 +1,19 @@
 import { computed } from 'vue';
 import { useT } from '@/composables/useT';
-import { LANGUAGES } from '@/schemas/deck';
+import { useTaxonomy } from '@/composables/useTaxonomy';
+import { langLabel } from '@/utils/subjects';
 
 /**
- * Localized language names. LANGUAGES only carries English labels, so the
- * Ukrainian UI showed "English", "Ukrainian · 20 cards", raw "en" pills, etc.
- * (QA (2) #2 / (3) #12 "translation drops", (3) #13).
+ * Localized language names (`languages.<code>`, falling back to the code as
+ * shown in caps — "UA" for Ukrainian) and the picker options: the supported
+ * languages from the taxonomy, in its order.
  */
 export const useLanguageName = () => {
     const { t } = useT();
-    const name = (code: string | null | undefined): string => {
-        const c = (code ?? '').toLowerCase();
-        if (!c) {
-            return '';
-        }
-        const fallback = LANGUAGES.find((l) => l.code === c)?.label ?? c.toUpperCase();
-        return t(`languages.${c}`, fallback);
-    };
-    const options = computed(() => LANGUAGES.map((l) => ({ value: l.code, label: name(l.code) })));
+    const taxonomy = useTaxonomy();
+    const name = (code: string | null | undefined): string => langLabel(t, code);
+    const options = computed(() =>
+        taxonomy.languages.value.map((code) => ({ value: code, label: name(code) })),
+    );
     return { name, options };
 };

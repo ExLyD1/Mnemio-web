@@ -35,6 +35,12 @@
                     :options="languageOptions"
                 />
                 <UiSelect v-model="newSrc" :label="t('deck.backLang')" :options="languageOptions" />
+                <div class="sm:col-span-2">
+                    <span class="mb-1 block text-small text-brand-muted">
+                        {{ t('deck.categoryLabel') }}
+                    </span>
+                    <UiCategorySelect v-model="newSubject" :options="subjectOptions" allow-auto />
+                </div>
             </div>
 
             <UiInputField
@@ -144,6 +150,8 @@ import { Trash2 } from 'lucide-vue-next';
 import { useT } from '#imports';
 import { useAiImport } from '@/composables/useAiImport';
 import { useLanguageName } from '@/composables/useLanguageName';
+import { useTaxonomy } from '@/composables/useTaxonomy';
+import { subjectLabel } from '@/utils/subjects';
 
 const props = withDefaults(
     defineProps<{
@@ -159,6 +167,19 @@ const emit = defineEmits<{ 'update:modelValue': [boolean]; done: [] }>();
 const { t } = useT();
 
 const { options: languageOptions } = useLanguageName();
+const taxonomy = useTaxonomy();
+const subjectOptions = computed(() =>
+    taxonomy.subjects.value.map((slug) => ({ value: slug, label: subjectLabel(t, slug) })),
+);
+watch(
+    () => props.modelValue,
+    (open) => {
+        if (open && !props.deck) {
+            void taxonomy.ensure();
+        }
+    },
+    { immediate: true },
+);
 
 const close = () => emit('update:modelValue', false);
 const onModelUpdate = (open: boolean) => {
@@ -173,6 +194,7 @@ const {
     newTitle,
     newSrc,
     newTgt,
+    newSubject,
     context,
     rows,
     meta,

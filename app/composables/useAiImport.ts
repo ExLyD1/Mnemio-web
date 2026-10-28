@@ -1,9 +1,10 @@
 import { ref, computed } from 'vue';
 import { useDecks, useToast, useT, useApiError } from '#imports';
-import { enrichWords, type AiDraftCard, type EnrichWordsResult } from '@/api/ai';
+import { classifySubject, enrichWords, type AiDraftCard, type EnrichWordsResult } from '@/api/ai';
 import { bulkAddCards } from '@/api/cards';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import type { CardInput } from '@/types/deck';
+import { isSubject, type Subject } from '@/utils/subjects';
 
 /** A draft card plus a per-row include toggle for the review step. */
 export type ReviewRow = AiDraftCard & { include: boolean };
@@ -39,6 +40,8 @@ export const useAiImport = (opts: UseAiImportOptions) => {
     const newTitle = ref('');
     const newSrc = ref('en');
     const newTgt = ref('en');
+    // '' = Auto-detect: classified from the title and words on create.
+    const newSubject = ref('');
     const context = ref('');
     const rows = ref<ReviewRow[]>([]);
     const meta = ref<EnrichWordsResult['meta'] | null>(null);
@@ -88,6 +91,7 @@ export const useAiImport = (opts: UseAiImportOptions) => {
         step.value = 'input';
         rawWords.value = '';
         newTitle.value = '';
+        newSubject.value = '';
         context.value = '';
         rows.value = [];
         meta.value = null;
@@ -141,6 +145,25 @@ export const useAiImport = (opts: UseAiImportOptions) => {
         difficulty: r.difficulty,
     });
 
+    // The picked subject, or (Auto) the server's classification. Never blocks
+    // the create: on failure it's omitted and the server infers one.
+    const pickSubject = async (title: string, words: string[]): Promise<Subject | undefined> => {
+        if (isSubject(newSubject.value)) {
+            return newSubject.value;
+        }
+        try {
+            const res = await classifySubject({
+                title,
+                sourceLanguage: newSrc.value,
+                targetLanguage: newTgt.value,
+                words,
+            });
+            return res.subject;
+        } catch {
+            return undefined;
+        }
+    };
+
     const onCommit = async () => {
         const cards = rows.value
             .filter((r) => r.include && r.definition.trim().length > 0)
@@ -166,11 +189,16 @@ export const useAiImport = (opts: UseAiImportOptions) => {
                 error.value = t('ai.needTitle');
                 return;
             }
+            const subject = await pickSubject(
+                title,
+                cards.map((c) => c.word),
+            );
             const created = await create.execute({
                 title,
                 description: null,
                 sourceLanguage: newSrc.value,
                 targetLanguage: newTgt.value,
+                ...(subject ? { subject } : {}),
             });
             if (!created) {
                 error.value = apiErrorText(create.error.value, 'ai.enrichError');
@@ -194,6 +222,7 @@ export const useAiImport = (opts: UseAiImportOptions) => {
         newTitle,
         newSrc,
         newTgt,
+        newSubject,
         context,
         rows,
         meta,

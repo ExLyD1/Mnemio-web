@@ -1,8 +1,8 @@
 import { defineEventHandler, getQuery, createError } from 'h3';
-import { LANGUAGES } from '../../../app/schemas/deck';
+import { SUPPORTED_LANGS } from '../../../app/utils/subjects';
 import { makeCache } from './_cache';
 
-const VALID_LANGS = new Set<string>(LANGUAGES.map((l) => l.code));
+const VALID_LANGS: ReadonlySet<string> = new Set(SUPPORTED_LANGS);
 
 const CACHE_MAX = 2000;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;

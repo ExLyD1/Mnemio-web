@@ -1,5 +1,5 @@
 import { defineEventHandler, getQuery, createError } from 'h3';
-import { LANGUAGES } from '../../../app/schemas/deck';
+import { SUPPORTED_LANGS } from '../../../app/utils/subjects';
 import { makeCache } from './_cache';
 
 // NOTE: lives under `server/routes/_lex/`, NOT `server/api/**` — the
@@ -7,7 +7,7 @@ import { makeCache } from './_cache';
 // `/api` straight to the backend, which would shadow a `/api/_lex/*` handler.
 // Same trap the sitemap source (`server/routes/__sitemap__/urls.ts`) avoids.
 
-const VALID_LANGS = new Set<string>(LANGUAGES.map((l) => l.code));
+const VALID_LANGS: ReadonlySet<string> = new Set(SUPPORTED_LANGS);
 
 const CACHE_MAX = 2000;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;

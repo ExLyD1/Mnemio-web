@@ -1,21 +1,9 @@
 import { z } from 'zod';
+import { SUBJECTS, SUPPORTED_LANGS } from '@/utils/subjects';
 
-export const LANGUAGES = [
-    { code: 'en', label: 'English' },
-    { code: 'es', label: 'Spanish' },
-    { code: 'fr', label: 'French' },
-    { code: 'de', label: 'German' },
-    { code: 'it', label: 'Italian' },
-    { code: 'pt', label: 'Portuguese' },
-    { code: 'uk', label: 'Ukrainian' },
-    { code: 'pl', label: 'Polish' },
-    { code: 'ja', label: 'Japanese' },
-    { code: 'ko', label: 'Korean' },
-    { code: 'zh', label: 'Chinese' },
-    { code: 'ru', label: 'Russian' },
-] as const;
-
-const languageCodes = LANGUAGES.map((l) => l.code) as readonly string[];
+// The backend's 28 codes (GET /public/taxonomy serves the same list; the
+// pickers offer it from there).
+const languageCodes: readonly string[] = SUPPORTED_LANGS;
 
 // Source and target may match: a monolingual deck (e.g. English words with
 // English definitions) is a legitimate way to learn.
@@ -38,7 +26,7 @@ export const deckSchema = z.object({
         .string()
         .refine((v) => languageCodes.includes(v), 'deck.errors.language_invalid'),
     isPublic: z.boolean().default(true),
-    subject: z.string().max(40).default('other'),
+    subject: z.enum(SUBJECTS).default('other'),
 });
 
 export type DeckSchema = z.infer<typeof deckSchema>;

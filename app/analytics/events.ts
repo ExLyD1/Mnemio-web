@@ -14,6 +14,7 @@
  */
 
 import type { CancelReason } from '@/types/billing';
+import type { Subject } from '@/utils/subjects';
 
 export type Plan = 'free' | 'trial' | 'premium';
 export type StudyModeProp = 'flashcard' | 'multiple_choice' | 'srs';
@@ -66,6 +67,8 @@ export type AnalyticsEvent =
               target_language?: string;
               is_first_deck: boolean;
               is_public: boolean;
+              /** The subject the server stored (spec 002). */
+              subject?: Subject;
           };
       }
     | {

@@ -233,6 +233,7 @@ export const useImageDeck = (opts: { onCreated?: (deckId: string) => void } = {}
                 target_language: h.targetLanguage,
                 is_first_deck: store.summaries.length === 0,
                 is_public: false,
+                subject: created.subject,
             });
             toast.success(t('ai.added', cards.length));
             notifications.announce(newAchievements);

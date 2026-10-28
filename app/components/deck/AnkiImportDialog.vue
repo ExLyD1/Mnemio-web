@@ -80,6 +80,12 @@
                     :label="t('anki.backLanguage')"
                     :disabled="upload.loading.value"
                 />
+                <div>
+                    <p class="mb-1 text-small text-brand-muted">
+                        {{ t('deck.categoryLabel') }}
+                    </p>
+                    <UiCategorySelect v-model="subject" :options="subjectOptions" allow-auto />
+                </div>
                 <p
                     v-if="localError || upload.error.value"
                     role="alert"
@@ -101,6 +107,8 @@
 import { Upload } from 'lucide-vue-next';
 import { useApkgImport } from '@/composables/useApkgImport';
 import { usePracticePreferences } from '@/composables/usePracticePreferences';
+import { useTaxonomy } from '@/composables/useTaxonomy';
+import { isSubject, subjectLabel } from '@/utils/subjects';
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>();
 const { t } = useT();
@@ -113,6 +121,12 @@ const dragging = ref(false);
 const localError = ref('');
 const frontLanguage = ref('en');
 const backLanguage = ref('uk');
+// '' = Auto-detect: the server classifies each imported deck.
+const subject = ref('');
+const taxonomy = useTaxonomy();
+const subjectOptions = computed(() =>
+    taxonomy.subjects.value.map((slug) => ({ value: slug, label: subjectLabel(t, slug) })),
+);
 const selectFile = (selected?: File) => {
     if (upload.loading.value || !selected) return;
     localError.value = '';
@@ -131,7 +145,12 @@ const onDrop = (event: DragEvent) => {
 };
 const submit = async () => {
     if (!file.value || upload.loading.value) return;
-    await upload.execute(file.value, backLanguage.value, frontLanguage.value);
+    await upload.execute(
+        file.value,
+        backLanguage.value,
+        frontLanguage.value,
+        isSubject(subject.value) ? subject.value : undefined,
+    );
 };
 const openFirst = () => {
     const first = upload.data.value?.decks[0];
@@ -147,6 +166,8 @@ watch(
         localError.value = '';
         upload.data.value = null;
         upload.error.value = null;
+        subject.value = '';
+        void taxonomy.ensure();
         if (!prefs.store.loaded) await prefs.hydrate.execute();
         frontLanguage.value = prefs.store.learningLanguages[0] ?? 'en';
         backLanguage.value = prefs.store.nativeLanguage ?? 'uk';

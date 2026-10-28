@@ -93,8 +93,10 @@ const props = withDefaults(
         modelValue: string;
         options: Option[];
         placeholder?: string;
+        /** Adds an "Auto-detect" first option (value `''`): the server picks. */
+        allowAuto?: boolean;
     }>(),
-    { placeholder: '' },
+    { placeholder: '', allowAuto: false },
 );
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
@@ -109,14 +111,20 @@ const query = ref('');
 const focused = ref(-1);
 const panelStyle = ref<Record<string, string>>({});
 
+const allOptions = computed<Option[]>(() =>
+    props.allowAuto
+        ? [{ value: '', label: t('deck.subjectAuto') }, ...props.options]
+        : props.options,
+);
+
 const selectedLabel = computed(
-    () => props.options.find((o) => o.value === props.modelValue)?.label ?? props.placeholder,
+    () => allOptions.value.find((o) => o.value === props.modelValue)?.label ?? props.placeholder,
 );
 
 const filtered = computed(() => {
     const q = query.value.trim().toLowerCase();
-    if (!q) return props.options;
-    return props.options.filter((o) => o.label.toLowerCase().includes(q));
+    if (!q) return allOptions.value;
+    return allOptions.value.filter((o) => o.label.toLowerCase().includes(q));
 });
 
 const computePosition = () => {

@@ -2,6 +2,7 @@ import { http } from '@/utils/http';
 import { normLang } from '@/api/decks';
 import { runSse, type StreamError } from '@/utils/sse';
 import type { CardDifficulty } from '@/types/deck';
+import type { Subject } from '@/utils/subjects';
 
 export interface AiDraftCard {
     word: string;
@@ -196,6 +197,27 @@ export interface EnrichWordsResult {
 
 export const enrichWords = (input: EnrichWordsInput): Promise<EnrichWordsResult> =>
     http('/ai/enrich-words', { method: 'POST', body: input });
+
+export interface ClassifySubjectInput {
+    title: string;
+    description?: string;
+    sourceLanguage: string;
+    targetLanguage: string;
+    /** ≤ 20; the server uses the first 10. */
+    words: string[];
+}
+
+/**
+ * POST /ai/classify-subject — files a deck under one of the fixed subjects.
+ * Unbudgeted and never fails on an AI problem (the server falls back to rules).
+ */
+export const classifySubject = (
+    input: ClassifySubjectInput,
+): Promise<{ subject: Subject; source: 'ai' | 'rules' }> =>
+    http('/ai/classify-subject', {
+        method: 'POST',
+        body: { ...input, words: input.words.slice(0, 20) },
+    });
 
 export type AiSuggestContext = 'dashboard' | 'deck_detail' | 'review';
 

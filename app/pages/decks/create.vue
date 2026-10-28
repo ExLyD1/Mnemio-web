@@ -466,7 +466,7 @@ import { useDecksStore } from '@/stores/decks';
 import { useLanguageName } from '@/composables/useLanguageName';
 import type { DeckInput } from '@/types/deck';
 import { useTaxonomy } from '@/composables/useTaxonomy';
-import { isSubject, subjectLabel, type Subject } from '@/utils/subjects';
+import { isSubject, subjectLabel, suggestSubject, type Subject } from '@/utils/subjects';
 
 definePageMeta({ layout: 'default' });
 
@@ -506,7 +506,14 @@ useSeo({ title: t('seo.deckCreateTitle'), description: t('seo.appDesc'), noindex
 
 // Form state
 const title = ref('');
-const category = ref<Subject>('other');
+// Suggested from the languages (C1) until the user picks one themselves.
+const pickedCategory = ref<Subject | null>(null);
+const category = computed<Subject>({
+    get: () => pickedCategory.value ?? suggestSubject(sourceLanguage.value, targetLanguage.value),
+    set: (v) => {
+        pickedCategory.value = v;
+    },
+});
 const description = ref('');
 const sourceLanguage = ref('en');
 const targetLanguage = ref('es');
@@ -571,22 +578,27 @@ const validate = (): boolean => {
     return true;
 };
 
-const trackDeckCreated = (deckId: string, source: 'manual' | 'ai_generated', cards: number) =>
+const trackDeckCreated = (
+    deck: { id: string; subject: Subject },
+    source: 'manual' | 'ai_generated',
+    cards: number,
+) =>
     analytics.track('deck_created', {
-        deck_id: deckId,
+        deck_id: deck.id,
         creation_source: source,
         card_count: cards,
         source_language: sourceLanguage.value,
         target_language: targetLanguage.value,
         is_first_deck: isFirstDeck(),
         is_public: isPublic.value,
+        subject: deck.subject,
     });
 
 const onCreateEmpty = async () => {
     if (!validate()) return;
     const deck = await create.execute(buildInput());
     if (deck) {
-        trackDeckCreated(deck.id, 'manual', 0);
+        trackDeckCreated(deck, 'manual', 0);
         toast.success(t('deck.created'));
         await navigateTo(`/decks/${deck.id}`);
     }
@@ -596,7 +608,7 @@ const onCreateAndAdd = async () => {
     if (!validate()) return;
     const deck = await create.execute(buildInput());
     if (deck) {
-        trackDeckCreated(deck.id, 'manual', 0);
+        trackDeckCreated(deck, 'manual', 0);
         toast.success(t('deck.created'));
         await navigateTo(`/decks/${deck.id}/cards/add`);
     }
@@ -699,6 +711,7 @@ const onAccept = async (d: AiDeckDraft) => {
             target_language: d.targetLanguage,
             is_first_deck: isFirstDeck(),
             is_public: false,
+            subject: deck.subject,
         });
         toast.success(t('deck.aiCreated'));
         notifications.announce(newAchievements);
