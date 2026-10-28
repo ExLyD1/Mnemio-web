@@ -13,12 +13,30 @@ export interface SrsQueueItem {
     previews: Previews;
 }
 
+/** One deck's due count in a queue's scope (powers the /review hub). */
+export interface SrsDeckDue {
+    deckId: string;
+    deckTitle: string;
+    coverColor: string | null;
+    glyph: string | null;
+    due: number;
+}
+
 export interface SrsQueue {
     items: SrsQueueItem[];
     counts: { new: number; learning: number; review: number };
     nextDueAt: string | null;
     newAvailable: number;
     limits: { newPerDay: number; newIntroducedToday: number };
+    // Uncapped per-deck due counts, most due first.
+    byDeck: SrsDeckDue[];
+}
+
+/** Which cards a queue covers: one deck (with its new cards), a set of decks, or all. */
+export interface QueueScope {
+    deckId?: string;
+    deckIds?: string[];
+    extraNew?: number;
 }
 
 export interface CardProgress {

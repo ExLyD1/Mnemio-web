@@ -23,6 +23,8 @@ export interface StudySession {
     counts: SessionCounts;
     revisitCardIds: string[];
     durationMs: number;
+    // Groups the per-deck sessions written by one review run; null for deck study.
+    runId: string | null;
     startedAt: string;
     endedAt: string | null;
 }

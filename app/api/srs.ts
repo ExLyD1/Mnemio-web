@@ -1,5 +1,12 @@
 import { http } from '@/utils/http';
-import type { CardProgress, SrsRating, SrsState, SrsQueue, Previews } from '@/types/srs';
+import type {
+    CardProgress,
+    SrsRating,
+    SrsState,
+    SrsQueue,
+    Previews,
+    QueueScope,
+} from '@/types/srs';
 import type { Achievement } from '@/types/achievement';
 
 interface WireProgress {
@@ -80,10 +87,17 @@ export const rateCard = async (
 
 /**
  * The study queue in one request (the http util sends X-Timezone, which sets
- * the server's day rollover). With a deck it also holds that deck's new cards.
+ * the server's day rollover). With a deck it also holds that deck's new cards;
+ * with a set of decks it is due-only, narrowed to them.
  */
-export const getQueue = (deckId?: string, extraNew = 0): Promise<SrsQueue> =>
-    http<SrsQueue>('/srs/queue', { query: { deckId, extraNew } });
+export const getQueue = (scope: QueueScope = {}): Promise<SrsQueue> =>
+    http<SrsQueue>('/srs/queue', {
+        query: {
+            deckId: scope.deckId,
+            deckIds: scope.deckIds?.length ? scope.deckIds.join(',') : undefined,
+            extraNew: scope.extraNew ?? 0,
+        },
+    });
 
 export const listProgress = async (): Promise<CardProgress[]> => {
     const res = await http<{ items: WireProgress[] }>('/srs/progress');

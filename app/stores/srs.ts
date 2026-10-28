@@ -1,11 +1,13 @@
 import { defineStore, ref, computed } from '#imports';
 import * as srsApi from '@/api/srs';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
-import type { CardProgress, SrsRating, SrsQueueItem } from '@/types/srs';
+import type { CardProgress, QueueScope, SrsDeckDue, SrsRating, SrsQueueItem } from '@/types/srs';
 
 export const useSrsStore = defineStore('srs', () => {
     const progress = ref<Record<string, CardProgress>>({});
     const dueCards = ref<SrsQueueItem[]>([]);
+    // Per-deck due counts across every deck (uncapped), for the review hub.
+    const byDeck = ref<SrsDeckDue[]>([]);
     const loading = ref(false);
 
     // Grabbed once at store setup (valid Vue/i18n context) and reused inside
@@ -58,6 +60,7 @@ export const useSrsStore = defineStore('srs', () => {
                     items.map((p): [string, CardProgress] => [p.cardId, p]),
                 );
                 dueCards.value = queue.items;
+                byDeck.value = queue.byDeck;
                 fetchedAt = Date.now();
             } finally {
                 if (seq === fetchSeq) {
@@ -92,7 +95,17 @@ export const useSrsStore = defineStore('srs', () => {
         return result;
     };
 
-    const fetchQueue = (deckId?: string, extraNew = 0) => srsApi.getQueue(deckId, extraNew);
+    const fetchQueue = (scope: QueueScope = {}) => srsApi.getQueue(scope);
 
-    return { progress, dueCards, dueCount, nextReviewAt, loading, fetchAll, rate, fetchQueue };
+    return {
+        progress,
+        dueCards,
+        byDeck,
+        dueCount,
+        nextReviewAt,
+        loading,
+        fetchAll,
+        rate,
+        fetchQueue,
+    };
 });

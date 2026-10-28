@@ -1,6 +1,6 @@
 import { defineStore, ref, computed } from '#imports';
 import * as sessionsApi from '@/api/sessions';
-import type { SessionPatch } from '@/api/sessions';
+import type { SessionPatch, SessionSnapshot } from '@/api/sessions';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
 import type { StudyMode, StudySession } from '@/types/session';
 
@@ -24,6 +24,7 @@ export const useSessionsStore = defineStore('sessions', () => {
         mode: StudyMode;
         cardIds?: string[];
         srsEnabled?: boolean;
+        runId?: string;
     }) => {
         const replaced = active.value;
         const session = await sessionsApi.startSession({
@@ -31,6 +32,7 @@ export const useSessionsStore = defineStore('sessions', () => {
             mode: input.mode,
             cardIds: input.cardIds,
             srsEnabled: input.srsEnabled,
+            runId: input.runId,
         });
         active.value = session;
         if (replaced) {
@@ -48,12 +50,14 @@ export const useSessionsStore = defineStore('sessions', () => {
         return updated;
     };
 
-    const complete = async (_xpAwarded?: number) => {
+    // `snapshot` writes the final tally in the completing request (review runs).
+    const complete = async (snapshot?: SessionSnapshot) => {
         if (!active.value) {
             return null;
         }
         const { session: ended, newAchievements } = await sessionsApi.completeSession(
             active.value.id,
+            snapshot,
         );
         active.value = null;
         lastCompleted.value = ended;

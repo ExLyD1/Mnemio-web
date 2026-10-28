@@ -33,7 +33,7 @@ export const useSrsQueue = () => {
     };
 
     const load = async (deckId?: string, extraNew = 0) => {
-        const result = await fetchQueue.execute(deckId, extraNew);
+        const result = await fetchQueue.execute({ deckId, extraNew });
         if (!result) {
             return false;
         }

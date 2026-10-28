@@ -18,6 +18,7 @@ interface WireSession {
     counts: SessionCounts;
     revisitCardIds: string[];
     durationMs: number;
+    runId?: string | null;
     startedAt: string;
     endedAt: string | null;
 }
@@ -45,6 +46,7 @@ const toSession = (s: WireSession): StudySession => ({
     counts: s.counts,
     revisitCardIds: s.revisitCardIds,
     durationMs: s.durationMs,
+    runId: s.runId ?? null,
     startedAt: s.startedAt,
     endedAt: s.endedAt,
 });
@@ -67,6 +69,7 @@ export const startSession = async (input: {
     mode: StudyMode;
     cardIds?: string[];
     srsEnabled?: boolean;
+    runId?: string;
 }): Promise<StudySession> => {
     const s = await http<WireSession>('/sessions', {
         method: 'POST',
@@ -79,6 +82,7 @@ export const startSession = async (input: {
             // whole deck, and browse mode rolls that inflated number into the
             // day's activity counters.
             ...(input.cardIds?.length ? { cardIds: input.cardIds } : {}),
+            ...(input.runId ? { runId: input.runId } : {}),
         },
     });
     return toSession(s);
@@ -107,11 +111,21 @@ export const updateActive = async (
     return toSession(s);
 };
 
+/** A session's final tally, written in the same request that completes it. */
+export interface SessionSnapshot {
+    correct?: number;
+    counts?: SessionCounts;
+    revisitCardIds?: string[];
+    durationMs?: number;
+}
+
 export const completeSession = async (
     sessionId: string,
+    snapshot?: SessionSnapshot,
 ): Promise<{ session: StudySession; newAchievements: Achievement[] }> => {
     const s = await http<WireCompleteResult>(`/sessions/${sessionId}/complete`, {
         method: 'POST',
+        ...(snapshot ? { body: clean({ ...snapshot }) } : {}),
     });
     return { session: toSession(s), newAchievements: s.newAchievements };
 };

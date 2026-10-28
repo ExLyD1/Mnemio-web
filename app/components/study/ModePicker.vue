@@ -153,7 +153,7 @@ const initialize = async () => {
         return;
     }
     if (!empty) {
-        await fetchQueue.execute(props.deckId);
+        await fetchQueue.execute({ deckId: props.deckId });
         if (fetchQueue.error.value) error.value = apiErrorText(fetchQueue.error.value);
     }
     ready.value = true;
