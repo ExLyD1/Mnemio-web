@@ -554,9 +554,18 @@
         "meaning": "Meaning",
         "mimiOnline": "online",
         "mimiChatTitle": "Mimi",
-        "mimiSuggestTags": "Suggest tags",
-        "mimiHarderExample": "Harder example",
-        "mimiTranslate": "Translate",
+        "mimiGreeting": "Hi! I'm Mimi. Ask me anything about your words: examples, synonyms, translations or grammar. For example: “5 German examples with Haus”.",
+        "mimiChip": {
+            "examples": "5 examples",
+            "synonyms": "Synonyms",
+            "grammar": "Explain grammar"
+        },
+        "mimiChipAsk": {
+            "examples": "Give me 5 example sentences with “{word}”",
+            "synonyms": "Give me synonyms for “{word}”",
+            "grammar": "Explain the grammar of “{word}”"
+        },
+        "mimiMessagesLeft": "{n} of {cap} messages left today",
         "playAudio": "Play audio",
         "statusAria": "Status: {state}",
         "errors": {
@@ -888,7 +897,10 @@
         "loadMore": "Load older chats",
         "tooLong": "That message is too long — keep it under {n} characters.",
         "resetsAt": "Resets {time}.",
-        "usage": "{decks}/{deckCap} decks · {messages}/{messageCap} messages left today",
+        "usageLeft": "Left today: {parts}",
+        "usageDecks": "{n} of {cap} new decks",
+        "usageMessages": "{n} of {cap} messages",
+        "usageActions": "{n} of {cap} card additions",
         "deckAttach": "Add a deck",
         "deckChange": "Change deck",
         "deckDetach": "Remove deck",
@@ -898,7 +910,7 @@
         "deckSkipped": "{n} already in this deck, skipped",
         "err": {
             "generic": "Something went wrong. Please try again.",
-            "AI_BUDGET_EXCEEDED": "You've reached today's AI chat limit. Try again tomorrow.",
+            "AI_BUDGET_EXCEEDED": "You've used all your Mimi messages for today.",
             "RATE_LIMITED": "Too many messages — slow down a moment and retry.",
             "AI_PROVIDER_ERROR": "The AI is unavailable right now. Please try again.",
             "AI_VALIDATION_FAILED": "The AI couldn't produce a reply. Try rephrasing.",
@@ -1118,12 +1130,13 @@
     },
     "pricing": {
         "seoTitle": "Pricing — Mnemio Premium",
-        "seoDesc": "Upgrade to Mnemio Premium for unlimited AI, advanced study features, and more.",
+        "seoDesc": "Upgrade to Mnemio Premium for unlimited AI, advanced statistics, and priority support. $6/month, or $60/year with 2 months free.",
         "title": "Simple, honest pricing.",
         "subtitle": "Everything you need to learn more and remember longer.",
         "toggleMonthly": "Monthly",
         "toggleAnnual": "Annual",
-        "saveBadge": "Save 20%",
+        "saveBadge": "2 months free",
+        "annualNote": "Pay for 10 months, get 12",
         "freePlanName": "Free",
         "freePrice": "Free",
         "trialNote": "Includes a {n}-day free trial",
@@ -1140,7 +1153,7 @@
         "features": {
             "srs": "Spaced repetition",
             "decksUnlimited": "Unlimited decks",
-            "aiLimited": "AI generator (10/day)",
+            "aiLimited": "AI generator (daily limits)",
             "aiUnlimited": "Unlimited AI generator",
             "advancedStats": "Advanced statistics",
             "prioritySupport": "Priority support"
@@ -1196,10 +1209,10 @@
         "bodyAiBudget": "You've used all {cap} free AI requests for today. Upgrade to continue.",
         "bodyAiBudgetChat": "You've used all {cap} free AI messages for today. Upgrade to keep chatting.",
         "bodyAiBudgetDecks": "You've built all {cap} free AI decks for today. Upgrade to make more.",
-        "bodyAiBudgetImage": "You've used all {cap} free image imports for today. Upgrade to add more.",
+        "bodyAiBudgetActions": "You've used all {cap} free card additions from Mimi today. Upgrade to add more.",
         "bodyAiBudgetGeneric": "You've reached today's free AI limit. Upgrade to continue.",
         "ctaMonthly": "Go monthly",
-        "ctaAnnual": "Go annual (save 20%)",
+        "ctaAnnual": "Go annual (2 months free)",
         "ctaContact": "Contact us",
         "dismiss": "Maybe later"
     },

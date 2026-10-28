@@ -70,14 +70,25 @@ export const listConversations = (
         query: { cursor: params.cursor ?? undefined, limit: params.limit ?? 30 },
     });
 
-/** Today's AI allowance, so the composer can show a limit before it's hit. */
+/**
+ * Today's Mimi allowance, so the composer can show a limit before it's hit.
+ * Users see three: `deck` (new decks), `message` (chat messages) and `action`
+ * (cards Mimi generates into an existing deck). `tip` and `import` are internal.
+ */
+export type AiUsageKind = 'deck' | 'message' | 'action' | 'tip' | 'import';
 export interface AiUsage {
     plan: 'free' | 'premium';
     /** ISO — next UTC midnight. */
     resetsAt: string;
     kinds: Record<
-        'enrich' | 'generate' | 'suggest' | 'import' | 'chat' | 'image',
-        { used: number; cap: number; remaining: number }
+        AiUsageKind,
+        {
+            used: number;
+            cap: number;
+            remaining: number;
+            /** Premium: the cap is a hidden safety net — show no counter. */
+            unlimited: boolean;
+        }
     >;
 }
 

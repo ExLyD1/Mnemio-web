@@ -436,6 +436,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useDecksStore } from '@/stores/decks';
 import { usePremiumGateStore } from '@/stores/premiumGate';
 import { renderMarkdown } from '@/utils/markdown';
+import { isRunningLow } from '@/utils/usageHint';
 
 definePageMeta({ layout: 'default' });
 
@@ -496,17 +497,23 @@ const onPickDeck = async (id: string, close: () => void) => {
     await chat.setContextDeck(id);
 };
 
-/** Today's allowance, shown before the user runs into it. */
+/** Today's allowance — shown only for the limits that are about to run out. */
 const usageLabel = computed(() => {
     const u = chat.usage.value;
     if (!u) {
         return '';
     }
-    return t('chat.usage')
-        .replace('{decks}', String(u.kinds.enrich.remaining))
-        .replace('{deckCap}', String(u.kinds.enrich.cap))
-        .replace('{messages}', String(u.kinds.chat.remaining))
-        .replace('{messageCap}', String(u.kinds.chat.cap));
+    const parts: string[] = [];
+    const add = (kind: 'deck' | 'message' | 'action', key: string) => {
+        const k = u.kinds[kind];
+        if (isRunningLow(k)) {
+            parts.push(t(key).replace('{n}', String(k.remaining)).replace('{cap}', String(k.cap)));
+        }
+    };
+    add('deck', 'chat.usageDecks');
+    add('message', 'chat.usageMessages');
+    add('action', 'chat.usageActions');
+    return parts.length ? t('chat.usageLeft').replace('{parts}', parts.join(' · ')) : '';
 });
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];

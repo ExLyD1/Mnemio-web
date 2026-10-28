@@ -4,7 +4,7 @@ import { useAnalytics } from '@/composables/useAnalytics';
 export const usePremiumGateStore = defineStore('premiumGate', () => {
     const open = ref(false);
     const context = ref<'ai_budget' | 'feature' | null>(null);
-    // `kind` says WHICH cap was hit ('chat', 'enrich', 'generate', 'image') so
+    // `kind` says WHICH cap was hit ('deck', 'message', 'action') so
     // the modal names the real limit instead of one generic number.
     const details = ref<{ capPerDay?: number; kind?: string } | null>(null);
 

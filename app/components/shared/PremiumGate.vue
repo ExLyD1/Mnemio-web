@@ -59,10 +59,9 @@ const { t } = useT();
  * fall back to wording that carries no number at all.
  */
 const KIND_KEY: Record<string, string> = {
-    chat: 'premiumGate.bodyAiBudgetChat',
-    enrich: 'premiumGate.bodyAiBudgetDecks',
-    generate: 'premiumGate.bodyAiBudgetDecks',
-    image: 'premiumGate.bodyAiBudgetImage',
+    message: 'premiumGate.bodyAiBudgetChat',
+    deck: 'premiumGate.bodyAiBudgetDecks',
+    action: 'premiumGate.bodyAiBudgetActions',
 };
 
 const body = computed(() => {

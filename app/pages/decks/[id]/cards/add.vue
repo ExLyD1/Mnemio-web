@@ -260,21 +260,30 @@
 
                 <!-- Messages -->
                 <div ref="chatBodyEl" class="flex flex-1 flex-col gap-2.5 overflow-y-auto p-3.5">
+                    <div
+                        class="max-w-[88%] self-start rounded-[4px_14px_14px_14px] border border-line bg-bg-surface px-3 py-2.5 text-[13px] leading-[1.5] text-cream"
+                    >
+                        {{ t('card.mimiGreeting') }}
+                    </div>
                     <template v-for="(msg, i) in chatMessages" :key="i">
                         <div
-                            v-if="msg.role === 'mimi'"
-                            class="max-w-[88%] self-start rounded-[4px_14px_14px_14px] border border-line bg-bg-surface px-3 py-2.5 text-[13px] leading-[1.5] text-cream"
-                            v-html="msg.html"
+                            v-if="msg.role === 'mimi' && msg.text"
+                            class="chat-prose max-w-[88%] self-start rounded-[4px_14px_14px_14px] border border-line bg-bg-surface px-3 py-2.5 text-[13px] leading-[1.5] text-cream"
+                            v-html="renderMarkdown(msg.text)"
                         />
                         <div
                             v-else-if="msg.role === 'user'"
-                            class="max-w-[88%] self-end rounded-[14px_4px_14px_14px] border border-pink/25 bg-brand px-3 py-2.5 text-[13px] leading-[1.5] text-on-color"
+                            class="max-w-[88%] self-end whitespace-pre-wrap rounded-[14px_4px_14px_14px] border border-pink/25 bg-brand px-3 py-2.5 text-[13px] leading-[1.5] text-on-color"
                         >
                             {{ msg.text }}
                         </div>
                     </template>
 
-                    <div v-if="chatLoading" class="flex items-center gap-2">
+                    <p v-if="chatError" class="self-start px-1 text-[13px] text-pink">
+                        {{ chatError }}
+                    </p>
+
+                    <div v-if="chatLoading && !streamingText" class="flex items-center gap-2">
                         <div
                             class="flex items-center gap-1 rounded-[4px_14px_14px_14px] bg-bg-surface px-3 py-3 text-cream-faint"
                         >
@@ -287,6 +296,19 @@
 
                 <!-- Input -->
                 <div class="border-t border-line p-3">
+                    <!-- Starter questions: teach what Mimi can do without a blank page. -->
+                    <div class="mb-2.5 flex flex-wrap gap-1.5">
+                        <button
+                            v-for="chip in chips"
+                            :key="chip.key"
+                            type="button"
+                            class="rounded-full border border-line-strong px-3 py-1.5 text-[12px] font-semibold text-cream-dim transition-colors hover:text-cream disabled:opacity-40"
+                            :disabled="chatLoading"
+                            @click="onChip(chip.key)"
+                        >
+                            {{ t(`card.mimiChip.${chip.key}`) }}
+                        </button>
+                    </div>
                     <div
                         class="flex items-center gap-2 rounded-xl border border-line-strong bg-bg-surface px-3 py-2.5"
                     >
@@ -302,11 +324,14 @@
                             type="button"
                             class="grid size-7 shrink-0 place-items-center rounded-lg bg-brand text-on-color disabled:opacity-40"
                             :disabled="!chatInput.trim() || chatLoading"
-                            @click="onChatSend"
+                            @click="onChatSend()"
                         >
                             <ArrowRight class="size-3.5" />
                         </button>
                     </div>
+                    <p v-if="messagesLeft" class="mt-2 text-center text-[12px] text-cream-faint">
+                        {{ messagesLeft }}
+                    </p>
                 </div>
             </div>
         </Transition>
@@ -317,8 +342,12 @@
 import { Volume2, Image as ImageIcon, Check, X, ArrowRight } from 'lucide-vue-next';
 import { useDecks, useCards, useToast, useT, useApiError } from '#imports';
 import { uploadMedia } from '@/api/media';
+import * as chatApi from '@/api/chat';
 import { useAnalytics } from '@/composables/useAnalytics';
-import * as aiApi from '@/api/ai';
+import { useAuthStore } from '@/stores/auth';
+import { usePremiumGateStore } from '@/stores/premiumGate';
+import { renderMarkdown } from '@/utils/markdown';
+import { isRunningLow } from '@/utils/usageHint';
 import type { MediaKind } from '@/api/media';
 import type { CardDifficulty } from '@/types/deck';
 
@@ -333,9 +362,9 @@ const toast = useToast();
 const { t } = useT();
 const { apiErrorText } = useApiError();
 const analytics = useAnalytics();
-
-// Whether AI enrichment touched the current card (drives card_added.method).
-const usedEnrich = ref(false);
+const auth = useAuthStore();
+const premiumGate = usePremiumGateStore();
+const { locale } = useI18n();
 
 useSeo({ title: t('seo.cardAddTitle'), description: t('seo.appDesc'), noindex: true });
 
@@ -352,14 +381,22 @@ const imageInput = ref<HTMLInputElement | null>(null);
 
 const previewFlipped = ref(false);
 
-// --- Mimi chat state ---
-type ChatMsg = { role: 'mimi'; html: string } | { role: 'user'; text: string };
+// --- Mimi side chat ---
+// A plain conversation with Mimi (examples, synonyms, grammar…). It never fills
+// the form — the user decides what goes on the card. Each sent message is one of
+// the user's daily Mimi messages.
+type ChatMsg = { role: 'mimi' | 'user'; text: string };
 
 const mimiOpen = ref(false);
 const chatBodyEl = ref<HTMLElement | null>(null);
 const chatMessages = ref<ChatMsg[]>([]);
 const chatInput = ref('');
 const chatLoading = ref(false);
+const chatError = ref('');
+const streamingText = ref('');
+const conversationId = ref<string | null>(null);
+const usage = ref<chatApi.AiUsage | null>(null);
+let abort: AbortController | null = null;
 
 const difficultyOptions = computed<{ value: CardDifficulty; label: string }[]>(() => [
     { value: 'easy', label: t('card.diffEasy') },
@@ -385,89 +422,41 @@ const scrollChat = () => {
     });
 };
 
-const openMimi = () => {
-    mimiOpen.value = true;
-    if (!chatMessages.value.length) {
-        const word = front.value.trim();
-        const cardNum = nextNumber.value;
-        const deck = deckTitle.value;
-        chatMessages.value.push({
-            role: 'mimi',
-            html: word
-                ? `I see you're on card ${cardNum} of <b>${deck}</b>. Want me to draft the meaning for "<b>${word}</b>"?`
-                : `I'm here to help with card ${cardNum} of <b>${deck}</b>. Type a word on the left, and I'll draft the meaning.`,
-        });
-        scrollChat();
+const messagesLeft = computed(() => {
+    const m = usage.value?.kinds.message;
+    if (!m || !isRunningLow(m)) return '';
+    return t('card.mimiMessagesLeft')
+        .replace('{n}', String(m.remaining))
+        .replace('{cap}', String(m.cap));
+});
+
+const refreshUsage = async () => {
+    try {
+        usage.value = await chatApi.getAiUsage();
+    } catch {
+        // Only an indicator — the limit itself is enforced server-side.
     }
 };
 
-const callEnrich = async (fields: aiApi.EnrichField[]) => {
-    if (!front.value.trim()) {
-        chatMessages.value.push({
-            role: 'mimi',
-            html: `Type a word in the Front field first, then I can help!`,
-        });
-        scrollChat();
-        return;
-    }
-    chatLoading.value = true;
+const openMimi = () => {
+    mimiOpen.value = true;
+    void refreshUsage();
     scrollChat();
-    const startedAt = Date.now();
-    analytics.track('ai_feature_started', { ai_feature: 'enrich_words', context: 'card_add' });
-    try {
-        const res = await aiApi.enrichWords({
-            words: [front.value.trim()],
-            sourceLanguage: store.deck?.sourceLanguage ?? 'en',
-            targetLanguage: store.deck?.targetLanguage ?? 'en',
-            fields,
-        });
-        const card = res.cards[0];
-        if (!card) return;
-        usedEnrich.value = true;
-        analytics.track('ai_feature_completed', {
-            ai_feature: 'enrich_words',
-            context: 'card_add',
-            result_size: res.cards.length,
-            duration_ms: Date.now() - startedAt,
-        });
+};
 
-        if (fields.includes('tags') && card.tags?.length) {
-            tags.value = [...new Set([...tags.value, ...(card.tags ?? [])])];
-            chatMessages.value.push({
-                role: 'mimi',
-                html: `Added tags: <b>${card.tags.join(', ')}</b>`,
-            });
-        } else if (fields.includes('example') && card.example) {
-            chatMessages.value.push({
-                role: 'mimi',
-                html: `Here's a harder example: "<i>${card.example}</i>"`,
-            });
-        } else if (fields.includes('exampleTranslation') && card.exampleTranslation) {
-            chatMessages.value.push({
-                role: 'mimi',
-                html: `Translation: "<i>${card.exampleTranslation}</i>"`,
-            });
-        } else if (card.definition) {
-            back.value = card.definition;
-            chatMessages.value.push({
-                role: 'mimi',
-                html: `Done — I filled in the meaning. Review it on the left, or tap a quick action below.`,
-            });
-        } else {
-            chatMessages.value.push({
-                role: 'mimi',
-                html: `I couldn't find data for that word. Try a different term.`,
+const showChatError = (e: chatApi.StreamError) => {
+    if (e.code === 'AI_BUDGET_EXCEEDED') {
+        chatError.value = t('chat.err.AI_BUDGET_EXCEEDED');
+        if (!auth.isPremium) {
+            const d = (e.details ?? {}) as { capPerDay?: number; kind?: string };
+            premiumGate.show('ai_budget', {
+                ...(d.capPerDay !== undefined ? { capPerDay: d.capPerDay } : {}),
+                ...(d.kind ? { kind: d.kind } : {}),
             });
         }
-    } catch {
-        chatMessages.value.push({
-            role: 'mimi',
-            html: `Hmm, something went wrong. Try again?`,
-        });
-    } finally {
-        chatLoading.value = false;
-        scrollChat();
+        return;
     }
+    chatError.value = t(`chat.err.${e.code}`, apiErrorText({ code: e.code }, 'chat.err.generic'));
 };
 
 // Enter sends; Shift+Enter inserts a newline (multi-line prompts).
@@ -477,31 +466,81 @@ const onChatEnterKey = (e: KeyboardEvent) => {
     onChatSend();
 };
 
-const onChatSend = async () => {
-    const text = chatInput.value.trim();
-    if (!text || chatLoading.value) return;
-    chatMessages.value.push({ role: 'user', text });
-    chatInput.value = '';
-    await callEnrich([
-        'phonetic',
-        'partOfSpeech',
-        'example',
-        'exampleTranslation',
-        'tags',
-        'difficulty',
-    ]);
+const chips = [{ key: 'examples' }, { key: 'synonyms' }, { key: 'grammar' }];
+
+// With a word typed on the card the question is sent right away; without one it
+// is put in the input for the user to finish.
+const onChip = (key: string) => {
+    const word = front.value.trim();
+    if (word) {
+        void onChatSend(t(`card.mimiChipAsk.${key}`).replace('{word}', word));
+    } else {
+        chatInput.value = t(`card.mimiChipAsk.${key}`)
+            .replace('{word}', '')
+            .replace(/[“”«»]/g, '');
+    }
 };
 
-const onQuickAction = async (action: 'tags' | 'harder' | 'translate') => {
-    const labels: Record<string, string> = {
-        tags: t('card.mimiSuggestTags'),
-        harder: t('card.mimiHarderExample'),
-        translate: t('card.mimiTranslate'),
-    };
-    chatMessages.value.push({ role: 'user', text: labels[action]! });
-    if (action === 'tags') await callEnrich(['tags']);
-    else if (action === 'harder') await callEnrich(['example']);
-    else await callEnrich(['exampleTranslation']);
+const onChatSend = async (override?: string) => {
+    const text = (override ?? chatInput.value).trim();
+    if (!text || chatLoading.value) return;
+    chatError.value = '';
+    chatMessages.value.push({ role: 'user', text });
+    if (override === undefined) chatInput.value = '';
+    chatLoading.value = true;
+    streamingText.value = '';
+    chatMessages.value.push({ role: 'mimi', text: '' });
+    // The reactive copy from the array — mutating the raw object wouldn't re-render.
+    const reply = chatMessages.value[chatMessages.value.length - 1]!;
+    scrollChat();
+
+    try {
+        if (!conversationId.value) {
+            conversationId.value = (await chatApi.createConversation()).id;
+        }
+        abort = new AbortController();
+        await chatApi.streamMessage(
+            conversationId.value,
+            text,
+            {
+                onToken: (delta) => {
+                    streamingText.value += delta;
+                    reply.text = streamingText.value;
+                    scrollChat();
+                },
+                // Text streamed before a tool runs is a throwaway "On it…".
+                onToolUse: () => {
+                    streamingText.value = '';
+                    reply.text = '';
+                },
+                onToolResult: (e) => {
+                    // Mimi added cards to this deck — refresh so the duplicate
+                    // hints in the Front field know about them.
+                    if (e.ok) fetchOne.execute(id.value);
+                },
+                onDone: (e) => {
+                    reply.text = e.assistantMessage.content;
+                },
+                onError: (e) => {
+                    showChatError(e);
+                },
+            },
+            abort.signal,
+            locale.value,
+            null,
+            { deckId: id.value },
+        );
+    } catch {
+        chatError.value = t('chat.err.generic');
+    } finally {
+        // An empty reply bubble (error before any text) would just look broken.
+        chatMessages.value = chatMessages.value.filter((m) => m.role === 'user' || m.text);
+        chatLoading.value = false;
+        streamingText.value = '';
+        abort = null;
+        void refreshUsage();
+        scrollChat();
+    }
 };
 
 // --- Media upload ---
@@ -534,10 +573,7 @@ const reset = () => {
     difficulty.value = 'medium';
     audioUrl.value = null;
     imageUrl.value = null;
-    chatMessages.value = [];
-    usedEnrich.value = false;
     previewFlipped.value = false;
-    mimiOpen.value = false;
 };
 
 const save = async (): Promise<boolean> => {
@@ -556,7 +592,7 @@ const save = async (): Promise<boolean> => {
     }
     analytics.track('card_added', {
         deck_id: id.value,
-        method: usedEnrich.value ? 'ai_enriched' : 'manual',
+        method: 'manual',
         count: 1,
     });
     return true;
@@ -582,6 +618,8 @@ onMounted(() => {
         fetchOne.execute(id.value);
     }
 });
+
+onBeforeUnmount(() => abort?.abort());
 </script>
 
 <style scoped>
@@ -590,6 +628,34 @@ onMounted(() => {
     border-radius: 14px;
     padding: 12px 16px 14px;
     background: rgb(var(--c-bg-surface));
+}
+
+/* Markdown in Mimi's replies (lists of examples, bold words). */
+.chat-prose :deep(p) {
+    margin: 0;
+}
+.chat-prose :deep(p + p) {
+    margin-top: 0.5rem;
+}
+.chat-prose :deep(strong) {
+    font-weight: 700;
+}
+.chat-prose :deep(em) {
+    font-style: italic;
+}
+.chat-prose :deep(ul),
+.chat-prose :deep(ol) {
+    margin: 0.4rem 0;
+    padding-left: 1.2rem;
+}
+.chat-prose :deep(ul) {
+    list-style: disc;
+}
+.chat-prose :deep(ol) {
+    list-style: decimal;
+}
+.chat-prose :deep(li) {
+    margin: 0.15rem 0;
 }
 
 .panel-slide-enter-active,

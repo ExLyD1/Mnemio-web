@@ -109,7 +109,10 @@ export const useImageDeck = (opts: { onCreated?: (deckId: string) => void } = {}
     const handleStreamError = (e: StreamError) => {
         if (e.code === 'AI_BUDGET_EXCEEDED' && !auth.isPremium) {
             const cap = (e.details as { capPerDay?: number } | undefined)?.capPerDay;
-            premiumGate.show('ai_budget', cap !== undefined ? { capPerDay: cap } : undefined);
+            premiumGate.show(
+                'ai_budget',
+                cap !== undefined ? { capPerDay: cap, kind: 'deck' } : undefined,
+            );
             error.value = '';
         } else {
             // AI_IMAGE_* and provider errors get a friendly, code-keyed message.
