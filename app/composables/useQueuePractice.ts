@@ -301,7 +301,12 @@ export const useQueuePractice = (options: {
                 void flush();
             }
             if (!options.deckId && isSrs) {
-                analytics.track('review_due_cleared', { cards_reviewed: answers.value });
+                const scopeSize = options.deckIds?.length ?? 0;
+                analytics.track('review_due_cleared', {
+                    cards_reviewed: answers.value,
+                    scope: scopeSize === 0 ? 'all' : scopeSize === 1 ? 'single' : 'multi',
+                    deck_count: Object.keys(tallies.value).length,
+                });
             }
         }
         return true;

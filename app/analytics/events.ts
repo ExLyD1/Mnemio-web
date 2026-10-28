@@ -107,13 +107,23 @@ export type AnalyticsEvent =
               duration_sec: number;
           };
       }
-    | { name: 'review_due_cleared'; props: { cards_reviewed: number } }
     | {
+          name: 'review_due_cleared';
+          props: {
+              cards_reviewed: number;
+              // Which /review scope was cleared, and how many decks it touched.
+              scope?: 'all' | 'single' | 'multi';
+              deck_count?: number;
+          };
+      }
+    | {
+          // A review started from the /review hub.
           name: 'practice_decks_selected';
           props: {
               selection_mode: 'single' | 'multi' | 'all';
               deck_count: number;
               card_count: number;
+              order?: 'mixed' | 'by_deck';
           };
       }
     | {

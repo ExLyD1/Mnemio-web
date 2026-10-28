@@ -103,6 +103,7 @@ const { t } = useT();
 const { current: locale } = useAppLocale();
 const { apiErrorText } = useApiError();
 const toast = useToast();
+const analytics = useAnalytics();
 const srs = useSrsStore();
 const prefs = usePracticePreferences();
 const fetchAll = useAsync(srs.fetchAll);
@@ -144,16 +145,26 @@ const clearSelection = () => {
     order.value = 'mixed';
 };
 
-const go = (scope: Omit<ReviewScope, 'mode'>) =>
-    navigateTo({ path: '/review', query: reviewScopeQuery({ ...scope, mode: mode.value }) });
-const startDeck = (deckId: string) => go({ deckIds: [deckId], order: 'mixed' });
+const go = (scope: Omit<ReviewScope, 'mode'>, selectionMode: 'all' | 'single' | 'multi') => {
+    const ids = scope.deckIds;
+    analytics.track('practice_decks_selected', {
+        selection_mode: selectionMode,
+        deck_count: ids ? ids.length : decks.value.length,
+        card_count: decks.value
+            .filter((d) => !ids || ids.includes(d.deckId))
+            .reduce((sum, d) => sum + d.due, 0),
+        ...(selectionMode === 'multi' ? { order: scope.order } : {}),
+    });
+    return navigateTo({ path: '/review', query: reviewScopeQuery({ ...scope, mode: mode.value }) });
+};
+const startDeck = (deckId: string) => go({ deckIds: [deckId], order: 'mixed' }, 'single');
 const start = () => {
     if (!selecting.value) {
-        return go({ deckIds: null, order: 'mixed' });
+        return go({ deckIds: null, order: 'mixed' }, 'all');
     }
     // Hub order (most due first), not tick order, so deck-by-deck is predictable.
     const ids = decks.value.map((d) => d.deckId).filter((id) => selected.value.has(id));
-    return go({ deckIds: ids, order: ids.length > 1 ? order.value : 'mixed' });
+    return go({ deckIds: ids, order: ids.length > 1 ? order.value : 'mixed' }, 'multi');
 };
 
 const caughtUpMessage = computed(() => {
