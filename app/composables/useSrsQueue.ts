@@ -1,11 +1,24 @@
 import { computed, ref } from 'vue';
 import { useSrsStore } from '@/stores/srs';
 import { useAsync } from '@/composables/useAsync';
+import { orderByDeck, type ReviewOrder } from '@/utils/reviewScope';
 import type { SrsQueueItem, SrsQueue, SrsRating } from '@/types/srs';
 
 const LEARN_AHEAD_MS = 20 * 60 * 1000;
 
-/** Server ordering is preserved; intraday repeats live in a separate timed pile. */
+export interface QueueLoadOptions {
+    deckId?: string;
+    deckIds?: string[];
+    extraNew?: number;
+    order?: ReviewOrder;
+}
+
+/**
+ * Server ordering is preserved; intraday repeats live in a separate timed pile.
+ * In `by_deck` order the decks run back to back: each deck's due learning, its
+ * queue, then its learning within the learn-ahead window, before the next deck.
+ * Learning cards left after the last deck fall back to the normal order.
+ */
 export const useSrsQueue = () => {
     const store = useSrsStore();
     const fetchQueue = useAsync(store.fetchQueue);
@@ -17,9 +30,39 @@ export const useSrsQueue = () => {
     const metadata = ref<SrsQueue | null>(null);
     const scheduled = ref<Record<string, string>>({});
     const dueTime = (item: SrsQueueItem) => (item.dueAt ? Date.parse(item.dueAt) : 0);
+    // by_deck: the deck order and which deck is being served.
+    const deckOrder = ref<string[]>([]);
+    const deckIndex = ref(0);
+    const currentDeckId = computed(() => deckOrder.value[deckIndex.value] ?? null);
+
+    const takeFrom = (pile: SrsQueueItem[], match: (item: SrsQueueItem) => boolean) => {
+        const i = pile.findIndex(match);
+        return i === -1 ? null : (pile.splice(i, 1)[0] ?? null);
+    };
+    const nextInDeck = (deckId: string) => {
+        const now = Date.now();
+        const inDeck = (item: SrsQueueItem) => item.card.deckId === deckId;
+        return (
+            takeFrom(learning.value, (item) => inDeck(item) && dueTime(item) <= now) ??
+            takeFrom(queue.value, inDeck) ??
+            takeFrom(
+                learning.value,
+                (item) => inDeck(item) && dueTime(item) <= now + LEARN_AHEAD_MS,
+            )
+        );
+    };
 
     const advance = () => {
         learning.value.sort((a, b) => dueTime(a) - dueTime(b));
+        while (deckIndex.value < deckOrder.value.length) {
+            const deckId = deckOrder.value[deckIndex.value];
+            const item = deckId ? nextInDeck(deckId) : null;
+            if (item) {
+                current.value = item;
+                return;
+            }
+            deckIndex.value += 1;
+        }
         const first = learning.value[0];
         if (first && dueTime(first) <= Date.now()) {
             current.value = learning.value.shift() ?? null;
@@ -32,17 +75,24 @@ export const useSrsQueue = () => {
         }
     };
 
-    const load = async (deckId?: string, extraNew = 0) => {
-        const result = await fetchQueue.execute({ deckId, extraNew });
+    const load = async (opts: QueueLoadOptions = {}) => {
+        const result = await fetchQueue.execute({
+            deckId: opts.deckId,
+            deckIds: opts.deckIds,
+            extraNew: opts.extraNew ?? 0,
+        });
         if (!result) {
             return false;
         }
         metadata.value = result;
         scheduled.value = {};
-        initial.value = [...result.items];
+        const byDeck = opts.order === 'by_deck' && !!opts.deckIds?.length;
+        deckOrder.value = byDeck ? [...(opts.deckIds ?? [])] : [];
+        deckIndex.value = 0;
+        initial.value = byDeck ? orderByDeck(result.items, deckOrder.value) : [...result.items];
         queue.value = [];
         learning.value = [];
-        for (const item of result.items) {
+        for (const item of initial.value) {
             if (
                 (item.state === 'learning' || item.state === 'relearning') &&
                 dueTime(item) > Date.now()
@@ -100,5 +150,16 @@ export const useSrsQueue = () => {
         return dates[0] ?? null;
     });
 
-    return { current, initial, metadata, counts, nextDueAt, load, submit, fetchQueue, rate };
+    return {
+        current,
+        currentDeckId,
+        initial,
+        metadata,
+        counts,
+        nextDueAt,
+        load,
+        submit,
+        fetchQueue,
+        rate,
+    };
 };

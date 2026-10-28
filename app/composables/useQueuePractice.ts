@@ -17,6 +17,7 @@ import {
     tallySnapshot,
     tallyStart,
     type DeckTally,
+    type ReviewOrder,
     type RunTallies,
 } from '@/utils/reviewScope';
 import type { PracticeFormat } from '@/composables/usePracticePreferences';
@@ -54,6 +55,9 @@ const shuffled = (cards: Card[]) => {
  */
 export const useQueuePractice = (options: {
     deckId?: string;
+    /** Review scope: these decks only (absent = every deck). */
+    deckIds?: string[];
+    order?: ReviewOrder;
     mode: PracticeMode;
     format: PracticeFormat;
     resume?: boolean;
@@ -406,7 +410,13 @@ export const useQueuePractice = (options: {
                 }
             }
             if (isSrs || !options.deckId) {
-                if (!(await srs.load(options.deckId, extraNew))) {
+                const loaded = await srs.load({
+                    deckId: options.deckId,
+                    deckIds: options.deckIds,
+                    order: options.order,
+                    extraNew,
+                });
+                if (!loaded) {
                     error.value = apiErrorText(srs.fetchQueue.error.value);
                     return;
                 }

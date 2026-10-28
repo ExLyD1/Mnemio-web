@@ -1,5 +1,5 @@
 import type { SessionCounts } from '@/types/session';
-import type { SrsRating } from '@/types/srs';
+import type { PracticeMode, SrsRating } from '@/types/srs';
 
 /*
  * Review runs (/review) keep no session open while reviewing. Every rating is
@@ -10,6 +10,91 @@ import type { SrsRating } from '@/types/srs';
  * Pure functions only: there is no FE test runner, so the logic stays here,
  * away from the composable's refs and requests.
  */
+
+/* ---------- Scope: which decks a review covers, encoded in the URL ----------
+ *
+ *   /review                                   hub (also legacy ?pick=1)
+ *   /review?decks=all&mode=srs|know           every due card, mixed
+ *   /review?decks=<id>&mode=…                 one deck
+ *   /review?decks=<id>,<id>&order=…&mode=…    several decks, mixed | by_deck
+ */
+
+export type ReviewOrder = 'mixed' | 'by_deck';
+
+export interface ReviewScope {
+    /** null = every deck with due cards. */
+    deckIds: string[] | null;
+    order: ReviewOrder;
+    /** null when the URL leaves it to the user's default mode. */
+    mode: PracticeMode | null;
+}
+
+/** Mirrors the server's cap on GET /srs/queue?deckIds. */
+export const MAX_REVIEW_DECKS = 50;
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const first = (value: unknown): string | null => {
+    const v: unknown = Array.isArray(value) ? (value as unknown[])[0] : value;
+    return typeof v === 'string' ? v : null;
+};
+
+const parseMode = (value: unknown): PracticeMode | null => {
+    const v = first(value);
+    return v === 'srs' || v === 'know' ? v : null;
+};
+
+/**
+ * Read a review scope from the route query. null = show the hub. A legacy
+ * `?mode=` link without `decks` means "everything due" (the caller redirects).
+ */
+export const parseReviewScope = (query: Record<string, unknown>): ReviewScope | null => {
+    if (first(query.pick) === '1') {
+        return null;
+    }
+    const decks = first(query.decks);
+    const mode = parseMode(query.mode);
+    if (decks === null) {
+        return mode ? { deckIds: null, order: 'mixed', mode } : null;
+    }
+    if (decks === 'all') {
+        return { deckIds: null, order: 'mixed', mode };
+    }
+    const ids = [...new Set(decks.split(',').map((id) => id.trim()))]
+        .filter((id) => UUID.test(id))
+        .slice(0, MAX_REVIEW_DECKS);
+    if (!ids.length) {
+        return null;
+    }
+    const order: ReviewOrder =
+        ids.length > 1 && first(query.order) === 'by_deck' ? 'by_deck' : 'mixed';
+    return { deckIds: ids, order, mode };
+};
+
+/** The /review query for a scope (the inverse of parseReviewScope). */
+export const reviewScopeQuery = (scope: ReviewScope): Record<string, string> => ({
+    decks: scope.deckIds?.length ? scope.deckIds.join(',') : 'all',
+    ...(scope.order === 'by_deck' && (scope.deckIds?.length ?? 0) > 1 ? { order: 'by_deck' } : {}),
+    ...(scope.mode ? { mode: scope.mode } : {}),
+});
+
+/**
+ * Group queue items deck by deck in the given deck order, keeping the server's
+ * order within each deck. Decks missing from `deckIds` go last.
+ */
+export const orderByDeck = <T extends { card: { deckId: string } }>(
+    items: T[],
+    deckIds: string[],
+): T[] => {
+    const rank = new Map(deckIds.map((id, i) => [id, i]));
+    const at = (item: T) => rank.get(item.card.deckId) ?? deckIds.length;
+    return items
+        .map((item, i) => ({ item, i }))
+        .sort((a, b) => at(a.item) - at(b.item) || a.i - b.i)
+        .map(({ item }) => item);
+};
+
+/* ---------- Run recording ---------- */
 
 /** The server caps cardIds and revisitCardIds at 1000 per session. */
 const MAX_SESSION_CARDS = 1000;

@@ -272,11 +272,15 @@ import * as aiApi from '@/api/ai';
 import { useQueuePractice } from '@/composables/useQueuePractice';
 import { buildMultipleChoice } from '@/composables/useMultipleChoice';
 import { toStudyCard } from '@/utils/studyCard';
+import { reviewScopeQuery, type ReviewOrder } from '@/utils/reviewScope';
 import type { PracticeMode } from '@/types/srs';
 import type { PracticeFormat } from '@/composables/usePracticePreferences';
 
 const props = defineProps<{
     deckId?: string;
+    /** Review scope (no deckId): these decks only; absent = every deck. */
+    deckIds?: string[];
+    order?: ReviewOrder;
     mode: PracticeMode;
     format: PracticeFormat;
     resume?: boolean;
@@ -361,7 +365,16 @@ const nextChoice = async () => {
 };
 const practiceAnyway = () =>
     navigateTo(
-        props.deckId ? `/study/${props.deckId}/${props.format}?mode=know` : '/review?mode=know',
+        props.deckId
+            ? `/study/${props.deckId}/${props.format}?mode=know`
+            : {
+                  path: '/review',
+                  query: reviewScopeQuery({
+                      deckIds: props.deckIds ?? null,
+                      order: props.order ?? 'mixed',
+                      mode: 'know',
+                  }),
+              },
     );
 const saveTrack = () =>
     localStorage.setItem('mnemio_track_progress', String(practice.trackProgress.value));
