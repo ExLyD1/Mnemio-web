@@ -104,7 +104,7 @@ must be running on `:3001`** or every call 502s. In prod set `NUXT_PUBLIC_API_BA
 | `analytics/`                             | `client.ts` (Mixpanel/GA wrapper), `events.ts` (typed event catalog). Call via `useAnalytics()` composable — never import `analytics/client.ts` directly in components.                                                                                                                                              |
 | `types/`                                 | Hand-written domain types (FE-facing shapes).                                                                                                                                                                                                                                                                        |
 | `schemas/`                               | Zod schemas (`auth, card, deck`) → forms via `utils/zodValidator.ts` + vee-validate.                                                                                                                                                                                                                                 |
-| `utils/`                                 | `http`, `publicHttp`, `authToken`, `returnTo`, `anonId`, `zodValidator`, `grades`, `media`, `deckVm`, `studyCard`, `coverSwatches`.                                                                                                                                                                                  |
+| `utils/`                                 | `http`, `publicHttp`, `authToken`, `returnTo`, `anonId`, `zodValidator`, `grades`, `media`, `deckVm`, `studyCard`, `coverSwatches`, `reviewScope`.                                                                                                                                                                   |
 | `data/`                                  | Static content. `blog.ts` = all blog post data (no CMS).                                                                                                                                                                                                                                                             |
 | `components/`                            | `ui/` = shadcn-vue primitives; `shared/` = reusable app widgets; rest grouped by feature (`study, deck, dashboard, login, marketing, landing, review, card, app, ai, layout`).                                                                                                                                       |
 | `pages/`                                 | File-based routes. `discover/` is a directory with `index.vue`, `[subject].vue`, `sets/[id].vue`. `blog/` is a directory with `index.vue` + `[slug].vue`.                                                                                                                                                            |
@@ -136,6 +136,18 @@ must be running on `:3001`** or every call 502s. In prod set `NUXT_PUBLIC_API_BA
 **`AiImportDialog`** — floating dialog for importing words via AI into a deck. Controlled by a local `aiOpen` ref; always paired with a floating Mimi trigger button (`fixed bottom-[26px] right-[28px]`).
 
 **`useChat`** — composable for the Mimi chat page. Not a Pinia store — each page that calls `useChat()` gets its own state. Do not call it from multiple components simultaneously; place it at the page level and pass state down.
+
+**Review (`/review`)** — bare `/review` is the hub (`ReviewHub`: SRS/Know toggle, "Review all · N", a tile per deck with cards due from `useSrsStore().byDeck`, opt-in multi-select via each tile's corner checkbox). A review's scope lives in the URL — parse/build it only with `parseReviewScope` / `reviewScopeQuery` in `app/utils/reviewScope.ts`:
+
+| URL                                                   | Meaning                                        |
+| ----------------------------------------------------- | ---------------------------------------------- |
+| `/review` (also `?pick=1`)                            | Hub (app layout)                               |
+| `/review?decks=all&mode=srs\|know`                    | Everything due, mixed                          |
+| `/review?decks=<id>&mode=…`                           | One deck                                       |
+| `/review?decks=<id>,<id>&order=mixed\|by_deck&mode=…` | Several decks (≤ 50); `by_deck` = back to back |
+| legacy `/review?mode=…` / no `mode`                   | Redirected to `decks=all` / the user's default |
+
+Review is due-only (`GET /srs/queue?deckIds=`; new cards stay in `/study/:deckId`). **Review runs open no session while reviewing** — unlike deck study, which keeps a live, resumable session PATCHed per answer. `useQueuePractice` (no `deckId`) rates live via `POST /srs/rate`, tallies answers per deck (`tallyAnswer`), and when the run ends or the user leaves it `flush()`es: per touched deck, sequentially, `POST /sessions { …, runId, cardIds }` → `POST /sessions/:id/complete { correct, counts, revisitCardIds, durationMs }`. All share one client `runId`, so the server pays the +25 bonus once per run (a run over N decks earns `10 × Σcorrect + 25`). Leaving waits for the flush at most ~3 s; a failed flush shows an inline Retry. Keep run logic pure in `reviewScope.ts` (no FE test runner).
 
 **i18n interpolation** — the custom `useT()` catalog does not support named placeholders natively. Interpolate manually: `t('key').replace('{n}', String(value))`.
 
