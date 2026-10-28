@@ -1,19 +1,36 @@
 import { computed, reactive, ref } from 'vue';
 import { useIntervalFn } from '@vueuse/core';
 import { useSrsQueue } from '@/composables/useSrsQueue';
-import { useAsync } from '@/composables/useAsync';
+import { useAsync, type ApiError } from '@/composables/useAsync';
 import { useDecks } from '@/composables/useDecks';
 import { useSessionsStore } from '@/stores/sessions';
 import { usePracticeStore } from '@/stores/practice';
 import { useApiError } from '@/composables/useApiError';
 import { useToast } from '@/composables/useToast';
+import { useT } from '@/composables/useT';
 import { useAnalytics } from '@/composables/useAnalytics';
+import {
+    flushPlan,
+    newRunId,
+    retryDelayMs,
+    tallyAnswer,
+    tallySnapshot,
+    tallyStart,
+    type DeckTally,
+    type RunTallies,
+} from '@/utils/reviewScope';
 import type { PracticeFormat } from '@/composables/usePracticePreferences';
 import type { Card } from '@/types/deck';
 import type { PracticeMode, SrsRating } from '@/types/srs';
 import type { SessionCounts } from '@/types/session';
 
 const emptyCounts = (): SessionCounts => ({ again: 0, hard: 0, good: 0, easy: 0 });
+// Leaving a review waits this long for its session stats to save, then goes
+// anyway (the writes carry on in the background).
+const EXIT_FLUSH_WAIT_MS = 3000;
+// A deck that vanished or went private mid-run is skipped, not retried forever.
+const SKIP_DECK_CODES = new Set(['DECK_NOT_FOUND', 'DECK_EMPTY', 'SESSION_NO_CARDS']);
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 const shuffled = (cards: Card[]) => {
     const result = [...cards];
     for (let i = result.length - 1; i > 0; i--) {
@@ -27,7 +44,14 @@ const shuffled = (cards: Card[]) => {
     return result;
 };
 
-/** Shared practice lifecycle for deck study and the global review queue. */
+/**
+ * Shared practice lifecycle for deck study and the review queue.
+ *
+ * Deck study (`deckId`) keeps a live session: started up front, PATCHed per
+ * answer, resumable. Review (no `deckId`) opens no session while reviewing: it
+ * tallies per deck and, when the run ends or the user leaves, writes one
+ * completed session per deck touched under a shared runId (see reviewScope.ts).
+ */
 export const useQueuePractice = (options: {
     deckId?: string;
     mode: PracticeMode;
@@ -44,9 +68,11 @@ export const useQueuePractice = (options: {
     const resumeRecord = useAsync(sessions.resume);
     const resultStore = usePracticeStore();
     const toast = useToast();
+    const { t } = useT();
     const { apiErrorText } = useApiError();
     const analytics = useAnalytics();
     const isSrs = options.mode === 'srs';
+    const isReview = !options.deckId;
     const loading = ref(true);
     const locked = ref(false);
     const error = ref('');
@@ -67,6 +93,17 @@ export const useQueuePractice = (options: {
     let startedAt = 0;
     let recordStartedAt = 0;
     let recordDeckId: string | null = null;
+    // Review run state: per-deck tallies, flushed once at the end.
+    let runId = newRunId();
+    const tallies = ref<RunTallies>({});
+    const written = new Set<string>();
+    // Started-but-not-completed session per deck, so a retry completes it
+    // instead of opening a second one (which would leave the first incomplete).
+    const pendingSession = new Map<string, string>();
+    let lastDeckId: string | null = null;
+    let lastAnswerAt = 0;
+    let flushing: Promise<boolean> | null = null;
+    const saveFailed = ref(false);
     const { pause, resume } = useIntervalFn(
         () => {
             elapsedMs.value = Date.now() - startedAt;
@@ -165,17 +202,87 @@ export const useQueuePractice = (options: {
             })),
         });
     };
+    const withRateRetry = async <T>(request: () => Promise<T>): Promise<T> => {
+        try {
+            return await request();
+        } catch (err) {
+            if ((err as ApiError | null)?.code !== 'RATE_LIMITED') {
+                throw err;
+            }
+            await sleep(retryDelayMs((err as ApiError).details));
+            return request();
+        }
+    };
+    const writeTally = async (tally: DeckTally) => {
+        try {
+            const pending = pendingSession.get(tally.deckId);
+            if (!pending || sessions.active?.id !== pending) {
+                const created = await withRateRetry(() =>
+                    sessions.start({
+                        ...tallyStart(tally),
+                        mode: options.format,
+                        srsEnabled: isSrs,
+                        runId,
+                    }),
+                );
+                pendingSession.set(tally.deckId, created.id);
+            }
+            // Re-read the tally: an answer may have landed while the start was in flight.
+            const latest = tallies.value[tally.deckId] ?? tally;
+            const ended = await withRateRetry(() => sessions.complete(tallySnapshot(latest)));
+            if (!ended) {
+                return false;
+            }
+        } catch (err) {
+            const code = (err as ApiError | null)?.code ?? '';
+            // SESSION_NOT_ACTIVE on complete: it already completed (a lost response)
+            // or was superseded; either way writing it again would double-count.
+            if (!SKIP_DECK_CODES.has(code) && code !== 'SESSION_NOT_ACTIVE') {
+                return false;
+            }
+        }
+        written.add(tally.deckId);
+        pendingSession.delete(tally.deckId);
+        return true;
+    };
+    /**
+     * Write one completed session per touched deck, sequentially. Safe to call
+     * repeatedly: concurrent calls share one run, written decks are skipped.
+     */
+    const flush = (): Promise<boolean> => {
+        flushing ??= (async () => {
+            try {
+                for (const tally of flushPlan(tallies.value, lastDeckId, written)) {
+                    if (!(await writeTally(tally))) {
+                        saveFailed.value = true;
+                        toast.error(t('review.saveFailed'));
+                        return false;
+                    }
+                }
+                saveFailed.value = false;
+                return true;
+            } finally {
+                flushing = null;
+            }
+        })();
+        return flushing;
+    };
     const finishSession = async () => {
-        if (!(await closeRecord())) {
+        if (!isReview && !(await closeRecord())) {
             return false;
         }
         elapsedMs.value = Date.now() - startedAt;
         pause();
         saveResult();
         if (!isSrs && trackProgress.value && unknown.value.length) {
+            // Know-mode rounds stay one run: the next round keeps tallying.
             roundDone.value = true;
         } else {
             finished.value = true;
+            if (isReview) {
+                // Results show right away; the session writes land behind them.
+                void flush();
+            }
             if (!options.deckId && isSrs) {
                 analytics.track('review_due_cleared', { cards_reviewed: answers.value });
             }
@@ -191,7 +298,7 @@ export const useQueuePractice = (options: {
         // Hide the answer right away so the card flips back while the rating saves.
         revealed.value = false;
         try {
-            if (!(await ensureRecord(card))) {
+            if (!isReview && !(await ensureRecord(card))) {
                 return;
             }
             if (isSrs && !(await srs.submit(rating))) {
@@ -200,7 +307,14 @@ export const useQueuePractice = (options: {
             }
             const correct = rating !== 'again';
             counts[rating] += 1;
-            recordCounts.value[rating] += 1;
+            if (isReview) {
+                const now = Date.now();
+                tallies.value = tallyAnswer(tallies.value, card, rating, now - lastAnswerAt);
+                lastAnswerAt = now;
+                lastDeckId = card.deckId;
+            } else {
+                recordCounts.value[rating] += 1;
+            }
             answers.value += 1;
             streak.value = correct ? streak.value + 1 : 0;
             unknown.value = unknown.value.filter((c) => c.id !== card.id);
@@ -211,7 +325,9 @@ export const useQueuePractice = (options: {
                 knowIndex.value += 1;
             }
             // A successful rating must never be resubmitted if recording stats fails.
-            await syncRecord();
+            if (!isReview) {
+                await syncRecord();
+            }
             // Re-read after advance(): Vue computed refs change across the awaited rating.
             if (isSrs ? !srs.current.value : knowIndex.value >= knowQueue.value.length) {
                 await finishSession();
@@ -239,6 +355,8 @@ export const useQueuePractice = (options: {
         unknown.value = [];
         knowIndex.value = 0;
         roundDone.value = false;
+        // Time on the round-complete screen isn't study time.
+        lastAnswerAt = Date.now();
         resume();
     };
     const toggleShuffle = () => {
@@ -268,6 +386,17 @@ export const useQueuePractice = (options: {
         streak.value = 0;
         elapsedMs.value = 0;
         revealed.value = false;
+        if (isReview) {
+            // A fresh load is a fresh run; anything unsaved from the last one is
+            // written first so it keeps its own runId.
+            await flush();
+            runId = newRunId();
+            tallies.value = {};
+            written.clear();
+            pendingSession.clear();
+            lastDeckId = null;
+            saveFailed.value = false;
+        }
         try {
             if (options.deckId) {
                 const loaded = await decks.fetchOne.execute(options.deckId);
@@ -323,8 +452,16 @@ export const useQueuePractice = (options: {
                 }
             }
             startedAt = Date.now();
+            lastAnswerAt = startedAt;
             resume();
-            if (current.value) {
+            if (current.value && isReview) {
+                analytics.track('study_session_started', {
+                    study_mode:
+                        options.format === 'multiple-choice' ? 'multiple_choice' : 'flashcard',
+                    deck_id: current.value.deckId,
+                    card_count: initialCards.value.length,
+                });
+            } else if (current.value) {
                 if (!(await ensureRecord(current.value))) {
                     error.value = apiErrorText(startRecord.error.value);
                 } else {
@@ -343,6 +480,12 @@ export const useQueuePractice = (options: {
         }
     };
     const exit = async () => {
+        if (isReview) {
+            pause();
+            // Bounded: a slow or failed save never traps the user here.
+            await Promise.race([flush(), sleep(EXIT_FLUSH_WAIT_MS)]);
+            return true;
+        }
         if (locked.value || loading.value) {
             return false;
         }
@@ -386,5 +529,8 @@ export const useQueuePractice = (options: {
         nextRound,
         toggleShuffle,
         saveResult,
+        tallies,
+        saveFailed,
+        flush,
     };
 };

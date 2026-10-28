@@ -455,7 +455,8 @@
         "tipEmpty": "No tip available for this card.",
         "errors": {
             "rate_failed": "Could not save your rating. Try again."
-        }
+        },
+        "saveFailed": "Couldn't save your session stats — your card ratings are saved."
     },
     "study": {
         "start": "Start",
