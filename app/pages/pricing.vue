@@ -83,6 +83,11 @@
                     </template>
                     <template v-else>&nbsp;</template>
                 </p>
+                <p class="min-h-5 text-small font-semibold text-brand-bright">
+                    <template v-if="plan.priceId && billingCycle === 'annual'">
+                        {{ t('pricing.annualNote') }}
+                    </template>
+                </p>
 
                 <ul class="mt-6 flex flex-1 flex-col gap-3">
                     <li
@@ -206,7 +211,7 @@ useHead({
                     {
                         '@type': 'Offer',
                         name: 'Premium (monthly)',
-                        price: '10',
+                        price: '6',
                         priceCurrency: 'USD',
                         availability: 'https://schema.org/InStock',
                         url: `${base}/pricing`,
@@ -214,7 +219,7 @@ useHead({
                     {
                         '@type': 'Offer',
                         name: 'Premium (annual)',
-                        price: '96',
+                        price: '60',
                         priceCurrency: 'USD',
                         availability: 'https://schema.org/InStock',
                         url: `${base}/pricing`,

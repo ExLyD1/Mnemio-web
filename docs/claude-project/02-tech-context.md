@@ -244,7 +244,7 @@ monetization decision, not an implementation detail). Enforcement details:
   same $2/$10 per MTok, so that swap is free if quality is equal or better.)
 - Max words per enrich call: 100. Study modes and SRS are uncapped and free.
 - Pricing: the `/pricing` page renders Paddle's localized `PricePreview`
-  client-side; the JSON-LD fallback hard-codes $10/mo and $96/yr for crawlers,
+  client-side; the JSON-LD fallback hard-codes $6/mo and $60/yr for crawlers,
   so changing the real price means updating that structured data too.
 
 Rate limits (per IP unless noted): 120 req/min global · 10/min register+login ·
