@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/auth';
 import { usePremiumGateStore } from '@/stores/premiumGate';
 import { useAnalytics } from '@/composables/useAnalytics';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
-import { normCategory } from '@/utils/deckCategories';
+import { isSubject } from '@/utils/subjects';
 import type { ReviewRow } from '@/composables/useAiImport';
 import type { CardInput } from '@/types/deck';
 
@@ -216,7 +216,8 @@ export const useImageDeck = (opts: { onCreated?: (deckId: string) => void } = {}
                 description: h.description || null,
                 sourceLanguage: h.sourceLanguage,
                 targetLanguage: h.targetLanguage,
-                subject: normCategory(h.subject),
+                // Server-validated already; omitted → the server infers one.
+                ...(isSubject(h.subject) ? { subject: h.subject } : {}),
                 glyph: h.glyph ?? null,
             });
             if (!created) {

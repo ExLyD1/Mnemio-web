@@ -90,7 +90,7 @@
 import { Plus, Library } from 'lucide-vue-next';
 import { useDecks, usePreferencesStore, useT } from '#imports';
 import { deckToCardVm } from '@/utils/deckVm';
-import { DECK_CATEGORIES, normCategory } from '@/utils/deckCategories';
+import { SUBJECTS, subjectLabel } from '@/utils/subjects';
 
 definePageMeta({ layout: 'default' });
 
@@ -110,16 +110,16 @@ const favCount = computed(() => store.summaries.filter((d) => prefs.isFavorite(d
 const filterOptions = computed(() => {
     const catCount = new Map<string, number>();
     for (const d of store.summaries) {
-        const cat = normCategory(d.subject);
+        const cat = d.subject;
         catCount.set(cat, (catCount.get(cat) ?? 0) + 1);
     }
     const base = [{ key: 'all', label: t('deck.filterAll'), count: store.summaries.length }];
     if (favCount.value > 0) {
         base.push({ key: 'mine', label: t('deck.filterMine'), count: favCount.value });
     }
-    const cats = DECK_CATEGORIES.filter((cat) => catCount.has(cat)).map((cat) => ({
+    const cats = SUBJECTS.filter((cat) => catCount.has(cat)).map((cat) => ({
         key: `cat:${cat}`,
-        label: t(`deck.category.${cat}`),
+        label: subjectLabel(t, cat),
         count: catCount.get(cat) ?? 0,
     }));
     return [...base, ...cats];
@@ -130,7 +130,7 @@ const deckVms = computed(() => {
         if (filter.value === 'all') return true;
         if (filter.value === 'mine') return prefs.isFavorite(d.id);
         if (filter.value.startsWith('cat:')) {
-            return normCategory(d.subject) === filter.value.slice('cat:'.length);
+            return d.subject === filter.value.slice('cat:'.length);
         }
         return true;
     });

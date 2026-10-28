@@ -36,7 +36,7 @@
                         <UiCategorySelect
                             v-model="category"
                             :options="categoryOptions"
-                            :placeholder="t('deck.category.other')"
+                            :placeholder="t('subject.other')"
                         />
                     </div>
 
@@ -465,8 +465,8 @@ import { useAchievementNotifications } from '@/composables/useAchievementNotific
 import { useDecksStore } from '@/stores/decks';
 import { useLanguageName } from '@/composables/useLanguageName';
 import type { DeckInput } from '@/types/deck';
-import { DECK_CATEGORIES, normCategory } from '@/utils/deckCategories';
-import type { DeckCategory } from '@/utils/deckCategories';
+import { useTaxonomy } from '@/composables/useTaxonomy';
+import { isSubject, subjectLabel, type Subject } from '@/utils/subjects';
 
 definePageMeta({ layout: 'default' });
 
@@ -506,7 +506,7 @@ useSeo({ title: t('seo.deckCreateTitle'), description: t('seo.appDesc'), noindex
 
 // Form state
 const title = ref('');
-const category = ref<DeckCategory>('other');
+const category = ref<Subject>('other');
 const description = ref('');
 const sourceLanguage = ref('en');
 const targetLanguage = ref('es');
@@ -514,10 +514,11 @@ const cardType = ref<'basic' | 'cloze' | 'image'>('basic');
 const coverColor = ref(COVER_SWATCHES[0]);
 const isPublic = ref(true);
 
-const categoryOptions = DECK_CATEGORIES.map((cat) => ({
-    value: cat,
-    label: t(`deck.category.${cat}`),
-}));
+const taxonomy = useTaxonomy();
+const categoryOptions = computed(() =>
+    taxonomy.subjects.value.map((slug) => ({ value: slug, label: subjectLabel(t, slug) })),
+);
+onMounted(() => void taxonomy.ensure());
 
 const { name: labelForLang, options: languageOptions } = useLanguageName();
 const frontLangLabel = computed(() => labelForLang(targetLanguage.value));
@@ -673,7 +674,7 @@ const onAccept = async (d: AiDeckDraft) => {
             description: d.description,
             sourceLanguage: d.sourceLanguage,
             targetLanguage: d.targetLanguage,
-            subject: normCategory(d.subject),
+            ...(isSubject(d.subject) ? { subject: d.subject } : {}),
             glyph: d.glyph ?? null,
         });
         if (!deck) throw new Error('create failed');

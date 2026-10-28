@@ -1,3 +1,5 @@
+import type { Subject } from '@/utils/subjects';
+
 export type CardDifficulty = 'easy' | 'medium' | 'hard';
 export type CardType = 'basic' | 'cloze' | 'image';
 
@@ -40,7 +42,8 @@ export interface Deck {
     isPublic: boolean;
     coverColor: string | null;
     glyph: string | null;
-    subject: string | null;
+    // One of the 12 fixed subjects (spec 002), always set by the server.
+    subject: Subject;
     featured: boolean;
     copyCount: number;
     sourceDeckId: string | null;
@@ -64,7 +67,7 @@ export interface DeckInput {
     isPublic?: boolean;
     coverColor?: string | null;
     glyph?: string | null;
-    subject?: string | null;
+    subject?: Subject;
 }
 
 export interface CardInput {

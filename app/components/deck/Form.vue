@@ -31,7 +31,7 @@
             <UiCategorySelect
                 v-model="subject"
                 :options="categoryOptions"
-                :placeholder="t('deck.category.other')"
+                :placeholder="t('subject.other')"
             />
         </div>
 
@@ -87,8 +87,8 @@ import { useForm, useField } from 'vee-validate';
 import { deckSchema } from '@/schemas/deck';
 import { toFormValidator } from '@/utils/zodValidator';
 import { useT } from '@/composables/useT';
-import { DECK_CATEGORIES } from '@/utils/deckCategories';
-import type { DeckCategory } from '@/utils/deckCategories';
+import { useTaxonomy } from '@/composables/useTaxonomy';
+import { subjectLabel, type Subject } from '@/utils/subjects';
 import type { Deck } from '@/types/deck';
 
 const props = withDefaults(
@@ -111,7 +111,7 @@ const emit = defineEmits<{
             sourceLanguage: string;
             targetLanguage: string;
             isPublic: boolean;
-            subject: DeckCategory;
+            subject: Subject;
         },
     ];
     cancel: [];
@@ -119,10 +119,11 @@ const emit = defineEmits<{
 
 const { t } = useT();
 
-const categoryOptions = DECK_CATEGORIES.map((cat) => ({
-    value: cat,
-    label: t(`deck.category.${cat}`),
-}));
+const taxonomy = useTaxonomy();
+const categoryOptions = computed(() =>
+    taxonomy.subjects.value.map((slug) => ({ value: slug, label: subjectLabel(t, slug) })),
+);
+onMounted(() => void taxonomy.ensure());
 
 const { handleSubmit } = useForm({
     validationSchema: toFormValidator(deckSchema),
@@ -134,14 +135,14 @@ const { handleSubmit } = useForm({
         sourceLanguage: props.initial?.sourceLanguage ?? 'en',
         targetLanguage: props.initial?.targetLanguage ?? 'es',
         isPublic: props.initial?.isPublic ?? true,
-        subject: (props.initial?.subject as DeckCategory | null) ?? 'other',
+        subject: props.initial?.subject ?? 'other',
     },
 });
 
 const { value: title, errorMessage: titleError } = useField<string>('title');
 const { value: description, errorMessage: descriptionError } = useField<string>('description');
 const { value: isPublic } = useField<boolean>('isPublic');
-const { value: subject } = useField<DeckCategory>('subject');
+const { value: subject } = useField<Subject>('subject');
 
 const onSubmit = handleSubmit((values) => {
     emit('submit', {
@@ -150,7 +151,7 @@ const onSubmit = handleSubmit((values) => {
         sourceLanguage: values.sourceLanguage,
         targetLanguage: values.targetLanguage,
         isPublic: values.isPublic,
-        subject: values.subject as DeckCategory,
+        subject: values.subject as Subject,
     });
 });
 </script>
