@@ -38,8 +38,8 @@
                                      so QA reported it backwards; the title spells
                                      out which side is which. -->
                                     <p class="mt-1 text-small text-on-color/80" :title="langHint">
-                                        {{ store.deck.targetLanguage.toUpperCase() }} →
-                                        {{ store.deck.sourceLanguage.toUpperCase() }}
+                                        {{ displayLangCode(store.deck.targetLanguage) }} →
+                                        {{ displayLangCode(store.deck.sourceLanguage) }}
                                     </p>
                                 </div>
                             </div>
@@ -396,6 +396,7 @@ import {
 import { useDecks, useCards, useSrsStore, useToast, useT, useApiError } from '#imports';
 import { isAuthExpiry } from '@/composables/useToast';
 import { swatchFor } from '@/utils/coverSwatches';
+import { displayLangCode, subjectLabel } from '@/utils/subjects';
 import { copyDeck } from '@/api/discover';
 import { useAuthStore } from '@/stores/auth';
 import { useAnalytics } from '@/composables/useAnalytics';
@@ -520,7 +521,7 @@ const EMPTY_STATS: DeckStats = {
 
 const swatch = computed(() => store.deck?.coverColor ?? swatchFor(id.value));
 const deckStat = computed(() => store.deck?.stats ?? EMPTY_STATS);
-const eyebrow = computed(() => store.deck?.subject?.toUpperCase() || 'DECK');
+const eyebrow = computed(() => (store.deck ? subjectLabel(t, store.deck.subject) : ''));
 // Spells out the language pair the "XX → YY" line compresses.
 const langHint = computed(() => {
     const d = store.deck;
@@ -528,8 +529,8 @@ const langHint = computed(() => {
         return '';
     }
     return t('deck.langHint')
-        .replace('{words}', d.targetLanguage.toUpperCase())
-        .replace('{definitions}', d.sourceLanguage.toUpperCase());
+        .replace('{words}', displayLangCode(d.targetLanguage))
+        .replace('{definitions}', displayLangCode(d.sourceLanguage));
 });
 const coachTip = computed(() => {
     if (!store.deck?.cards.length) {

@@ -25,6 +25,7 @@
 import { computed } from 'vue';
 import { Layers, ArrowRight } from 'lucide-vue-next';
 import { useT } from '@/composables/useT';
+import { displayLangCode } from '@/utils/subjects';
 
 /**
  * The receipt for a deck the assistant just wrote to. It carries what actually
@@ -48,7 +49,7 @@ const { t } = useT();
 
 const pair = computed(() =>
     props.targetLanguage && props.sourceLanguage
-        ? `${props.targetLanguage.toUpperCase()} → ${props.sourceLanguage.toUpperCase()}`
+        ? `${displayLangCode(props.targetLanguage)} → ${displayLangCode(props.sourceLanguage)}`
         : '',
 );
 

@@ -1,14 +1,13 @@
 import type { DeckCardVM, DeckSummary } from '@/types/deck';
 import { swatchFor } from '@/utils/coverSwatches';
-import { LANGUAGES } from '@/schemas/deck';
-
-const LANG_LABELS = new Map<string, string>(LANGUAGES.map((l) => [l.code, l.label]));
+import { displayLangCode } from '@/utils/subjects';
 
 /** Build a DeckCard presentation model from a deck summary's embedded stats. */
 export const deckToCardVm = (deck: DeckSummary, favorite = false): DeckCardVM => ({
     id: deck.id,
     title: deck.title,
-    tag: LANG_LABELS.get(deck.targetLanguage) ?? deck.targetLanguage.toUpperCase(),
+    // Fallback only: SharedDeckCard shows the localized name from `lang`.
+    tag: displayLangCode(deck.targetLanguage),
     lang: deck.targetLanguage,
     glyph: deck.glyph ?? undefined,
     total: deck.cardCount,

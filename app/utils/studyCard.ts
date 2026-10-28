@@ -1,5 +1,5 @@
 import type { Card, Deck } from '@/types/deck';
-import { LANGUAGES } from '@/schemas/deck';
+import { displayLangCode } from '@/utils/subjects';
 
 /**
  * Rich card shown during practice — maps the real backend card fields
@@ -28,10 +28,7 @@ export const frontTextFor = (c: StudyCard, side: FrontSide): string =>
     side === 'definition' ? c.meaning : c.word;
 
 export const toStudyCard = (card: Card, deck?: Deck | null): StudyCard => {
-    const lang =
-        LANGUAGES.find((l) => l.code === deck?.targetLanguage)?.label ??
-        deck?.targetLanguage.toUpperCase() ??
-        '';
+    const lang = displayLangCode(deck?.targetLanguage);
     return {
         id: card.id,
         deckId: card.deckId,
@@ -39,7 +36,7 @@ export const toStudyCard = (card: Card, deck?: Deck | null): StudyCard => {
         reading: card.phonetic,
         meaning: card.definition,
         lang,
-        region: deck?.targetLanguage.toUpperCase() ?? '',
+        region: displayLangCode(deck?.targetLanguage),
         pos: card.partOfSpeech ?? '',
         example: card.example ?? '',
         exampleTranslation: card.exampleTranslation ?? '',

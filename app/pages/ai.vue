@@ -475,6 +475,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useDecksStore } from '@/stores/decks';
 import { usePremiumGateStore } from '@/stores/premiumGate';
 import { renderMarkdown } from '@/utils/markdown';
+import { displayLangCode } from '@/utils/subjects';
 import { isRunningLow } from '@/utils/usageHint';
 
 definePageMeta({ layout: 'default' });
@@ -555,7 +556,7 @@ const contextPair = computed(() => {
     if (!d?.targetLanguage || !d.sourceLanguage) {
         return '';
     }
-    return `${d.targetLanguage.toUpperCase()} → ${d.sourceLanguage.toUpperCase()}`;
+    return `${displayLangCode(d.targetLanguage)} → ${displayLangCode(d.sourceLanguage)}`;
 });
 
 const pickerDecks = computed(() => {
