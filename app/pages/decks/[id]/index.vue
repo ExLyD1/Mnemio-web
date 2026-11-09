@@ -103,58 +103,31 @@
                     class="flex flex-wrap gap-x-7 gap-y-1.5 rounded-2xl border border-line bg-bg-surface px-[22px] py-3.5"
                 >
                     <button
+                        v-for="chip in statChips"
+                        :key="chip.key"
                         type="button"
                         class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
-                        @click="filter = 'all'"
+                        :aria-pressed="filter === chip.key"
+                        @click="filter = chip.key"
                     >
                         <span class="font-display text-h2 leading-none text-cream">{{
-                            store.deck.cards.length
+                            chip.count
                         }}</span>
                         <span
-                            class="text-small transition-colors"
+                            class="flex items-center gap-1.5 text-small transition-colors"
                             :class="
-                                filter === 'all'
+                                filter === chip.key
                                     ? 'text-brand-bright underline underline-offset-2'
                                     : 'text-brand-muted'
                             "
-                            >{{ t('deck.statTotal') }}</span
                         >
-                    </button>
-                    <button
-                        type="button"
-                        class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
-                        @click="filter = 'practiced'"
-                    >
-                        <span class="font-display text-h2 leading-none text-cream">{{
-                            deckStat.mastered + deckStat.learning
-                        }}</span>
-                        <span
-                            class="text-small transition-colors"
-                            :class="
-                                filter === 'practiced'
-                                    ? 'text-brand-bright underline underline-offset-2'
-                                    : 'text-brand-muted'
-                            "
-                            >{{ t('deck.statPracticed') }}</span
-                        >
-                    </button>
-                    <button
-                        type="button"
-                        class="flex items-baseline gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
-                        @click="filter = 'new'"
-                    >
-                        <span class="font-display text-h2 leading-none text-cream">{{
-                            deckStat.new
-                        }}</span>
-                        <span
-                            class="text-small transition-colors"
-                            :class="
-                                filter === 'new'
-                                    ? 'text-brand-bright underline underline-offset-2'
-                                    : 'text-brand-muted'
-                            "
-                            >{{ t('deck.statNew') }}</span
-                        >
+                            <span
+                                v-if="chip.dot"
+                                :class="['size-2.5 rounded-full', chip.dot]"
+                                aria-hidden="true"
+                            />
+                            {{ chip.label }}
+                        </span>
                     </button>
                 </div>
 
@@ -169,7 +142,7 @@
                             />
                         </div>
 
-                        <div class="max-h-[420px] overflow-y-auto">
+                        <div class="sm:max-h-[420px] sm:overflow-y-auto">
                             <SharedCardRow
                                 v-for="(card, i) in visibleCards"
                                 :key="card.id"
@@ -200,23 +173,6 @@
                                     {{ t('deck.statTotal').toLowerCase() }})
                                 </button>
                             </div>
-                        </div>
-
-                        <div
-                            class="flex flex-wrap gap-[18px] border-t border-line px-[14px] py-[11px] text-small text-brand-muted"
-                        >
-                            <span class="flex items-center gap-1.5">
-                                <span class="size-2.5 rounded-full bg-lavender" />
-                                {{ t('deck.statPracticed') }}
-                            </span>
-                            <span class="flex items-center gap-1.5">
-                                <span class="size-2.5 rounded-full bg-brand" />
-                                {{ t('deck.statLearning') }}
-                            </span>
-                            <span class="flex items-center gap-1.5">
-                                <span class="size-2.5 rounded-full border border-brand-muted" />
-                                {{ t('deck.statNew') }}
-                            </span>
                         </div>
                     </template>
 
@@ -550,6 +506,28 @@ const breakdownSegments = computed(() => [
 
 const search = ref('');
 const filter = ref('all');
+// Stats row doubles as the legend: each chip filters the list and shows its dot colour.
+const statChips = computed(() => [
+    { key: 'all', label: t('deck.statTotal'), count: store.deck?.cards.length ?? 0, dot: '' },
+    {
+        key: 'mastered',
+        label: t('deck.statMastered'),
+        count: deckStat.value.mastered,
+        dot: 'bg-lavender',
+    },
+    {
+        key: 'learning',
+        label: t('deck.statLearning'),
+        count: deckStat.value.learning,
+        dot: 'bg-brand',
+    },
+    {
+        key: 'new',
+        label: t('deck.statNew'),
+        count: deckStat.value.new,
+        dot: 'border border-brand-muted',
+    },
+]);
 const CARD_PAGE = 50;
 const visibleCardCount = ref(CARD_PAGE);
 const isDue = (card: Card): boolean => {
@@ -570,8 +548,9 @@ const filteredCards = computed(() => {
         switch (filter.value) {
             case 'new':
                 return cardState(card) === 'new';
-            case 'practiced':
-                return cardState(card) !== 'new';
+            case 'mastered':
+            case 'learning':
+                return cardState(card) === filter.value;
             case 'due':
                 return isDue(card);
             default:

@@ -3,7 +3,6 @@
         <header class="flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h1 class="font-display text-display-sm text-cream">{{ t('statistics.title') }}</h1>
-                <p class="mt-1 text-body text-cream-dim">{{ t('statistics.subtitle') }}</p>
             </div>
             <UiSegmentedControl v-model="range" :options="rangeOptions" />
         </header>
@@ -164,12 +163,7 @@
                         {{ t('statistics.performance') }}
                     </p>
                     <span v-if="perf?.enoughData" class="text-small font-semibold text-vib-pink">
-                        {{
-                            t('statistics.performanceTop').replace(
-                                '{n}',
-                                String(100 - perf.percentile),
-                            )
-                        }}
+                        {{ t('statistics.performanceTop').replace('{n}', String(perf.percentile)) }}
                     </span>
                 </div>
                 <p class="mb-4 text-small text-brand-muted">{{ t('statistics.performanceSub') }}</p>
@@ -392,7 +386,8 @@ const perfPoints = computed<{ x: number; y: number }[]>(() => {
     if (b.length < 2) return [];
     const maxC = Math.max(1, ...b);
     return b.map((c, i) => ({
-        x: (i / (b.length - 1)) * PERF_W,
+        // Bucket i covers recall [10i, 10i+10), so draw it at its middle to match the "you" marker.
+        x: ((i + 0.5) / b.length) * PERF_W,
         y: PERF_H - 6 - (c / maxC) * (PERF_H - 16),
     }));
 });
@@ -412,7 +407,7 @@ const perfMarkerY = computed(() => {
         const a = pts[i - 1]!;
         const b = pts[i]!;
         if (x <= b.x) {
-            const t = b.x === a.x ? 0 : (x - a.x) / (b.x - a.x);
+            const t = b.x === a.x ? 0 : Math.max(0, (x - a.x) / (b.x - a.x));
             return a.y + (b.y - a.y) * t;
         }
     }

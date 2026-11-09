@@ -2,7 +2,7 @@
     <header
         class="flex h-[68px] shrink-0 items-center gap-4 border-b border-line bg-bg-surface/80 px-6 backdrop-blur"
     >
-        <div class="flex min-w-0 flex-1 justify-center">
+        <div class="hidden min-w-0 flex-1 justify-center sm:flex">
             <div
                 class="relative min-w-0 w-full max-w-md"
                 @focusin="searchFocused = true"
@@ -45,7 +45,50 @@
             </div>
         </div>
 
-        <div class="flex shrink-0 items-center gap-2">
+        <div class="ml-auto flex shrink-0 items-center gap-2">
+            <!-- Phones: the inline box is too narrow for its placeholder, so tap an icon instead. -->
+            <button
+                type="button"
+                class="grid size-10 place-items-center rounded-full text-brand-muted transition-colors hover:bg-brand/20 hover:text-cream sm:hidden"
+                :aria-label="t('topbar.openSearch')"
+                @click="mobileSearchOpen = true"
+            >
+                <Search class="size-5" />
+            </button>
+            <UiModal v-model="mobileSearchOpen" :title="t('topbar.openSearch')" sheet>
+                <UiInputSearch
+                    v-model="search"
+                    :placeholder="t('topbar.search')"
+                    variant="dark"
+                    class="w-full"
+                    @keydown.enter="goToDiscover"
+                />
+                <div v-if="search.trim()" class="mt-3 flex flex-col gap-1">
+                    <NuxtLink
+                        v-for="d in suggestions"
+                        :key="d.id"
+                        :to="`/decks/${d.id}`"
+                        class="flex items-center gap-3 rounded-xl px-3 py-2 text-body text-brand-pale transition-colors hover:bg-brand/20"
+                        @click="closeSearch"
+                    >
+                        <span class="min-w-0 flex-1 truncate">{{ d.title }}</span>
+                        <span class="shrink-0 text-small text-brand-muted">
+                            {{ t('deck.cardCount', d.cardCount) }}
+                        </span>
+                    </NuxtLink>
+                    <p v-if="!suggestions.length" class="px-3 py-2 text-small text-brand-muted">
+                        {{ t('topbar.searchNoMatches').replace('{q}', search.trim()) }}
+                    </p>
+                    <button
+                        type="button"
+                        class="mt-1 flex w-full items-center justify-center gap-1.5 rounded-xl border-t border-line px-3 py-2 text-small text-lavender transition-colors hover:bg-brand/20"
+                        @click="goToDiscover"
+                    >
+                        {{ t('topbar.searchSeeAll') }}
+                    </button>
+                </div>
+            </UiModal>
+
             <SharedThemeToggle />
 
             <UiPopover align="right">
@@ -116,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import { Bell, Plus, Trophy } from 'lucide-vue-next';
+import { Bell, Plus, Search, Trophy } from 'lucide-vue-next';
 import { useT } from '#imports';
 import { useLibrary } from '@/composables/useLibrary';
 import { useAchievementNotifications } from '@/composables/useAchievementNotifications';
@@ -124,6 +167,7 @@ import type { Achievement } from '@/types/achievement';
 
 const search = ref('');
 const searchFocused = ref(false);
+const mobileSearchOpen = ref(false);
 const { store: library, fetchAll: fetchLibrary } = useLibrary();
 const { t } = useT();
 const notifications = useAchievementNotifications();
@@ -154,6 +198,7 @@ const showSuggestions = computed(() => searchFocused.value && search.value.trim(
 
 const closeSearch = () => {
     searchFocused.value = false;
+    mobileSearchOpen.value = false;
 };
 
 const onSearchBlur = (e: FocusEvent) => {
@@ -167,7 +212,7 @@ const onSearchBlur = (e: FocusEvent) => {
 
 const goToDiscover = () => {
     const q = search.value.trim();
-    searchFocused.value = false;
+    closeSearch();
     navigateTo(q ? `/discover?q=${encodeURIComponent(q)}` : '/discover');
 };
 

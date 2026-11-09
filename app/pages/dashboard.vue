@@ -86,34 +86,44 @@
                         class="flex items-center gap-3 border-b border-line px-5 py-3 transition-colors last:border-b-0 hover:bg-bg-well"
                     >
                         <div
-                            class="h-9 w-2.5 shrink-0 rounded-full"
+                            class="h-9 w-2.5 shrink-0 self-stretch rounded-full"
                             :style="{ background: deck.swatch }"
                         />
                         <div class="min-w-0 flex-1">
-                            <p class="truncate font-display text-base text-cream">
+                            <p class="line-clamp-2 font-display text-base text-cream">
                                 {{ deck.title }}
                             </p>
                             <p class="text-small text-brand-muted">
-                                {{
+                                <span class="whitespace-nowrap">{{
                                     t('dashboard.mastered').replace(
                                         '{pct}',
                                         String(deck.masteredPct),
                                     )
-                                }}
+                                }}</span>
+                                <span
+                                    v-if="deck.due > 0"
+                                    class="whitespace-nowrap font-bold text-purple"
+                                    >· {{ deck.due }} {{ t('dashboard.dueShort') }}</span
+                                >
                             </p>
                         </div>
-                        <div class="flex shrink-0 items-center gap-2">
-                            <span v-if="deck.due > 0" class="text-xs font-bold text-purple"
-                                >{{ deck.due }} {{ t('dashboard.dueShort') }}</span
-                            >
-                            <UiButton
-                                variant="primary"
-                                class="!py-1.5 !text-small"
-                                @click="navigateTo(`/study/${deck.id}`)"
-                            >
-                                {{ t('dashboard.practice') }}
-                            </UiButton>
-                        </div>
+                        <!-- Review = due cards only, so the button matches the "due" count next to it. -->
+                        <UiButton
+                            variant="primary"
+                            class="shrink-0 !py-1.5 !text-small"
+                            @click="
+                                navigateTo({
+                                    path: '/review',
+                                    query: reviewScopeQuery({
+                                        deckIds: [deck.id],
+                                        order: 'mixed',
+                                        mode: null,
+                                    }),
+                                })
+                            "
+                        >
+                            {{ t('dashboard.review') }}
+                        </UiButton>
                     </div>
                     <div class="px-5 py-3">
                         <NuxtLink to="/decks" class="text-small text-lavender hover:underline">

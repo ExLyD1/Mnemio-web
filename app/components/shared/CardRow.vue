@@ -8,6 +8,7 @@
             <p v-if="card.phonetic" class="truncate text-small text-brand-muted">
                 {{ card.phonetic }}
             </p>
+            <p class="truncate text-small text-brand-muted sm:hidden">{{ card.definition }}</p>
         </div>
         <p class="hidden min-w-0 flex-1 truncate text-small text-brand-muted sm:block">
             {{ card.definition }}

@@ -2,14 +2,14 @@
     <div :class="['rounded-[20px] border p-5', tones[tone]]">
         <div class="flex items-start justify-between gap-2">
             <p
-                class="flex items-center gap-1 text-small font-semibold uppercase tracking-[0.08em] text-brand-muted"
+                class="flex min-w-0 items-center gap-1 text-small font-semibold uppercase tracking-[0.08em] text-brand-muted"
             >
-                {{ label }}
+                <span class="min-w-0 break-words">{{ label }}</span>
                 <span
                     v-if="info"
                     :title="info"
                     :aria-label="info"
-                    class="inline-flex cursor-help text-brand-muted/70"
+                    class="inline-flex shrink-0 cursor-help text-brand-muted/70"
                 >
                     <Info class="size-3.5" />
                 </span>

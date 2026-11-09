@@ -122,6 +122,7 @@
     },
     "topbar": {
         "search": "Search decks…",
+        "openSearch": "Search",
         "notifications": "Notifications",
         "noNotifications": "No notifications yet",
         "achievementUnlocked": "Achievement unlocked",
@@ -401,6 +402,7 @@
         "mostlyFrom": "Mostly from {deck}",
         "orPickDeck": "or pick a deck below",
         "dueShort": "due",
+        "review": "Review",
         "allDecks": "All decks",
         "upNext": "Up next",
         "thisWeek": "This week",
@@ -660,7 +662,6 @@
     },
     "statistics": {
         "title": "Your statistics.",
-        "subtitle": "How your memory is trending over time.",
         "reviewed": "Reviewed",
         "reviewedSub": "cards reviewed",
         "retention": "Retention",
@@ -707,15 +708,15 @@
         "trendTotalTime": "{n} min this period",
         "performance": "Performance",
         "performanceSub": "How your recall compares with other learners.",
-        "performanceTop": "top {n}% recall",
+        "performanceTop": "Better than {n}% of learners",
         "performanceYou": "You · {n}% recall",
         "performancePeers": "{n} learner compared | {n} learners compared",
-        "performanceEmpty": "Not enough learners have studied yet to compare — check back soon.",
+        "performanceEmpty": "Comparison appears when you and at least 2 other learners have 10+ reviews in this period.",
         "performanceComingSoon": "Comparing your recall against other learners — coming soon.",
         "comingSoon": "Coming soon",
         "reviewedSubRange": "cards in the last {n} day | cards in the last {n} days",
         "reviewedSubAll": "cards, all time",
-        "weakestDecksHint": "% = progress toward mastery: every successful review with progress tracking (SRS) on moves it up. A card is fully mastered after 3 successful reviews in a row, spaced over several days; \"Forgot\" and \"Hard\" restart that count.",
+        "weakestDecksHint": "% = how many cards are mastered (3 successful reviews in a row, on different days).",
         "masteredOf": "{m}/{n} mastered"
     },
     "onboarding": {
