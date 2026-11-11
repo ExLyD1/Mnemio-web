@@ -249,7 +249,7 @@ test('inline checkout binds theme, iframe options and signed-in customer; events
     let completed = 0;
     await billing.inlineCheckout.execute({
         plan: 'annual',
-        frameTarget: 'paddle-frame',
+        frameTarget: 'mnemio-checkout-frame',
         onComplete: () => {
             completed++;
         },

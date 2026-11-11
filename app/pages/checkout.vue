@@ -109,7 +109,7 @@
             </div>
             <UiSpinner v-if="billing.inlineCheckout.loading.value" class="mx-auto my-8" />
             <div
-                class="paddle-frame min-w-0"
+                class="mnemio-checkout-frame min-w-0"
                 :class="billing.paymentError.value ? 'rounded-xl border border-error-soft' : ''"
             />
             <p
@@ -190,7 +190,7 @@ onMounted(async () => {
     }
     await billing.inlineCheckout.execute({
         plan: plan.value,
-        frameTarget: 'paddle-frame',
+        frameTarget: 'mnemio-checkout-frame',
         onComplete: async () => {
             await navigateTo({ path: '/billing/success', query: { from: from.value } });
         },

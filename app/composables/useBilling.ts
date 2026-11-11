@@ -35,9 +35,21 @@ export const useBilling = () => {
         if (checkoutId && event.data?.id && event.data.id !== checkoutId) {
             return;
         }
-        if (event.name === 'checkout.loaded' || event.name === 'checkout.updated') {
-            checkoutId = event.data?.id ?? checkoutId;
-            checkoutData.value = event.data ?? null;
+        // Country, item and discount changes re-price the checkout (VAT, Ukraine price),
+        // so every event that carries fresh totals must refresh the order summary.
+        if (
+            [
+                'checkout.loaded',
+                'checkout.updated',
+                'checkout.customer.updated',
+                'checkout.items.updated',
+                'checkout.discount.applied',
+                'checkout.discount.removed',
+            ].includes(event.name ?? '') &&
+            event.data?.totals
+        ) {
+            checkoutId = event.data.id;
+            checkoutData.value = event.data;
             checkoutReady.value = true;
         }
         if (
