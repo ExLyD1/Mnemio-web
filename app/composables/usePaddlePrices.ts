@@ -1,17 +1,25 @@
 import type { Paddle, PricePreviewParams, PricePreviewResponse } from '@paddle/paddle-js';
 import { ref, watch, type Ref } from '#imports';
-import { ALL_PRICE_IDS } from '@/data/plans';
+import { ALL_PRICE_IDS, TAX_INCLUSIVE_COUNTRIES } from '@/data/plans';
 import type { Money } from '@/types/billing';
 import { fromMinorUnits } from '@/utils/format';
 
-/** `priceId` → Paddle's already-formatted total, e.g. `"£8.00"`, `"149.00 ₴"`. */
+/** `priceId` → the already-formatted price to display, e.g. `"$8.00"`. */
 export type PaddlePrices = Record<string, string>;
 
-const toPriceMap = (res: PricePreviewResponse): PaddlePrices =>
-    res.data.details.lineItems.reduce<PaddlePrices>((acc, item) => {
-        acc[item.price.id] = item.formattedTotals.total;
-        return acc;
-    }, {});
+/**
+ * What to show for one price. Outside the tax-inclusive countries we show the
+ * price BEFORE VAT (the checkout adds it) whenever VAT applies; in Ukraine, or when
+ * we can't tell the country, we show Paddle's total — always the amount charged.
+ */
+const showsNet = (
+    res: PricePreviewResponse,
+    item: PricePreviewResponse['data']['details']['lineItems'][number],
+    fallbackCountry: string | null,
+) => {
+    const country = res.data.address?.countryCode ?? fallbackCountry;
+    return !!country && !TAX_INCLUSIVE_COUNTRIES.includes(country) && Number(item.totals.tax) > 0;
+};
 
 /**
  * Fetches localized totals for every purchasable price in one `PricePreview()`
@@ -30,6 +38,10 @@ export const usePaddlePrices = (
     country: Ref<string | null> | string | null,
 ) => {
     const prices = ref<PaddlePrices>({});
+    /** `priceId` → true when `prices` is before VAT (show "+ VAT"). */
+    const plusVat = ref<Record<string, boolean>>({});
+    /** `priceId` → Paddle's formatted total including VAT. */
+    const gross = ref<PaddlePrices>({});
     const amounts = ref<Record<string, Money>>({});
     const loading = ref(true);
     const error = ref(false);
@@ -52,12 +64,28 @@ export const usePaddlePrices = (
             } as PricePreviewParams;
 
             const res = await instance.PricePreview(params);
-            prices.value = { ...prices.value, ...toPriceMap(res) };
+            const items = res.data.details.lineItems;
+            const net = new Map(items.map((i) => [i.price.id, showsNet(res, i, cc)]));
+            prices.value = Object.fromEntries(
+                items.map((i) => [
+                    i.price.id,
+                    net.get(i.price.id) ? i.formattedTotals.subtotal : i.formattedTotals.total,
+                ]),
+            );
+            plusVat.value = Object.fromEntries(
+                items.map((i) => [i.price.id, !!net.get(i.price.id)]),
+            );
+            gross.value = Object.fromEntries(
+                items.map((i) => [i.price.id, i.formattedTotals.total]),
+            );
             amounts.value = Object.fromEntries(
-                res.data.details.lineItems.map((item) => [
+                items.map((item) => [
                     item.price.id,
                     {
-                        amount: fromMinorUnits(item.totals.total, res.data.currencyCode),
+                        amount: fromMinorUnits(
+                            net.get(item.price.id) ? item.totals.subtotal : item.totals.total,
+                            res.data.currencyCode,
+                        ),
                         currency: res.data.currencyCode,
                     },
                 ]),
@@ -73,5 +101,5 @@ export const usePaddlePrices = (
 
     watch([paddle, countryRef], fetchPrices, { immediate: true });
 
-    return { prices, amounts, loading, error, refresh: fetchPrices };
+    return { prices, plusVat, gross, amounts, loading, error, refresh: fetchPrices };
 };

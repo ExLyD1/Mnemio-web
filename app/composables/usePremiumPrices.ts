@@ -9,8 +9,19 @@ export const usePremiumPrices = () => {
     const { t } = useT();
     const amount = (plan: 'monthly' | 'annual') =>
         preview.amounts.value[premiumPriceId(plan) ?? ''];
-    const price = (plan: 'monthly' | 'annual') =>
-        preview.prices.value[premiumPriceId(plan) ?? ''] ?? '—';
+    const price = (plan: 'monthly' | 'annual') => {
+        const id = premiumPriceId(plan) ?? '';
+        const base = preview.prices.value[id] ?? '—';
+        return preview.plusVat.value[id] ? `${base} ${t('pricing.plusVat')}` : base;
+    };
+    /** "$9.60 incl. VAT" when the shown price is before VAT, else ''. */
+    const inclVat = (plan: 'monthly' | 'annual') => {
+        const id = premiumPriceId(plan) ?? '';
+        const gross = preview.gross.value[id];
+        return preview.plusVat.value[id] && gross
+            ? t('pricing.inclVat').replace('{price}', gross)
+            : '';
+    };
     const saving = computed(() => {
         const monthly = amount('monthly');
         const annual = amount('annual');
@@ -34,5 +45,5 @@ export const usePremiumPrices = () => {
     onMounted(() => {
         void load();
     });
-    return { ...preview, failed, price, amount, saving, saveLabel, perMonth };
+    return { ...preview, failed, price, inclVat, amount, saving, saveLabel, perMonth };
 };

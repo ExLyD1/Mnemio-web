@@ -245,8 +245,11 @@ monetization decision, not an implementation detail). Enforcement details:
 - Max words per enrich call: 100. Study modes and SRS are uncapped and free.
 - Pricing: the `/pricing` page renders Paddle's localized `PricePreview`
   client-side, and the JSON-LD offers come from the same preview. Prices live
-  only in Paddle ($6/mo and $60/yr intended); the copy "Pay for 10 months, get
-  12" (`pricing.annualNote`) assumes that ratio.
+  only in Paddle: $8/mo and $80/yr (tax added at checkout) with a Ukraine
+  override of $5/$50, which Paddle's 20% VAT turns into exactly $6/$60. The
+  page shows the total in Ukraine and "price + VAT" elsewhere
+  (`TAX_INCLUSIVE_COUNTRIES` in `data/plans.ts`). The copy "Pay for 10 months,
+  get 12" (`pricing.annualNote`) assumes the 10× ratio.
 
 Rate limits (per IP unless noted): 120 req/min global · 10/min register+login ·
 5/min verify-email + resend-otp · 30/min refresh · 30/min per user on `/ai/*`

@@ -47,8 +47,8 @@ export const PLANS: Plan[] = [
         nameKey: 'pricing.premiumPlanName',
         featured: true,
         priceId: {
-            month: 'pri_01m49b7ychmsbkz8dt2spxx3z1',
-            year: 'pri_01m49b7yhzsa7q9yhnv3s3tn0j',
+            month: 'pri_01m74wp3k6q0b7w2x99ynsrmbm',
+            year: 'pri_01m74wp3s2a3ndhvz3qk9d38th',
         },
         features: [
             { key: 'pricing.features.srs', included: true },
@@ -59,6 +59,15 @@ export const PLANS: Plan[] = [
         ],
     },
 ];
+
+/**
+ * Countries where the Paddle price carries a country override (see Paddle price
+ * `unit_price_overrides`) AND we show the tax-INCLUSIVE total: the customer sees
+ * exactly $6 / $60. Everywhere else we show the price before VAT plus "+ VAT",
+ * and the VAT-inclusive total on the pricing page. Must match the overrides set
+ * on the Paddle prices. Unknown country: show Paddle's total (what is charged).
+ */
+export const TAX_INCLUSIVE_COUNTRIES: readonly string[] = ['UA'];
 
 /** Free trial length, in days, configured on both Premium prices in Paddle. */
 export const TRIAL_DAYS = 7;

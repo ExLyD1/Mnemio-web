@@ -193,10 +193,11 @@ visitor's own currency.
 **Status: sandbox.** Paddle is not live yet, so there are no subscribers, no
 MRR and no conversion rate. Going live is a near-term task.
 
-**Price: not decided.** The code and the pricing page's structured data
-currently carry $9.99–10 / month and $96 / year, but that's a placeholder, not
-a researched price. Pricing is an open question — see §14. Don't treat $10 as
-the plan.
+**Price: decided (sandbox).** One paid plan, Premium, for tutors and
+students (a tutor pays only for their own AI usage). Ukraine: $6/month or
+$60/year, VAT included. Everywhere else (Europe and the rest of the world):
+$8/month or $80/year, VAT added at checkout. Yearly = "2 months free". 7-day
+trial kept for now. Paddle price = $8/$80 with a Ukraine override of $5/$50.
 
 **Free gets everything structurally.** No limit on decks, cards or folders
 anywhere. Full SRS scheduler, all study modes, practice and review, stats,
@@ -283,27 +284,29 @@ much AI does a user consume per month?_
 | Heavy (daily, 25 chat turns/d)           | $8.00 | ~$1.00 | ~$0.10 | ~$9.10 |
 | Maxing every premium cap, every day      | $270  | ~$1.00 | —      | ~$271  |
 
-Annual billing cuts the Paddle fee to ~$0.45/month equivalent.
+Annual billing cuts the Paddle fee to ~$0.38/month equivalent.
 
-> ⚠️ Paddle's fee is assumed against a ~$9.99 price, which isn't a decided
-> price. The infra range is an estimate, not a read bill — worth confirming
+> ⚠️ Paddle's fee is computed on the $8 price (5% + $0.50 per payment; Paddle
+> offers custom pricing for products under $10). The infra range is an estimate, not a read bill — worth confirming
 > once from the actual invoices.
 
 ---
 
 ## 10. Unit economics
 
-Now mostly knowable. At a placeholder $9.99/month:
+Now mostly knowable. At the $8/month price (rest of world; Ukraine below):
 
 ```
-Revenue per subscriber              = $9.99
-  minus Paddle (5% + $0.50)         = −$1.00   → net ≈ $8.99
+Revenue per subscriber              = $8.00   (VAT passes through)
+  minus Paddle (5% + $0.50)         = −$0.90   → net ≈ $7.10
   minus their own AI usage          = −$1.90   (typical)
-  = contribution per subscriber     ≈ $7.00    (≈ 70% margin)
+  = contribution per subscriber     ≈ $5.20    (≈ 65% margin)
 
-  light user                        ≈ $8.50    (85%)
-  heavy user                        ≈ $0.99    (10%)
-  cap-maxing user                   ≈ −$262    (catastrophic, see below)
+Ukraine ($6.00 incl. VAT → $5.00 before fee):
+  minus Paddle ≈ $0.80, minus AI $1.90 → ≈ $2.30 (≈ 46% margin)
+
+  heavy user (~$9.10 cost)          = loses money in both regions
+  cap-maxing user                   ≈ −$264    (catastrophic, see below)
 ```
 
 Then the part that isn't known yet:
@@ -312,16 +315,16 @@ Then the part that isn't known yet:
 Free users carried per subscriber   = ⚠️ 1 / conversion rate (no data)
 Cost of an average free user        = ⚠️ (no data — but bounded, see below)
 Acquisition cost                    ≈ $0 today (all organic)
-Break-even                          ≈ $80–120 infra ÷ ~$7 = 12–17 subscribers
+Break-even                          ≈ $80–120 infra ÷ ~$5.20 = 16–23 subscribers (more at the Ukraine price)
 ```
 
 **Three things this says out loud:**
 
-1. **Break-even is ~12–17 subscribers.** That's the whole business goal right
+1. **Break-even is ~16–23 subscribers.** That's the whole business goal right
    now, and it's a small number. Reaching it needs maybe 1–2k engaged free
    users at a plausible conversion rate.
 2. **A typical subscriber is comfortably profitable; a cap-maxing one is a
-   disaster.** $271/month of cost against $10 of revenue. The premium caps are
+   disaster.** $271/month of cost against $8 of revenue. The premium caps are
    10× higher than the free ones, which means the _paid_ tier is where the real
    cost risk lives — the opposite of the usual intuition. Premium caps are the
    number to re-examine first, not free ones.
@@ -418,14 +421,13 @@ learners, beachhead НМТ English · gate AI volume, not features.
    visitors, sources, signup rate and the paywall funnel are sitting there
    unread.
 3. **Paddle sandbox → live.** Until this ships, the business cannot be tested
-   at all. Also decide: trial or no trial?
-4. **Price discovery.** $10 is a placeholder. The cost model says margin is
-   healthy at typical usage, so price on willingness to pay, not cost. Open
-   sub-questions: is there a separate, lower price for Ukraine (purchasing
-   power, not currency)? Monthly-only or keep annual? Is a cheaper tier
-   (~$3–4) with smaller caps a better fit for a student than $10?
+   at all. The 7-day trial is kept for now (revisit after real data).
+4. **Price validation.** Prices are set ($6/$60 Ukraine, $8/$80 elsewhere) but
+   untested on real buyers. Watch conversion by region, and whether people pick
+   "Ukraine" at checkout to get the lower price. Rest-of-world price can be
+   changed per country in Paddle without code.
 5. **Recalibrate the caps — premium first.** A premium user maxing every cap
-   costs ~$271/month against ~$10 of revenue. Premium caps at 10× free are the
+   costs ~$271/month against ~$8 of revenue. Premium caps at 10× free are the
    larger exposure; a hard monthly ceiling or a soft-throttle above a threshold
    is worth designing before anyone pays.
 6. **Free caps: habit vs conversion.** Currently judgement, not measurement.

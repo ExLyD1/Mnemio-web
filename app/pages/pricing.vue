@@ -83,6 +83,9 @@
                     </template>
                     <template v-else>&nbsp;</template>
                 </p>
+                <p v-if="plan.priceId && vatLine" class="text-small text-cream-dim">
+                    {{ t('pricing.plusVat') }} · {{ vatLine }}
+                </p>
                 <p class="min-h-5 text-small font-semibold text-brand-bright">
                     <template v-if="plan.priceId && billingCycle === 'annual'">
                         {{ t('pricing.annualNote') }}
@@ -265,6 +268,8 @@ const priceFor = (plan: Plan): string | undefined =>
     plan.priceId
         ? prices.value[billingCycle.value === 'annual' ? plan.priceId.year : plan.priceId.month]
         : undefined;
+
+const vatLine = computed(() => premiumPrices.inclVat(billingCycle.value));
 
 const trialNote = computed(() => t('pricing.trialNote', TRIAL_DAYS));
 
